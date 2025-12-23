@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 export const runtime = "nodejs";
@@ -11,24 +12,32 @@ type Msg = { role: "user" | "assistant"; content: string };
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const messages = (body.messages ?? []) as Msg[];
+    const messages: Msg[] = Array.isArray(body?.messages) ? body.messages : [];
+
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { message: "Missing OPENAI_API_KEY env var in Vercel." },
+        { status: 500 }
+      );
+    }
 
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a helpful website-building assistant." },
-        ...messages,
-      ],
+      messages: messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      temperature: 0.7,
     });
 
     const message =
-      completion.choices?.[0]?.message?.content?.trim() || "No reply";
+      completion.choices?.[0]?.message?.content?.trim() || "(empty response)";
 
-    return Response.json({ message });
+    return NextResponse.json({ message });
   } catch (err: any) {
-    return new Response(JSON.stringify({ message: "Server error." }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json(
+      { message: `Server error: ${err?.message ?? "unknown"}` },
+      { status: 500 }
+    );
   }
 }
