@@ -5,19 +5,16 @@ import { useState } from "react";
 type Msg = { role: "user" | "assistant"; content: string };
 
 export default function ChatPage() {
-  const [input, setInput] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-
-  // 👇 Explicitly type messages so TS never widens role to "string"
   const [messages, setMessages] = useState<Msg[]>([
     { role: "assistant", content: "Hi — I’m your site AI. What are we building?" },
   ]);
+  const [input, setInput] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   async function send() {
     const text = input.trim();
     if (!text || loading) return;
 
-    // 👇 Explicitly type next as Msg[]
     const next: Msg[] = [...messages, { role: "user", content: text }];
 
     setMessages(next);
