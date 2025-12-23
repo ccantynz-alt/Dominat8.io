@@ -3,40 +3,42 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-type Msg = { role: "user" | "assistant"; content: string };
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { messages?: Msg[] };
-
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        { message: "Server missing OPENAI_API_KEY env var." },
+        { message: "OPENAI_API_KEY is missing on the server" },
         { status: 500 }
       );
     }
 
+    const body = await req.json();
     const messages = Array.isArray(body.messages) ? body.messages : [];
 
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a helpful website-building assistant." },
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        {
+          role: "system",
+          content: "You are a helpful website-building assistant.",
+        },
         ...messages,
       ],
-      temperature: 0.7,
     });
 
-    const reply = completion.choices?.[0]?.message?.content ?? "";
-    return NextResponse.json({ message: reply || "(empty reply)" });
+    const text =
+      response.output_text ||
+      "No text returned from OpenAI.";
+
+    return NextResponse.json({ message: text });
   } catch (err: any) {
-    // Return a readable error to the UI so you're not blind
-    const msg =
-      typeof err?.message === "string"
-        ? err.message
-        : "Unknown server error";
-    return NextResponse.json({ message: `API error: ${msg}` }, { status: 500 });
+    return NextResponse.json(
+      { message: err?.message || "Unknown server error" },
+      { status: 500 }
+    );
   }
 }
