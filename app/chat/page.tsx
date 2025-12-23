@@ -2,20 +2,26 @@
 
 import { useState } from "react";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = {
+  role: "user" | "assistant";
+  content: string;
+};
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Msg[]>([
-    { role: "assistant", content: "Hi! I’m your site AI. What are we building?" },
+    { role: "assistant", content: "Hi! I'm your AI. What are we building?" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function send() {
-    const text = input.trim();
-    if (!text || loading) return;
+    if (!input.trim() || loading) return;
 
-    const next: Msg[] = [...messages, { role: "user", content: text }];
+    const next: Msg[] = [
+      ...messages,
+      { role: "user", content: input },
+    ];
+
     setMessages(next);
     setInput("");
     setLoading(true);
@@ -28,13 +34,15 @@ export default function ChatPage() {
       });
 
       const data = await res.json();
-      const reply = data?.message ?? "(no reply)";
 
-      setMessages([...next, { role: "assistant", content: reply }]);
+      setMessages([
+        ...next,
+        { role: "assistant", content: data.message || "No reply" },
+      ]);
     } catch {
       setMessages([
         ...next,
-        { role: "assistant", content: "Something went wrong calling the API." },
+        { role: "assistant", content: "Error talking to server." },
       ]);
     } finally {
       setLoading(false);
@@ -42,76 +50,24 @@ export default function ChatPage() {
   }
 
   return (
-    <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }}>Chat</h1>
+    <main style={{ maxWidth: 700, margin: "40px auto" }}>
+      <h1>Chat</h1>
 
-      <div
-        style={{
-          border: "1px solid #ddd",
-          borderRadius: 12,
-          padding: 12,
-          minHeight: 300,
-          background: "#fff",
-        }}
-      >
+      <div style={{ marginBottom: 20 }}>
         {messages.map((m, i) => (
-          <div
-            key={i}
-            style={{
-              marginBottom: 10,
-              display: "flex",
-              justifyContent: m.role === "user" ? "flex-end" : "flex-start",
-            }}
-          >
-            <div
-              style={{
-                maxWidth: "85%",
-                padding: "10px 12px",
-                borderRadius: 12,
-                background: m.role === "user" ? "#e8f0ff" : "#f4f4f4",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {m.content}
-            </div>
+          <div key={i}>
+            <strong>{m.role}:</strong> {m.content}
           </div>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") send();
-          }}
-          placeholder="Type a message…"
-          style={{
-            flex: 1,
-            padding: "10px 12px",
-            borderRadius: 10,
-            border: "1px solid #ddd",
-          }}
-        />
-        <button
-          onClick={send}
-          disabled={loading}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "1px solid #111",
-            background: loading ? "#999" : "#111",
-            color: "#fff",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "…" : "Send"}
-        </button>
-      </div>
-
-      <p style={{ marginTop: 10, opacity: 0.7 }}>
-        Open this page at <code>/chat</code>
-      </p>
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && send()}
+        placeholder="Type a message..."
+        style={{ width: "100%", padding: 8 }}
+      />
     </main>
   );
 }
