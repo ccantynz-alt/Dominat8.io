@@ -1,15 +1,10 @@
-<a
-  href="/chat"
-  style={{
-    display: "inline-block",
-    marginTop: 20,
-    padding: "12px 20px",
-    background: "#2563eb",
-    color: "white",
-    borderRadius: 8,
-    textDecoration: "none",
-    fontWeight: 600
-  }}
->
-  Try the AI Chat →
-</a>
+export default function Home() {
+  return (
+    <main style={{ padding: 40 }}>
+      <h1>My SaaS App</h1>
+      <p>
+        Go to <a href="/chat">/chat</a> to talk to the AI.
+      </p>
+    </main>
+  );
+}
