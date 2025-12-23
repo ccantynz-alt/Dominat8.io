@@ -1,0 +1,11 @@
+app/layout.tsx
+
+app/page.tsx
+
+app/globals.css
+
+components/Header.tsx
+
+components/Footer.tsx
+
+public/favicon.ico
