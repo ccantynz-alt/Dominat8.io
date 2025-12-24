@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
 
 export async function GET() {
-  await kv.set("hello", "world");
-  const v = await kv.get("hello");
-  return NextResponse.json({ ok: true, value: v });
+  return NextResponse.json({
+    ok: true,
+    hasKVUrl: !!process.env.KV_REST_API_URL,
+    hasKVToken: !!process.env.KV_REST_API_TOKEN,
+    hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+    hasUpstashToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
 }
