@@ -1,4 +1,5 @@
-// app/api/runs/route.ts
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { KV } from "../../lib/kv";
 import { makeId } from "../../lib/ids";
