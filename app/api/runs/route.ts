@@ -1,9 +1,8 @@
 // app/api/runs/route.ts
-import { NextResponse } from "next/server";
-import { kv } from "@/app/lib/kv";
-import { makeRunId } from "@/app/lib/ids";
-import { requireDemoUser } from "@/app/lib/demoAuth";
-import type { Run } from "@/app/lib/models/run";
+import { kv } from "../../lib/kv";
+import { makeRunId } from "../../lib/ids";
+import { requireDemoUser } from "../../lib/demoAuth";
+import type { Run } from "../../lib/models/run";
 
 export async function POST() {
   const user = await requireDemoUser();
