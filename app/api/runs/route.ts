@@ -16,17 +16,24 @@ type Run = {
 };
 
 function safeEnvInfo() {
-  const upUrl = (process.env.UPSTASH_REDIS_REST_URL ?? "").trim();
-  const kvUrl = (process.env.KV_REST_API_URL ?? "").trim();
+  const kvRedisUrl = (process.env.KV_REDIS_URL ?? "").trim();
+  const redisUrl = (process.env.REDIS_URL ?? "").trim();
 
   return {
-    hasUpstashUrl: !!upUrl,
-    upstashUrlHost: upUrl ? new URL(upUrl.startsWith("http") ? upUrl : `https://${upUrl}`).host : null,
-    hasKvUrl: !!kvUrl,
-    kvUrlHost: kvUrl ? new URL(kvUrl.startsWith("http") ? kvUrl : `https://${kvUrl}`).host : null,
-    hasUpstashToken: !!(process.env.UPSTASH_REDIS_REST_TOKEN ?? "").trim(),
-    hasKvToken: !!(process.env.KV_REST_API_TOKEN ?? "").trim(),
+    hasKvRedisUrl: !!kvRedisUrl,
+    kvRedisUrlHost: kvRedisUrl ? safeHost(kvRedisUrl) : null,
+    hasRedisUrl: !!redisUrl,
+    redisUrlHost: redisUrl ? safeHost(redisUrl) : null,
   };
+}
+
+function safeHost(u: string) {
+  try {
+    // redis://... is valid for URL()
+    return new URL(u).host;
+  } catch {
+    return "(unparseable)";
+  }
 }
 
 export async function POST() {
