@@ -16,13 +16,20 @@ const token =
   (process.env.UPSTASH_REDIS_REST_TOKEN ?? "").trim() ||
   (process.env.KV_REST_API_TOKEN ?? "").trim();
 
-if (!url || !token) {
-  console.warn(
-    "KV is not configured. Missing UPSTASH_REDIS_REST_URL/KV_REST_API_URL or token."
-  );
+function assertUrlLooksLikeKv(url: string) {
+  // This is the exact mistake you hit: KV url accidentally set to your Vercel domain.
+  if (url.includes("vercel.app")) {
+    throw new Error(
+      `KV URL is set to a Vercel domain (${url}). It must be an Upstash REST URL like https://xxxx.upstash.io. Fix your Vercel env var UPSTASH_REDIS_REST_URL or KV_REST_API_URL.`
+    );
+  }
 }
 
-const redis = url && token ? new Redis({ url, token }) : null;
+const redis = (() => {
+  if (!url || !token) return null;
+  assertUrlLooksLikeKv(url);
+  return new Redis({ url, token });
+})();
 
 export const KV = {
   async get<T = unknown>(key: string): Promise<T | null> {
