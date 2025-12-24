@@ -14,26 +14,25 @@ export default function ProjectsPage() {
 
     try {
       const res = await fetch("/api/runs", { method: "POST" });
-
       const text = await res.text().catch(() => "");
+
       if (!res.ok) {
         throw new Error(
-          `Failed to create run. Status ${res.status}. ${text ? "Body: " + text : ""}`.trim()
+          `Failed to create run.\nStatus: ${res.status}\nBody: ${text || "(empty)"}`
         );
       }
 
-      // Parse JSON safely
       let data: any = null;
       try {
         data = text ? JSON.parse(text) : null;
       } catch {
         throw new Error(
-          `Create run returned non-JSON. Status ${res.status}. Body: ${text || "(empty)"}`
+          `Create run returned non-JSON.\nStatus: ${res.status}\nBody: ${text || "(empty)"}`
         );
       }
 
       if (!data?.runId) {
-        throw new Error(`No runId returned. Body: ${text || "(empty)"}`);
+        throw new Error(`No runId returned.\nBody: ${text || "(empty)"}`);
       }
 
       router.push(`/runs/${data.runId}`);
