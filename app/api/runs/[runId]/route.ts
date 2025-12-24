@@ -1,9 +1,8 @@
-// app/api/runs/[runId]/route.ts
 import { NextResponse } from "next/server";
-import { KV } from "@/lib/kv";
-import { keys } from "@/lib/keys";
-import { getCurrentUserId } from "@/lib/demoAuth";
-import { RunSchema } from "@/lib/models/run";
+import { KV } from "../../../../lib/kv";
+import { keys } from "../../../../lib/keys";
+import { getCurrentUserId } from "../../../../lib/demoAuth";
+import { RunSchema } from "../../../../lib/models/run";
 
 export const runtime = "nodejs";
 
