@@ -1,11 +1,10 @@
-// lib/models/log.ts
 import { z } from "zod";
 
 export const LogLevelSchema = z.enum(["debug", "info", "warn", "error"]);
 export type LogLevel = z.infer<typeof LogLevelSchema>;
 
 export const RunLogSchema = z.object({
-  ts: z.string(), // ISO
+  ts: z.string(),
   level: LogLevelSchema,
   message: z.string(),
   data: z.any().optional(),
