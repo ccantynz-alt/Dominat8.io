@@ -1,13 +1,12 @@
-// lib/models/project.ts
 import { z } from "zod";
 
 export const ProjectSchema = z.object({
   id: z.string(),
-  ownerId: z.string(), // auth later; for now "demo"
+  ownerId: z.string(),
   name: z.string().min(1).max(120),
   description: z.string().max(500).optional().default(""),
-  createdAt: z.string(), // ISO
-  updatedAt: z.string(), // ISO
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
 
 export type Project = z.infer<typeof ProjectSchema>;
