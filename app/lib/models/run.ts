@@ -1,4 +1,3 @@
-// lib/models/run.ts
 import { z } from "zod";
 
 export const RunStatusSchema = z.enum([
@@ -13,13 +12,13 @@ export type RunStatus = z.infer<typeof RunStatusSchema>;
 
 export const RunSchema = z.object({
   id: z.string(),
-  ownerId: z.string(), // auth later; for now "demo"
+  ownerId: z.string(),
   projectId: z.string(),
   title: z.string().min(1).max(140),
-  input: z.any().optional(), // arbitrary run payload (tool args, etc.)
+  input: z.any().optional(),
   status: RunStatusSchema,
-  createdAt: z.string(), // ISO
-  updatedAt: z.string(), // ISO
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
 
 export type Run = z.infer<typeof RunSchema>;
