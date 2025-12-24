@@ -1,17 +1,18 @@
-// app/api/projects/route.ts
 import { NextResponse } from "next/server";
-import { KV } from "@/lib/kv";
-import { keys } from "@/lib/keys";
-import { makeId } from "@/lib/ids";
-import { getCurrentUserId } from "@/lib/demoAuth";
-import { CreateProjectInputSchema, ProjectSchema } from "@/lib/models/project";
+import { KV } from "../../../lib/kv";
+import { keys } from "../../../lib/keys";
+import { makeId } from "../../../lib/ids";
+import { getCurrentUserId } from "../../../lib/demoAuth";
+import {
+  CreateProjectInputSchema,
+  ProjectSchema,
+} from "../../../lib/models/project";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   const ownerId = getCurrentUserId();
 
-  // Fetch project IDs from index (sorted by updatedAt desc)
   const ids = (await KV.zrange(keys.projectsIndexByOwner(ownerId), 0, 49, {
     rev: true,
   })) as string[];
@@ -51,7 +52,6 @@ export async function POST(req: Request) {
     updatedAt: now,
   };
 
-  // Persist
   await KV.set(keys.project(projectId), project);
   await KV.sadd(keys.projectIdsByOwner(ownerId), projectId);
   await KV.zadd(keys.projectsIndexByOwner(ownerId), {
@@ -59,8 +59,6 @@ export async function POST(req: Request) {
     member: projectId,
   });
 
-  // Validate stored shape
   const validated = ProjectSchema.parse(project);
-
   return NextResponse.json({ ok: true, project: validated });
 }
