@@ -1,15 +1,11 @@
-// lib/keys.ts
 export const keys = {
-  // Projects
   project: (projectId: string) => `project:${projectId}`,
-  projectIdsByOwner: (ownerId: string) => `projectIdsByOwner:${ownerId}`, // Set
-  projectsIndexByOwner: (ownerId: string) => `projectsIndexByOwner:${ownerId}`, // Sorted set (by updatedAt ms)
+  projectIdsByOwner: (ownerId: string) => `projectIdsByOwner:${ownerId}`,
+  projectsIndexByOwner: (ownerId: string) => `projectsIndexByOwner:${ownerId}`,
 
-  // Runs
   run: (runId: string) => `run:${runId}`,
-  runIdsByProject: (projectId: string) => `runIdsByProject:${projectId}`, // Sorted set (by createdAt ms)
-  runIdsByOwner: (ownerId: string) => `runIdsByOwner:${ownerId}`, // Sorted set
+  runIdsByProject: (projectId: string) => `runIdsByProject:${projectId}`,
+  runIdsByOwner: (ownerId: string) => `runIdsByOwner:${ownerId}`,
 
-  // Logs
-  runLogs: (runId: string) => `runLogs:${runId}`, // List
+  runLogs: (runId: string) => `runLogs:${runId}`,
 };
