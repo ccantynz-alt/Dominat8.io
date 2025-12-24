@@ -13,24 +13,32 @@ export default function ProjectsPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/runs", {
-        method: "POST",
-      });
+      const res = await fetch("/api/runs", { method: "POST" });
 
+      const text = await res.text().catch(() => "");
       if (!res.ok) {
-        throw new Error("Failed to create run");
+        throw new Error(
+          `Failed to create run. Status ${res.status}. ${text ? "Body: " + text : ""}`.trim()
+        );
       }
 
-      const data = await res.json();
+      // Parse JSON safely
+      let data: any = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        throw new Error(
+          `Create run returned non-JSON. Status ${res.status}. Body: ${text || "(empty)"}`
+        );
+      }
 
       if (!data?.runId) {
-        throw new Error("No runId returned");
+        throw new Error(`No runId returned. Body: ${text || "(empty)"}`);
       }
 
-      // THIS is the navigation step
       router.push(`/runs/${data.runId}`);
     } catch (err: any) {
-      setError(err.message ?? "Something went wrong");
+      setError(err?.message ?? "Something went wrong");
     } finally {
       setBusy(false);
     }
@@ -45,9 +53,9 @@ export default function ProjectsPage() {
       </button>
 
       {error && (
-        <p style={{ marginTop: 12, color: "red" }}>
-          Error: {error}
-        </p>
+        <pre style={{ marginTop: 12, color: "red", whiteSpace: "pre-wrap" }}>
+          {error}
+        </pre>
       )}
     </div>
   );
