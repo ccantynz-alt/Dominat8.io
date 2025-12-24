@@ -3,20 +3,7 @@ import Link from "next/link";
 import NewProjectForm from "./NewProjectForm";
 
 async function getProjects() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/projects`, {
-    cache: "no-store",
-  }).catch(() => null);
-
-  // When NEXT_PUBLIC_BASE_URL is not set, fallback to relative fetch on server
-  if (!res) {
-    const res2 = await fetch("http://localhost:3000/api/projects", { cache: "no-store" }).catch(
-      () => null
-    );
-    if (!res2) return [];
-    const data2 = await res2.json();
-    return data2.projects ?? [];
-  }
-
+  const res = await fetch("/api/projects", { cache: "no-store" });
   const data = await res.json();
   return data.projects ?? [];
 }
@@ -41,7 +28,6 @@ export default async function ProjectsPage() {
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <NewProjectForm
           onCreated={() => {
-            // client-side refresh without needing router import
             window.location.reload();
           }}
         />
@@ -60,7 +46,9 @@ export default async function ProjectsPage() {
                 >
                   <div className="font-medium">{p.name}</div>
                   {p.description ? (
-                    <div className="text-sm text-neutral-600 line-clamp-2">{p.description}</div>
+                    <div className="text-sm text-neutral-600 line-clamp-2">
+                      {p.description}
+                    </div>
                   ) : null}
                   <div className="mt-1 text-xs text-neutral-500">{p.id}</div>
                 </Link>
