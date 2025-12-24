@@ -15,6 +15,20 @@ type Run = {
   title: string;
 };
 
+function safeEnvInfo() {
+  const upUrl = (process.env.UPSTASH_REDIS_REST_URL ?? "").trim();
+  const kvUrl = (process.env.KV_REST_API_URL ?? "").trim();
+
+  return {
+    hasUpstashUrl: !!upUrl,
+    upstashUrlHost: upUrl ? new URL(upUrl.startsWith("http") ? upUrl : `https://${upUrl}`).host : null,
+    hasKvUrl: !!kvUrl,
+    kvUrlHost: kvUrl ? new URL(kvUrl.startsWith("http") ? kvUrl : `https://${kvUrl}`).host : null,
+    hasUpstashToken: !!(process.env.UPSTASH_REDIS_REST_TOKEN ?? "").trim(),
+    hasKvToken: !!(process.env.KV_REST_API_TOKEN ?? "").trim(),
+  };
+}
+
 export async function POST() {
   try {
     const userId = getCurrentUserId();
@@ -30,24 +44,17 @@ export async function POST() {
       title: "Simulated Run",
     };
 
-    // Helpful explicit error if KV wrapper is missing methods
-    if (typeof (KV as any).set !== "function") {
-      throw new Error(
-        "KV.set is not a function. Your app/lib/kv.ts wrapper currently does not expose set()."
-      );
-    }
-
-    await (KV as any).set(`run:${runId}`, run);
+    await KV.set(`run:${runId}`, run);
 
     return NextResponse.json({ ok: true, runId });
   } catch (err: any) {
     const message = err?.message ?? "Unknown error";
-    // Send back something you can see in the browser
     return NextResponse.json(
       {
         ok: false,
         where: "/api/runs POST",
         message,
+        env: safeEnvInfo(),
       },
       { status: 500 }
     );
