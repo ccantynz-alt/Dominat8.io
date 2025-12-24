@@ -3,23 +3,23 @@ import { createClient, type RedisClientType } from "redis";
 
 let client: RedisClientType | null = null;
 
-function pickRedisUrl() {
-  // Vercel sometimes injects KV_REDIS_URL, sometimes REDIS_URL.
-  const kvRedisUrl = (process.env.KV_REDIS_URL ?? "").trim();
+function getRedisUrl() {
+  // Vercel Redis with prefix "kv" injects KV_URL
+  const kvUrl = (process.env.KV_URL ?? "").trim();
   const redisUrl = (process.env.REDIS_URL ?? "").trim();
 
-  if (kvRedisUrl) return { url: kvRedisUrl, source: "KV_REDIS_URL" };
+  if (kvUrl) return { url: kvUrl, source: "KV_URL" };
   if (redisUrl) return { url: redisUrl, source: "REDIS_URL" };
 
   throw new Error(
-    "KV not configured. Missing KV_REDIS_URL or REDIS_URL. (Vercel Storage should inject one of these when Redis/KV is connected to the project + environment.)"
+    "KV not configured. Missing KV_URL or REDIS_URL. Check Vercel Storage → Redis connection."
   );
 }
 
 async function getClient() {
   if (client) return client;
 
-  const { url, source } = pickRedisUrl();
+  const { url, source } = getRedisUrl();
 
   client = createClient({
     url,
@@ -29,7 +29,7 @@ async function getClient() {
   });
 
   client.on("error", (err) => {
-    console.error(`Redis client error (${source}):`, err);
+    console.error(`Redis error (${source}):`, err);
   });
 
   if (!client.isOpen) {
