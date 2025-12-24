@@ -1,3 +1,4 @@
+// app/api/runs/route.ts
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
@@ -15,22 +16,40 @@ type Run = {
 };
 
 export async function POST() {
-  const userId = getCurrentUserId();
+  try {
+    const userId = getCurrentUserId();
+    const runId = makeId("run");
+    const now = Date.now();
 
-  const runId = makeId("run");
-  const now = Date.now();
+    const run: Run = {
+      id: runId,
+      projectId: "demo-project",
+      createdAt: now,
+      createdBy: userId,
+      status: "running",
+      title: "Simulated Run",
+    };
 
-  const run: Run = {
-    id: runId,
-    projectId: "demo-project",
-    createdAt: now,
-    createdBy: userId,
-    status: "running",
-    title: "Simulated Run",
-  };
+    // Helpful explicit error if KV wrapper is missing methods
+    if (typeof (KV as any).set !== "function") {
+      throw new Error(
+        "KV.set is not a function. Your app/lib/kv.ts wrapper currently does not expose set()."
+      );
+    }
 
-  // Minimal storage (enough for /runs/[runId] to load via your existing GET endpoints)
-  await KV.set(`run:${runId}`, run);
+    await (KV as any).set(`run:${runId}`, run);
 
-  return NextResponse.json({ ok: true, runId });
+    return NextResponse.json({ ok: true, runId });
+  } catch (err: any) {
+    const message = err?.message ?? "Unknown error";
+    // Send back something you can see in the browser
+    return NextResponse.json(
+      {
+        ok: false,
+        where: "/api/runs POST",
+        message,
+      },
+      { status: 500 }
+    );
+  }
 }
