@@ -1,27 +1,35 @@
 // app/api/runs/route.ts
-import { kv } from "../../lib/kv";
-import { makeRunId } from "../../lib/ids";
-import { requireDemoUser } from "../../lib/demoAuth";
-import type { Run } from "../../lib/models/run";
+import { NextResponse } from "next/server";
+import { KV } from "../../lib/kv";
+import { makeId } from "../../lib/ids";
+import { getCurrentUserId } from "../../lib/demoAuth";
+
+type Run = {
+  id: string;
+  projectId: string;
+  createdAt: number;
+  createdBy: string;
+  status: "running" | "completed" | "failed";
+  title: string;
+};
 
 export async function POST() {
-  const user = await requireDemoUser();
+  const userId = getCurrentUserId();
 
-  const runId = makeRunId();
+  const runId = makeId("run");
   const now = Date.now();
 
   const run: Run = {
     id: runId,
-    projectId: "demo-project", // or accept from body later
+    projectId: "demo-project",
     createdAt: now,
-    createdBy: user.id,
+    createdBy: userId,
     status: "running",
     title: "Simulated Run",
   };
 
-  // Example keys; keep using YOUR keys.ts conventions
-  await kv.set(`run:${runId}`, run);
-  await kv.lpush(`project:demo-project:runs`, runId);
+  // Minimal storage (enough for /runs/[runId] to load via your existing GET endpoints)
+  await KV.set(`run:${runId}`, run);
 
   return NextResponse.json({ ok: true, runId });
 }
