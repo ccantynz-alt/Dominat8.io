@@ -1,237 +1,262 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Run = {
   id: string;
+  projectId?: string;
+  createdAt?: number;
+  createdBy?: string;
   status?: string;
   title?: string;
-  createdAt?: number;
 };
 
-type LogLine = {
-  ts: number;
-  level: string;
-  message: string;
-};
+type LogEntry =
+  | { t?: number; level?: string; msg?: string }
+  | string
+  | number
+  | boolean
+  | null
+  | Record<string, unknown>;
 
-function isJsonResponse(res: Response) {
-  const ct = res.headers.get("content-type") || "";
-  return ct.includes("application/json");
+function safeJsonParse(text: string) {
+  try {
+    return { ok: true as const, value: JSON.parse(text) };
+  } catch {
+    return { ok: false as const, value: text };
+  }
 }
 
-async function safeReadJson<T>(res: Response): Promise<T | null> {
-  if (!isJsonResponse(res)) return null;
+async function fetchJsonDebug(url: string, init?: RequestInit) {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    cache: "no-store",
+  });
+
   const text = await res.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    return null;
-  }
+  const parsed = safeJsonParse(text);
+
+  return {
+    status: res.status,
+    ok: res.ok,
+    rawText: text,
+    json: parsed.ok ? parsed.value : null,
+    parsedOk: parsed.ok,
+  };
 }
 
 export default function RunPage({ params }: { params: { runId: string } }) {
   const runId = params.runId;
 
   const [run, setRun] = useState<Run | null>(null);
-  const [runNotFound, setRunNotFound] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [loadRunError, setLoadRunError] = useState<string | null>(null);
+  const [loadLogsError, setLoadLogsError] = useState<string | null>(null);
 
-  const [logs, setLogs] = useState<LogLine[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [debugRun, setDebugRun] = useState<any>(null);
+  const [debugLogs, setDebugLogs] = useState<any>(null);
+  const [debugAppend, setDebugAppend] = useState<any>(null);
 
-  const [simulating, setSimulating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const title = useMemo(() => run?.title ?? "Untitled", [run]);
+  const status = useMemo(() => run?.status ?? "unknown", [run]);
 
-  const intervalRef = useRef<number | null>(null);
-  const stepRef = useRef<number>(0);
+  async function loadRun() {
+    setLoadRunError(null);
+    setRun(null);
+    setDebugRun(null);
 
-  async function fetchRun() {
-    const res = await fetch(`/api/runs/${runId}`, { method: "GET" });
+    const r = await fetchJsonDebug(`/api/runs/${encodeURIComponent(runId)}`);
+    setDebugRun(r);
 
-    if (res.status === 404) {
-      setRun(null);
-      setRunNotFound(true);
-      return;
-    }
-
-    const data = await safeReadJson<any>(res);
-    if (!res.ok || !data) {
-      throw new Error("Failed to load run");
-    }
-
-    // Accept either { run: {...} } or the run object directly
-    const r = (data.run ?? data) as Run;
-    setRun(r);
-    setRunNotFound(false);
-  }
-
-  async function fetchLogs() {
-    const res = await fetch(`/api/runs/${runId}/logs`, { method: "GET" });
-    const data = await safeReadJson<any>(res);
-
-    if (!res.ok || !data) {
-      // If logs endpoint fails, don't hard-crash the page
-      setLogs([]);
-      return;
-    }
-
-    const nextLogs = Array.isArray(data.logs) ? (data.logs as LogLine[]) : [];
-    setLogs(nextLogs);
-  }
-
-  async function appendLogs(lines: string[]) {
-    const res = await fetch(`/api/runs/${runId}/logs/append`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ lines }),
-    });
-
-    // If your append endpoint expects a different body shape,
-    // this will fail here and we’ll adjust to match it.
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(
-        `Append failed (${res.status}). ${text ? "Response: " + text : ""}`.trim()
+    if (!r.ok) {
+      setLoadRunError(
+        `Failed to load run (HTTP ${r.status}). See debug section below.`
       );
+      return;
     }
+
+    // Expected shape: { ok: true, run: {...} }
+    const payload = r.json;
+    const runObj = payload?.run ?? null;
+
+    if (!runObj || typeof runObj !== "object") {
+      setLoadRunError(
+        `Run payload missing "run" object (HTTP ${r.status}). See debug section below.`
+      );
+      return;
+    }
+
+    setRun(runObj as Run);
   }
 
-  function stopSimulation() {
-    if (intervalRef.current) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
+  async function loadLogs() {
+    setLoadLogsError(null);
+    setLogs([]);
+    setDebugLogs(null);
+
+    const r = await fetchJsonDebug(
+      `/api/runs/${encodeURIComponent(runId)}/logs`
+    );
+    setDebugLogs(r);
+
+    if (!r.ok) {
+      setLoadLogsError(
+        `Failed to load logs (HTTP ${r.status}). See debug section below.`
+      );
+      return;
     }
-    setSimulating(false);
+
+    const payload = r.json;
+    const logsArr = payload?.logs;
+
+    if (!Array.isArray(logsArr)) {
+      setLoadLogsError(
+        `Logs payload missing "logs" array (HTTP ${r.status}). See debug section below.`
+      );
+      return;
+    }
+
+    setLogs(logsArr as LogEntry[]);
   }
 
-  async function startSimulation() {
-    setError(null);
-    setSimulating(true);
-    stepRef.current = 0;
+  async function simulateLogs() {
+    setDebugAppend(null);
 
-    try {
-      await appendLogs([`Starting simulation for ${runId}…`]);
-      await fetchLogs();
+    // Append a few logs with delays so you can see them show up
+    const messages = [
+      "Starting simulated work…",
+      "Thinking…",
+      "Still working…",
+      "Done ✅",
+    ];
 
-      intervalRef.current = window.setInterval(async () => {
-        try {
-          stepRef.current += 1;
-
-          const step = stepRef.current;
-          const lines = [
-            `Step ${step}: Doing work…`,
-            step % 3 === 0 ? "Calling tool…" : "Processing…",
-            step % 5 === 0 ? "Writing output…" : "Still running…",
-          ];
-
-          await appendLogs(lines);
-          await fetchLogs();
-
-          if (step >= 12) {
-            await appendLogs(["Simulation complete ✅"]);
-            await fetchLogs();
-            stopSimulation();
-          }
-        } catch (e: any) {
-          stopSimulation();
-          setError(e?.message ?? "Simulation error");
+    for (const msg of messages) {
+      const r = await fetchJsonDebug(
+        `/api/runs/${encodeURIComponent(runId)}/logs/append`,
+        {
+          method: "POST",
+          body: JSON.stringify({ msg, level: "info" }),
         }
-      }, 900);
-    } catch (e: any) {
-      stopSimulation();
-      setError(e?.message ?? "Simulation error");
+      );
+
+      setDebugAppend(r);
+
+      // If append fails, stop early and show debug
+      if (!r.ok) return;
+
+      // small delay between log writes
+      await new Promise((resolve) => setTimeout(resolve, 600));
     }
+
+    await loadLogs();
   }
 
-  // Initial load
   useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        await fetchRun();
-        await fetchLogs();
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Load error");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      stopSimulation();
-    };
+    // On first load, load run + logs
+    loadRun();
+    loadLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId]);
 
-  if (loading) {
-    return (
-      <div style={{ padding: 16 }}>
-        <h1>Run: {runId}</h1>
-        <p>Loading…</p>
-      </div>
-    );
-  }
-
-  if (runNotFound) {
-    return (
-      <div style={{ padding: 16 }}>
-        <h1>Run: {runId}</h1>
-        <p>Run not found</p>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ padding: 16 }}>
-      <h1>Run: {runId}</h1>
+    <div style={{ padding: 16, fontFamily: "system-ui, Arial, sans-serif" }}>
+      <h1 style={{ margin: 0, marginBottom: 12 }}>Run: {runId}</h1>
 
-      <div style={{ marginTop: 8, marginBottom: 12 }}>
+      <div style={{ marginBottom: 12 }}>
         <div>
-          <strong>Title:</strong> {run?.title ?? "Untitled"}
+          <b>Title:</b> {title}
         </div>
         <div>
-          <strong>Status:</strong> {run?.status ?? "unknown"}
+          <b>Status:</b> {status}
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <button onClick={fetchLogs} disabled={simulating}>
-          Refresh logs
-        </button>
-
-        <button onClick={startSimulation} disabled={simulating}>
-          {simulating ? "Simulating…" : "Simulate Logs"}
-        </button>
-
-        {simulating && (
-          <button onClick={stopSimulation}>
-            Stop
-          </button>
-        )}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <button onClick={loadLogs}>Refresh logs</button>
+        <button onClick={simulateLogs}>Simulate Logs</button>
+        <button onClick={loadRun}>Reload run</button>
       </div>
 
-      {error && (
-        <p style={{ marginTop: 12, color: "red" }}>
-          Error: {error}
-        </p>
-      )}
+      {loadRunError ? (
+        <div style={{ color: "red", marginBottom: 12 }}>
+          <b>Error:</b> {loadRunError}
+        </div>
+      ) : null}
 
-      <pre style={{ marginTop: 16, padding: 12, border: "1px solid #ddd" }}>
-        {logs.length === 0
-          ? "(no logs yet)"
-          : logs
-              .map(
-                (l) =>
-                  `${new Date(l.ts).toISOString()} [${l.level}] ${l.message}`
-              )
-              .join("\n")}
-      </pre>
+      <div
+        style={{
+          border: "1px solid #ddd",
+          borderRadius: 6,
+          padding: 12,
+          marginBottom: 12,
+        }}
+      >
+        <b>Logs</b>
+        <div style={{ marginTop: 8 }}>
+          {loadLogsError ? (
+            <div style={{ color: "red", marginBottom: 8 }}>
+              <b>Error:</b> {loadLogsError}
+            </div>
+          ) : null}
+
+          {logs.length === 0 ? (
+            <div style={{ opacity: 0.7 }}>(no logs yet)</div>
+          ) : (
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {logs.map((l, idx) => (
+                <li key={idx}>
+                  <code>
+                    {typeof l === "object"
+                      ? JSON.stringify(l)
+                      : String(l)}
+                  </code>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* DEBUG PANEL */}
+      <div
+        style={{
+          border: "1px solid #ddd",
+          borderRadius: 6,
+          padding: 12,
+          background: "#fafafa",
+        }}
+      >
+        <b>Debug (helps us fix it fast)</b>
+
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontWeight: 600 }}>GET /api/runs/{runId}</div>
+          <pre style={{ whiteSpace: "pre-wrap" }}>
+            {debugRun ? JSON.stringify(debugRun, null, 2) : "(not loaded yet)"}
+          </pre>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontWeight: 600 }}>GET /api/runs/{runId}/logs</div>
+          <pre style={{ whiteSpace: "pre-wrap" }}>
+            {debugLogs ? JSON.stringify(debugLogs, null, 2) : "(not loaded yet)"}
+          </pre>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontWeight: 600 }}>
+            POST /api/runs/{runId}/logs/append (last attempt)
+          </div>
+          <pre style={{ whiteSpace: "pre-wrap" }}>
+            {debugAppend
+              ? JSON.stringify(debugAppend, null, 2)
+              : "(click Simulate Logs to test)"}
+          </pre>
+        </div>
+      </div>
     </div>
   );
 }
