@@ -1,123 +1,48 @@
-"use client";
+// FORCE_REDEPLOY_PROJECT_PAGE_001
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-
-type Project = {
-  id: string;
-  name?: string;
-  createdAt?: number;
-};
-
-export default function ProjectsPage() {
-  const router = useRouter();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-
-  async function loadProjects() {
-    setLoading(true);
-    setErr(null);
-
-    try {
-      const res = await fetch("/api/projects", { cache: "no-store" });
-      const text = await res.text();
-
-      let data: any = null;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error("Projects API did not return JSON.");
-      }
-
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.message ?? `Failed to load projects (HTTP ${res.status})`);
-      }
-
-      setProjects(Array.isArray(data.projects) ? data.projects : []);
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to load projects");
-      setProjects([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function createRunAndGo() {
-    setCreating(true);
-    setErr(null);
-
-    try {
-      const res = await fetch("/api/runs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: "demo-project" }),
-      });
-
-      const text = await res.text();
-      let data: any = null;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(`Create run returned non-JSON (HTTP ${res.status}).`);
-      }
-
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.message ?? `Failed to create run (HTTP ${res.status})`);
-      }
-
-      const runId = data.runId ?? data.run?.id;
-      if (!runId || typeof runId !== "string") {
-        throw new Error("Create run response missing runId.");
-      }
-
-      // ✅ This is the key fix: use the REAL runId, not "<RUN_ID>"
-      router.push(`/runs/${runId}`);
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to create run");
-    } finally {
-      setCreating(false);
-    }
-  }
-
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
+export default function ProjectPage() {
   return (
-    <div style={{ padding: 16, fontFamily: "system-ui, Arial, sans-serif" }}>
-      <h1 style={{ marginTop: 0 }}>Projects</h1>
+    <main
+      style={{
+        minHeight: "100vh",
+        padding: "4rem",
+        background: "linear-gradient(135deg, #0f172a, #020617)",
+        color: "white",
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont",
+      }}
+    >
+      <h1 style={{ fontSize: "3rem", marginBottom: "1rem" }}>
+        ✅ Project Page Is Working
+      </h1>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        <button onClick={loadProjects} disabled={loading}>
-          Refresh
-        </button>
+      <p style={{ fontSize: "1.25rem", maxWidth: "700px" }}>
+        If you can see this page, then:
+      </p>
 
-        <button onClick={createRunAndGo} disabled={creating}>
-          {creating ? "Creating..." : "Create Run (go to run page)"}
-        </button>
+      <ul style={{ marginTop: "2rem", fontSize: "1.1rem", lineHeight: "1.8" }}>
+        <li>✔ GitHub saved the file</li>
+        <li>✔ Vercel detected a change</li>
+        <li>✔ The App Router is functioning</li>
+        <li>✔ This deployment is NOT cached</li>
+      </ul>
+
+      <div
+        style={{
+          marginTop: "3rem",
+          padding: "2rem",
+          background: "#020617",
+          border: "1px solid #334155",
+          borderRadius: "12px",
+        }}
+      >
+        <strong>Timestamp:</strong>
+        <br />
+        {new Date().toLocaleString()}
       </div>
 
-      {err ? (
-        <div style={{ color: "red", marginBottom: 12 }}>
-          <b>Error:</b> {err}
-        </div>
-      ) : null}
-
-      {loading ? (
-        <div>Loading…</div>
-      ) : projects.length === 0 ? (
-        <div>(No projects yet)</div>
-      ) : (
-        <ul>
-          {projects.map((p) => (
-            <li key={p.id}>
-              <code>{p.id}</code> {p.name ? `— ${p.name}` : ""}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+      <p style={{ marginTop: "3rem", opacity: 0.7 }}>
+        File: <code>app/project/page.tsx</code>
+      </p>
+    </main>
   );
 }
