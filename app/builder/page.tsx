@@ -17,6 +17,15 @@ export default function Builder() {
     setFiles(data.files);
   }
 
+  const PageComponent = files?.["app/page.tsx"]
+    ? new Function(
+        "React",
+        `return ${files["app/page.tsx"]
+          .replace(/import.*?;/g, "")
+          .replace("export default", "")}`
+      )(require("react"))
+    : null;
+
   return (
     <main style={{ padding: 40 }}>
       <h1>AI Website Builder</h1>
@@ -32,10 +41,10 @@ export default function Builder() {
         Generate
       </button>
 
-      {files && (
-        <div style={{ marginTop: 30 }}>
-          <h3>Generated Files</h3>
-          <pre>{JSON.stringify(files, null, 2)}</pre>
+      {PageComponent && (
+        <div style={{ marginTop: 40, border: "1px solid #ddd" }}>
+          <h3>Live Preview</h3>
+          <PageComponent />
         </div>
       )}
     </main>
