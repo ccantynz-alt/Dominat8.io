@@ -4,15 +4,17 @@ import { useState } from "react";
 
 export default function Builder() {
   const [prompt, setPrompt] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [files, setFiles] = useState<any>(null);
 
   async function generate() {
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt }),
     });
-    setResult(await res.json());
+
+    const data = await res.json();
+    setFiles(data.files);
   }
 
   return (
@@ -30,10 +32,11 @@ export default function Builder() {
         Generate
       </button>
 
-      {result && (
-        <pre style={{ marginTop: 20 }}>
-          {JSON.stringify(result, null, 2)}
-        </pre>
+      {files && (
+        <div style={{ marginTop: 30 }}>
+          <h3>Generated Files</h3>
+          <pre>{JSON.stringify(files, null, 2)}</pre>
+        </div>
       )}
     </main>
   );
