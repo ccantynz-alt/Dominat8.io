@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listRuns } from "@/lib/store";
+import { listRuns } from "../../../../lib/store";
 
 export async function GET() {
   const runs = await listRuns(25);
