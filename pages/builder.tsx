@@ -1,6 +1,7 @@
 import Head from "next/head";
 import type { GetServerSideProps } from "next";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Container } from "../components/Container";
 import { ButtonLink } from "../components/Button";
 import { isAuthedFromReq } from "../lib/auth";
@@ -77,14 +78,27 @@ export default function BuilderPage() {
 
       <Container>
         <section className="section">
-          <h1 className="h1">Builder</h1>
-          <p className="p">
-            Create a site plan in seconds. (Prototype: saved locally in your browser.)
-          </p>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <h1 className="h1">Builder</h1>
+              <p className="p">
+                Create a site plan in seconds. (Prototype: saved locally in your browser.)
+              </p>
+            </div>
 
-          <div className="grid" style={{ gridTemplateColumns: "1.2fr 0.8fr" }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <Link className="link" href="/dashboard">
+                Back to dashboard
+              </Link>
+              <ButtonLink href="/pricing">View pricing</ButtonLink>
+            </div>
+          </div>
+
+          <div className="grid" style={{ gridTemplateColumns: "1.2fr 0.8fr", marginTop: 14 }}>
             <div className="card">
-              <h2 className="h2" style={{ marginBottom: 12 }}>Create a website</h2>
+              <h2 className="h2" style={{ marginBottom: 12 }}>
+                Create a website
+              </h2>
 
               <form onSubmit={onCreate}>
                 <label style={labelStyle}>Website name</label>
@@ -131,28 +145,40 @@ export default function BuilderPage() {
             </div>
 
             <div className="card">
-              <h2 className="h2" style={{ marginBottom: 12 }}>Suggested pages</h2>
+              <h2 className="h2" style={{ marginBottom: 12 }}>
+                Suggested pages
+              </h2>
+
               <ul style={{ margin: 0, paddingLeft: "1.2rem" }}>
                 {suggestedPages.map((p) => (
-                  <li key={p} style={{ color: "var(--muted)" }}>{p}</li>
+                  <li key={p} style={{ color: "var(--muted)" }}>
+                    {p}
+                  </li>
                 ))}
               </ul>
 
               <div style={{ height: 16 }} />
-              <ButtonLink href="/dashboard">Back to dashboard</ButtonLink>
+
+              <div style={{ padding: "0.75rem", borderRadius: 14, border: "1px solid var(--border)", background: "rgba(255,255,255,0.04)" }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>Pro tip</div>
+                <div style={{ color: "var(--muted)" }}>
+                  The “last website you’ll ever build” feeling comes from structure that scales. We keep it simple on purpose.
+                </div>
+              </div>
             </div>
           </div>
 
           {created && (
             <div className="card" style={{ marginTop: 16 }}>
               <h2 className="h2">Created: {created.name}</h2>
-              <p className="p">
-                Type: <strong>{created.type}</strong>
+
+              <p className="p" style={{ marginBottom: 8 }}>
+                Type: <strong style={{ color: "var(--text)" }}>{created.type}</strong>
                 <br />
-                Goal: <strong>{created.goal}</strong>
+                Goal: <strong style={{ color: "var(--text)" }}>{created.goal}</strong>
               </p>
 
-              <h3 style={{ marginTop: 12 }}>Next steps</h3>
+              <h3 style={{ marginTop: 12, marginBottom: 6 }}>Next steps</h3>
               <ul>
                 <li>We’ll generate these pages automatically.</li>
                 <li>We’ll add templates and editing controls.</li>
@@ -163,10 +189,11 @@ export default function BuilderPage() {
 
           <div style={{ marginTop: 18 }}>
             <h2 className="h2">Recent site plans</h2>
+
             {savedPlans.length === 0 ? (
               <p className="p">None yet. Create your first one above.</p>
             ) : (
-              <div className="grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+              <div className="grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))", marginTop: 10 }}>
                 {savedPlans.slice(0, 6).map((p) => (
                   <div key={p.id} className="card">
                     <div className="card__title">{p.name}</div>
@@ -177,6 +204,12 @@ export default function BuilderPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div style={{ marginTop: 18 }}>
+            <p className="p" style={{ fontSize: 13 }}>
+              This is a prototype Builder UI. Next we’ll plug it into a database and a real project generator.
+            </p>
           </div>
         </section>
       </Container>
@@ -193,6 +226,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
 };
 
 const labelStyle: React.CSSProperties = { display: "block", marginBottom: 8 };
+
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "0.7rem 0.85rem",
