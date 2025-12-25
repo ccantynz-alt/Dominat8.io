@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-
-// Relative import from: src/app/api/cron/tick/route.ts -> src/lib/*
 import { dequeueRun, appendRunLog, updateRunStatus, getRun } from "../../../../lib/store";
 import { nowIso } from "../../../../lib/time";
 
