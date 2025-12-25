@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRun, getRunLogs } from "@/lib/store";
+import { getRun, getRunLogs } from "../../../../../lib/store";
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const run = await getRun(params.id);
