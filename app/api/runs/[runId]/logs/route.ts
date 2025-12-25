@@ -11,18 +11,13 @@ export async function GET(
 ) {
   try {
     const logs = await KV.lrange(keys.runLogs(params.runId), 0, -1);
-
-    // FINGERPRINT: if you ever see this header, you KNOW this file is the one being executed.
-    const res = NextResponse.json({ ok: true, logs, fingerprint: "logs-route-v1" });
-    res.headers.set("x-logs-route-fingerprint", "logs-route-v1");
-    return res;
+    return NextResponse.json({ ok: true, logs });
   } catch (err: any) {
     return NextResponse.json(
       {
         ok: false,
         where: "/api/runs/[runId]/logs GET",
         message: err?.message ?? "Unknown error",
-        fingerprint: "logs-route-v1",
       },
       { status: 500 }
     );
