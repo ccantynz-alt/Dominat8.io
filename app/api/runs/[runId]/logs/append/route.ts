@@ -1,44 +1,70 @@
+// app/api/runs/[runId]/logs/append/route.ts
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { KV } from "../../../../../lib/kv";
 import { keys } from "../../../../../lib/keys";
-import { getCurrentUserId } from "../../../../../lib/demoAuth";
-import { RunSchema } from "../../../../../lib/models/run";
-import { RunLogSchema } from "../../../../../lib/models/log";
 
-export const runtime = "nodejs";
+type LogEntry = {
+  t: number;
+  level: "info" | "warn" | "error";
+  msg: string;
+};
 
 export async function POST(
   req: Request,
   { params }: { params: { runId: string } }
 ) {
-  const ownerId = getCurrentUserId();
+  try {
+    // 1) Read body safely (never crash on empty body)
+    const text = await req.text();
+    let body: any = null;
 
-  const runRaw = await KV.get(keys.run(params.runId));
-  if (!runRaw) {
-    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-  }
+    if (text && text.trim().length > 0) {
+      try {
+        body = JSON.parse(text);
+      } catch {
+        // If it's not JSON, treat the raw text as the message
+        body = { msg: text };
+      }
+    }
 
-  const run = RunSchema.parse(runRaw);
-  if (run.ownerId !== ownerId) {
-    return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
-  }
+    const msg =
+      typeof body?.msg === "string"
+        ? body.msg
+        : typeof body?.message === "string"
+        ? body.message
+        : "";
 
-  const body = await req.json().catch(() => ({}));
-  const entry = RunLogSchema.safeParse({
-    ts: new Date().toISOString(),
-    level: body.level ?? "info",
-    message: String(body.message ?? ""),
-    data: body.data ?? undefined,
-  });
+    if (!msg) {
+      return NextResponse.json(
+        { ok: false, message: "Missing msg in request body" },
+        { status: 400 }
+      );
+    }
 
-  if (!entry.success || !entry.data.message) {
+    const level: LogEntry["level"] =
+      body?.level === "warn" || body?.level === "error" ? body.level : "info";
+
+    const entry: LogEntry = {
+      t: Date.now(),
+      level,
+      msg,
+    };
+
+    // 2) Append log entry
+    await KV.rpush(keys.runLogs(params.runId), entry);
+
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    // Always return JSON even on crashes
     return NextResponse.json(
-      { ok: false, error: "Invalid log entry" },
-      { status: 400 }
+      {
+        ok: false,
+        where: "/api/runs/[runId]/logs/append POST",
+        message: err?.message ?? String(err),
+      },
+      { status: 500 }
     );
   }
-
-  await KV.rpush(keys.runLogs(params.runId), entry.data);
-
-  return NextResponse.json({ ok: true });
 }
