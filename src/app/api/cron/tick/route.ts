@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { dequeueRun, appendRunLog, updateRunStatus, getRun } from "@/lib/store";
-import { nowIso } from "@/lib/time";
+
+// Relative import from: src/app/api/cron/tick/route.ts -> src/lib/*
+import { dequeueRun, appendRunLog, updateRunStatus, getRun } from "../../../../lib/store";
+import { nowIso } from "../../../../lib/time";
 
 /**
  * Vercel Cron calls this endpoint.
@@ -27,7 +29,6 @@ export async function GET() {
     try {
       await appendRunLog(id, "🧠 Agent: analyzing input…");
 
-      // Placeholder logic – you will replace this with real tool calls.
       if (run.kind === "agent:deploy") {
         await appendRunLog(id, "🚀 Deploy runs via /api/vercel/deploy (trigger from UI).");
       } else if (run.kind === "agent:import") {
@@ -53,6 +54,6 @@ export async function GET() {
     ok: true,
     startedAt,
     processedCount: processed.length,
-    processed,
+    processed
   });
 }
