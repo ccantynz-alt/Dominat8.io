@@ -14,11 +14,12 @@ export async function saveRun(run: Run) {
 }
 
 export async function getRun(id: string): Promise<Run | null> {
-  return (await kv.get<Run>(KEY_RUN(id))) ?? null;
+  const v = await kv.get(KEY_RUN(id));
+  return (v as Run) ?? null;
 }
 
 export async function listRuns(limit = 25): Promise<Run[]> {
-  const ids = await kv.zrange<string[]>(KEY_RUN_INDEX, -limit, -1);
+  const ids = (await kv.zrange(KEY_RUN_INDEX, -limit, -1)) as string[];
   const runs = await Promise.all(ids.map((id) => getRun(id)));
   return runs.filter(Boolean) as Run[];
 }
@@ -28,7 +29,8 @@ export async function enqueueRun(id: string) {
 }
 
 export async function dequeueRun(): Promise<string | null> {
-  return await kv.rpop<string>(KEY_QUEUE);
+  const v = await kv.rpop(KEY_QUEUE);
+  return (v as string) ?? null;
 }
 
 export async function appendRunLog(id: string, line: string) {
@@ -37,7 +39,7 @@ export async function appendRunLog(id: string, line: string) {
 }
 
 export async function getRunLogs(id: string, limit = 300): Promise<string[]> {
-  const logs = await kv.lrange<string[]>(KEY_RUN_LOGS(id), -limit, -1);
+  const logs = (await kv.lrange(KEY_RUN_LOGS(id), -limit, -1)) as string[];
   return logs ?? [];
 }
 
@@ -55,3 +57,4 @@ export async function updateRunStatus(id: string, status: RunStatus, patch?: Par
   await saveRun(updated);
   return updated;
 }
+
