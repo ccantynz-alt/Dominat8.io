@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 export async function POST(req: Request) {
   try {
@@ -15,22 +13,23 @@ export async function POST(req: Request) {
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
+      temperature: 0.4,
       messages: [
         {
           role: "system",
           content:
-            "You generate production-ready Next.js App Router files. Return valid JSON only.",
+            "Return valid JSON only. Generate a single-page marketing website as plain HTML + CSS. No JS unless absolutely necessary. No external assets. No frameworks.",
         },
         {
           role: "user",
           content: `
-Create a modern website using Next.js App Router.
+Create a modern, clean single-page website based on this prompt.
 
-Return JSON in this format:
+Return JSON exactly in this format:
 {
   "files": {
-    "app/page.tsx": "...",
-    "app/globals.css": "..."
+    "preview.html": "<main>...</main>",
+    "preview.css": "body { ... }"
   }
 }
 
@@ -39,16 +38,15 @@ ${prompt}
 `,
         },
       ],
-      temperature: 0.4,
     });
 
-    const raw = completion.choices[0].message.content!;
+    const raw = completion.choices[0].message.content ?? "";
     const json = JSON.parse(raw);
 
     return NextResponse.json(json);
   } catch (err: any) {
     return NextResponse.json(
-      { error: err.message || "Generation failed" },
+      { error: err?.message || "Generation failed" },
       { status: 500 }
     );
   }
