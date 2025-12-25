@@ -4,9 +4,9 @@ import { Container } from "../components/Container";
 import { ButtonLink } from "../components/Button";
 
 export default function HomePage() {
-  const title = "MySaaS — Simple, fast, professional SaaS foundation";
+  const title = "The last website you’ll ever need to build";
   const description =
-    "A clean Next.js Pages Router foundation with layout, navigation, SEO defaults, and an app shell.";
+    "Build, launch, and grow professional websites without rebuilding or starting over. One foundation that scales.";
 
   return (
     <>
@@ -18,56 +18,139 @@ export default function HomePage() {
       </Head>
 
       <Container>
+        {/* HERO */}
         <section className="hero">
-          <div className="hero__badge">
-            SaaS Foundation • Pages Router • Production-ready
-          </div>
-
           <h1 className="hero__title">
-            Build a clean, scalable SaaS
-            <span className="hero__titleAccent"> without chaos</span>.
+            The last website you’ll ever need to build.
           </h1>
 
           <p className="hero__subtitle">
-            A professional starting point with structure, navigation, and SEO
-            defaults. Designed so your agent can safely build inside the rails.
+            Build, launch, and grow professional websites without rebuilding,
+            rewiring, or starting over. One foundation that scales with you.
           </p>
 
           <div className="hero__cta">
-            <ButtonLink href="/dashboard">Open Dashboard</ButtonLink>
-            <Link className="link" href="/pricing">
-              View Pricing →
+            <ButtonLink href="/dashboard">
+              Start your 7-day free trial
+            </ButtonLink>
+            <Link href="/pricing" className="link">
+              See how it works →
             </Link>
           </div>
 
-          <div className="hero__grid">
-            <div className="card">
-              <div className="card__title">Structure</div>
-              <div className="card__text">
-                Clean layout, components, and routing.
-              </div>
-            </div>
-            <div className="card">
-              <div className="card__title">SEO Defaults</div>
-              <div className="card__text">
-                Correct titles, meta tags, and structure.
-              </div>
-            </div>
-            <div className="card">
-              <div className="card__title">Agent-safe</div>
-              <div className="card__text">
-                Clear boundaries prevent rogue changes.
-              </div>
-            </div>
-          </div>
+          <p className="hero__trust">
+            No credit card required · Cancel anytime
+          </p>
+        </section>
 
-          <div className="note">
-            <strong>Sanity check:</strong> If you see this in production,
-            deployments are working.
-            <div className="note__sub">
-              Timestamp: {new Date().toLocaleString()}
+        {/* CONFIDENCE STRIP */}
+        <section className="confidence">
+          <div>Built for real projects</div>
+          <div>Designed to scale</div>
+          <div>Personal & business ready</div>
+          <div>SEO built in</div>
+        </section>
+
+        {/* PROBLEM */}
+        <section className="section">
+          <h2 className="h2">
+            Most website builders don’t scale. They just make you rebuild later.
+          </h2>
+          <p className="p">
+            You start simple. Then your site grows — and everything breaks.
+            Structure doesn’t scale. SEO becomes an afterthought. “Version two”
+            turns into a full rebuild.
+          </p>
+          <p className="p">That’s friction. Not progress.</p>
+        </section>
+
+        {/* SOLUTION */}
+        <section className="section">
+          <h2 className="h2">One platform. One structure. No rebuilds.</h2>
+
+          <div className="grid">
+            <div className="card">
+              <h3>Designed to evolve</h3>
+              <p>Your site grows without redesigning everything.</p>
+            </div>
+            <div className="card">
+              <h3>Built-in structure</h3>
+              <p>Layouts, pages, and SEO handled properly from day one.</p>
+            </div>
+            <div className="card">
+              <h3>Personal or business</h3>
+              <p>Start small. Scale up. Same foundation.</p>
             </div>
           </div>
+        </section>
+
+        {/* HOW IT WORKS */}
+        <section className="section">
+          <h2 className="h2">How it works</h2>
+
+          <ol className="steps">
+            <li>
+              <strong>Start with a foundation</strong>
+              <span>Professional structure out of the box.</span>
+            </li>
+            <li>
+              <strong>Build and customise</strong>
+              <span>Add pages and features without breaking anything.</span>
+            </li>
+            <li>
+              <strong>Scale without rebuilding</strong>
+              <span>Your site evolves instead of being replaced.</span>
+            </li>
+          </ol>
+        </section>
+
+        {/* USE CASES */}
+        <section className="section">
+          <h2 className="h2">Built for how people actually use websites</h2>
+
+          <div className="grid">
+            <div className="card">
+              <h3>Personal</h3>
+              <ul>
+                <li>Personal brands</li>
+                <li>Portfolios</li>
+                <li>Side projects</li>
+                <li>Life admin hubs</li>
+              </ul>
+            </div>
+
+            <div className="card">
+              <h3>Business</h3>
+              <ul>
+                <li>SaaS websites</li>
+                <li>Company sites</li>
+                <li>Client projects</li>
+                <li>Internal tools</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* STICKINESS */}
+        <section className="section">
+          <h2 className="h2">
+            Once you build this way, going back feels impossible.
+          </h2>
+          <p className="p">
+            Changes don’t break things. Structure doesn’t fight you. Progress
+            feels continuous.
+          </p>
+        </section>
+
+        {/* FINAL CTA */}
+        <section className="cta">
+          <h2>Start building the last website you’ll ever need.</h2>
+          <ButtonLink href="/dashboard">
+            Start your 7-day free trial
+          </ButtonLink>
+          <p className="cta__sub">
+            No credit card · No lock-in · No rebuilding later
+          </p>
         </section>
       </Container>
     </>
