@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { uid } from "../../../../lib/ids";
-import { nowIso } from "../../../../lib/time";
-import type { Run, RunKind } from "../../../../lib/types";
-import { enqueueRun, saveRun } from "../../../../lib/store";
+import { uid } from "../../../lib/ids";
+import { nowIso } from "../../../lib/time";
+import type { Run, RunKind } from "../../../lib/types";
+import { enqueueRun, saveRun } from "../../../lib/store";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
