@@ -34,6 +34,10 @@ export const kv = {
     return kvFetch("/set", { key, value });
   },
 
+  del: async (key: string) => {
+    return kvFetch("/del", { key });
+  },
+
   lpush: async (key: string, value: string) => {
     return kvFetch("/lpush", { key, value });
   },
@@ -61,3 +65,9 @@ export const kv = {
     return (r?.result ?? []) as T[];
   }
 };
+
+/**
+ * Backwards-compatible alias:
+ * Some routes import { KV } from "../lib/kv"
+ */
+export const KV = kv;
