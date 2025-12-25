@@ -38,16 +38,18 @@ export const kv = {
     return kvFetch("/del", { key });
   },
 
-  lpush: async (key: string, value: string) => {
+  // ✅ accept any JSON value, not only string
+  lpush: async (key: string, value: any) => {
     return kvFetch("/lpush", { key, value });
   },
 
-  rpop: async (key: string): Promise<string | null> => {
+  rpop: async (key: string): Promise<any | null> => {
     const r: any = await kvFetch("/rpop", { key });
-    return (r?.result ?? null) as string | null;
+    return r?.result ?? null;
   },
 
-  rpush: async (key: string, value: string) => {
+  // ✅ accept any JSON value, not only string
+  rpush: async (key: string, value: any) => {
     return kvFetch("/rpush", { key, value });
   },
 
@@ -66,8 +68,5 @@ export const kv = {
   }
 };
 
-/**
- * Backwards-compatible alias:
- * Some routes import { KV } from "../lib/kv"
- */
+// Backwards-compatible alias
 export const KV = kv;
