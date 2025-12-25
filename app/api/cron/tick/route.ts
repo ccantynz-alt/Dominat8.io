@@ -77,16 +77,16 @@ Return JSON only.
     method: "POST",
     headers: {
       Authorization: `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
       temperature: 0.2,
       messages: [
         { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
+        { role: "user", content: user }
+      ]
+    })
   });
 
   if (!res.ok) {
@@ -161,7 +161,7 @@ export async function GET() {
         summary: result.summary ?? "(no summary)",
         nextActions: result.nextActions ?? [],
         projectId,
-        finishedAt: nowIso(),
+        finishedAt: nowIso()
       };
 
       await updateRunStatus(id, "succeeded", { output });
@@ -175,7 +175,7 @@ export async function GET() {
         await appendRunLog(id, `🔁 Re-queueing for retry (attempt ${nextAttempt}/${MAX_ATTEMPTS})…`);
         await updateRunStatus(id, "queued", {
           input: { ...(run.input ?? {}), attempt: nextAttempt },
-          error: msg,
+          error: msg
         });
         await enqueueRun(id);
       } else {
