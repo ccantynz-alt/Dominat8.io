@@ -1,9 +1,9 @@
-// app/api/projects/route.ts
+// api/projects/route.ts
 import { NextResponse } from "next/server";
-import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
-import { keys } from "../../../lib/keys";
-import { uid } from "../../../lib/id";
-import { getCurrentUserId } from "../../../lib/demoAuth";
+import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "@/lib/kv";
+import { keys } from "@/lib/keys";
+import { uid } from "@/lib/id";
+import { getCurrentUserId } from "@/lib/demoAuth";
 import { z } from "zod";
 
 const CreateProjectInputSchema = z.object({
