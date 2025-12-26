@@ -1,13 +1,10 @@
 // pages/index.tsx
 export default function Home() {
   return (
-    <main style={{ padding: "40px", fontFamily: "system-ui" }}>
-      <h1>✅ My SaaS App is Live</h1>
-      <p>Your Vercel deployment is working.</p>
-
-      <h2>API</h2>
+    <main style={{ padding: 40, fontFamily: "system-ui" }}>
+      <h1>✅ Home Page Working</h1>
       <p>
-        <a href="/api/projects">View Projects API</a>
+        Try the API: <a href="/api/projects">/api/projects</a>
       </p>
     </main>
   );
