@@ -1,6 +1,7 @@
 {
   "name": "my-saas-app",
   "version": "0.1.0",
+  "description": "force-new-commit",
   "private": true,
   "scripts": {
     "dev": "next dev",
