@@ -1,6 +1,6 @@
 // app/api/projects/route.ts
 import { NextResponse } from "next/server";
-import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "../../lib/kv";
+import { kvJsonGet, kvJsonSet, kvNowISO, kv } from "../../lib/kv";
 import { getCurrentUserId } from "../../lib/demoAuth";
 import { z } from "zod";
 import { randomUUID } from "crypto";
@@ -18,9 +18,9 @@ function projectKey(userId: string, projectId: string) {
   return `projects:${userId}:${projectId}`;
 }
 
-const CreateProjectInputSchema = z.object({
+const CreateProjectSchema = z.object({
   name: z.string().min(1),
-  description: z.string().optional(),
+  description: z.string().optional()
 });
 
 type Project = {
@@ -50,19 +50,10 @@ export async function GET() {
 export async function POST(req: Request) {
   const userId = getCurrentUserId();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const parsed = CreateProjectInputSchema.safeParse(body);
+  const body = await req.json().catch(() => null);
+  const parsed = CreateProjectSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { ok: false, error: "Invalid input", details: parsed.error.flatten() },
-      { status: 400 }
-    );
+    return NextResponse.json({ ok: false, error: "Invalid input" }, { status: 400 });
   }
 
   const now = await kvNowISO();
@@ -74,7 +65,7 @@ export async function POST(req: Request) {
     name: parsed.data.name,
     description: parsed.data.description,
     createdAt: now,
-    updatedAt: now,
+    updatedAt: now
   };
 
   await kvJsonSet(projectKey(userId, id), project);
@@ -84,4 +75,21 @@ export async function POST(req: Request) {
   await kvJsonSet(indexKey(userId), idx);
 
   return NextResponse.json({ ok: true, project }, { status: 201 });
+}
+
+export async function DELETE(req: Request) {
+  const userId = getCurrentUserId();
+  const url = new URL(req.url);
+  const projectId = url.searchParams.get("id");
+  if (!projectId) {
+    return NextResponse.json({ ok: false, error: "Missing ?id=" }, { status: 400 });
+  }
+
+  await kv.del(projectKey(userId, projectId));
+
+  const idx = (await kvJsonGet<ProjectsIndex>(indexKey(userId))) ?? { ids: [] };
+  idx.ids = idx.ids.filter((x) => x !== projectId);
+  await kvJsonSet(indexKey(userId), idx);
+
+  return NextResponse.json({ ok: true });
 }
