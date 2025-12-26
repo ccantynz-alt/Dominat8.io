@@ -1,13 +1,15 @@
-// app/lib/keys.ts
-export const keys = {
-  // Runs
+export const K = {
+  projectsIndex: "idx:projects",                 // zset
+  project: (id: string) => `project:${id}`,
+  runsIndex: (projectId: string) => `idx:runs:${projectId}`, // zset
   run: (runId: string) => `run:${runId}`,
-  runLogs: (runId: string) => `run:${runId}:logs`,
 
-  // Projects
-  project: (projectId: string) => `project:${projectId}`,
-  projectRuns: (projectId: string) => `project:${projectId}:runs`,
+  queue: "queue:runs",                           // list
+  lease: (name: string) => `lease:${name}`,      // string
 
-  // Indexes
-  projectsIndex: () => `projects`,
+  memoryIndex: (scope: string, id: string) => `idx:memory:${scope}:${id}`, // zset
+  memory: (id: string) => `memory:${id}`,
+
+  // agent scheduling state
+  agentState: "state:agents",
 };
