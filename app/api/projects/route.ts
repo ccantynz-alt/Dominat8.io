@@ -1,73 +1,111 @@
+// app/api/projects/route.ts
 import { NextResponse } from "next/server";
-import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "../../lib/kv";
-import { keys } from "../../lib/keys";
-import { uid } from "../../lib/id";
-import { getCurrentUserId } from "../../lib/demoAuth";
-import {
-  CreateProjectInputSchema,
-  ProjectSchema,
-  type Project
-} from "../../lib/models/project";
+import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
+import { keys } from "../../../lib/keys";
+import { uid } from "../../../lib/id";
+import { getCurrentUserId } from "../../../lib/demoAuth";
+import { z } from "zod";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+const CreateProjectInputSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+});
 
-/**
- * GET /api/projects
- * Lists projects for the current user.
- */
+type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
+
+type Project = {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type ProjectsIndex = {
+  ids: string[];
+};
+
+function indexKey(userId: string) {
+  return keys.projectsIndex(userId);
+}
+
+function projectKey(userId: string, projectId: string) {
+  return keys.project(userId, projectId);
+}
+
 export async function GET() {
   const userId = getCurrentUserId();
-
-  // List project IDs from the index (newest first)
-  const ids = (await kv.zrevrange(keys.projectsIndex, 0, 200)) as string[];
+  const idx = (await kvJsonGet<ProjectsIndex>(indexKey(userId))) ?? { ids: [] };
 
   const projects: Project[] = [];
-  for (const id of ids) {
-    const p = await kvJsonGet<Project>(keys.project(id));
-    if (!p) continue;
-    if (p.userId !== userId) continue;
-
-    const parsed = ProjectSchema.safeParse(p);
-    if (parsed.success) projects.push(parsed.data);
+  for (const id of idx.ids) {
+    const p = await kvJsonGet<Project>(projectKey(userId, id));
+    if (p) projects.push(p);
   }
 
   return NextResponse.json({ ok: true, projects });
 }
 
-/**
- * POST /api/projects
- * Creates a new project.
- */
 export async function POST(req: Request) {
+  const userId = getCurrentUserId();
+
+  let body: unknown;
   try {
-    const userId = getCurrentUserId();
-    const body = await req.json().catch(() => ({}));
-
-    const input = CreateProjectInputSchema.parse(body);
-
-    const now = await kvNowISO();
-    const project: Project = {
-      id: uid("prj"),
-      userId,
-      name: input.name,
-      repoUrl: input.repoUrl,
-      defaultBranch: input.defaultBranch,
-      createdAt: now,
-      updatedAt: now
-    };
-
-    await kvJsonSet(keys.project(project.id), project);
-
-    // Add to index with timestamp score
-    await kv.zadd(keys.projectsIndex, {
-      score: Date.now(),
-      member: project.id
-    });
-
-    return NextResponse.json({ ok: true, project });
-  } catch (err: any) {
-    const message = err?.message || "Unknown error";
-    return NextResponse.json({ ok: false, error: message }, { status: 400 });
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
   }
+
+  const parsed = CreateProjectInputSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: "Invalid input", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const input: CreateProjectInput = parsed.data;
+
+  const now = kvNowISO();
+  const id = uid("proj");
+
+  const project: Project = {
+    id,
+    userId,
+    name: input.name,
+    description: input.description,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  // Save project
+  await kvJsonSet(projectKey(userId, id), project);
+
+  // Update index
+  const idx = (await kvJsonGet<ProjectsIndex>(indexKey(userId))) ?? { ids: [] };
+  if (!idx.ids.includes(id)) idx.ids.unshift(id);
+  await kvJsonSet(indexKey(userId), idx);
+
+  return NextResponse.json({ ok: true, project }, { status: 201 });
+}
+
+export async function DELETE(req: Request) {
+  const userId = getCurrentUserId();
+
+  const url = new URL(req.url);
+  const projectId = url.searchParams.get("id");
+  if (!projectId) {
+    return NextResponse.json({ ok: false, error: "Missing ?id=PROJECT_ID" }, { status: 400 });
+  }
+
+  // Delete project
+  await kv.del(projectKey(userId, projectId));
+
+  // Update index
+  const idx = (await kvJsonGet<ProjectsIndex>(indexKey(userId))) ?? { ids: [] };
+  idx.ids = idx.ids.filter((id) => id !== projectId);
+  await kvJsonSet(indexKey(userId), idx);
+
+  return NextResponse.json({ ok: true });
 }
