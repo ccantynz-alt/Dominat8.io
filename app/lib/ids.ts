@@ -1,6 +1,6 @@
-import crypto from "crypto";
-
-export function makeId(prefix: string) {
-  const raw = crypto.randomBytes(16).toString("base64url");
-  return `${prefix}_${raw}`;
+// app/lib/id.ts
+export function uid(prefix = "id"): string {
+  // crypto.randomUUID() is available in modern Node runtimes (Vercel)
+  const id = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+  return `${prefix}_${id}`;
 }
