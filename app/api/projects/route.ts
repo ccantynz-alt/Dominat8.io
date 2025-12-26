@@ -2,9 +2,15 @@
 import { NextResponse } from "next/server";
 import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "@/lib/kv";
 import { keys } from "@/lib/keys";
-import { uid } from "@/lib/id";
 import { getCurrentUserId } from "@/lib/demoAuth";
 import { z } from "zod";
+import { randomUUID } from "crypto";
+
+// Local UID helper (avoids "@/lib/id" resolution issues)
+function uid(prefix = ""): string {
+  const id = randomUUID().replace(/-/g, "");
+  return prefix ? `${prefix}_${id}` : id;
+}
 
 const CreateProjectInputSchema = z.object({
   name: z.string().min(1),
@@ -85,27 +91,4 @@ export async function POST(req: Request) {
   // Update index
   const idx = (await kvJsonGet<ProjectsIndex>(indexKey(userId))) ?? { ids: [] };
   if (!idx.ids.includes(id)) idx.ids.unshift(id);
-  await kvJsonSet(indexKey(userId), idx);
-
-  return NextResponse.json({ ok: true, project }, { status: 201 });
-}
-
-export async function DELETE(req: Request) {
-  const userId = getCurrentUserId();
-
-  const url = new URL(req.url);
-  const projectId = url.searchParams.get("id");
-  if (!projectId) {
-    return NextResponse.json({ ok: false, error: "Missing ?id=PROJECT_ID" }, { status: 400 });
-  }
-
-  // Delete project
-  await kv.del(projectKey(userId, projectId));
-
-  // Update index
-  const idx = (await kvJsonGet<ProjectsIndex>(indexKey(userId))) ?? { ids: [] };
-  idx.ids = idx.ids.filter((id) => id !== projectId);
-  await kvJsonSet(indexKey(userId), idx);
-
-  return NextResponse.json({ ok: true });
-}
+  await kvJ
