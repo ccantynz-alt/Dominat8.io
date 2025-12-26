@@ -3,16 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cd app && npm run dev",
-    "build": "cd app && npm run build",
-    "start": "cd app && npm run start",
-    "lint": "cd app && npm run lint",
-    "vercel-build": "cd app && npm run build"
+    "dev": "cd app && npm install && npm run dev",
+    "build": "cd app && npm install && npm run build",
+    "start": "cd app && npm install && npm run start",
+    "lint": "cd app && npm install && npm run lint",
+    "vercel-build": "cd app && npm install && npm run build"
   },
   "dependencies": {
-    "next": "14.2.5",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
     "@vercel/kv": "^3.0.0",
     "zod": "^3.23.8"
   }
