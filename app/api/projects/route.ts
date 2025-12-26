@@ -73,7 +73,8 @@ export async function POST(req: Request) {
 
   const input: CreateProjectInput = parsed.data;
 
-  const now = kvNowISO();
+  // ✅ FIX: kvNowISO() is async in your lib, so we must await it
+  const now = await kvNowISO();
   const id = uid("proj");
 
   const project: Project = {
