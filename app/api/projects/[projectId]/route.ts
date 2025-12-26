@@ -1,7 +1,7 @@
 // app/api/projects/[projectId]/route.ts
 import { NextResponse } from "next/server";
-import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "../../../../lib/kv";
-import { getCurrentUserId } from "../../../../lib/demoAuth";
+import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
+import { getCurrentUserId } from "../../../lib/demoAuth";
 import { z } from "zod";
 
 function projectKey(userId: string, projectId: string) {
@@ -22,10 +22,7 @@ type Project = {
   updatedAt: string;
 };
 
-export async function GET(
-  _req: Request,
-  ctx: { params: { projectId: string } }
-) {
+export async function GET(_req: Request, ctx: { params: { projectId: string } }) {
   const userId = getCurrentUserId();
   const projectId = ctx.params.projectId;
 
@@ -37,10 +34,7 @@ export async function GET(
   return NextResponse.json({ ok: true, project });
 }
 
-export async function PATCH(
-  req: Request,
-  ctx: { params: { projectId: string } }
-) {
+export async function PATCH(req: Request, ctx: { params: { projectId: string } }) {
   const userId = getCurrentUserId();
   const projectId = ctx.params.projectId;
 
@@ -65,7 +59,6 @@ export async function PATCH(
   }
 
   const now = await kvNowISO();
-
   const updated: Project = {
     ...existing,
     ...parsed.data,
@@ -73,14 +66,10 @@ export async function PATCH(
   };
 
   await kvJsonSet(projectKey(userId, projectId), updated);
-
   return NextResponse.json({ ok: true, project: updated });
 }
 
-export async function DELETE(
-  _req: Request,
-  ctx: { params: { projectId: string } }
-) {
+export async function DELETE(_req: Request, ctx: { params: { projectId: string } }) {
   const userId = getCurrentUserId();
   const projectId = ctx.params.projectId;
 
@@ -90,7 +79,5 @@ export async function DELETE(
   }
 
   await kv.del(projectKey(userId, projectId));
-
-  // Note: index cleanup happens in the list route, or you can add it later.
   return NextResponse.json({ ok: true });
 }
