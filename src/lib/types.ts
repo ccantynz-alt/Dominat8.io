@@ -1,20 +1,34 @@
-export type RunStatus = "queued" | "running" | "succeeded" | "failed";
+export type Project = {
+  id: string;
+  name: string;
+  repoUrl: string;          // https://github.com/org/repo
+  defaultBranch?: string;   // main/master
+  createdAt: string;
 
-export type RunKind =
-  | "agent:plan"
-  | "agent:build"
-  | "agent:import"
-  | "agent:deploy"
-  | "agent:maintenance";
+  // Optional build integration:
+  vercelDeployHookUrl?: string; // Vercel Deploy Hook (POST to trigger build)
+};
+
+export type RunStatus = "queued" | "running" | "succeeded" | "failed";
 
 export type Run = {
   id: string;
-  kind: RunKind;
+  projectId: string;
   status: RunStatus;
   createdAt: string;
-  updatedAt: string;
-  title: string;
-  input?: Record<string, any>;
-  output?: Record<string, any>;
+  startedAt?: string;
+  finishedAt?: string;
+
+  trigger?: "manual" | "agent" | "auto-update";
+  logs: string[]; // stored as array for simplicity
   error?: string;
+};
+
+export type MemoryRecord = {
+  id: string;
+  scope: "project" | "user";
+  scopeId: string;
+  createdAt: string;
+  content: string;
+  tags?: string[];
 };
