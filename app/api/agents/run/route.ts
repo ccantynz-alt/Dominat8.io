@@ -1,7 +1,7 @@
 // app/api/agents/run/route.ts
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
+import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 
@@ -22,7 +22,6 @@ type RunRecord = {
 };
 
 type RunLog = { ts: string; level: "info" | "error"; msg: string };
-
 type GeneratedFile = { path: string; content: string };
 
 function uid(prefix = ""): string {
@@ -33,15 +32,12 @@ function uid(prefix = ""): string {
 function runKey(runId: string) {
   return `runs:${runId}`;
 }
-
 function runLogsKey(runId: string) {
   return `runs:${runId}:logs`;
 }
-
 function runFilesKey(runId: string) {
   return `runs:${runId}:files`;
 }
-
 function projectRunsIndexKey(projectId: string) {
   return `projects:${projectId}:runs`;
 }
@@ -74,14 +70,13 @@ export async function POST(req: Request) {
     updatedAt: now,
   };
 
-  // Create run + index
   await kvJsonSet(runKey(runId), run);
+
   const idxKey = projectRunsIndexKey(projectId);
   const idx = (await kvJsonGet<string[]>(idxKey)) ?? [];
   idx.unshift(runId);
   await kvJsonSet(idxKey, idx);
 
-  // Start generation (synchronously for MVP)
   try {
     await appendLog(runId, "info", "Run created. Starting generation…");
     run.status = "running";
@@ -89,33 +84,26 @@ export async function POST(req: Request) {
     await kvJsonSet(runKey(runId), run);
 
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("Missing OPENAI_API_KEY in environment variables.");
-    }
+    if (!apiKey) throw new Error("Missing OPENAI_API_KEY in Vercel env vars.");
 
     const client = new OpenAI({ apiKey });
 
-    await appendLog(runId, "info", "Calling ChatGPT to generate file tree JSON…");
+    await appendLog(runId, "info", "Calling ChatGPT to generate files…");
 
-    // We generate a VERY small, safe starter template as JSON: [{path, content}]
-    // You will evolve the prompt + templates later.
     const system = [
       "You are a senior full-stack engineer.",
       "Return ONLY valid JSON. No markdown. No commentary.",
-      "Your output must be a JSON array of objects: {path: string, content: string}.",
-      "Paths must be relative, like 'app/page.tsx'.",
-      "Generate a minimal Next.js App Router project feature for a website builder:",
-      "- Home page",
-      "- Dashboard page",
-      "- Projects list UI calling /api/projects",
-      "- Runs UI calling /api/agents/run and /api/runs endpoints",
-      "Keep it small and compile-safe.",
+      "Output MUST be a JSON array of {path: string, content: string}.",
+      "Paths are relative like 'app/templates/page.tsx'.",
+      "Keep changes minimal and compile-safe for Next.js App Router + TypeScript.",
+      "Do not delete existing files. Only create new files under 'app/generated/'.",
     ].join(" ");
 
     const user = [
-      "Project goal: AI automated website builder platform.",
-      "Task: Generate a minimal feature addition consistent with the existing app.",
-      `User prompt: ${prompt}`,
+      "Goal: AI automated website builder platform.",
+      `ProjectId: ${projectId}`,
+      "Task: Generate a small useful feature as files under app/generated/.",
+      `Prompt: ${prompt}`,
     ].join("\n");
 
     const completion = await client.chat.completions.create({
@@ -128,18 +116,19 @@ export async function POST(req: Request) {
     });
 
     const text = completion.choices?.[0]?.message?.content?.trim() ?? "";
+
     let files: GeneratedFile[] = [];
     try {
       files = JSON.parse(text);
-      if (!Array.isArray(files)) throw new Error("JSON is not an array");
+      if (!Array.isArray(files)) throw new Error("Not an array");
       for (const f of files) {
-        if (!f?.path || typeof f.path !== "string") throw new Error("Invalid file path");
-        if (typeof f.content !== "string") throw new Error("Invalid file content");
+        if (!f?.path || typeof f.path !== "string") throw new Error("Bad path");
+        if (typeof f.content !== "string") throw new Error("Bad content");
       }
-    } catch (e: any) {
-      await appendLog(runId, "error", "Model output was not valid JSON. Storing raw output as a log.");
+    } catch {
+      await appendLog(runId, "error", "Model output was not valid JSON. Raw output logged:");
       await appendLog(runId, "error", text.slice(0, 4000));
-      throw new Error("Generation failed: model did not return valid JSON.");
+      throw new Error("Generation failed (invalid JSON).");
     }
 
     await kvJsonSet(runFilesKey(runId), files);
