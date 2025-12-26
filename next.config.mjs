@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: undefined // 🚫 ensure NOT static export
+
+  // ✅ CRITICAL: do NOT static export
+  output: undefined
 };
 
 export default nextConfig;
