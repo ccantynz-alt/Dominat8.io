@@ -1,5 +1,14 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
-import { dequeueRun, appendRunLog, updateRunStatus, getRun, enqueueRun } from "../../../lib/store";
+import {
+  dequeueRun,
+  appendRunLog,
+  updateRunStatus,
+  getRun,
+  enqueueRun
+} from "../../../lib/store";
 import { nowIso } from "../../../lib/time";
 import { kv } from "../../../lib/kv";
 
@@ -19,39 +28,68 @@ type AgentResult = {
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-function safeJsonParse<T>(s: string): T | null {
+/**
+ * Safe JSON parse (never throws)
+ */
+function safeJsonParse<T>(text: string): T | null {
   try {
-    return JSON.parse(s) as T;
+    return JSON.parse(text) as T;
   } catch {
     return null;
   }
 }
 
+/**
+ * Choose a stable project identifier
+ */
 function pickProjectId(run: any): string {
-  return run?.input?.projectId || run?.input?.repoFullName || run?.input?.repo || "default";
+  return (
+    run?.input?.projectId ||
+    run?.input?.repoFullName ||
+    run?.input?.repo ||
+    "default"
+  );
 }
 
-async function getProjectMemory(projectId: string): Promise<any> {
+/**
+ * Load project memory from KV
+ */
+async function getProjectMemory(projectId: string) {
   const key = `memory:${projectId}`;
-  const v = await kv.get(key);
-  return v ?? { projectId, notes: [], updatedAt: nowIso() };
+  const memory = await kv.get(key);
+  return memory ?? { projectId, notes: [], updatedAt: nowIso() };
 }
 
+/**
+ * Save project memory
+ */
 async function saveProjectMemory(projectId: string, memory: any) {
   const key = `memory:${projectId}`;
-  await kv.set(key, { ...memory, projectId, updatedAt: nowIso() });
+  await kv.set(key, {
+    ...memory,
+    projectId,
+    updatedAt: nowIso()
+  });
 }
 
-async function callAgentLLM(args: { run: any; memory: any }): Promise<AgentResult & { rawText: string }> {
-  if (!OPENAI_API_KEY) throw new Error("Missing OPENAI_API_KEY");
+/**
+ * Call OpenAI as the agent brain
+ */
+async function callAgentLLM(run: any, memory: any): Promise<AgentResult & { rawText: string }> {
+  if (!OPENAI_API_KEY) {
+    throw new Error("Missing OPENAI_API_KEY");
+  }
 
-  const { run, memory } = args;
+  const systemPrompt = `
+You are an autonomous job-runner AI for a software platform.
 
-  const system = `
-You are the job-runner brain for an AI agent platform.
-Output MUST be valid JSON only (no markdown, no backticks).
+Rules:
+- Output VALID JSON ONLY
+- No markdown
+- No backticks
+- No explanations outside JSON
 
-Return JSON shape:
+Required format:
 {
   "summary": string,
   "logLines": string[],
@@ -62,15 +100,14 @@ Return JSON shape:
 }
 `.trim();
 
-  const user = `
+  const userPrompt = `
 RUN:
 ${JSON.stringify(run, null, 2)}
 
 MEMORY:
 ${JSON.stringify(memory, null, 2)}
 
-Decide what to do for run kind "${run.kind}".
-Return JSON only.
+Determine the correct next step for run kind "${run.kind}".
 `.trim();
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -83,107 +120,124 @@ Return JSON only.
       model: "gpt-4o-mini",
       temperature: 0.2,
       messages: [
-        { role: "system", content: system },
-        { role: "user", content: user }
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
       ]
     })
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`OpenAI error: ${res.status} ${text}`);
+    throw new Error(`OpenAI error ${res.status}: ${text}`);
   }
 
   const data = await res.json();
-  const rawText: string = data?.choices?.[0]?.message?.content ?? "";
+  const rawText = data?.choices?.[0]?.message?.content ?? "";
 
   const parsed = safeJsonParse<AgentResult>(rawText);
-  if (!parsed) return { rawText };
+  if (!parsed) {
+    return { rawText };
+  }
 
   return { ...parsed, rawText };
 }
 
+/**
+ * CRON ENTRYPOINT
+ */
 export async function GET() {
   const startedAt = nowIso();
   const processed: string[] = [];
-  const MAX = 2;
+  const MAX_RUNS = 2;
 
-  for (let i = 0; i < MAX; i++) {
-    const id = await dequeueRun();
-    if (!id) break;
+  for (let i = 0; i < MAX_RUNS; i++) {
+    const runId = await dequeueRun();
+    if (!runId) break;
 
-    processed.push(id);
+    processed.push(runId);
 
-    const run = await getRun(id);
+    const run = await getRun(runId);
     if (!run) continue;
 
     const projectId = pickProjectId(run);
-
     const attempt = Number(run?.input?.attempt ?? 1);
     const MAX_ATTEMPTS = 2;
 
-    await updateRunStatus(id, "running", { input: { ...(run.input ?? {}), attempt } });
-    await appendRunLog(id, `▶️ Started run (${run.kind}) "${run.title}" [attempt ${attempt}/${MAX_ATTEMPTS}]`);
-    await appendRunLog(id, `📌 Project: ${projectId}`);
+    await updateRunStatus(runId, "running", {
+      input: { ...(run.input ?? {}), attempt }
+    });
+
+    await appendRunLog(runId, `▶️ Started run "${run.title}" (${run.kind})`);
+    await appendRunLog(runId, `📌 Project: ${projectId}`);
+    await appendRunLog(runId, `🔁 Attempt ${attempt}/${MAX_ATTEMPTS}`);
 
     try {
       const memory = await getProjectMemory(projectId);
+      await appendRunLog(runId, "🧠 Thinking…");
 
-      await appendRunLog(id, "🧠 Calling agent brain…");
-      const result = await callAgentLLM({ run, memory });
+      const result = await callAgentLLM(run, memory);
 
-      if (result.logLines && Array.isArray(result.logLines)) {
+      if (Array.isArray(result.logLines)) {
         for (const line of result.logLines.slice(0, 30)) {
-          await appendRunLog(id, `• ${String(line)}`);
+          await appendRunLog(runId, `• ${line}`);
         }
       } else {
-        await appendRunLog(id, "• (No logLines returned — raw model output below)");
-        await appendRunLog(id, result.rawText.slice(0, 1500));
+        await appendRunLog(runId, result.rawText.slice(0, 1200));
       }
 
       if (result.memoryPatch) {
         const nextMemory = { ...(memory ?? {}) };
 
-        if (Array.isArray(result.memoryPatch.notesToAdd) && result.memoryPatch.notesToAdd.length) {
-          const existing = Array.isArray(nextMemory.notes) ? nextMemory.notes : [];
-          nextMemory.notes = [...existing, ...result.memoryPatch.notesToAdd.map(String)].slice(-200);
+        if (Array.isArray(result.memoryPatch.notesToAdd)) {
+          nextMemory.notes = [
+            ...(nextMemory.notes ?? []),
+            ...result.memoryPatch.notesToAdd
+          ].slice(-200);
         }
 
-        if (result.memoryPatch.set && typeof result.memoryPatch.set === "object") {
-          nextMemory.state = { ...(nextMemory.state ?? {}), ...result.memoryPatch.set };
+        if (result.memoryPatch.set) {
+          nextMemory.state = {
+            ...(nextMemory.state ?? {}),
+            ...result.memoryPatch.set
+          };
         }
 
         await saveProjectMemory(projectId, nextMemory);
-        await appendRunLog(id, "💾 Memory updated.");
+        await appendRunLog(runId, "💾 Memory updated");
       }
 
-      const output = {
-        summary: result.summary ?? "(no summary)",
-        nextActions: result.nextActions ?? [],
-        projectId,
-        finishedAt: nowIso()
-      };
+      await updateRunStatus(runId, "succeeded", {
+        output: {
+          summary: result.summary ?? "(no summary)",
+          nextActions: result.nextActions ?? [],
+          projectId,
+          finishedAt: nowIso()
+        }
+      });
 
-      await updateRunStatus(id, "succeeded", { output });
-      await appendRunLog(id, "✅ Run succeeded.");
+      await appendRunLog(runId, "✅ Run completed");
     } catch (err: any) {
-      const msg = err?.message ?? "Unknown error";
-      await appendRunLog(id, `❌ Error: ${msg}`);
+      const message = err?.message ?? "Unknown error";
+      await appendRunLog(runId, `❌ Error: ${message}`);
 
       if (attempt < MAX_ATTEMPTS) {
-        const nextAttempt = attempt + 1;
-        await appendRunLog(id, `🔁 Re-queueing for retry (attempt ${nextAttempt}/${MAX_ATTEMPTS})…`);
-        await updateRunStatus(id, "queued", {
-          input: { ...(run.input ?? {}), attempt: nextAttempt },
-          error: msg
+        await appendRunLog(runId, "🔁 Re-queueing for retry");
+        await updateRunStatus(runId, "queued", {
+          input: { ...(run.input ?? {}), attempt: attempt + 1 },
+          error: message
         });
-        await enqueueRun(id);
+        await enqueueRun(runId);
       } else {
-        await updateRunStatus(id, "failed", { error: msg });
-        await appendRunLog(id, "🛑 Run failed (max attempts reached).");
+        await updateRunStatus(runId, "failed", { error: message });
+        await appendRunLog(runId, "🛑 Run failed permanently");
       }
     }
   }
 
-  return NextResponse.json({ ok: true, startedAt, processedCount: processed.length, processed });
+  return NextResponse.json({
+    ok: true,
+    startedAt,
+    processedCount: processed.length,
+    processed
+  });
 }
