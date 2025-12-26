@@ -1,7 +1,7 @@
 {
   "name": "my-saas-app",
   "version": "0.1.0",
-  "description": "force-ts-devdeps-2213",
+  "description": "force-ts-devdeps-2219",
   "private": true,
   "scripts": {
     "dev": "next dev",
