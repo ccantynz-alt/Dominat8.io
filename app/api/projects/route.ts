@@ -19,8 +19,8 @@ function projectKey(userId: string, projectId: string) {
 }
 
 const CreateProjectSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional()
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
 });
 
 type Project = {
@@ -33,6 +33,30 @@ type Project = {
 };
 
 type ProjectsIndex = { ids: string[] };
+
+async function readBody(req: Request): Promise<unknown> {
+  const contentType = req.headers.get("content-type") || "";
+
+  // JSON (fetch)
+  if (contentType.includes("application/json")) {
+    return await req.json().catch(() => null);
+  }
+
+  // Form submit (<form method="post">)
+  if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
+    const form = await req.formData().catch(() => null);
+    if (!form) return null;
+
+    const name = (form.get("name") ?? "").toString();
+    const descriptionRaw = form.get("description");
+    const description = descriptionRaw === null ? undefined : descriptionRaw.toString();
+
+    return { name, description };
+  }
+
+  // Fallback: try JSON anyway
+  return await req.json().catch(() => null);
+}
 
 export async function GET() {
   const userId = getCurrentUserId();
@@ -50,10 +74,14 @@ export async function GET() {
 export async function POST(req: Request) {
   const userId = getCurrentUserId();
 
-  const body = await req.json().catch(() => null);
+  const body = await readBody(req);
   const parsed = CreateProjectSchema.safeParse(body);
+
   if (!parsed.success) {
-    return NextResponse.json({ ok: false, error: "Invalid input" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "Invalid input", details: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const now = await kvNowISO();
@@ -65,7 +93,7 @@ export async function POST(req: Request) {
     name: parsed.data.name,
     description: parsed.data.description,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   };
 
   await kvJsonSet(projectKey(userId, id), project);
@@ -74,6 +102,16 @@ export async function POST(req: Request) {
   if (!idx.ids.includes(id)) idx.ids.unshift(id);
   await kvJsonSet(indexKey(userId), idx);
 
+  // If it was a form submit, redirect back to dashboard so user sees the new project.
+  const contentType = req.headers.get("content-type") || "";
+  const isForm =
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data");
+
+  if (isForm) {
+    return NextResponse.redirect(new URL("/dashboard", req.url), { status: 303 });
+  }
+
   return NextResponse.json({ ok: true, project }, { status: 201 });
 }
 
@@ -81,6 +119,7 @@ export async function DELETE(req: Request) {
   const userId = getCurrentUserId();
   const url = new URL(req.url);
   const projectId = url.searchParams.get("id");
+
   if (!projectId) {
     return NextResponse.json({ ok: false, error: "Missing ?id=" }, { status: 400 });
   }
