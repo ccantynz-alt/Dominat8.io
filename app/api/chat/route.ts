@@ -1,43 +1,43 @@
-import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    hint: "Use POST to chat. Example: POST { message: 'hello' }",
+  });
+}
 
 export async function POST(req: Request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { message: "OPENAI_API_KEY is missing on the server" },
-        { status: 500 }
-      );
+    const body = await req.json().catch(() => ({}));
+    const message = String(body?.message ?? "").trim();
+
+    if (!message) {
+      return NextResponse.json({ ok: false, error: "Missing 'message' in JSON body" }, { status: 400 });
     }
 
-    const body = await req.json();
-    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ ok: false, error: "Missing OPENAI_API_KEY" }, { status: 500 });
+    }
 
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "system",
-          content: "You are a helpful website-building assistant.",
-        },
-        ...messages,
-      ],
+    const client = new OpenAI({ apiKey });
+
+    const resp = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.2,
+      messages: [{ role: "user", content: message }],
     });
 
-    const text =
-      response.output_text ||
-      "No text returned from OpenAI.";
-
-    return NextResponse.json({ message: text });
+    const text = resp.choices?.[0]?.message?.content ?? "";
+    return NextResponse.json({ ok: true, text });
   } catch (err: any) {
     return NextResponse.json(
-      { message: err?.message || "Unknown server error" },
+      { ok: false, error: err?.message ?? "Unknown error" },
       { status: 500 }
     );
   }
