@@ -1,24 +1,30 @@
-import type { NextApiRequest } from "next";
+import { NextRequest } from "next/server";
 
-export const AUTH_COOKIE_NAME = "mysaas_auth";
-
-/**
- * Minimal prototype auth:
- * - If cookie exists and equals "1", user is "logged in".
- * - Replace with real auth later (NextAuth, Clerk, Supabase, etc.)
- */
-export function isAuthedFromReq(req: NextApiRequest | { headers: { cookie?: string } }) {
-  const cookieHeader = req.headers.cookie || "";
-  return cookieHeader.split(";").some((c) => c.trim() === `${AUTH_COOKIE_NAME}=1`);
+export function requireAdmin(req: NextRequest) {
+  const adminKey = process.env.PLATFORM_ADMIN_KEY;
+  if (!adminKey) return; // If unset, allow (dev-friendly)
+  const got = req.headers.get("x-admin-key") || "";
+  if (got !== adminKey) {
+    throw new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
+  }
 }
 
-export function authSetCookieHeader() {
-  // HttpOnly: cannot be read by JS (better than localStorage)
-  // SameSite=Lax: decent default for most apps
-  // Secure: should be true on HTTPS (Vercel is HTTPS)
-  return `${AUTH_COOKIE_NAME}=1; Path=/; HttpOnly; SameSite=Lax; Secure`;
-}
-
-export function authClearCookieHeader() {
-  return `${AUTH_COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Secure`;
+export function requireCron(req: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    throw new Response(
+      JSON.stringify({ ok: false, error: "CRON_SECRET not set" }),
+      { status: 500, headers: { "content-type": "application/json" } }
+    );
+  }
+  const got = req.headers.get("x-cron-secret") || "";
+  if (got !== secret) {
+    throw new Response(JSON.stringify({ ok: false, error: "Forbidden" }), {
+      status: 403,
+      headers: { "content-type": "application/json" },
+    });
+  }
 }
