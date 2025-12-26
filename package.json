@@ -1,13 +1,13 @@
 {
-  "name": "my-saas-app-root",
+  "name": "my-saas-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cd app && npm run dev",
-    "build": "cd app && npm run build",
-    "start": "cd app && npm run start",
-    "lint": "cd app && npm run lint",
-    "vercel-build": "cd app && npm run build"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "vercel-build": "next build"
   },
   "dependencies": {
     "@vercel/kv": "^3.0.0",
