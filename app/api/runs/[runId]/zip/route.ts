@@ -1,25 +1,24 @@
-import JSZip from "jszip";
 import { z } from "zod";
-import { readRunFiles } from "../../../../lib/runFiles";
+import JSZip from "jszip";
+import { kvJsonGet } from "../../../../lib/kv";
 import { getCurrentUserId } from "../../../../lib/demoAuth";
+
+type RunFile = {
+  path: string;
+  content: string;
+};
 
 const ParamsSchema = z.object({
   runId: z.string().min(1),
 });
 
-function safeZipPath(p: string): string | null {
-  // Normalize and block zip-slip
-  let path = (p || "").trim().replace(/\\/g, "/");
+function filesKey(userId: string, runId: string) {
+  return `runs:${userId}:${runId}:files`;
+}
 
-  // Remove any leading slashes
-  path = path.replace(/^\/+/, "");
-
-  // Block traversal or weird empty paths
+function safePath(p: string) {
+  const path = p.replace(/\\/g, "/").replace(/^\/+/, "");
   if (!path || path.includes("..")) return null;
-
-  // Optional: block absolute Windows drive paths
-  if (/^[A-Za-z]:\//.test(path)) return null;
-
   return path;
 }
 
@@ -30,39 +29,29 @@ export async function GET(
   const userId = await getCurrentUserId();
   const { runId } = ParamsSchema.parse(ctx.params);
 
-  const files = await readRunFiles(userId, runId);
+  const files = await kvJsonGet<RunFile[]>(filesKey(userId, runId));
 
-  if (!files.length) {
+  if (!Array.isArray(files) || files.length === 0) {
     return new Response(
-      JSON.stringify({ ok: false, error: "No files found for this run." }),
-      { status: 404, headers: { "content-type": "application/json" } }
+      JSON.stringify({ ok: false, error: "No files for this run" }),
+      { status: 404 }
     );
   }
 
   const zip = new JSZip();
 
   for (const f of files) {
-    const zipPath = safeZipPath(f.path);
-    if (!zipPath) continue;
-
-    // Ensure content is a string (your agent contract already guarantees this)
-    zip.file(zipPath, typeof f.content === "string" ? f.content : String(f.content));
+    const path = safePath(f.path);
+    if (!path) continue;
+    zip.file(path, f.content ?? "");
   }
 
-  const data = await zip.generateAsync({
-    type: "uint8array",
-    compression: "DEFLATE",
-    compressionOptions: { level: 6 },
-  });
-
-  const filename = `run_${runId}.zip`;
+  const data = await zip.generateAsync({ type: "uint8array" });
 
   return new Response(data, {
-    status: 200,
     headers: {
-      "content-type": "application/zip",
-      "content-disposition": `attachment; filename="${filename}"`,
-      "cache-control": "no-store",
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename="run-${runId}.zip"`,
     },
   });
 }
