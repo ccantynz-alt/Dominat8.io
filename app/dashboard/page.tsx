@@ -1,9 +1,7 @@
-// app/dashboard/page.tsx
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+"use client";
 
-export const dynamic = "force-dynamic";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 type Project = {
   id: string;
@@ -11,43 +9,69 @@ type Project = {
   createdAt?: string;
 };
 
-function getBaseUrl() {
-  const h = headers();
-  const host = h.get("host") || "localhost:3000";
-  const proto = h.get("x-forwarded-proto") || "https";
-  return `${proto}://${host}`;
-}
+export default function DashboardPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string>("");
 
-async function getProjects(): Promise<Project[]> {
-  const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/api/projects`, { cache: "no-store" });
-  const data = await res.json().catch(() => ({ ok: false, projects: [] }));
-  return Array.isArray(data?.projects) ? data.projects : [];
-}
+  async function loadProjects() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/projects", { cache: "no-store" });
+      const data = await res.json();
+      const list = Array.isArray(data?.projects) ? data.projects : [];
+      setProjects(list);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load projects");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-export default async function DashboardPage() {
-  const projects = await getProjects();
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
-  async function createProjectAction(formData: FormData) {
-    "use server";
-    const name = String(formData.get("name") ?? "").trim();
-    if (!name) redirect("/dashboard");
+  async function createProject() {
+    const trimmed = name.trim();
+    if (!trimmed) return;
 
-    const baseUrl = getBaseUrl();
-    const res = await fetch(`${baseUrl}/api/projects`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ name }),
-      cache: "no-store",
-    });
+    setCreating(true);
+    setError("");
 
-    const data = await res.json().catch(() => null);
+    try {
+      // Your API supports form submissions, so we send x-www-form-urlencoded
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ name: trimmed }),
+      });
 
-    const projectId =
-      data?.project?.id || data?.id || data?.projectId || data?.project?.projectId;
+      const data = await res.json().catch(() => null);
 
-    if (projectId) redirect(`/dashboard/projects/${projectId}`);
-    redirect("/dashboard");
+      const projectId =
+        data?.project?.id ||
+        data?.id ||
+        data?.projectId ||
+        data?.project?.projectId;
+
+      if (projectId) {
+        // Go straight to the project page
+        window.location.href = `/dashboard/projects/${projectId}`;
+        return;
+      }
+
+      // If API returned ok but no id parsed, just refresh list
+      setName("");
+      await loadProjects();
+    } catch (e: any) {
+      setError(e?.message || "Failed to create project");
+    } finally {
+      setCreating(false);
+    }
   }
 
   return (
@@ -61,9 +85,10 @@ export default async function DashboardPage() {
           Create a Project
         </h2>
 
-        <form action={createProjectAction} style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <input
-            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Project name"
             style={{
               padding: "10px 12px",
@@ -74,19 +99,26 @@ export default async function DashboardPage() {
             autoComplete="off"
           />
           <button
-            type="submit"
+            onClick={createProject}
+            disabled={creating}
             style={{
               padding: "10px 12px",
               border: "1px solid #000",
               borderRadius: 8,
-              cursor: "pointer",
+              cursor: creating ? "not-allowed" : "pointer",
               background: "#fff",
               fontWeight: 600,
             }}
           >
-            Create Project
+            {creating ? "Creating..." : "Create Project"}
           </button>
-        </form>
+        </div>
+
+        {error ? (
+          <p style={{ marginTop: 10 }}>
+            <strong>Error:</strong> {error}
+          </p>
+        ) : null}
       </section>
 
       <section>
@@ -94,7 +126,9 @@ export default async function DashboardPage() {
           Projects
         </h2>
 
-        {projects.length === 0 ? (
+        {loading ? (
+          <p>Loading…</p>
+        ) : projects.length === 0 ? (
           <p>No projects yet.</p>
         ) : (
           <ul style={{ display: "grid", gap: 8, paddingLeft: 18 }}>
