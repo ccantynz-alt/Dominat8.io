@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 
-import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
-import { getCurrentUserId } from "../../../lib/demoAuth";
+import { kvJsonGet, kvJsonSet, kvNowISO } from "../../lib/kv";
+import { getCurrentUserId } from "../../lib/demoAuth";
 
 export const runtime = "nodejs";
 
