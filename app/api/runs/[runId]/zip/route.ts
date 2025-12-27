@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import { z } from "zod";
-import { readRunFiles } from "../files/route";
+import { readRunFiles } from "../../../../lib/runFiles";
 import { getCurrentUserId } from "../../../../lib/demoAuth";
 
 const ParamsSchema = z.object({
