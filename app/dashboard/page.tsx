@@ -11,12 +11,29 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  async function readResponse(res: Response) {
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      const json = await res.json().catch(() => null);
+      return { json, text: JSON.stringify(json, null, 2) };
+    }
+    const text = await res.text().catch(() => "");
+    return { json: null, text };
+  }
+
   async function loadProjects() {
     setError(null);
     try {
       const res = await fetch("/api/projects", { cache: "no-store" });
-      const json = await res.json().catch(() => null);
-      if (!res.ok || !json?.ok) throw new Error(json?.error || "Failed to load projects");
+      const { json, text } = await readResponse(res);
+
+      if (!res.ok) {
+        throw new Error(`GET /api/projects failed (${res.status})\n\n${text || "(empty response)"}`);
+      }
+      if (!json?.ok) {
+        throw new Error(`GET /api/projects returned ok:false\n\n${text || "(empty response)"}`);
+      }
+
       setProjects(json.projects || []);
     } catch (e: any) {
       setError(String(e?.message || e));
@@ -36,8 +53,16 @@ export default function DashboardPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      const json = await res.json().catch(() => null);
-      if (!res.ok || !json?.ok) throw new Error(json?.error || "Failed to create project");
+
+      const { json, text } = await readResponse(res);
+
+      if (!res.ok) {
+        throw new Error(`POST /api/projects failed (${res.status})\n\n${text || "(empty response)"}`);
+      }
+      if (!json?.ok) {
+        throw new Error(`POST /api/projects returned ok:false\n\n${text || "(empty response)"}`);
+      }
+
       setName("");
       await loadProjects();
     } catch (e: any) {
@@ -58,9 +83,10 @@ export default function DashboardPage() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. My AI Website"
+            placeholder="e.g. AI website builder"
             style={{ padding: 10, borderRadius: 10, border: "1px solid #444", minWidth: 260 }}
           />
+
           <button
             onClick={createProject}
             disabled={busy || !name.trim()}
@@ -75,11 +101,20 @@ export default function DashboardPage() {
           >
             Refresh
           </button>
+
+          <a
+            href="/api/projects"
+            target="_blank"
+            rel="noreferrer"
+            style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #444", textDecoration: "none" }}
+          >
+            Open /api/projects
+          </a>
         </div>
 
         {error ? (
           <pre style={{ marginTop: 12, padding: 12, background: "#111", borderRadius: 10, whiteSpace: "pre-wrap" }}>
-            Error: {error}
+            {error}
           </pre>
         ) : null}
       </div>
