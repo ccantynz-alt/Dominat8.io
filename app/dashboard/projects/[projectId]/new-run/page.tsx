@@ -1,56 +1,87 @@
-// app/dashboard/projects/[projectId]/new-run/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function NewRunPage({ params }: { params: { projectId: string } }) {
+export default function NewRunPage({
+  params,
+}: {
+  params: { projectId: string };
+}) {
   const router = useRouter();
-  const [prompt, setPrompt] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const projectId = params.projectId;
 
-  async function submit() {
-    setBusy(true);
-    setErr(null);
+  const [prompt, setPrompt] = useState(
+    "Generate a simple landing page under app/generated/hello/page.tsx"
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const res = await fetch("/api/agents/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId: params.projectId, prompt }),
-    });
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
 
-    const data = await res.json().catch(() => ({}));
-    setBusy(false);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/runs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
 
-    if (!res.ok) {
-      setErr(data?.error ?? "Failed to start run");
-      return;
+      const data = await res.json();
+
+      if (!res.ok || !data?.ok) {
+        setError(data?.error ?? "Failed to create run");
+        setSubmitting(false);
+        return;
+      }
+
+      router.push(`/dashboard/runs/${data.runId}`);
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to create run");
+      setSubmitting(false);
     }
-
-    router.push(`/dashboard/runs/${data.runId}`);
   }
 
   return (
-    <main style={{ padding: 40, fontFamily: "system-ui" }}>
-      <h1>New Run</h1>
-      <p>Describe what you want the agent to build/change.</p>
-
-      <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        rows={8}
-        style={{ width: "100%", maxWidth: 800 }}
-        placeholder='Example: "Create a landing page template with pricing + FAQ + testimonials. Add a /templates page."'
-      />
-
-      <div style={{ marginTop: 12 }}>
-        <button onClick={submit} disabled={busy || !prompt.trim()}>
-          {busy ? "Running…" : "Run Agent"}
-        </button>
+    <main className="p-6 space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold">New Run</h1>
+        <div className="text-sm opacity-80">Project: {projectId}</div>
       </div>
 
-      {err && <p style={{ marginTop: 12, color: "crimson" }}>{err}</p>}
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Prompt</label>
+          <textarea
+            className="w-full rounded-md border p-2 text-sm"
+            rows={8}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+          />
+        </div>
+
+        {error && (
+          <div className="rounded-md border p-3 text-sm">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="inline-flex items-center rounded-md border px-3 py-2 text-sm disabled:opacity-60"
+        >
+          {submitting ? "Creating..." : "Create Run"}
+        </button>
+
+        <div className="text-sm opacity-80">
+          <a className="underline" href={`/dashboard/projects/${projectId}`}>
+            Back to project
+          </a>
+        </div>
+      </form>
     </main>
   );
 }
