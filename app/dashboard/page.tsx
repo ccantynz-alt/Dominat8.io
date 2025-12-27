@@ -3,87 +3,103 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-type Project = {
-  id: string;
-  name: string;
-};
+type Project = { id: string; name: string };
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  async function load() {
-    const res = await fetch("/api/projects", { cache: "no-store" });
-    const json = await res.json();
-    if (json?.ok) setProjects(json.projects || []);
+  async function loadProjects() {
+    setError(null);
+    try {
+      const res = await fetch("/api/projects", { cache: "no-store" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.ok) throw new Error(json?.error || "Failed to load projects");
+      setProjects(json.projects || []);
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    }
   }
 
   useEffect(() => {
-    load();
+    loadProjects();
   }, []);
 
   async function createProject() {
     setError(null);
-    setLoading(true);
-
+    setBusy(true);
     try {
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name }),
       });
-
-      const json = await res.json();
-      if (!res.ok || !json?.ok) {
-        throw new Error(json?.error || "Failed to create project");
-      }
-
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.ok) throw new Error(json?.error || "Failed to create project");
       setName("");
-      await load();
+      await loadProjects();
     } catch (e: any) {
-      setError(e.message);
+      setError(String(e?.message || e));
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   }
 
   return (
     <div style={{ padding: 24, maxWidth: 900 }}>
-      <h1>Dashboard</h1>
+      <h1 style={{ marginTop: 0 }}>Dashboard</h1>
 
-      <h2>Create a Project</h2>
+      <div style={{ marginTop: 16, padding: 16, border: "1px solid #333", borderRadius: 12 }}>
+        <h2 style={{ marginTop: 0 }}>Create Project</h2>
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Project name"
-          style={{ padding: 8, minWidth: 240 }}
-        />
-        <button onClick={createProject} disabled={loading || !name}>
-          {loading ? "Creating…" : "Create Project"}
-        </button>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. My AI Website"
+            style={{ padding: 10, borderRadius: 10, border: "1px solid #444", minWidth: 260 }}
+          />
+          <button
+            onClick={createProject}
+            disabled={busy || !name.trim()}
+            style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #444", cursor: "pointer" }}
+          >
+            {busy ? "Creating…" : "Create Project"}
+          </button>
+
+          <button
+            onClick={loadProjects}
+            style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #444", cursor: "pointer" }}
+          >
+            Refresh
+          </button>
+        </div>
+
+        {error ? (
+          <pre style={{ marginTop: 12, padding: 12, background: "#111", borderRadius: 10, whiteSpace: "pre-wrap" }}>
+            Error: {error}
+          </pre>
+        ) : null}
       </div>
 
-      {error ? <div style={{ color: "red", marginTop: 8 }}>{error}</div> : null}
-
-      <h2 style={{ marginTop: 24 }}>Projects</h2>
-
-      {projects.length === 0 ? (
-        <div>No projects yet.</div>
-      ) : (
-        <ul>
-          {projects.map((p) => (
-            <li key={p.id}>
-              <Link href={`/dashboard/projects/${p.id}`}>
-                {p.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div style={{ marginTop: 24 }}>
+        <h2>Projects</h2>
+        {projects.length === 0 ? (
+          <div style={{ opacity: 0.8 }}>No projects yet.</div>
+        ) : (
+          <ul style={{ paddingLeft: 18 }}>
+            {projects.map((p) => (
+              <li key={p.id}>
+                <Link href={`/dashboard/projects/${p.id}`} style={{ textDecoration: "underline" }}>
+                  {p.name} ({p.id})
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
