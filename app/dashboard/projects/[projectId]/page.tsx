@@ -1,41 +1,77 @@
-// app/dashboard/projects/[projectId]/page.tsx
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 
-async function getRuns(projectId: string) {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/projects/${projectId}/runs`,
-    { cache: "no-store" }
-  ).catch(() => null);
+type Run = {
+  id: string;
+  status?: string;
+  createdAt?: string;
+};
 
-  if (!res || !res.ok) return { runs: [] as any[] };
-  return res.json();
+async function getRuns(projectId: string): Promise<Run[]> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/projects/${projectId}/runs`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const runs = data?.runs ?? data?.items ?? [];
+    return Array.isArray(runs) ? runs : [];
+  } catch {
+    return [];
+  }
 }
 
-export default async function ProjectPage({ params }: { params: { projectId: string } }) {
-  const { projectId } = params;
-  const data = await getRuns(projectId);
-  const runs = data?.runs ?? [];
+export default async function ProjectRunsPage({
+  params,
+}: {
+  params: { projectId: string };
+}) {
+  const projectId = params.projectId;
+  const runs = await getRuns(projectId);
 
   return (
-    <main style={{ padding: 40, fontFamily: "system-ui" }}>
-      <p>
-        <Link href="/dashboard">← Back</Link>
-      </p>
+    <main className="p-6 space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold">Project</h1>
+        <div className="text-sm opacity-80">{projectId}</div>
+      </div>
 
-      <h1>Project: {projectId}</h1>
+      <div className="flex gap-3">
+        <Link
+          href={`/dashboard/projects/${projectId}/new-run`}
+          className="inline-flex items-center rounded-md border px-3 py-2 text-sm"
+        >
+          New Run
+        </Link>
 
-      <p style={{ marginTop: 16 }}>
-        <Link href={`/dashboard/projects/${projectId}/new-run`}>▶ New Run</Link>
-      </p>
+        <Link href="/dashboard" className="underline text-sm self-center">
+          Back
+        </Link>
+      </div>
 
-      <h2 style={{ marginTop: 24 }}>Runs</h2>
-      <ul>
-        {runs.map((r: any) => (
-          <li key={r.id}>
-            <Link href={`/dashboard/runs/${r.id}`}>{r.id}</Link> — {r.status}
-          </li>
-        ))}
-      </ul>
+      <div className="rounded-md border p-4 space-y-3">
+        <h2 className="font-medium">Runs</h2>
+
+        {runs.length === 0 ? (
+          <p className="text-sm opacity-80">No runs yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {runs.map((r) => (
+              <li key={r.id} className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="font-medium">{r.id}</div>
+                  <div className="text-xs opacity-70">{r.status ?? "unknown"}</div>
+                </div>
+                <Link className="underline text-sm" href={`/dashboard/runs/${r.id}`}>
+                  Open
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </main>
   );
 }
