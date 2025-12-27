@@ -1,85 +1,60 @@
-// app/dashboard/runs/[runId]/page.tsx
-import Link from "next/link";
+import { notFound } from "next/navigation";
 
-async function getRun(runId: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/runs/${runId}`, {
+type Run = {
+  id: string;
+  status: "pending" | "running" | "succeeded" | "failed";
+};
+
+type RunFile = {
+  path: string;
+  content: string;
+};
+
+async function getRun(runId: string): Promise<Run | null> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/runs/${runId}`, {
     cache: "no-store",
-  }).catch(() => null);
+  });
 
-  if (!res || !res.ok) return null;
-  return res.json();
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.run ?? null;
 }
 
-async function getLogs(runId: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/runs/${runId}/logs`, {
-    cache: "no-store",
-  }).catch(() => null);
+async function getFiles(runId: string): Promise<RunFile[]> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/runs/${runId}/files_v2`,
+    { cache: "no-store" }
+  );
 
-  if (!res || !res.ok) return { logs: [] as any[] };
-  return res.json();
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data.files) ? data.files : [];
 }
 
-async function getFiles(runId: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/runs/${runId}/files`, {
-    cache: "no-store",
-  }).catch(() => null);
+export default async function RunPage({
+  params,
+}: {
+  params: { runId: string };
+}) {
+  const run = await getRun(params.runId);
+  if (!run) notFound();
 
-  if (!res || !res.ok) return { files: [] as any[] };
-  return res.json();
-}
-
-export default async function RunPage({ params }: { params: { runId: string } }) {
-  const runData = await getRun(params.runId);
-  const logsData = await getLogs(params.runId);
-  const filesData = await getFiles(params.runId);
-
-  const run = runData?.run;
-  const logs = logsData?.logs ?? [];
-  const files = filesData?.files ?? [];
+  const files = await getFiles(params.runId);
 
   return (
-    <main style={{ padding: 40, fontFamily: "system-ui" }}>
-      <p>
-        <Link href="/dashboard">← Dashboard</Link>
-      </p>
+    <div className="space-y-6">
+      <h1 className="text-xl font-semibold">Run {run.id}</h1>
 
-      <h1>Run: {params.runId}</h1>
+      <p>Status: {run.status}</p>
 
-      {!run ? (
-        <p>Run not found.</p>
-      ) : (
-        <>
-          <p>Status: <b>{run.status}</b></p>
-          {run.error && <p style={{ color: "crimson" }}>Error: {run.error}</p>}
-
-          <h2 style={{ marginTop: 24 }}>Logs</h2>
-          <pre style={{ background: "#111", color: "#eee", padding: 12, overflowX: "auto" }}>
-            {logs.map((l: any) => `[${l.ts}] ${l.level.toUpperCase()} ${l.msg}`).join("\n")}
-          </pre>
-
-          <h2 style={{ marginTop: 24 }}>Generated Files</h2>
-          {files.length === 0 ? (
-            <p>No files generated yet.</p>
-          ) : (
-            <ul>
-              {files.map((f: any) => (
-                <li key={f.path}>
-                  <code>{f.path}</code>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+      {run.status === "succeeded" && files.length > 0 && (
+        <a
+          href={`/api/runs/${params.runId}/zip`}
+          className="inline-flex items-center rounded-md border px-3 py-2 text-sm"
+        >
+          Download ZIP
+        </a>
       )}
-    </main>
+    </div>
   );
 }
-{/* Show only when succeeded + has files (adjust to match your local variables) */}
-{run?.status === "succeeded" && files?.length > 0 && (
-  <a
-    href={`/api/runs/${runId}/zip`}
-    className="inline-flex items-center rounded-md border px-3 py-2 text-sm"
-  >
-    Download ZIP
-  </a>
-)}
