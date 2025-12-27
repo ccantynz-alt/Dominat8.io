@@ -74,3 +74,12 @@ export default async function RunPage({ params }: { params: { runId: string } })
     </main>
   );
 }
+{/* Show only when succeeded + has files (adjust to match your local variables) */}
+{run?.status === "succeeded" && files?.length > 0 && (
+  <a
+    href={`/api/runs/${runId}/zip`}
+    className="inline-flex items-center rounded-md border px-3 py-2 text-sm"
+  >
+    Download ZIP
+  </a>
+)}
