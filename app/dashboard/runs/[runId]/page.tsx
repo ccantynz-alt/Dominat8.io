@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
+import Link from "next/link";
 
 type Run = {
   id: string;
-  status: "pending" | "running" | "succeeded" | "failed";
+  status?: string;
 };
 
 type RunFile = {
@@ -10,51 +10,62 @@ type RunFile = {
   content: string;
 };
 
-async function getRun(runId: string): Promise<Run | null> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/runs/${runId}`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.run ?? null;
-}
-
-async function getFiles(runId: string): Promise<RunFile[]> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/runs/${runId}/files_v2`,
-    { cache: "no-store" }
-  );
-
-  if (!res.ok) return [];
-  const data = await res.json();
-  return Array.isArray(data.files) ? data.files : [];
-}
-
 export default async function RunPage({
   params,
 }: {
   params: { runId: string };
 }) {
-  const run = await getRun(params.runId);
-  if (!run) notFound();
+  const runId = params.runId;
 
-  const files = await getFiles(params.runId);
+  let run: Run | null = null;
+  let files: RunFile[] = [];
+
+  // Fetch run
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/runs/${runId}`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      run = data?.run ?? null;
+    }
+  } catch {}
+
+  // Fetch files (use files_v2 to avoid the old route)
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/runs/${runId}/files_v2`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      files = Array.isArray(data?.files) ? data.files : [];
+    }
+  } catch {}
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Run {run.id}</h1>
+    <main className="p-6 space-y-6">
+      <h1 className="text-xl font-semibold">Run</h1>
 
-      <p>Status: {run.status}</p>
+      <div className="rounded-md border p-4 space-y-2">
+        <div><strong>Run ID:</strong> {runId}</div>
+        <div><strong>Status:</strong> {run?.status ?? "unknown"}</div>
+        <div><strong>Files:</strong> {files.length}</div>
+      </div>
 
-      {run.status === "succeeded" && files.length > 0 && (
-        <a
-          href={`/api/runs/${params.runId}/zip`}
+      {run?.status === "succeeded" && files.length > 0 && (
+        <Link
+          href={`/api/runs/${runId}/zip`}
           className="inline-flex items-center rounded-md border px-3 py-2 text-sm"
         >
           Download ZIP
-        </a>
+        </Link>
       )}
-    </div>
+
+      <div className="text-sm opacity-80">
+        <Link href="/dashboard" className="underline">
+          Back to Dashboard
+        </Link>
+      </div>
+    </main>
   );
 }
