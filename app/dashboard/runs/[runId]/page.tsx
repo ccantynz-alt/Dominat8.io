@@ -19,11 +19,14 @@ export default async function RunPage({
       `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/runs/${runId}/files_v2`,
       { cache: "no-store" }
     );
+
     if (res.ok) {
       const data = await res.json();
       files = Array.isArray(data?.files) ? data.files : [];
     }
-  } catch {}
+  } catch {
+    files = [];
+  }
 
   return (
     <main className="p-6 space-y-6">
