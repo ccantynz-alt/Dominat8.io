@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { kvJsonGet, kvJsonSet, kvNowISO } from "../../lib/kv";
-import { getCurrentUserId } from "../../lib/demoAuth";
 
-export const runtime = "nodejs"; // avoid edge URL parsing weirdness
+import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
+import { getCurrentUserId } from "../../../lib/demoAuth";
+
+export const runtime = "nodejs";
 
 function uid(prefix = "") {
   const id = randomUUID().replace(/-/g, "");
@@ -23,28 +24,12 @@ const CreateProjectSchema = z.object({
   name: z.string().min(1, "Project name is required"),
 });
 
-function safeUrl(req: Request) {
-  // Safari/edge cases can produce a relative req.url that breaks new URL(req.url)
-  // This makes it safe in all environments.
-  return new URL(req.url, "http://localhost");
-}
-
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const userId = getCurrentUserId();
-    const url = safeUrl(req);
-
-    // Optional: support fetching a single project
-    const projectId = url.searchParams.get("projectId");
-    if (projectId) {
-      const project = await kvJsonGet<any>(projectKey(userId, projectId));
-      if (!project) return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
-      return NextResponse.json({ ok: true, project });
-    }
-
     const ids = (await kvJsonGet<string[]>(projectsIndexKey(userId))) || [];
-    const projects: any[] = [];
 
+    const projects: any[] = [];
     for (const id of ids) {
       const p = await kvJsonGet<any>(projectKey(userId, id));
       if (p) projects.push(p);
