@@ -1,167 +1,124 @@
 // app/api/projects/[projectId]/apply/route.ts
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../../lib/kv";
-import { getCurrentUserId } from "../../../../lib/demoAuth";
+import { kvJsonGet, kvJsonSet, kvNowISO } from "@/app/lib/kv";
+import { getCurrentUserId } from "@/app/lib/demoAuth";
 
-const VERSION = "apply-v12-merge-by-path";
-
-const BodySchema = z.object({
+const QuerySchema = z.object({
   runId: z.string().min(1),
 });
 
-type FileRec = { path: string; content: string };
+type GenFile = {
+  path: string;
+  content: string;
+};
+
+type RunRecord = {
+  runId: string;
+  userId: string;
+  createdAt?: string;
+  files: GenFile[];
+};
+
+type ProjectRecord = {
+  projectId: string;
+  userId: string;
+  files: GenFile[];
+  updatedAt: string;
+};
 
 function projectKey(userId: string, projectId: string) {
   return `projects:${userId}:${projectId}`;
 }
 
-function runKeyUser(userId: string, runId: string) {
+function runKey(userId: string, runId: string) {
   return `runs:${userId}:${runId}`;
 }
 
-function runKeyLegacy(runId: string) {
-  return `runs:${runId}`;
+function normalizePath(path: string) {
+  return path.replace(/^\/+/, "");
 }
 
-function isAllowedGeneratedPath(p: string): boolean {
-  if (typeof p !== "string") return false;
-  const path = p.replace(/\\/g, "/");
-  if (!path.startsWith("app/generated/")) return false;
-  if (path.includes("..") || path.startsWith("/") || path.includes("://")) return false;
-  if (path.includes("/api/")) return false;
-  const okExt = [".tsx", ".ts", ".css", ".md", ".json", ".txt", ".svg"];
-  if (!okExt.some((ext) => path.endsWith(ext))) return false;
-  return true;
+function mergeFilesByPath(
+  existing: GenFile[],
+  incoming: GenFile[]
+): GenFile[] {
+  const map = new Map<string, GenFile>();
+
+  for (const file of existing) {
+    const p = normalizePath(file.path);
+    map.set(p, { path: p, content: file.content });
+  }
+
+  for (const file of incoming) {
+    const p = normalizePath(file.path);
+    map.set(p, { path: p, content: file.content });
+  }
+
+  return Array.from(map.values()).sort((a, b) =>
+    a.path.localeCompare(b.path)
+  );
 }
 
-function mergeFiles(existing: FileRec[], incoming: FileRec[]) {
-  const map = new Map<string, FileRec>();
+export async function GET(
+  req: Request,
+  ctx: { params: Promise<{ projectId: string }> }
+) {
+  const { projectId } = await ctx.params;
+  const userId = getCurrentUserId();
 
-  // keep existing
-  for (const f of existing) {
-    const path = String(f?.path ?? "");
-    const content = String(f?.content ?? "");
-    if (!path) continue;
-    map.set(path, { path, content });
-  }
+  const url = new URL(req.url);
+  const parsed = QuerySchema.safeParse({
+    runId: url.searchParams.get("runId"),
+  });
 
-  // overwrite/append incoming
-  for (const f of incoming) {
-    const path = String(f?.path ?? "");
-    const content = String(f?.content ?? "");
-    if (!path) continue;
-    map.set(path, { path, content });
-  }
-
-  return Array.from(map.values()).sort((a, b) => a.path.localeCompare(b.path));
-}
-
-async function applyRunToProject(userId: string, projectId: string, runId: string) {
-  const rKey1 = runKeyUser(userId, runId);
-  const rKey2 = runKeyLegacy(runId);
-
-  const run = (await kvJsonGet<any>(rKey1)) ?? (await kvJsonGet<any>(rKey2));
-  const rawFiles = Array.isArray(run?.files) ? run.files : [];
-
-  const incoming: FileRec[] = [];
-  const dropped: Array<{ path: string; reason: string }> = [];
-
-  for (const f of rawFiles) {
-    const path = String(f?.path ?? "");
-    const content = String(f?.content ?? "");
-    if (!path) {
-      dropped.push({ path, reason: "missing path" });
-      continue;
-    }
-    if (!isAllowedGeneratedPath(path)) {
-      dropped.push({ path, reason: "disallowed path" });
-      continue;
-    }
-    incoming.push({ path, content });
-  }
-
-  if (incoming.length === 0) {
+  if (!parsed.success) {
     return NextResponse.json(
-      {
-        ok: false,
-        version: VERSION,
-        error: "Run contained no allowed generated UI files",
-        userId,
-        projectId,
-        runId,
-        triedRunKeys: [rKey1, rKey2],
-        rawFilesCount: rawFiles.length,
-        incomingCount: incoming.length,
-        dropped,
-      },
+      { ok: false, error: "Missing or invalid runId" },
       { status: 400 }
     );
   }
 
-  const pKey = projectKey(userId, projectId);
+  const { runId } = parsed.data;
 
-  // ✅ MERGE instead of overwrite
-  const existingProj = await kvJsonGet<any>(pKey);
-  const existingFiles: FileRec[] = Array.isArray(existingProj?.files) ? existingProj.files : [];
+  const run = await kvJsonGet<RunRecord>(runKey(userId, runId));
+  if (!run || !Array.isArray(run.files)) {
+    return NextResponse.json(
+      { ok: false, error: "Run not found" },
+      { status: 404 }
+    );
+  }
 
-  const merged = mergeFiles(existingFiles, incoming);
+  const projectKeyName = projectKey(userId, projectId);
+  const existingProject =
+    await kvJsonGet<ProjectRecord>(projectKeyName);
 
-  const payload = {
+  const existingFiles = existingProject?.files ?? [];
+  const incomingFiles = run.files ?? [];
+
+  const mergedFiles = mergeFilesByPath(
+    existingFiles,
+    incomingFiles
+  );
+
+  const updatedProject: ProjectRecord = {
     projectId,
     userId,
-    files: merged,
+    files: mergedFiles,
     updatedAt: kvNowISO(),
   };
 
-  await kvJsonSet(pKey, payload);
-
-  const readBack = await kvJsonGet<any>(pKey);
-  const readBackCount = Array.isArray(readBack?.files) ? readBack.files.length : 0;
+  await kvJsonSet(projectKeyName, updatedProject);
 
   return NextResponse.json({
     ok: true,
-    version: VERSION,
-    userId,
+    version: "apply-v12-merge-by-path",
     projectId,
     runId,
-    usedRunKey: (await kvJsonGet<any>(rKey1)) ? rKey1 : rKey2,
-    pKey,
-    rawFilesCount: rawFiles.length,
-    incomingCount: incoming.length,
-    mergedCount: merged.length,
-    readBackCount,
-    droppedCount: dropped.length,
-    dropped,
+    counts: {
+      before: existingFiles.length,
+      incoming: incomingFiles.length,
+      after: mergedFiles.length,
+    },
   });
-}
-
-export async function GET(req: Request, { params }: { params: { projectId: string } }) {
-  const userId = getCurrentUserId();
-  const projectId = params.projectId;
-  const url = new URL(req.url);
-  const runId = url.searchParams.get("runId") || "";
-
-  if (!runId) {
-    return NextResponse.json(
-      { ok: false, version: VERSION, error: "Missing runId query param. Use /apply?runId=run_xxx" },
-      { status: 400 }
-    );
-  }
-
-  return applyRunToProject(userId, projectId, runId);
-}
-
-export async function POST(req: Request, { params }: { params: { projectId: string } }) {
-  const userId = getCurrentUserId();
-  const projectId = params.projectId;
-
-  const body = await req.json().catch(() => null);
-  const parsed = BodySchema.safeParse(body);
-
-  if (!parsed.success) {
-    return NextResponse.json({ ok: false, version: VERSION, error: "Missing runId" }, { status: 400 });
-  }
-
-  return applyRunToProject(userId, projectId, parsed.data.runId);
 }
