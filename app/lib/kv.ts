@@ -1,13 +1,14 @@
 // app/lib/kv.ts
 // Minimal in-memory KV layer to keep builds stable on Vercel.
-// Supports get/set + a tiny sorted-set (zadd) used by store.ts.
-
-type Json = Record<string, any>;
+// Supports get/set + tiny sorted-set (zadd/zrange) + list queue (lpush/rpop).
 
 const memory = new Map<string, any>();
 
 // sorted set store: key -> Map(member -> score)
 const zsets = new Map<string, Map<string, number>>();
+
+// list store: key -> array
+const lists = new Map<string, string[]>();
 
 export function kvNowISO() {
   return new Date().toISOString();
@@ -39,17 +40,31 @@ export const kv = {
     return 1;
   },
 
-  // Optional helper (safe): returns members by score desc/asc if needed later
+  // Minimal zrange implementation (returns members)
   async zrange(key: string, start: number, stop: number, opts?: { rev?: boolean }) {
     const m = zsets.get(key);
     if (!m) return [];
 
     const arr = Array.from(m.entries()).map(([member, score]) => ({ member, score }));
-
     arr.sort((a, b) => (opts?.rev ? b.score - a.score : a.score - b.score));
 
-    const slice = arr.slice(start, stop >= 0 ? stop + 1 : undefined);
+    const end = stop >= 0 ? stop + 1 : undefined;
+    return arr.slice(start, end).map((x) => x.member);
+  },
 
-    return slice.map((x) => x.member);
-  }
+  // List/queue helpers (Redis-like)
+  async lpush(key: string, value: string) {
+    const list = lists.get(key) ?? [];
+    list.unshift(String(value));
+    lists.set(key, list);
+    return list.length;
+  },
+
+  async rpop(key: string) {
+    const list = lists.get(key);
+    if (!list || list.length === 0) return null;
+    const v = list.pop() ?? null;
+    lists.set(key, list);
+    return v;
+  },
 };
