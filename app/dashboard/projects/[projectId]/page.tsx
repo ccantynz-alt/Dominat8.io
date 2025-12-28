@@ -21,6 +21,9 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
   );
   const [running, setRunning] = useState(false);
   const [runLog, setRunLog] = useState<string>("");
+  const [publishing, setPublishing] = useState(false);
+const [publishLog, setPublishLog] = useState<string>("");
+
 
   async function load() {
     setLoading(true);
