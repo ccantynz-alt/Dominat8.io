@@ -1,7 +1,7 @@
 // app/api/projects/[projectId]/files/route.ts
 import { NextResponse } from "next/server";
-import { kvJsonGet } from "@/app/lib/kv";
-import { getCurrentUserId } from "@/app/lib/demoAuth";
+import { kvJsonGet } from "../../../../lib/kv";
+import { getCurrentUserId } from "../../../../lib/demoAuth";
 
 function projectKey(userId: string, projectId: string) {
   return `projects:${userId}:${projectId}`;
@@ -16,7 +16,9 @@ export async function GET(
 
   const pKey = projectKey(userId, projectId);
   const proj = await kvJsonGet<any>(pKey);
+
   const files = Array.isArray(proj?.files) ? proj.files : [];
+  const filesCount = files.length;
 
   return NextResponse.json({
     ok: true,
@@ -28,7 +30,7 @@ export async function GET(
       storedProjectId: proj?.projectId ?? null,
       storedUserId: proj?.userId ?? null,
     },
+    filesCount,
     files,
-    filesCount: files.length,
   });
 }
