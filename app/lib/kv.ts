@@ -1,6 +1,6 @@
 // app/lib/kv.ts
 // Minimal in-memory KV layer to keep builds stable on Vercel.
-// Supports get/set + tiny sorted-set (zadd/zrange) + list queue (lpush/rpop).
+// Supports get/set + sorted-set (zadd/zrange) + list queue/logs (lpush/rpush/rpop/lrange).
 
 const memory = new Map<string, any>();
 
@@ -22,6 +22,12 @@ export async function kvJsonSet(key: string, value: any) {
   memory.set(key, value);
 }
 
+function getList(key: string) {
+  const list = lists.get(key) ?? [];
+  lists.set(key, list);
+  return list;
+}
+
 export const kv = {
   async get(key: string) {
     return memory.get(key) ?? null;
@@ -31,8 +37,7 @@ export const kv = {
     memory.set(key, value);
   },
 
-  // Minimal zadd implementation:
-  // kv.zadd("myzset", { score: 123, member: "abc" })
+  // Sorted set: kv.zadd("myzset", { score: 123, member: "abc" })
   async zadd(key: string, entry: { score: number; member: string }) {
     const m = zsets.get(key) ?? new Map<string, number>();
     m.set(String(entry.member), Number(entry.score));
@@ -40,7 +45,7 @@ export const kv = {
     return 1;
   },
 
-  // Minimal zrange implementation (returns members)
+  // Sorted set: returns members (like Redis ZRANGE)
   async zrange(key: string, start: number, stop: number, opts?: { rev?: boolean }) {
     const m = zsets.get(key);
     if (!m) return [];
@@ -52,19 +57,31 @@ export const kv = {
     return arr.slice(start, end).map((x) => x.member);
   },
 
-  // List/queue helpers (Redis-like)
+  // List: LPUSH
   async lpush(key: string, value: string) {
-    const list = lists.get(key) ?? [];
+    const list = getList(key);
     list.unshift(String(value));
-    lists.set(key, list);
     return list.length;
   },
 
+  // List: RPUSH
+  async rpush(key: string, value: string) {
+    const list = getList(key);
+    list.push(String(value));
+    return list.length;
+  },
+
+  // List: RPOP
   async rpop(key: string) {
     const list = lists.get(key);
     if (!list || list.length === 0) return null;
-    const v = list.pop() ?? null;
-    lists.set(key, list);
-    return v;
+    return list.pop() ?? null;
+  },
+
+  // List: LRANGE (inclusive stop, like Redis)
+  async lrange(key: string, start: number, stop: number) {
+    const list = lists.get(key) ?? [];
+    const end = stop >= 0 ? stop + 1 : undefined;
+    return list.slice(start, end);
   },
 };
