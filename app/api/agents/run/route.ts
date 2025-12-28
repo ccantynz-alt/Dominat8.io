@@ -27,6 +27,10 @@ type ProjectRecord = {
   updatedAt: string;
 };
 
+function runKey(userId: string, runId: string) {
+  return `runs:${userId}:${runId}`;
+}
+
 function projectKey(userId: string, projectId: string) {
   return `projects:${userId}:${projectId}`;
 }
@@ -35,12 +39,19 @@ function normalizePath(p: string) {
   return p.replace(/^\/+/, "");
 }
 
-function baseUrlFromEnv() {
-  // VERCEL_URL is usually like "my-app.vercel.app" (no scheme)
-  const v = process.env.VERCEL_URL;
-  if (!v) return null;
-  if (v.startsWith("http://") || v.startsWith("https://")) return v;
-  return `https://${v}`;
+function mergeByPath(existing: GenFile[], incoming: GenFile[]) {
+  const map = new Map<string, GenFile>();
+
+  for (const f of existing) {
+    const p = normalizePath(f.path);
+    map.set(p, { path: p, content: f.content });
+  }
+  for (const f of incoming) {
+    const p = normalizePath(f.path);
+    map.set(p, { path: p, content: f.content });
+  }
+
+  return Array.from(map.values()).sort((a, b) => a.path.localeCompare(b.path));
 }
 
 export async function POST(req: Request) {
@@ -57,7 +68,7 @@ export async function POST(req: Request) {
 
   const { prompt, projectId } = parsed.data;
 
-  // Load existing project files for context (helps iterative editing)
+  // Load existing project files for context
   const existingProject = await kvJsonGet<ProjectRecord>(projectKey(userId, projectId));
   const existingFiles = (existingProject?.files ?? []).map((f) => ({
     path: normalizePath(f.path),
@@ -66,14 +77,13 @@ export async function POST(req: Request) {
 
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  // We force the model to return STRICT JSON only (no markdown)
   const system = [
     "You are an AI website builder that outputs real Next.js App Router files.",
-    "Return ONLY valid JSON with this exact shape: [{\"path\":\"...\",\"content\":\"...\"}, ...].",
+    'Return ONLY valid JSON with this exact shape: [{"path":"...","content":"..."}, ...].',
     "Do NOT wrap in markdown. Do NOT include explanations.",
     "Paths must be under app/generated/** and represent Next.js App Router pages.",
-    "Use TypeScript/TSX and export default React components.",
-    "If the user asks to modify an existing page, update that page file path.",
+    "Use TSX and export default React components.",
+    "If the user asks to modify an existing page, update that exact page file path.",
   ].join("\n");
 
   const user = [
@@ -85,10 +95,7 @@ export async function POST(req: Request) {
   ].join("\n");
 
   let files: GenFile[] = [];
-
   try {
-    // Using responses API style via SDK: many installs support .responses.create
-    // But to be safe with broad SDK versions, use chat.completions.
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.2,
@@ -99,7 +106,6 @@ export async function POST(req: Request) {
     });
 
     const text = completion.choices?.[0]?.message?.content ?? "";
-    // Parse JSON strictly
     const parsedJson = JSON.parse(text);
     const validated = GenFilesSchema.parse(parsedJson);
     files = validated.map((f) => ({
@@ -111,8 +117,6 @@ export async function POST(req: Request) {
       {
         ok: false,
         error: "Agent generation failed",
-        hint:
-          "The model must return strict JSON only. Check server logs for the raw model output if needed.",
         details: err?.message ?? String(err),
       },
       { status: 500 }
@@ -121,7 +125,8 @@ export async function POST(req: Request) {
 
   const runId = `run_${randomUUID().replace(/-/g, "")}`;
 
-  await kvJsonSet(`runs:${userId}:${runId}`, {
+  // Save run (temporary)
+  await kvJsonSet(runKey(userId, runId), {
     ok: true,
     runId,
     userId,
@@ -131,24 +136,29 @@ export async function POST(req: Request) {
     createdAt: kvNowISO(),
   });
 
-  // 🔥 AUTO-APPLY
-  const baseUrl = baseUrlFromEnv();
-  try {
-    // If baseUrl exists, call absolute. Otherwise call relative (local/dev)
-    const applyUrl = baseUrl
-      ? `${baseUrl}/api/projects/${projectId}/apply?runId=${runId}`
-      : `/api/projects/${projectId}/apply?runId=${runId}`;
+  // ✅ AUTO-APPLY (NO HTTP): merge into project KV directly
+  const beforeCount = existingFiles.length;
+  const mergedFiles = mergeByPath(existingFiles, files);
 
-    await fetch(applyUrl, { method: "GET" });
-  } catch {
-    // Even if auto-apply fails, still return the run so user can apply manually
-  }
+  const nextProject: ProjectRecord = {
+    projectId,
+    userId,
+    files: mergedFiles,
+    updatedAt: kvNowISO(),
+  };
+
+  await kvJsonSet(projectKey(userId, projectId), nextProject);
 
   return NextResponse.json({
     ok: true,
-    version: "agents-run-v8-openai-json+auto-apply",
+    version: "agents-run-v9-openai+direct-auto-apply",
     runId,
     filesCount: files.length,
     autoApplied: true,
+    apply: {
+      beforeCount,
+      incomingCount: files.length,
+      afterCount: mergedFiles.length,
+    },
   });
 }
