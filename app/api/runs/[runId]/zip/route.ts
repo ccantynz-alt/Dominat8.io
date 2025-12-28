@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function runKey(userId: string, runId: string) {
-  return `runs:${userId}:${runId}`;
+  return "runs:" + userId + ":" + runId;
 }
 
 export async function GET(
@@ -39,17 +39,19 @@ export async function GET(
     const zip = new JSZip();
 
     for (const file of run.files) {
-      if (file?.path && typeof file.content === "string") {
+      if (file && file.path && typeof file.content === "string") {
         zip.file(file.path, file.content);
       }
     }
 
-    const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+    // Generate a Node Buffer then convert to Uint8Array (BodyInit-compatible)
+    const nodeBuffer: Buffer = await zip.generateAsync({ type: "nodebuffer" });
+    const body = new Uint8Array(nodeBuffer);
 
-    return new NextResponse(zipBuffer, {
+    return new NextResponse(body, {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="run_${runId}.zip"`,
+        "Content-Disposition": 'attachment; filename="run_' + runId + '.zip"',
       },
     });
   } catch (err: any) {
