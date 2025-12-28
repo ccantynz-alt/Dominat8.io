@@ -126,9 +126,39 @@ const [publishLog, setPublishLog] = useState<string>("");
           </button>
           <button
   onClick={async () => {
-    const res = await fetch(`/api/projects/${projectId}/publish`, {
-      method: "GET",
-    });
+    setPublishing(true);
+    setPublishLog("");
+    try {
+      const res = await fetch(`/api/projects/${projectId}/publish`, {
+        method: "GET",
+      });
+      const json = await res.json().catch(() => null);
+
+      if (json?.ok && json?.commitUrl) {
+        setPublishLog("✅ Published: " + json.commitUrl);
+        window.open(json.commitUrl, "_blank");
+      } else {
+        setPublishLog("❌ Publish failed: " + (json?.error || "Unknown error"));
+      }
+    } catch (e: any) {
+      setPublishLog("❌ Publish failed: " + (e?.message || String(e)));
+    } finally {
+      setPublishing(false);
+    }
+  }}
+  disabled={running || publishing}
+  style={{
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "1px solid #444",
+    cursor: running || publishing ? "not-allowed" : "pointer",
+    fontWeight: 600,
+    background: running || publishing ? "#e9e9e9" : "#f4f4f4",
+  }}
+>
+  {publishing ? "Publishing…" : "Publish to GitHub"}
+</button>
+
     const json = await res.json();
 
     if (json?.ok && json?.commitUrl) {
