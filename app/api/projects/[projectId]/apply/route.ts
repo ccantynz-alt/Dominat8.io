@@ -1,8 +1,8 @@
 // app/api/projects/[projectId]/apply/route.ts
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
-import { getCurrentUserId } from "../../../lib/demoAuth";
+import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../../lib/kv";
+import { getCurrentUserId } from "../../../../lib/demoAuth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,11 +31,17 @@ function projectFilesKey(userId: string, projectId: string) {
   return "projectfiles:" + userId + ":" + projectId;
 }
 
-export async function POST(req: Request, { params }: { params: { projectId: string } }) {
+export async function POST(
+  req: Request,
+  { params }: { params: { projectId: string } }
+) {
   try {
     const projectId = params?.projectId;
     if (!projectId) {
-      return NextResponse.json({ ok: false, error: "Missing projectId" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "Missing projectId" },
+        { status: 400 }
+      );
     }
 
     const body = await req.json().catch(() => null);
@@ -51,12 +57,18 @@ export async function POST(req: Request, { params }: { params: { projectId: stri
 
     const project: any = await kvJsonGet(projectKey(userId, projectId));
     if (!project) {
-      return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, error: "Project not found" },
+        { status: 404 }
+      );
     }
 
     const run: any = await kvJsonGet(runKey(userId, parsed.data.runId));
     if (!run || !Array.isArray(run.files)) {
-      return NextResponse.json({ ok: false, error: "Run not found or has no files" }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, error: "Run not found or has no files" },
+        { status: 404 }
+      );
     }
 
     const filesMap: Record<string, string> =
@@ -97,6 +109,9 @@ export async function POST(req: Request, { params }: { params: { projectId: stri
       totalFilesInProject: project.filesCount,
     });
   } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err?.message ?? "Unknown error" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: err?.message ?? "Unknown error" },
+      { status: 500 }
+    );
   }
 }
