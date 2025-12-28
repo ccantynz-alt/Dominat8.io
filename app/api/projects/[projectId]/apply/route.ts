@@ -4,11 +4,13 @@ import { z } from "zod";
 import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../../lib/kv";
 import { getCurrentUserId } from "../../../../lib/demoAuth";
 
-const VERSION = "apply-v11-path-guardrails";
+const VERSION = "apply-v12-merge-by-path";
 
 const BodySchema = z.object({
   runId: z.string().min(1),
 });
+
+type FileRec = { path: string; content: string };
 
 function projectKey(userId: string, projectId: string) {
   return `projects:${userId}:${projectId}`;
@@ -22,28 +24,37 @@ function runKeyLegacy(runId: string) {
   return `runs:${runId}`;
 }
 
-// ✅ Only allow site UI files under app/generated/**
-// ❌ Block anything with /api/, .., or weird absolute paths
 function isAllowedGeneratedPath(p: string): boolean {
   if (typeof p !== "string") return false;
-
-  // normalize slashes
   const path = p.replace(/\\/g, "/");
-
-  // must live under app/generated/
   if (!path.startsWith("app/generated/")) return false;
-
-  // block traversal + absolute-ish
   if (path.includes("..") || path.startsWith("/") || path.includes("://")) return false;
-
-  // never allow api routes inside generated area
   if (path.includes("/api/")) return false;
-
-  // allow common web build file types
   const okExt = [".tsx", ".ts", ".css", ".md", ".json", ".txt", ".svg"];
   if (!okExt.some((ext) => path.endsWith(ext))) return false;
-
   return true;
+}
+
+function mergeFiles(existing: FileRec[], incoming: FileRec[]) {
+  const map = new Map<string, FileRec>();
+
+  // keep existing
+  for (const f of existing) {
+    const path = String(f?.path ?? "");
+    const content = String(f?.content ?? "");
+    if (!path) continue;
+    map.set(path, { path, content });
+  }
+
+  // overwrite/append incoming
+  for (const f of incoming) {
+    const path = String(f?.path ?? "");
+    const content = String(f?.content ?? "");
+    if (!path) continue;
+    map.set(path, { path, content });
+  }
+
+  return Array.from(map.values()).sort((a, b) => a.path.localeCompare(b.path));
 }
 
 async function applyRunToProject(userId: string, projectId: string, runId: string) {
@@ -53,14 +64,12 @@ async function applyRunToProject(userId: string, projectId: string, runId: strin
   const run = (await kvJsonGet<any>(rKey1)) ?? (await kvJsonGet<any>(rKey2));
   const rawFiles = Array.isArray(run?.files) ? run.files : [];
 
-  // sanitize
-  const kept = [];
+  const incoming: FileRec[] = [];
   const dropped: Array<{ path: string; reason: string }> = [];
 
   for (const f of rawFiles) {
     const path = String(f?.path ?? "");
     const content = String(f?.content ?? "");
-
     if (!path) {
       dropped.push({ path, reason: "missing path" });
       continue;
@@ -69,10 +78,10 @@ async function applyRunToProject(userId: string, projectId: string, runId: strin
       dropped.push({ path, reason: "disallowed path" });
       continue;
     }
-    kept.push({ path, content });
+    incoming.push({ path, content });
   }
 
-  if (kept.length === 0) {
+  if (incoming.length === 0) {
     return NextResponse.json(
       {
         ok: false,
@@ -83,7 +92,7 @@ async function applyRunToProject(userId: string, projectId: string, runId: strin
         runId,
         triedRunKeys: [rKey1, rKey2],
         rawFilesCount: rawFiles.length,
-        keptCount: kept.length,
+        incomingCount: incoming.length,
         dropped,
       },
       { status: 400 }
@@ -92,10 +101,16 @@ async function applyRunToProject(userId: string, projectId: string, runId: strin
 
   const pKey = projectKey(userId, projectId);
 
+  // ✅ MERGE instead of overwrite
+  const existingProj = await kvJsonGet<any>(pKey);
+  const existingFiles: FileRec[] = Array.isArray(existingProj?.files) ? existingProj.files : [];
+
+  const merged = mergeFiles(existingFiles, incoming);
+
   const payload = {
     projectId,
     userId,
-    files: kept,
+    files: merged,
     updatedAt: kvNowISO(),
   };
 
@@ -113,14 +128,14 @@ async function applyRunToProject(userId: string, projectId: string, runId: strin
     usedRunKey: (await kvJsonGet<any>(rKey1)) ? rKey1 : rKey2,
     pKey,
     rawFilesCount: rawFiles.length,
-    writtenFiles: kept.length,
+    incomingCount: incoming.length,
+    mergedCount: merged.length,
     readBackCount,
     droppedCount: dropped.length,
     dropped,
   });
 }
 
-/** GET /apply?runId=run_xxx */
 export async function GET(req: Request, { params }: { params: { projectId: string } }) {
   const userId = getCurrentUserId();
   const projectId = params.projectId;
@@ -137,7 +152,6 @@ export async function GET(req: Request, { params }: { params: { projectId: strin
   return applyRunToProject(userId, projectId, runId);
 }
 
-/** POST { runId } */
 export async function POST(req: Request, { params }: { params: { projectId: string } }) {
   const userId = getCurrentUserId();
   const projectId = params.projectId;
