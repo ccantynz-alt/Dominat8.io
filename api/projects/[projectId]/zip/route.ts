@@ -1,8 +1,8 @@
 // app/api/projects/[projectId]/zip/route.ts
 import { NextResponse } from "next/server";
 import JSZip from "jszip";
-import { kvJsonGet } from "../../../../../lib/kv";
-import { getCurrentUserId } from "../../../../../lib/demoAuth";
+import { kvJsonGet } from "../../../../lib/kv";
+import { getCurrentUserId } from "../../../../lib/demoAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,7 @@ export async function GET(
     const path = String(f?.path ?? "").replace(/\\/g, "/");
     const content = String(f?.content ?? "");
 
-    // basic safety: only allow app/generated/**
+    // safety: only allow app/generated/**
     if (!path.startsWith("app/generated/")) continue;
     if (path.includes("..") || path.includes("://") || path.includes("/api/")) continue;
 
