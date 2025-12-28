@@ -5,8 +5,7 @@ import { z } from "zod";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Change this string any time you paste a new file so we can confirm deployment.
-const VERSION = "agents-run-v4-NO_STARTSWITH";
+const VERSION = "agents-run-v6-RUN_INDEX";
 
 const RunRequestSchema = z.object({
   projectId: z.string().min(1),
@@ -16,17 +15,24 @@ const RunRequestSchema = z.object({
 function uid(prefix = "") {
   const rnd = Math.random().toString(16).slice(2);
   const ts = Date.now().toString(16);
-  return prefix ? `${prefix}_${ts}${rnd}` : `${ts}${rnd}`;
+  return prefix ? prefix + "_" + ts + rnd : ts + rnd;
 }
 
 function runKey(userId: string, runId: string) {
-  return `runs:${userId}:${runId}`;
+  return "runs:" + userId + ":" + runId;
 }
 
-// No startsWith usage anywhere:
+function runsIndexKey(userId: string) {
+  return "runs:index:" + userId;
+}
+
 function hasPrefix(value: unknown, prefix: string) {
   if (typeof value !== "string") return false;
   return value.slice(0, prefix.length) === prefix;
+}
+
+function userIdOrDemo(getCurrentUserId: any) {
+  return (typeof getCurrentUserId === "function" && getCurrentUserId()) || "demo";
 }
 
 export async function GET() {
@@ -34,10 +40,6 @@ export async function GET() {
     ok: true,
     version: VERSION,
     message: "Agent endpoint is online. POST JSON { projectId, prompt }",
-    example: {
-      projectId: "proj_test",
-      prompt: "Create app/generated/page.tsx with a hero headline and button",
-    },
   });
 }
 
@@ -53,25 +55,23 @@ export async function POST(req: Request) {
       );
     }
 
-    const { projectId, prompt } = parsedReq.data;
-
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { ok: false, version: VERSION, error: "Missing OPENAI_API_KEY" },
-        { status: 500 }
-      );
+    if (!apiKey || typeof apiKey !== "string") {
+      return NextResponse.json({ ok: false, version: VERSION, error: "Missing OPENAI_API_KEY" }, { status: 500 });
     }
 
-    // Dynamic imports so Next build step can't execute code at build-time
     const [{ default: OpenAI }, kvMod, authMod] = await Promise.all([
       import("openai"),
       import("../../../lib/kv"),
       import("../../../lib/demoAuth"),
     ]);
 
-    const { kvJsonSet, kvNowISO } = kvMod as any;
-    const { getCurrentUserId } = authMod as any;
+    const kvJsonGet = (kvMod as any).kvJsonGet;
+    const kvJsonSet = (kvMod as any).kvJsonSet;
+    const kvNowISO = (kvMod as any).kvNowISO;
+    const getCurrentUserId = (authMod as any).getCurrentUserId;
+
+    const userId = userIdOrDemo(getCurrentUserId);
 
     const client = new OpenAI({ apiKey });
 
@@ -80,30 +80,20 @@ export async function POST(req: Request) {
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [
-        {
-          role: "system",
-          content:
-            'Return JSON ONLY in this exact shape: {"files":[{"path":"app/generated/...","content":"..."}]}',
-        },
-        { role: "user", content: prompt },
+        { role: "system", content: 'Return JSON ONLY: {"files":[{"path":"app/generated/...","content":"..."}]}' },
+        { role: "user", content: parsedReq.data.prompt },
       ],
     });
 
     const raw = completion.choices?.[0]?.message?.content ?? "";
     let parsed: any;
-
     try {
       parsed = JSON.parse(raw);
     } catch {
-      return NextResponse.json(
-        { ok: false, version: VERSION, error: "Model returned invalid JSON", raw: raw.slice(0, 2000) },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, version: VERSION, error: "Model returned invalid JSON", raw }, { status: 500 });
     }
 
     const filesRaw = Array.isArray(parsed?.files) ? parsed.files : [];
-
-    // Sanitize aggressively (no startsWith used)
     const cleaned = filesRaw
       .filter((f: any) => f && typeof f === "object")
       .map((f: any) => ({
@@ -113,35 +103,38 @@ export async function POST(req: Request) {
       .filter((f: any) => hasPrefix(f.path, "app/generated/") && f.content.length > 0);
 
     if (cleaned.length === 0) {
-      return NextResponse.json(
-        { ok: false, version: VERSION, error: "Agent returned no valid files", raw: parsed },
-        { status: 400 }
-      );
+      return NextResponse.json({ ok: false, version: VERSION, error: "Agent returned no valid files", raw: parsed }, { status: 400 });
     }
 
-    const userId =
-      (typeof getCurrentUserId === "function" && getCurrentUserId()) || "demo";
-
     const runId = uid("run");
+    const now = kvNowISO();
 
     await kvJsonSet(runKey(userId, runId), {
       runId,
-      projectId,
-      prompt,
-      createdAt: kvNowISO(),
+      projectId: parsedReq.data.projectId,
+      prompt: parsedReq.data.prompt,
+      createdAt: now,
       files: cleaned,
     });
 
-    return NextResponse.json({
-      ok: true,
-      version: VERSION,
-      runId,
-      filesCount: cleaned.length,
-    });
+    // Update runs index (latest first), keep 25
+    const idxKey = runsIndexKey(userId);
+    const idx = (await kvJsonGet(idxKey)) || [];
+    const next = Array.isArray(idx) ? idx : [];
+    next.unshift(runId);
+    const seen: Record<string, boolean> = {};
+    const deduped: string[] = [];
+    for (const id of next) {
+      if (typeof id === "string" && !seen[id]) {
+        seen[id] = true;
+        deduped.push(id);
+      }
+      if (deduped.length >= 25) break;
+    }
+    await kvJsonSet(idxKey, deduped);
+
+    return NextResponse.json({ ok: true, version: VERSION, runId, filesCount: cleaned.length });
   } catch (err: any) {
-    return NextResponse.json(
-      { ok: false, version: VERSION, error: err?.message ?? "Unknown error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, version: VERSION, error: err?.message ?? "Unknown error" }, { status: 500 });
   }
 }
