@@ -4,6 +4,8 @@ import { z } from "zod";
 import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../../lib/kv";
 import { getCurrentUserId } from "../../../../lib/demoAuth";
 
+const VERSION = "apply-v9-overwrite-proof";
+
 const BodySchema = z.object({
   runId: z.string().min(1),
 });
@@ -31,63 +33,68 @@ export async function POST(
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, version: VERSION, error: "Invalid JSON body" },
+      { status: 400 }
+    );
   }
 
   const parsed = BodySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { ok: false, error: "Missing runId" },
+      { ok: false, version: VERSION, error: "Missing runId" },
       { status: 400 }
     );
   }
 
   const { runId } = parsed.data;
 
-  // 1️⃣ Load run (user-scoped first, legacy fallback)
-  const run =
-    (await kvJsonGet<any>(runKeyUser(userId, runId))) ??
-    (await kvJsonGet<any>(runKeyLegacy(runId)));
+  const rKey1 = runKeyUser(userId, runId);
+  const rKey2 = runKeyLegacy(runId);
 
+  const run = (await kvJsonGet<any>(rKey1)) ?? (await kvJsonGet<any>(rKey2));
   const files = Array.isArray(run?.files) ? run.files : [];
 
   if (files.length === 0) {
     return NextResponse.json(
       {
         ok: false,
-        error: "Run has no files",
+        version: VERSION,
+        error: "Run not found or run.files empty",
         userId,
         projectId,
         runId,
+        triedRunKeys: [rKey1, rKey2],
       },
       { status: 404 }
     );
   }
 
-  // 2️⃣ FORCE overwrite project draft (THIS IS THE KEY FIX)
+  const pKey = projectKey(userId, projectId);
+
+  // FORCE overwrite with files + userId every time
   const payload = {
     projectId,
     userId,
-    files, // 👈 ALWAYS WRITE FILES
+    files,
     updatedAt: kvNowISO(),
   };
 
-  const pKey = projectKey(userId, projectId);
   await kvJsonSet(pKey, payload);
 
-  // 3️⃣ Read-back proof
   const readBack = await kvJsonGet<any>(pKey);
-  const readBackCount = Array.isArray(readBack?.files)
-    ? readBack.files.length
-    : 0;
+  const readBackCount = Array.isArray(readBack?.files) ? readBack.files.length : 0;
 
   return NextResponse.json({
     ok: true,
+    version: VERSION,
     userId,
     projectId,
     runId,
+    usedRunKey: (await kvJsonGet<any>(rKey1)) ? rKey1 : rKey2,
     pKey,
     writtenFiles: files.length,
     readBackCount,
+    readBackUserId: readBack?.userId ?? null,
   });
 }
