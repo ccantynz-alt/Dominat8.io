@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import { getCurrentUserId } from "../../lib/demoAuth";
 
 export const runtime = "nodejs";
 
@@ -24,8 +23,9 @@ function runFilesKey(userId: string, runId: string) {
 
 export async function POST(req: Request) {
   try {
-    // ✅ IMPORTANT: Import KV helpers ONLY at runtime (inside POST)
-    const { kvJsonSet, kvNowISO } = await import("../../lib/kv");
+    // ✅ Correct paths + lazy-load ONLY inside POST (prevents build-time crash)
+    const { getCurrentUserId } = await import("../../../lib/demoAuth");
+    const { kvJsonSet, kvNowISO } = await import("../../../lib/kv");
 
     const userId = getCurrentUserId();
     const body = await req.json();
@@ -43,7 +43,6 @@ export async function POST(req: Request) {
     const runId = `run_${randomUUID().replace(/-/g, "")}`;
     const createdAt = kvNowISO();
 
-    // Save run metadata
     await kvJsonSet(runKey(userId, runId), {
       id: runId,
       projectId,
@@ -52,11 +51,9 @@ export async function POST(req: Request) {
       prompt,
     });
 
-    // ✅ Only read env INSIDE POST
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) throw new Error("OPENAI_API_KEY not set in Vercel env vars");
 
-    // ✅ Import OpenAI ONLY at runtime
     const { default: OpenAI } = await import("openai");
     const client = new OpenAI({ apiKey });
 
@@ -77,10 +74,8 @@ export async function POST(req: Request) {
     const text = completion.choices[0]?.message?.content || "{}";
     const parsed = AgentResponseSchema.parse(JSON.parse(text));
 
-    // Save generated files
     await kvJsonSet(runFilesKey(userId, runId), parsed.files);
 
-    // Mark run complete
     await kvJsonSet(runKey(userId, runId), {
       id: runId,
       projectId,
@@ -90,7 +85,7 @@ export async function POST(req: Request) {
       fileCount: parsed.files.length,
     });
 
-    return NextResponse.json({ ok: true, runId });
+    return NextResponse.json({ ok: true, runId, fileCount: parsed.files.length });
   } catch (err: any) {
     return NextResponse.json(
       { ok: false, error: err?.message || String(err) },
