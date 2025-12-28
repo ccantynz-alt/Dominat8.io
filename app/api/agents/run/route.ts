@@ -1,12 +1,9 @@
 // app/api/agents/run/route.ts
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import OpenAI from "openai";
-
-import { kvJsonSet, kvNowISO } from "../../../lib/kv";
-import { getCurrentUserId } from "../../../lib/demoAuth";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const RunRequestSchema = z.object({
   projectId: z.string().min(1),
@@ -59,8 +56,21 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ ok: false, error: "Missing OPENAI_API_KEY" }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: "Missing OPENAI_API_KEY" },
+        { status: 500 }
+      );
     }
+
+    // IMPORTANT: dynamic imports (prevents build-time evaluation crashes)
+    const [{ default: OpenAI }, kvMod, authMod] = await Promise.all([
+      import("openai"),
+      import("../../../lib/kv"),
+      import("../../../lib/demoAuth"),
+    ]);
+
+    const { kvJsonSet, kvNowISO } = kvMod as any;
+    const { getCurrentUserId } = authMod as any;
 
     const client = new OpenAI({ apiKey });
 
@@ -100,16 +110,31 @@ export async function POST(req: Request) {
 
     const files = parsedAgent.data.files;
 
+    // SAFE enforcement (can never crash)
     for (const f of files) {
+      if (typeof f?.path !== "string") {
+        return NextResponse.json(
+          { ok: false, error: "Invalid file.path (missing or not a string)", badFile: f },
+          { status: 400 }
+        );
+      }
       if (!f.path.startsWith("app/generated/")) {
         return NextResponse.json(
           { ok: false, error: 'Invalid path (must start with "app/generated/")', badFile: f },
           { status: 400 }
         );
       }
+      if (typeof f?.content !== "string") {
+        return NextResponse.json(
+          { ok: false, error: "Invalid file.content (must be a string).", badFile: f },
+          { status: 400 }
+        );
+      }
     }
 
-    const userId = (typeof getCurrentUserId === "function" && getCurrentUserId()) || "demo";
+    const userId =
+      (typeof getCurrentUserId === "function" && getCurrentUserId()) || "demo";
+
     const runId = uid("run");
     const now = kvNowISO();
 
