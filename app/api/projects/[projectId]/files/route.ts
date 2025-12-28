@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { kvJsonGet } from "../../../../lib/kv";
 import { getCurrentUserId } from "../../../../lib/demoAuth";
 
+const VERSION = "files-v3-debug";
+
 function projectKey(userId: string, projectId: string) {
   return `projects:${userId}:${projectId}`;
 }
@@ -22,6 +24,7 @@ export async function GET(
 
   return NextResponse.json({
     ok: true,
+    version: VERSION,
     userId,
     projectId,
     pKey,
