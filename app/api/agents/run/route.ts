@@ -9,7 +9,10 @@ export async function POST(req: Request) {
     const { projectId, prompt } = body || {};
 
     if (!projectId || !prompt) {
-      return NextResponse.json({ ok: false, error: "Missing input" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "Missing projectId or prompt" },
+        { status: 400 }
+      );
     }
 
     const runId = `run_${Date.now()}`;
@@ -26,9 +29,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, runId });
   } catch (e: any) {
     return NextResponse.json(
-      { ok: false, error: e?.message || "Agent run failed" },
+      { ok: false, error: e?.message || "Agent failed" },
       { status: 500 }
     );
   }
 }
-
