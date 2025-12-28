@@ -13,6 +13,18 @@ const AgentResponseSchema = z.object({
   ),
 });
 
+// ✅ If you open the endpoint in a browser, you will now see this JSON (no blank screen)
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    message: "Agent endpoint is online. Use POST with JSON { projectId, prompt }",
+    example: {
+      projectId: "proj_test",
+      prompt: "Create app/generated/page.tsx with a hero headline and button",
+    },
+  });
+}
+
 function runKey(userId: string, runId: string) {
   return `runs:${userId}:${runId}`;
 }
@@ -23,20 +35,28 @@ function runFilesKey(userId: string, runId: string) {
 
 export async function POST(req: Request) {
   try {
-    // ✅ Correct paths + lazy-load ONLY inside POST (prevents build-time crash)
+    // ✅ Lazy-load inside POST so builds stay safe
     const { getCurrentUserId } = await import("../../../lib/demoAuth");
     const { kvJsonSet, kvNowISO } = await import("../../../lib/kv");
 
     const userId = getCurrentUserId();
-    const body = await req.json();
+    const body = await req.json().catch(() => ({} as any));
 
-    const prompt = String(body.prompt || "").trim();
     const projectId = String(body.projectId || "").trim();
+    const prompt = String(body.prompt || "").trim();
 
-    if (!prompt || !projectId) {
+    if (!projectId || !prompt) {
       return NextResponse.json(
         { ok: false, error: "Missing projectId or prompt" },
         { status: 400 }
+      );
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { ok: false, error: "Missing OPENAI_API_KEY in Vercel env vars" },
+        { status: 500 }
       );
     }
 
@@ -51,9 +71,6 @@ export async function POST(req: Request) {
       prompt,
     });
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error("OPENAI_API_KEY not set in Vercel env vars");
-
     const { default: OpenAI } = await import("openai");
     const client = new OpenAI({ apiKey });
 
@@ -65,7 +82,7 @@ export async function POST(req: Request) {
         {
           role: "system",
           content:
-            "Return ONLY JSON like: { files: [{ path, content }] }. All paths MUST start with app/generated/.",
+            'Return ONLY JSON: { "files": [ { "path": "app/generated/...", "content": "..." } ] }. Paths MUST start with "app/generated/".',
         },
         { role: "user", content: prompt },
       ],
@@ -85,7 +102,11 @@ export async function POST(req: Request) {
       fileCount: parsed.files.length,
     });
 
-    return NextResponse.json({ ok: true, runId, fileCount: parsed.files.length });
+    return NextResponse.json({
+      ok: true,
+      runId,
+      fileCount: parsed.files.length,
+    });
   } catch (err: any) {
     return NextResponse.json(
       { ok: false, error: err?.message || String(err) },
