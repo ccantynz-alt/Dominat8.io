@@ -14,15 +14,22 @@ function projectFilesKey(userId: string, projectId: string) {
   return "projectfiles:" + userId + ":" + projectId;
 }
 
-export async function GET(_req: Request, { params }: { params: { projectId: string } }) {
+export async function GET(
+  _req: Request,
+  { params }: { params: { projectId: string } }
+) {
   try {
     const projectId = params?.projectId;
     if (!projectId) {
-      return NextResponse.json({ ok: false, error: "Missing projectId" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "Missing projectId" },
+        { status: 400 }
+      );
     }
 
     const userId = userIdOrDemo();
-    const filesMap: Record<string, string> = (await kvJsonGet(projectFilesKey(userId, projectId))) || {};
+    const filesMap: Record<string, string> =
+      (await kvJsonGet(projectFilesKey(userId, projectId))) || {};
 
     const files = Object.keys(filesMap).map((path) => ({
       path,
@@ -31,6 +38,9 @@ export async function GET(_req: Request, { params }: { params: { projectId: stri
 
     return NextResponse.json({ ok: true, projectId, files });
   } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err?.message ?? "Unknown error" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: err?.message ?? "Unknown error" },
+      { status: 500 }
+    );
   }
 }
