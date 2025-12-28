@@ -2,10 +2,20 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { getCurrentUserId } from "../../lib/demoAuth";
-import { kvJsonGet, kvJsonSet, kvNowISO } from "../../lib/kv";
 
-type Project = { id: string; name: string; createdAt: string; updatedAt: string };
+import { kvJsonGet, kvJsonSet, kvNowISO, kv } from "../../lib/kv";
+import { getCurrentUserId } from "../../lib/demoAuth";
+
+type ProjectRecord = {
+  id: string;
+  projectId: string; // must always be present and equal to id
+  name: string;
+  createdAt: string;
+};
+
+const CreateProjectSchema = z.object({
+  name: z.string().min(1).max(120).optional(),
+});
 
 function uid(prefix = ""): string {
   const id = randomUUID().replace(/-/g, "");
@@ -20,89 +30,131 @@ function projectKey(userId: string, projectId: string) {
   return `projects:${userId}:${projectId}`;
 }
 
-const CreateProjectSchema = z.object({
-  name: z.string().min(1).max(120),
-});
+function normalizeProject(p: any): ProjectRecord {
+  const id = String(p?.projectId || p?.id || "");
+  const createdAt = String(p?.createdAt || kvNowISO());
+  const name = String(p?.name || "Untitled Project");
 
-// GET /api/projects
-// Optional query params:
-// - projectId=<id> : returns a single project
-// - includeRuns=1  : (kept for compatibility; may be ignored if runs not implemented)
-export async function GET(req: Request) {
-  const userId = getCurrentUserId();
-
-  const url = new URL(req.url);
-  const projectId = url.searchParams.get("projectId");
-
-  // If asking for one project
-  if (projectId) {
-    const p = await kvJsonGet<Project>(projectKey(userId, projectId));
-    if (!p) {
-      return NextResponse.json({ ok: true, project: null });
-    }
-    return NextResponse.json({
-      ok: true,
-      project: { ...p, projectId: p.id }, // include both fields
-    });
-  }
-
-  // List all projects for user
-  const ids = (await kvJsonGet<string[]>(indexKey(userId))) || [];
-  const projects: any[] = [];
-
-  for (const id of ids) {
-    const p = await kvJsonGet<Project>(projectKey(userId, id));
-    if (p) {
-      projects.push({ ...p, projectId: p.id }); // include both fields
-    }
-  }
-
-  // Sort newest first by updatedAt/createdAt
-  projects.sort((a, b) => {
-    const ta = Date.parse(a.updatedAt || a.createdAt || "") || 0;
-    const tb = Date.parse(b.updatedAt || b.createdAt || "") || 0;
-    return tb - ta;
-  });
-
-  return NextResponse.json({ ok: true, projects });
+  return {
+    id,
+    projectId: id,
+    name,
+    createdAt,
+  };
 }
 
-// POST /api/projects
-// Body: { name: string }
-export async function POST(req: Request) {
-  const userId = getCurrentUserId();
+async function listProjects(userId: string): Promise<ProjectRecord[]> {
+  const idx = indexKey(userId);
 
-  const body = await req.json().catch(() => ({}));
-  const parsed = CreateProjectSchema.safeParse(body);
-  if (!parsed.success) {
+  // KV supports zrange. We store members as projectId strings.
+  // We want newest first, so we zadd with timestamp score and then reverse.
+  const ids = (await kv.zrange(idx, 0, -1)) as unknown as string[];
+
+  if (!ids || ids.length === 0) return [];
+
+  const projects = await Promise.all(
+    ids.map(async (projectId) => {
+      const raw = await kvJsonGet(projectKey(userId, projectId));
+      if (!raw) return null;
+      return normalizeProject(raw);
+    })
+  );
+
+  // zrange returns oldest -> newest depending on implementation;
+  // to be safe, sort by createdAt descending after normalization.
+  return projects
+    .filter(Boolean)
+    .sort((a, b) => (a!.createdAt < b!.createdAt ? 1 : -1)) as ProjectRecord[];
+}
+
+export async function GET() {
+  try {
+    const userId = getCurrentUserId();
+    if (!userId) {
+      return NextResponse.json(
+        { ok: false, error: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const projects = await listProjects(userId);
+
+    return NextResponse.json({
+      ok: true,
+      projects,
+    });
+  } catch (err: any) {
     return NextResponse.json(
-      { ok: false, error: parsed.error.issues?.[0]?.message || "Invalid body" },
-      { status: 400 }
+      {
+        ok: false,
+        error: err?.message || "Failed to load projects",
+      },
+      { status: 500 }
     );
   }
+}
 
-  const name = parsed.data.name.trim();
-  const createdAt = kvNowISO();
-  const updatedAt = createdAt;
+export async function POST(req: Request) {
+  try {
+    const userId = getCurrentUserId();
+    if (!userId) {
+      return NextResponse.json(
+        { ok: false, error: "Not authenticated" },
+        { status: 401 }
+      );
+    }
 
-  const projectId = uid("proj");
-  const project: Project = { id: projectId, name, createdAt, updatedAt };
+    let body: unknown = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
 
-  // Save project
-  await kvJsonSet(projectKey(userId, projectId), project);
+    const parsed = CreateProjectSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Invalid request body",
+          details: parsed.error.flatten(),
+        },
+        { status: 400 }
+      );
+    }
 
-  // Update index
-  const idx = (await kvJsonGet<string[]>(indexKey(userId))) || [];
-  // put newest first
-  const next = [projectId, ...idx.filter((x) => x !== projectId)];
-  await kvJsonSet(indexKey(userId), next);
+    const projectId = uid("proj");
+    const createdAt = kvNowISO();
+    const name = parsed.data.name?.trim() || "Untitled Project";
 
-  // IMPORTANT: return BOTH id + projectId to avoid UI mismatches
-  return NextResponse.json({
-    ok: true,
-    project: {
-      ...project,
-      projectId: project.id,
-    },
-  });
+    const project: ProjectRecord = {
+      id: projectId,
+      projectId,
+      name,
+      createdAt,
+    };
+
+    // Store the project
+    await kvJsonSet(projectKey(userId, projectId), project);
+
+    // Index it (timestamp score for sorting)
+    // KV supports zadd only (no scan/keys/del etc)
+    const score = Date.now();
+    await kv.zadd(indexKey(userId), { score, member: projectId });
+
+    return NextResponse.json({
+      ok: true,
+      project,
+      id: projectId,
+      projectId,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: err?.message || "Failed to create project",
+      },
+      { status: 500 }
+    );
+  }
 }
