@@ -1,83 +1,71 @@
-// app/api/projects/[projectId]/route.ts
 import { NextResponse } from "next/server";
-import { kv, kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
+import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../lib/kv";
 import { getCurrentUserId } from "../../../lib/demoAuth";
-import { z } from "zod";
+
+export const runtime = "nodejs";
 
 function projectKey(userId: string, projectId: string) {
   return `projects:${userId}:${projectId}`;
 }
 
-const UpdateProjectSchema = z.object({
-  name: z.string().min(1).optional(),
-  description: z.string().optional(),
-});
-
-type Project = {
-  id: string;
-  userId: string;
-  name: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export async function GET(_req: Request, ctx: { params: { projectId: string } }) {
-  const userId = getCurrentUserId();
-  const projectId = ctx.params.projectId;
-
-  const project = await kvJsonGet<Project>(projectKey(userId, projectId));
-  if (!project) {
-    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ ok: true, project });
+function runsIndexKey(userId: string, projectId: string) {
+  return `runs:index:${userId}:${projectId}`;
 }
 
-export async function PATCH(req: Request, ctx: { params: { projectId: string } }) {
-  const userId = getCurrentUserId();
-  const projectId = ctx.params.projectId;
-
-  const existing = await kvJsonGet<Project>(projectKey(userId, projectId));
-  if (!existing) {
-    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-  }
-
-  let body: unknown;
+export async function GET(_req: Request, { params }: { params: { projectId: string } }) {
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
-  }
+    const userId = getCurrentUserId();
+    const projectId = params?.projectId;
 
-  const parsed = UpdateProjectSchema.safeParse(body);
-  if (!parsed.success) {
+    if (!projectId) {
+      return NextResponse.json({ ok: false, error: "Missing projectId" }, { status: 400 });
+    }
+
+    const project = await kvJsonGet<any>(projectKey(userId, projectId));
+    if (!project) {
+      return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
+    }
+
+    // Optional: include runs if caller wants it (dashboard can request separately)
+    const ids = (await kvJsonGet<string[]>(runsIndexKey(userId, projectId))) || [];
+    return NextResponse.json({ ok: true, project, runIds: ids });
+  } catch (e: any) {
     return NextResponse.json(
-      { ok: false, error: "Invalid input", details: parsed.error.flatten() },
-      { status: 400 }
+      { ok: false, error: `GET /api/projects/[projectId] failed: ${String(e?.message || e)}` },
+      { status: 500 }
     );
   }
-
-  const now = await kvNowISO();
-  const updated: Project = {
-    ...existing,
-    ...parsed.data,
-    updatedAt: now,
-  };
-
-  await kvJsonSet(projectKey(userId, projectId), updated);
-  return NextResponse.json({ ok: true, project: updated });
 }
 
-export async function DELETE(_req: Request, ctx: { params: { projectId: string } }) {
-  const userId = getCurrentUserId();
-  const projectId = ctx.params.projectId;
+export async function PATCH(req: Request, { params }: { params: { projectId: string } }) {
+  try {
+    const userId = getCurrentUserId();
+    const projectId = params?.projectId;
 
-  const existing = await kvJsonGet<Project>(projectKey(userId, projectId));
-  if (!existing) {
-    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    if (!projectId) {
+      return NextResponse.json({ ok: false, error: "Missing projectId" }, { status: 400 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const name = typeof body?.name === "string" ? body.name.trim() : "";
+
+    if (!name) {
+      return NextResponse.json({ ok: false, error: "Missing name" }, { status: 400 });
+    }
+
+    const project = await kvJsonGet<any>(projectKey(userId, projectId));
+    if (!project) {
+      return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
+    }
+
+    const updated = { ...project, name, updatedAt: kvNowISO() };
+    await kvJsonSet(projectKey(userId, projectId), updated);
+
+    return NextResponse.json({ ok: true, project: updated });
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: `PATCH /api/projects/[projectId] failed: ${String(e?.message || e)}` },
+      { status: 500 }
+    );
   }
-
-  await kv.del(projectKey(userId, projectId));
-  return NextResponse.json({ ok: true });
 }
