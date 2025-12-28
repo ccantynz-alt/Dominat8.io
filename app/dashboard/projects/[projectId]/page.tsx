@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-/* ---------- Inline UI components (no imports) ---------- */
+/* ================= INLINE UI (NO IMPORTS) ================= */
 
 function Spinner() {
   return (
@@ -14,8 +14,8 @@ function Spinner() {
         height: 16,
         display: "inline-block",
         borderRadius: "50%",
-        border: "2px solid rgba(255,255,255,0.3)",
-        borderTopColor: "white",
+        border: "2px solid rgba(0,0,0,0.2)",
+        borderTopColor: "black",
         animation: "spin 0.8s linear infinite",
       }}
     />
@@ -54,6 +54,7 @@ function Notice({
         borderRadius: 14,
         padding: 14,
         background: "rgba(0,0,0,0.04)",
+        marginTop: 16,
       }}
     >
       {title && <strong>{title}</strong>}
@@ -76,6 +77,7 @@ function Modal({
   loading: boolean;
 }) {
   if (!open) return null;
+
   return (
     <div
       style={{
@@ -111,10 +113,10 @@ function Modal({
   );
 }
 
-/* ---------- Page ---------- */
+/* ================= PAGE ================= */
 
 type Project = { id: string; name: string };
-type Run = { id: string; status: string; createdAt?: string };
+type Run = { id: string; status: string };
 
 export default function ProjectPage({ params }: { params: { projectId: string } }) {
   const router = useRouter();
@@ -131,7 +133,6 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
   const [publishing, setPublishing] = useState(false);
 
   async function load() {
-    setLoading(true);
     const res = await fetch(`/api/projects?projectId=${projectId}&includeRuns=1`);
     const json = await res.json();
     setProject(json.project);
@@ -193,11 +194,9 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
       </div>
 
       {runs[0] && (
-        <div style={{ marginTop: 24 }}>
-          <Notice title="Last run">
-            {runs[0].id} — {runs[0].status}
-          </Notice>
-        </div>
+        <Notice title="Last run">
+          {runs[0].id} — {runs[0].status}
+        </Notice>
       )}
 
       <Modal
