@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-
-import { kvJsonSet, kvNowISO } from "../../../lib/kv";
-import { getCurrentUserId } from "../../../lib/demoAuth";
+import { getCurrentUserId } from "../../lib/demoAuth";
 
 export const runtime = "nodejs";
-
-/**
- * IMPORTANT RULES:
- * - No env access at import time
- * - No OpenAI import at import time
- * - Everything happens INSIDE POST
- */
 
 const AgentResponseSchema = z.object({
   files: z.array(
@@ -33,6 +24,9 @@ function runFilesKey(userId: string, runId: string) {
 
 export async function POST(req: Request) {
   try {
+    // ✅ IMPORTANT: Import KV helpers ONLY at runtime (inside POST)
+    const { kvJsonSet, kvNowISO } = await import("../../lib/kv");
+
     const userId = getCurrentUserId();
     const body = await req.json();
 
@@ -58,12 +52,11 @@ export async function POST(req: Request) {
       prompt,
     });
 
-    // 🔐 OpenAI import happens ONLY here
+    // ✅ Only read env INSIDE POST
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("OPENAI_API_KEY not set");
-    }
+    if (!apiKey) throw new Error("OPENAI_API_KEY not set in Vercel env vars");
 
+    // ✅ Import OpenAI ONLY at runtime
     const { default: OpenAI } = await import("openai");
     const client = new OpenAI({ apiKey });
 
@@ -75,12 +68,9 @@ export async function POST(req: Request) {
         {
           role: "system",
           content:
-            "You are an AI website builder. Return ONLY JSON in the form { files: [{ path, content }] }. Files MUST be under app/generated/.",
+            "Return ONLY JSON like: { files: [{ path, content }] }. All paths MUST start with app/generated/.",
         },
-        {
-          role: "user",
-          content: prompt,
-        },
+        { role: "user", content: prompt },
       ],
     });
 
