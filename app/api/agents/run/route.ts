@@ -154,5 +154,9 @@ Rules:
         );
       }
       if (typeof f.content !== "string") {
-        return NextResponse.json(
-          { ok: false, error: "Invali
+  return NextResponse.json(
+    { ok: false, error: "Invalid file.content (must be a string).", badFile: f },
+    { status: 400 }
+  );
+}
+
