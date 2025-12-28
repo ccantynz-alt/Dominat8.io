@@ -1,32 +1,29 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { kvJsonGet } from "../../../../lib/kv";
-import { getCurrentUserId } from "../../../../lib/demoAuth";
+import { kvJsonGet } from "../../../../../lib/kv";
+import { getCurrentUserId } from "../../../../../lib/demoAuth";
 
-type RunFile = {
-  path: string;
-  content: string;
-};
+export const runtime = "nodejs";
 
-const ParamsSchema = z.object({
-  runId: z.string().min(1),
-});
-
-function filesKey(userId: string, runId: string) {
-  return `runs:${userId}:${runId}:files`;
+function runFilesKey(userId: string, runId: string) {
+  // Must match what your agent run route writes
+  return `runfiles:${userId}:${runId}`;
 }
 
-export async function GET(
-  _req: Request,
-  ctx: { params: { runId: string } }
-) {
-  const userId = await getCurrentUserId();
-  const { runId } = ParamsSchema.parse(ctx.params);
+export async function GET(_req: Request, { params }: { params: { runId: string } }) {
+  try {
+    const userId = getCurrentUserId();
+    const runId = params?.runId;
 
-  const files = await kvJsonGet<RunFile[]>(filesKey(userId, runId));
+    if (!runId) {
+      return NextResponse.json({ ok: false, error: "Missing runId" }, { status: 400 });
+    }
 
-  return NextResponse.json({
-    ok: true,
-    files: Array.isArray(files) ? files : [],
-  });
+    const files = (await kvJsonGet<any[]>(runFilesKey(userId, runId))) || [];
+    return NextResponse.json({ ok: true, runId, files });
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: `GET /api/runs/[runId]/files_v2 failed: ${String(e?.message || e)}` },
+      { status: 500 }
+    );
+  }
 }
