@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import OpenAI from "openai";
 
-import { kvJsonSet, kvNowISO } from "../../lib/kv";
-import { getCurrentUserId } from "../../lib/demoAuth";
+import { kvJsonSet, kvNowISO } from "../../../lib/kv";
+import { getCurrentUserId } from "../../../lib/demoAuth";
 
 export const runtime = "nodejs";
 
