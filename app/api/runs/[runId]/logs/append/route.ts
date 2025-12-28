@@ -21,15 +21,16 @@ export async function POST(
     const runId = params.runId;
 
     const body = await req.json().catch(() => ({}));
+
     const entry: LogEntry = {
       ts: new Date().toISOString(),
-      level: (body.level as any) || "info",
+      level: body.level === "error" ? "error" : body.level === "warn" ? "warn" : "info",
       message: String(body.message || ""),
     };
 
     const key = logsKey(userId, runId);
 
-    // Store as a list in KV
+    // Append log entry to KV list
     await kv.rpush(key, JSON.stringify(entry));
 
     return NextResponse.json({ ok: true });
