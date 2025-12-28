@@ -121,6 +121,32 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
           >
             {running ? "Running…" : "Generate website (Agent)"}
           </button>
+          <button
+  onClick={async () => {
+    const res = await fetch(`/api/projects/${projectId}/publish`, {
+      method: "GET",
+    });
+    const json = await res.json();
+
+    if (json?.ok && json?.commitUrl) {
+      alert("Published successfully!\n\nCommit:\n" + json.commitUrl);
+      window.open(json.commitUrl, "_blank");
+    } else {
+      alert("Publish failed:\n" + (json?.error || "Unknown error"));
+    }
+  }}
+  style={{
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "1px solid #444",
+    cursor: "pointer",
+    fontWeight: 600,
+    background: "#f4f4f4",
+  }}
+>
+  Publish to GitHub
+</button>
+
 
           <Link
             href={`/dashboard/projects/${projectId}/new-run`}
