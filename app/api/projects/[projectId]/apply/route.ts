@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { kvJsonGet, kvJsonSet, kvNowISO } from "../../../../lib/kv";
+import { kvJsonSet, kvNowISO } from "../../../../lib/kv";
 import { getCurrentUserId } from "../../../../lib/demoAuth";
 
 export async function POST(
