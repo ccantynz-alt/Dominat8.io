@@ -1,16 +1,37 @@
-// app/dashboard/page.tsx
-import DashboardClient from "./DashboardClient";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function DashboardPage() {
+export default function DashboardRedirectPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    async function go() {
+      try {
+        const res = await fetch("/api/projects", { cache: "no-store" });
+        const json = await res.json();
+
+        if (json?.ok && Array.isArray(json.projects) && json.projects.length > 0) {
+          // Go to most recent project
+          const last = json.projects[0];
+          router.replace(`/dashboard/projects/${last.id}`);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+
+      // No projects yet → show create screen
+      router.replace("/dashboard?empty=1");
+    }
+
+    go();
+  }, [router]);
+
   return (
-    <main style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
-      <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 6 }}>Dashboard</h1>
-      <p style={{ color: "#666", marginTop: 0, marginBottom: 16 }}>
-        Projects + Runs + Apply (all in-app).
-      </p>
-      <DashboardClient />
-    </main>
+    <div style={{ padding: 32 }}>
+      Redirecting to your project…
+    </div>
   );
 }
