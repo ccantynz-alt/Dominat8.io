@@ -11,22 +11,25 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
 
-    // ✅ DEBUG MODE:
-    // Hit: /api/projects?debugCreate=1&name=Test
     const debugCreate = url.searchParams.get("debugCreate");
+    const name = url.searchParams.get("name") || "Test";
+
+    // ✅ This makes it impossible to “not know” which code is deployed.
     if (debugCreate === "1") {
-      const name = url.searchParams.get("name") || "Test";
       const project = await createProject({ name });
-      return NextResponse.json({ ok: true, project }, { status: 200 });
+      return NextResponse.json(
+        { ok: true, mode: "debugCreate", name, project },
+        { status: 200 }
+      );
     }
 
-    // Normal behavior: list projects
     const projects = await listProjects();
-    return NextResponse.json({ ok: true, projects }, { status: 200 });
+    return NextResponse.json({ ok: true, mode: "list", projects }, { status: 200 });
   } catch (err: any) {
     return NextResponse.json(
       {
         ok: false,
+        mode: "error",
         error: err?.message ?? String(err),
         stack: err?.stack ?? null,
       },
