@@ -1,9 +1,7 @@
 // app/api/projects/[projectId]/files/route.ts
 import { NextResponse } from "next/server";
-import { kvJsonGet } from "../../../../lib/kv";
-import { getCurrentUserId } from "../../../../lib/demoAuth";
-
-const VERSION = "files-v3-debug";
+import { kvJsonGet } from "@/app/lib/kv";
+import { getCurrentUserId } from "@/app/lib/demoAuth";
 
 function projectKey(userId: string, projectId: string) {
   return `projects:${userId}:${projectId}`;
@@ -13,27 +11,21 @@ export async function GET(
   _req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId(); // ✅ await fixes TS error
   const projectId = params.projectId;
+
+  if (!userId) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
 
   const pKey = projectKey(userId, projectId);
   const proj = await kvJsonGet<any>(pKey);
 
-  const files = Array.isArray(proj?.files) ? proj.files : [];
-  const filesCount = files.length;
+  if (!proj) {
+    return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
+  }
 
-  return NextResponse.json({
-    ok: true,
-    version: VERSION,
-    userId,
-    projectId,
-    pKey,
-    meta: {
-      updatedAt: proj?.updatedAt ?? null,
-      storedProjectId: proj?.projectId ?? null,
-      storedUserId: proj?.userId ?? null,
-    },
-    filesCount,
-    files,
-  });
+  const files = Array.isArray(proj?.files) ? proj.files : [];
+
+  return NextResponse.json({ ok: true, projectId, files });
 }
