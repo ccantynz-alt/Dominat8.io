@@ -1,49 +1,28 @@
 // app/dashboard/projects/page.tsx
-import "server-only";
 import Link from "next/link";
 import { listProjects } from "@/app/lib/store";
-import { getCurrentUserId } from "@/app/lib/demoAuth";
-import CreateProjectForm from "./create-project-form";
 
 export default async function ProjectsPage() {
-  const userId = await getCurrentUserId();
-  const projects = await listProjects(userId);
+  const projects = await listProjects();
 
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div>
-          <h1 style={{ margin: 0 }}>Projects</h1>
-          <p style={{ marginTop: 6, color: "#666" }}>
-            Create a project, then run the website builder inside it.
-          </p>
-        </div>
-        <Link href="/dashboard" style={{ textDecoration: "underline" }}>
-          Back
-        </Link>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Projects</h1>
+        <div style={{ flex: 1 }} />
+        <Link href="/dashboard">Dashboard</Link>
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <CreateProjectForm />
-      </div>
-
-      <div style={{ marginTop: 18 }}>
         {projects.length === 0 ? (
-          <div style={{ padding: 14, border: "1px solid #e5e5e5", borderRadius: 10 }}>
-            <strong>No projects yet.</strong>
-            <div style={{ marginTop: 6, color: "#666" }}>
-              Create your first project above.
-            </div>
-          </div>
+          <div style={{ color: "#666" }}>No projects yet.</div>
         ) : (
           <ul style={{ paddingLeft: 18 }}>
             {projects.map((p) => (
               <li key={p.id} style={{ marginBottom: 8 }}>
-                <Link href={`/dashboard/projects/${p.id}`} style={{ textDecoration: "underline" }}>
-                  {p.name}
-                </Link>
-                <span style={{ marginLeft: 10, color: "#777", fontSize: 12 }}>
-                  {p.createdAt ? new Date(p.createdAt).toLocaleString() : ""}
+                <Link href={`/dashboard/projects/${p.id}`}>{p.name}</Link>{" "}
+                <span style={{ color: "#666", marginLeft: 8 }}>
+                  ({p.createdAt})
                 </span>
               </li>
             ))}
