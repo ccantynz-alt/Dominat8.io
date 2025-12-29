@@ -1,87 +1,132 @@
 // app/lib/kv.ts
-// Minimal in-memory KV layer to keep builds stable on Vercel.
-// Supports get/set + sorted-set (zadd/zrange) + list queue/logs (lpush/rpush/rpop/lrange).
+import "server-only";
 
-const memory = new Map<string, any>();
+type ZAddArg =
+  | { score: number; member: string }
+  | Array<{ score: number; member: string }>;
 
-// sorted set store: key -> Map(member -> score)
-const zsets = new Map<string, Map<string, number>>();
+type JsonValue = any;
 
-// list store: key -> array
-const lists = new Map<string, string[]>();
+function requiredEnvError() {
+  return new Error(
+    [
+      "KV is not configured.",
+      "",
+      "Set ONE of the following in Vercel Environment Variables (Production):",
+      "",
+      "Option A (Vercel KV REST):",
+      "  - KV_REST_API_URL",
+      "  - KV_REST_API_TOKEN",
+      "",
+      "Option B (Upstash REST):",
+      "  - UPSTASH_REDIS_REST_URL",
+      "  - UPSTASH_REDIS_REST_TOKEN",
+      "",
+      "Current env detected:",
+      `  - REDIS_URL present: ${!!process.env.REDIS_URL || !!process.env.UPSTASH_REDIS_URL}`,
+      `  - Any REST configured: false`,
+      "",
+      "Note: REDIS_URL alone is not usable for the REST KV client used by this app.",
+    ].join("\n")
+  );
+}
+
+function env() {
+  const KV_URL = process.env.KV_REST_API_URL || process.env.VERCEL_KV_REST_API_URL || "";
+  const KV_TOKEN =
+    process.env.KV_REST_API_TOKEN || process.env.VERCEL_KV_REST_API_TOKEN || "";
+
+  const UP_URL = process.env.UPSTASH_REDIS_REST_URL || "";
+  const UP_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
+
+  const url = KV_URL || UP_URL;
+  const token = KV_TOKEN || UP_TOKEN;
+
+  return { url, token };
+}
 
 export function kvNowISO() {
   return new Date().toISOString();
 }
 
-export async function kvJsonGet<T = any>(key: string): Promise<T | null> {
-  return (memory.get(key) as T) ?? null;
-}
+async function rest<T>(command: string, ...args: any[]): Promise<T> {
+  const { url, token } = env();
+  if (!url || !token) throw requiredEnvError();
 
-export async function kvJsonSet(key: string, value: any) {
-  memory.set(key, value);
-}
+  const res = await fetch(`${url}/${command}`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(args),
+    cache: "no-store",
+  });
 
-function getList(key: string) {
-  const list = lists.get(key) ?? [];
-  lists.set(key, list);
-  return list;
+  const json = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const msg =
+      json?.error ||
+      json?.message ||
+      `KV request failed: ${command} (${res.status})`;
+    throw new Error(msg);
+  }
+
+  // Upstash/Vercel KV REST returns { result: ... }
+  return (json?.result ?? json) as T;
 }
 
 export const kv = {
+  // Allowed: get, set, zadd, zrange, lpush, rpop
   async get(key: string) {
-    return memory.get(key) ?? null;
+    return rest<any>("get", key);
   },
 
   async set(key: string, value: any) {
-    memory.set(key, value);
+    return rest<any>("set", key, value);
   },
 
-  // Sorted set: kv.zadd("myzset", { score: 123, member: "abc" })
-  async zadd(key: string, entry: { score: number; member: string }) {
-    const m = zsets.get(key) ?? new Map<string, number>();
-    m.set(String(entry.member), Number(entry.score));
-    zsets.set(key, m);
-    return 1;
+  async zadd(key: string, arg: ZAddArg) {
+    if (Array.isArray(arg)) {
+      // zadd key score member score member...
+      const flat: any[] = [];
+      for (const item of arg) flat.push(item.score, item.member);
+      return rest<any>("zadd", key, ...flat);
+    }
+    return rest<any>("zadd", key, arg.score, arg.member);
   },
 
-  // Sorted set: returns members (like Redis ZRANGE)
-  async zrange(key: string, start: number, stop: number, opts?: { rev?: boolean }) {
-    const m = zsets.get(key);
-    if (!m) return [];
-
-    const arr = Array.from(m.entries()).map(([member, score]) => ({ member, score }));
-    arr.sort((a, b) => (opts?.rev ? b.score - a.score : a.score - b.score));
-
-    const end = stop >= 0 ? stop + 1 : undefined;
-    return arr.slice(start, end).map((x) => x.member);
+  async zrange(key: string, start: number, stop: number) {
+    return rest<any>("zrange", key, start, stop);
   },
 
-  // List: LPUSH
-  async lpush(key: string, value: string) {
-    const list = getList(key);
-    list.unshift(String(value));
-    return list.length;
+  async lpush(key: string, value: any) {
+    return rest<any>("lpush", key, value);
   },
 
-  // List: RPUSH
-  async rpush(key: string, value: string) {
-    const list = getList(key);
-    list.push(String(value));
-    return list.length;
-  },
-
-  // List: RPOP
   async rpop(key: string) {
-    const list = lists.get(key);
-    if (!list || list.length === 0) return null;
-    return list.pop() ?? null;
-  },
-
-  // List: LRANGE (inclusive stop, like Redis)
-  async lrange(key: string, start: number, stop: number) {
-    const list = lists.get(key) ?? [];
-    const end = stop >= 0 ? stop + 1 : undefined;
-    return list.slice(start, end);
+    return rest<any>("rpop", key);
   },
 };
+
+export async function kvJsonGet<T = JsonValue>(key: string): Promise<T | null> {
+  const raw = await kv.get(key);
+  if (raw == null) return null;
+
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      // If it wasn't JSON, return as-is
+      return raw as any as T;
+    }
+  }
+
+  return raw as T;
+}
+
+export async function kvJsonSet(key: string, value: JsonValue) {
+  // Store as JSON string for consistent behavior
+  return kv.set(key, JSON.stringify(value));
+}
