@@ -1,6 +1,10 @@
 // app/lib/kv.ts
 import "server-only";
 
+type ZAddArg =
+  | { score: number; member: string }
+  | Array<{ score: number; member: string }>;
+
 type JsonValue = any;
 
 function requiredEnvError() {
@@ -57,7 +61,9 @@ async function rest<T>(command: string, ...args: any[]): Promise<T> {
   const { url, token } = envPair();
   if (!url || !token) throw requiredEnvError();
 
-  const res = await fetch(`${url}/${command}`, {
+  const endpoint = `${url}/${command}`;
+
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: {
       authorization: `Bearer ${token}`,
@@ -67,29 +73,57 @@ async function rest<T>(command: string, ...args: any[]): Promise<T> {
     cache: "no-store",
   });
 
-  const json = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(json?.error || "KV request failed");
+  const raw = await res.text().catch(() => "");
+  let json: any = null;
+  try {
+    json = raw ? JSON.parse(raw) : null;
+  } catch {
+    json = null;
+  }
+
+  if (!res.ok) {
+    const errMsg =
+      json?.error ||
+      json?.message ||
+      (raw ? raw.slice(0, 300) : "") ||
+      "KV request failed";
+
+    throw new Error(
+      [
+        `KV ${command} failed`,
+        `HTTP ${res.status}`,
+        `Endpoint: ${endpoint}`,
+        "",
+        `Error: ${errMsg}`,
+      ].join("\n")
+    );
+  }
 
   return (json?.result ?? json) as T;
 }
 
 export const kv = {
-  // string/value
   get: (key: string) => rest("get", key),
   set: (key: string, value: any) => rest("set", key, value),
+  zadd: (key: string, arg: ZAddArg) =>
+    Array.isArray(arg)
+      ? rest("zadd", key, ...arg.flatMap((i) => [i.score, i.member]))
+      : rest("zadd", key, arg.score, arg.member),
+  zrange: (key: string, start: number, stop: number) =>
+    rest("zrange", key, start, stop),
 
-  // list
+  // ✅ Set ops used by the app/store layer
+  sadd: (key: string, ...members: string[]) => rest("sadd", key, ...members),
+  smembers: (key: string) => rest("smembers", key),
+
   lpush: (key: string, value: any) => rest("lpush", key, value),
   rpop: (key: string) => rest("rpop", key),
-
-  // set (✅ stable + simple)
-  sadd: (key: string, ...members: string[]) => rest("sadd", key, ...members),
-  smembers: (key: string) => rest<string[]>("smembers", key),
 };
 
 export async function kvJsonGet<T = JsonValue>(key: string): Promise<T | null> {
   const raw = await kv.get(key);
   if (raw == null) return null;
+
   if (typeof raw === "string") {
     try {
       return JSON.parse(raw);
