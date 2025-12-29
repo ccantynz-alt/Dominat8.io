@@ -12,47 +12,65 @@ function requiredEnvError() {
     [
       "KV is not configured.",
       "",
-      "Expected one complete REST pair (URL + TOKEN). Supported env var names:",
+      "This project can be configured via ONE of these REST pairs:",
       "",
-      "Vercel/Upstash KV-style:",
-      "  - KV_REST_API_URL (or KV_URL) + KV_REST_API_TOKEN",
-      "  - Optional: KV_REST_API_READ_ONLY_TOKEN (read-only)",
+      "Unprefixed (recommended):",
+      "  - KV_REST_API_URL + KV_REST_API_TOKEN",
       "",
-      "Upstash REST-style:",
+      "Prefixed (if your Vercel integration forces a prefix like STORAGE):",
+      "  - STORAGE_KV_REST_API_URL + STORAGE_KV_REST_API_TOKEN",
+      "",
+      "Upstash REST (alternative):",
       "  - UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN",
       "",
-      "Also supported (legacy):",
-      "  - VERCEL_KV_REST_API_URL + VERCEL_KV_REST_API_TOKEN",
-      "",
-      "If you connected a DB in Vercel Storage, it will auto-inject KV_REST_API_* vars.",
-      "Make sure you redeploy after env var changes.",
+      "Redeploy after changing env vars or storage connections.",
     ].join("\n")
   );
 }
 
-function pickEnvPair() {
-  // KV-style (what your screenshot shows)
-  const KV_URL =
-    process.env.KV_REST_API_URL ||
-    process.env.KV_URL || // some integrations provide KV_URL
-    process.env.VERCEL_KV_REST_API_URL ||
-    "";
+function firstDefined(...vals: Array<string | undefined>) {
+  for (const v of vals) {
+    if (v && v.trim().length > 0) return v.trim();
+  }
+  return "";
+}
 
-  const KV_TOKEN =
-    process.env.KV_REST_API_TOKEN ||
-    process.env.KV_REST_API_READ_ONLY_TOKEN || // allow read-only token as fallback
-    process.env.VERCEL_KV_REST_API_TOKEN ||
-    "";
+function envPair() {
+  // URL sources
+  const url = firstDefined(
+    // Unprefixed KV
+    process.env.KV_REST_API_URL,
+    process.env.KV_URL,
 
-  // Upstash REST-style (if you ever use it)
-  const UP_URL = process.env.UPSTASH_REDIS_REST_URL || "";
-  const UP_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
+    // Prefixed KV (your forced STORAGE prefix)
+    process.env.STORAGE_KV_REST_API_URL,
+    process.env.STORAGE_KV_URL,
 
-  // Prefer KV-style if complete, else Upstash REST-style
-  if (KV_URL && KV_TOKEN) return { url: KV_URL, token: KV_TOKEN, provider: "kv" as const };
-  if (UP_URL && UP_TOKEN) return { url: UP_URL, token: UP_TOKEN, provider: "upstash" as const };
+    // Legacy Vercel KV names
+    process.env.VERCEL_KV_REST_API_URL,
 
-  return { url: "", token: "", provider: "none" as const };
+    // Upstash REST names
+    process.env.UPSTASH_REDIS_REST_URL
+  );
+
+  // TOKEN sources
+  const token = firstDefined(
+    // Unprefixed KV
+    process.env.KV_REST_API_TOKEN,
+    process.env.KV_REST_API_READ_ONLY_TOKEN,
+
+    // Prefixed KV
+    process.env.STORAGE_KV_REST_API_TOKEN,
+    process.env.STORAGE_KV_REST_API_READ_ONLY_TOKEN,
+
+    // Legacy Vercel KV names
+    process.env.VERCEL_KV_REST_API_TOKEN,
+
+    // Upstash REST names
+    process.env.UPSTASH_REDIS_REST_TOKEN
+  );
+
+  return { url, token };
 }
 
 export function kvNowISO() {
@@ -60,7 +78,7 @@ export function kvNowISO() {
 }
 
 async function rest<T>(command: string, ...args: any[]): Promise<T> {
-  const { url, token } = pickEnvPair();
+  const { url, token } = envPair();
   if (!url || !token) throw requiredEnvError();
 
   const res = await fetch(`${url}/${command}`, {
@@ -83,12 +101,11 @@ async function rest<T>(command: string, ...args: any[]): Promise<T> {
     throw new Error(msg);
   }
 
-  // Upstash/Vercel KV REST returns { result: ... }
   return (json?.result ?? json) as T;
 }
 
 export const kv = {
-  // Allowed: get, set, zadd, zrange, lpush, rpop
+  // Allowed ops: get, set, zadd, zrange, lpush, rpop
   async get(key: string) {
     return rest<any>("get", key);
   },
