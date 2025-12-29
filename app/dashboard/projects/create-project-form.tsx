@@ -28,24 +28,50 @@ export default function CreateProjectForm() {
         body: JSON.stringify({ name: trimmed }),
       });
 
-      const data = await res.json().catch(() => null);
+      // Read raw text first (so we can show HTML/empty bodies too)
+      const rawText = await res.text();
+
+      // Try JSON parse, but don't require it
+      let data: any = null;
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        data = null;
+      }
 
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || "Failed to create project");
+        const msg =
+          data?.error ||
+          data?.message ||
+          (rawText ? rawText.slice(0, 500) : "") ||
+          `HTTP ${res.status}`;
+
+        throw new Error(
+          [
+            "Create project failed.",
+            `HTTP ${res.status}`,
+            "",
+            "Response:",
+            msg,
+          ].join("\n")
+        );
       }
 
       setName("");
       router.refresh();
       router.push(`/dashboard/projects/${data.project.id}`);
     } catch (e: any) {
-      setErr(e?.message || "Unknown error");
+      setErr(e?.message || "Create project failed.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form onSubmit={onCreate} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+    <form
+      onSubmit={onCreate}
+      style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}
+    >
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -70,7 +96,24 @@ export default function CreateProjectForm() {
       >
         {loading ? "Creating..." : "Create"}
       </button>
-      {err ? <span style={{ color: "crimson" }}>{err}</span> : null}
+
+      {err ? (
+        <pre
+          style={{
+            marginTop: 12,
+            width: "100%",
+            color: "crimson",
+            background: "#fff5f5",
+            border: "1px solid #ffd6d6",
+            borderRadius: 10,
+            padding: 12,
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {err}
+        </pre>
+      ) : null}
     </form>
   );
 }
