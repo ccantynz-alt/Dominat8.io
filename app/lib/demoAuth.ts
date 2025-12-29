@@ -1,7 +1,11 @@
 // app/lib/demoAuth.ts
-// Demo auth helper for single-user / demo mode
+import "server-only";
 
-export function getCurrentUserId() {
-  // In demo mode, always return the same user
+/**
+ * Temporary demo auth.
+ * This MUST always return a stable userId.
+ */
+export async function getCurrentUserId(): Promise<string> {
+  // In production, replace this with real auth (Clerk, Auth.js, etc)
   return "demo-user";
 }
