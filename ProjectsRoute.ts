@@ -1,4 +1,6 @@
 // ProjectsRoute.ts
+import "server-only";
+
 import { z } from "zod";
 import { randomUUID } from "crypto";
 
@@ -54,7 +56,6 @@ export async function listProjectsForCurrentUser(): Promise<Project[]> {
     })
   );
 
-  // Defensive sort newest-first (createdAt ISO string)
   return (projects.filter(Boolean) as Project[]).sort((a, b) =>
     a.createdAt < b.createdAt ? 1 : -1
   );
@@ -83,17 +84,11 @@ export async function createProjectForCurrentUser(input?: unknown): Promise<Proj
   };
 
   await kvJsonSet(projectKey(userId, projectId), project);
-
-  // zadd index using timestamp score (KV supports zadd)
   await kv.zadd(indexKey(userId), { score: Date.now(), member: projectId });
 
   return project;
 }
 
-/**
- * Ensures the current user has at least one project.
- * Returns the newest project if any exist, otherwise creates one and returns it.
- */
 export async function ensureProjectForCurrentUser(): Promise<Project> {
   const projects = await listProjectsForCurrentUser();
   if (projects.length > 0) return projects[0];
