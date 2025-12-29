@@ -1,4 +1,3 @@
-// app/api/debug/create-project/route.ts
 import { NextResponse } from "next/server";
 import { createProject } from "@/app/lib/store";
 
@@ -9,13 +8,10 @@ export async function GET(req: Request) {
 
     const project = await createProject({ name });
 
-    return NextResponse.json(
-      {
-        ok: true,
-        project,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      ok: true,
+      project,
+    });
   } catch (err: any) {
     return NextResponse.json(
       {
