@@ -119,6 +119,7 @@ export async function listRuns(projectId: string): Promise<Run[]> {
     if (r) runs.push(r);
   }
 
+  
   runs.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
   return runs;
 }
