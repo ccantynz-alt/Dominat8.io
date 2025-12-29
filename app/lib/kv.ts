@@ -12,7 +12,7 @@ function requiredEnvError() {
     [
       "KV is not configured.",
       "",
-      "Set ONE of the following in Vercel Environment Variables (Production):",
+      "Set ONE of the following PAIRS in Vercel Environment Variables (Production):",
       "",
       "Option A (Vercel KV REST):",
       "  - KV_REST_API_URL",
@@ -23,15 +23,18 @@ function requiredEnvError() {
       "  - UPSTASH_REDIS_REST_TOKEN",
       "",
       "Current env detected:",
+      `  - KV_REST_API_URL present: ${!!process.env.KV_REST_API_URL || !!process.env.VERCEL_KV_REST_API_URL}`,
+      `  - KV_REST_API_TOKEN present: ${!!process.env.KV_REST_API_TOKEN || !!process.env.VERCEL_KV_REST_API_TOKEN}`,
+      `  - UPSTASH_REDIS_REST_URL present: ${!!process.env.UPSTASH_REDIS_REST_URL}`,
+      `  - UPSTASH_REDIS_REST_TOKEN present: ${!!process.env.UPSTASH_REDIS_REST_TOKEN}`,
       `  - REDIS_URL present: ${!!process.env.REDIS_URL || !!process.env.UPSTASH_REDIS_URL}`,
-      `  - Any REST configured: false`,
       "",
-      "Note: REDIS_URL alone is not usable for the REST KV client used by this app.",
+      "Note: URLs without their matching tokens are not usable.",
     ].join("\n")
   );
 }
 
-function env() {
+function pickEnvPair() {
   const KV_URL = process.env.KV_REST_API_URL || process.env.VERCEL_KV_REST_API_URL || "";
   const KV_TOKEN =
     process.env.KV_REST_API_TOKEN || process.env.VERCEL_KV_REST_API_TOKEN || "";
@@ -39,10 +42,11 @@ function env() {
   const UP_URL = process.env.UPSTASH_REDIS_REST_URL || "";
   const UP_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
 
-  const url = KV_URL || UP_URL;
-  const token = KV_TOKEN || UP_TOKEN;
+  // Prefer a complete KV pair, otherwise a complete Upstash pair.
+  if (KV_URL && KV_TOKEN) return { url: KV_URL, token: KV_TOKEN, provider: "vercel-kv" as const };
+  if (UP_URL && UP_TOKEN) return { url: UP_URL, token: UP_TOKEN, provider: "upstash" as const };
 
-  return { url, token };
+  return { url: "", token: "", provider: "none" as const };
 }
 
 export function kvNowISO() {
@@ -50,7 +54,7 @@ export function kvNowISO() {
 }
 
 async function rest<T>(command: string, ...args: any[]): Promise<T> {
-  const { url, token } = env();
+  const { url, token } = pickEnvPair();
   if (!url || !token) throw requiredEnvError();
 
   const res = await fetch(`${url}/${command}`, {
@@ -73,12 +77,10 @@ async function rest<T>(command: string, ...args: any[]): Promise<T> {
     throw new Error(msg);
   }
 
-  // Upstash/Vercel KV REST returns { result: ... }
   return (json?.result ?? json) as T;
 }
 
 export const kv = {
-  // Allowed: get, set, zadd, zrange, lpush, rpop
   async get(key: string) {
     return rest<any>("get", key);
   },
@@ -89,7 +91,6 @@ export const kv = {
 
   async zadd(key: string, arg: ZAddArg) {
     if (Array.isArray(arg)) {
-      // zadd key score member score member...
       const flat: any[] = [];
       for (const item of arg) flat.push(item.score, item.member);
       return rest<any>("zadd", key, ...flat);
@@ -118,7 +119,6 @@ export async function kvJsonGet<T = JsonValue>(key: string): Promise<T | null> {
     try {
       return JSON.parse(raw) as T;
     } catch {
-      // If it wasn't JSON, return as-is
       return raw as any as T;
     }
   }
@@ -127,6 +127,5 @@ export async function kvJsonGet<T = JsonValue>(key: string): Promise<T | null> {
 }
 
 export async function kvJsonSet(key: string, value: JsonValue) {
-  // Store as JSON string for consistent behavior
   return kv.set(key, JSON.stringify(value));
 }
