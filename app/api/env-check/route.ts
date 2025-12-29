@@ -11,18 +11,14 @@ const KEYS = [
   "UPSTASH_REDIS_REST_TOKEN",
   "REDIS_URL",
   "UPSTASH_REDIS_URL",
-  "REDIS_TOKEN",
   "VERCEL_ENV",
-  "VERCEL_REGION",
   "NODE_ENV",
 ];
 
 export async function GET() {
   const present: Record<string, boolean> = {};
-  for (const k of KEYS) present[k] = !!process.env[k] && String(process.env[k]).trim().length > 0;
-
-  return NextResponse.json({
-    ok: true,
-    present,
-  });
+  for (const k of KEYS) {
+    present[k] = !!process.env[k] && String(process.env[k]).trim().length > 0;
+  }
+  return NextResponse.json({ ok: true, present });
 }
