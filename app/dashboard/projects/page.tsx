@@ -10,76 +10,102 @@ type Project = {
 };
 
 function getBaseUrl(): string {
-  // 1) Prefer request headers (works behind Vercel proxy)
   const h = headers();
+
   const proto = h.get("x-forwarded-proto") || "https";
-  const host =
-    h.get("x-forwarded-host") ||
-    h.get("host") ||
-    "";
+  const host = h.get("x-forwarded-host") || h.get("host") || "";
 
-  if (host) {
-    return `${proto}://${host}`;
-  }
+  if (host) return `${proto}://${host}`;
 
-  // 2) Vercel environment fallback (very reliable in production)
   const vercelUrl = process.env.VERCEL_URL?.trim();
-  if (vercelUrl) {
-    // VERCEL_URL is usually like "my-app.vercel.app" (no protocol)
-    return `https://${vercelUrl}`;
-  }
+  if (vercelUrl) return `https://${vercelUrl}`;
 
-  // 3) Local fallback
   return "http://localhost:3000";
 }
 
-async function fetchProjects(baseUrl: string) {
-  const url = `${baseUrl}/api/projects`;
-
+async function safeFetchJson(url: string) {
   const res = await fetch(url, {
     cache: "no-store",
-    // next: { revalidate: 0 }, // optional
-    headers: {
-      // Ensure edge/proxy caches don't do anything weird
-      "accept": "application/json",
-    },
+    headers: { accept: "application/json" },
   });
 
   const text = await res.text();
 
-  if (!res.ok) {
-    throw new Error(
-      [
-        `Failed to load /api/projects`,
-        `URL: ${url}`,
-        `Status: ${res.status}`,
-        `Body: ${text.slice(0, 2000)}`,
-      ].join("\n")
-    );
-  }
-
-  // Parse JSON safely
   let json: any = null;
+  let jsonError: string | null = null;
+
   try {
-    json = JSON.parse(text);
-  } catch {
-    throw new Error(
-      [
-        `Expected JSON from /api/projects but got non-JSON`,
-        `URL: ${url}`,
-        `Body: ${text.slice(0, 2000)}`,
-      ].join("\n")
-    );
+    json = text ? JSON.parse(text) : null;
+  } catch (e: any) {
+    jsonError = e?.message || "JSON parse error";
   }
 
-  return json;
+  return {
+    ok: res.ok,
+    status: res.status,
+    text,
+    json,
+    jsonError,
+  };
 }
 
 export default async function ProjectsIndexPage() {
   const baseUrl = getBaseUrl();
-  const data = await fetchProjects(baseUrl);
+  const url = `${baseUrl}/api/projects`;
 
-  const projects: Project[] = Array.isArray(data?.projects) ? data.projects : [];
+  const resp = await safeFetchJson(url);
+
+  // ✅ Render debug info instead of throwing (production-safe)
+  if (!resp.ok || resp.jsonError) {
+    return (
+      <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
+        <h1 style={{ marginTop: 0 }}>Projects</h1>
+
+        <p style={{ marginTop: 8 }}>
+          This page is showing the real server error details (not the hidden digest).
+        </p>
+
+        <div style={{ marginTop: 16 }}>
+          <Link href="/dashboard" style={{ textDecoration: "underline" }}>
+            Back to dashboard
+          </Link>
+        </div>
+
+        <div
+          style={{
+            marginTop: 16,
+            padding: 12,
+            border: "1px solid #ddd",
+            borderRadius: 8,
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}
+        >
+          <strong>Fetch URL</strong>
+          {"\n"}
+          {url}
+          {"\n\n"}
+          <strong>Status</strong>
+          {"\n"}
+          {resp.status}
+          {"\n\n"}
+          <strong>JSON parse error</strong>
+          {"\n"}
+          {resp.jsonError ?? "(none)"}
+          {"\n\n"}
+          <strong>Body (first 2000 chars)</strong>
+          {"\n"}
+          {resp.text.slice(0, 2000) || "(empty)"}
+        </div>
+
+        <p style={{ marginTop: 16 }}>
+          Next: open <code>/api/projects</code> directly and paste what it shows.
+        </p>
+      </div>
+    );
+  }
+
+  const projects: Project[] = Array.isArray(resp.json?.projects) ? resp.json.projects : [];
 
   return (
     <div style={{ padding: 24 }}>
@@ -97,9 +123,7 @@ export default async function ProjectsIndexPage() {
           <ul>
             {projects.map((p) => (
               <li key={p.id}>
-                <Link href={`/dashboard/projects/${p.id}`}>
-                  {p.name}
-                </Link>
+                <Link href={`/dashboard/projects/${p.id}`}>{p.name}</Link>
               </li>
             ))}
           </ul>
