@@ -83,4 +83,52 @@ export async function listProjects(userId: string): Promise<Project[]> {
 // -----------------------------
 export async function createRun(
   userId: string,
-  projectId: st
+  projectId: string,
+  input: { prompt?: string; status?: string } = {}
+): Promise<Run> {
+  const runId = `run_${cryptoRandomId()}`;
+
+  const run: Run = {
+    id: runId,
+    projectId,
+    status: input.status || "queued",
+    prompt: input.prompt,
+    createdAt: kvNowISO(),
+    files: [],
+  };
+
+  await kvJsonSet(runKey(userId, runId), run);
+  await kv.sadd(runsIndexKey(userId, projectId), runId);
+
+  return run;
+}
+
+export async function getRun(userId: string, runId: string): Promise<Run | null> {
+  return kvJsonGet<Run>(runKey(userId, runId));
+}
+
+export async function listRuns(userId: string, projectId: string): Promise<Run[]> {
+  const idsRaw = await kv.smembers(runsIndexKey(userId, projectId)).catch(() => []);
+  const ids: string[] = Array.isArray(idsRaw) ? idsRaw.map(String).filter(Boolean) : [];
+
+  if (ids.length === 0) return [];
+
+  const runs: Run[] = [];
+  for (const id of ids) {
+    const r = await kvJsonGet<Run>(runKey(userId, id));
+    if (r && r.id) runs.push(r);
+  }
+
+  runs.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  return runs;
+}
+
+// -----------------------------
+// Helpers
+// -----------------------------
+function cryptoRandomId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return (crypto as any).randomUUID().replace(/-/g, "");
+  }
+  return Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2);
+}
