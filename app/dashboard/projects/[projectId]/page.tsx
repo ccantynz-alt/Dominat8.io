@@ -1,6 +1,7 @@
 // app/dashboard/projects/[projectId]/page.tsx
 import Link from "next/link";
 import { getProject, listRuns } from "@/app/lib/store";
+import RunCreator from "./RunCreator";
 
 export default async function ProjectPage({
   params,
@@ -9,7 +10,6 @@ export default async function ProjectPage({
 }) {
   const projectId = params.projectId;
 
-  // ✅ getProject now only takes projectId
   const project = await getProject(projectId);
 
   if (!project) {
@@ -36,6 +36,9 @@ export default async function ProjectPage({
         <div>Project ID: {project.id}</div>
         <div>Created: {project.createdAt}</div>
       </div>
+
+      {/* ✅ New Run Creator */}
+      <RunCreator projectId={projectId} />
 
       <div style={{ marginTop: 24 }}>
         <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
