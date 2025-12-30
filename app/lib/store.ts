@@ -38,6 +38,11 @@ function runKey(userId: string, runId: string) {
   return `runs:${userId}:${runId}`;
 }
 
+function asStringArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => String(x));
+  return [];
+}
+
 // -------------------------
 // Projects
 // -------------------------
@@ -49,10 +54,7 @@ export async function createProject(input: { name: string }): Promise<Project> {
 
   const project: Project = { id, name: input.name, createdAt };
 
-  // Write project record
   await kvJsonSet(projectKey(userId, id), project);
-
-  // Add project ID to index set
   await kv.sadd(projectsIndexKey(userId), id);
 
   return project;
@@ -60,8 +62,12 @@ export async function createProject(input: { name: string }): Promise<Project> {
 
 export async function listProjects(): Promise<Project[]> {
   const userId = await getCurrentUserId();
-  const ids = await kv.smembers(projectsIndexKey(userId));
-  if (!ids || ids.length === 0) return [];
+
+  // kv.smembers is typed as unknown in your wrapper, so normalize it
+  const rawIds = await kv.smembers(projectsIndexKey(userId));
+  const ids = asStringArray(rawIds);
+
+  if (ids.length === 0) return [];
 
   const projects: Project[] = [];
   for (const id of ids) {
@@ -99,10 +105,7 @@ export async function createRun(input: {
     prompt: input.prompt,
   };
 
-  // Write run record
   await kvJsonSet(runKey(userId, id), run);
-
-  // Add run ID to runs index set
   await kv.sadd(runsIndexKey(userId, input.projectId), id);
 
   return run;
@@ -110,8 +113,11 @@ export async function createRun(input: {
 
 export async function listRuns(projectId: string): Promise<Run[]> {
   const userId = await getCurrentUserId();
-  const ids = await kv.smembers(runsIndexKey(userId, projectId));
-  if (!ids || ids.length === 0) return [];
+
+  const rawIds = await kv.smembers(runsIndexKey(userId, projectId));
+  const ids = asStringArray(rawIds);
+
+  if (ids.length === 0) return [];
 
   const runs: Run[] = [];
   for (const id of ids) {
@@ -119,7 +125,6 @@ export async function listRuns(projectId: string): Promise<Run[]> {
     if (r) runs.push(r);
   }
 
-  
   runs.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
   return runs;
 }
