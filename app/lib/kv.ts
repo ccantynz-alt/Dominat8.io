@@ -1,139 +1,108 @@
 // app/lib/kv.ts
-import "server-only";
+type KvResult<T> = { result: T };
 
-type ZAddArg =
-  | { score: number; member: string }
-  | Array<{ score: number; member: string }>;
+function getEnv(name: string): string | undefined {
+  return process.env[name];
+}
 
-type JsonValue = any;
-
-function requiredEnvError() {
-  return new Error(
-    [
-      "KV is not configured.",
-      "",
-      "Supported REST env var pairs:",
-      "",
-      "Unprefixed:",
-      "  KV_REST_API_URL + KV_REST_API_TOKEN",
-      "",
-      "Prefixed (Vercel Storage):",
-      "  STORAGE_KV_REST_API_URL + STORAGE_KV_REST_API_TOKEN",
-      "",
-      "Upstash REST:",
-      "  UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN",
-    ].join("\n")
+function getKvUrl(): string {
+  return (
+    getEnv("STORAGE_KV_REST_API_URL") ||
+    getEnv("KV_REST_API_URL") ||
+    getEnv("UPSTASH_REDIS_REST_URL") ||
+    ""
   );
 }
 
-function firstDefined(...vals: Array<string | undefined>) {
-  for (const v of vals) {
-    if (v && v.trim()) return v.trim();
+function getKvToken(): string {
+  return (
+    getEnv("STORAGE_KV_REST_API_TOKEN") ||
+    getEnv("KV_REST_API_TOKEN") ||
+    getEnv("UPSTASH_REDIS_REST_TOKEN") ||
+    ""
+  );
+}
+
+async function kvFetch<T>(path: string, args: unknown[]): Promise<T> {
+  const base = getKvUrl();
+  const token = getKvToken();
+
+  if (!base || !token) {
+    throw new Error(
+      "Missing KV REST env vars. Need STORAGE_KV_REST_API_URL/TOKEN or KV_REST_API_URL/TOKEN (or UPSTASH_REDIS_REST_URL/TOKEN)."
+    );
   }
-  return "";
-}
 
-function envPair() {
-  const url = firstDefined(
-    process.env.KV_REST_API_URL,
-    process.env.KV_URL,
-    process.env.STORAGE_KV_REST_API_URL,
-    process.env.STORAGE_KV_URL,
-    process.env.UPSTASH_REDIS_REST_URL
-  );
+  // Upstash REST expects: POST {base}/{command} with JSON body: [arg1, arg2, ...]
+  const url = `${base}/${path}`;
 
-  const token = firstDefined(
-    process.env.KV_REST_API_TOKEN,
-    process.env.KV_REST_API_READ_ONLY_TOKEN,
-    process.env.STORAGE_KV_REST_API_TOKEN,
-    process.env.STORAGE_KV_REST_API_READ_ONLY_TOKEN,
-    process.env.UPSTASH_REDIS_REST_TOKEN
-  );
-
-  return { url, token };
-}
-
-export function kvNowISO() {
-  return new Date().toISOString();
-}
-
-async function rest<T>(command: string, ...args: any[]): Promise<T> {
-  const { url, token } = envPair();
-  if (!url || !token) throw requiredEnvError();
-
-  const endpoint = `${url}/${command}`;
-
-  const res = await fetch(endpoint, {
+  const res = await fetch(url, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${token}`,
-      "content-type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(args),
     cache: "no-store",
   });
 
-  const raw = await res.text().catch(() => "");
-  let json: any = null;
+  const text = await res.text();
+  let data: any = null;
   try {
-    json = raw ? JSON.parse(raw) : null;
+    data = text ? JSON.parse(text) : null;
   } catch {
-    json = null;
+    // keep as null
   }
 
   if (!res.ok) {
     const errMsg =
-      json?.error ||
-      json?.message ||
-      (raw ? raw.slice(0, 300) : "") ||
-      "KV request failed";
-
+      data?.error ||
+      data?.message ||
+      text ||
+      `HTTP ${res.status} ${res.statusText}`;
     throw new Error(
-      [
-        `KV ${command} failed`,
-        `HTTP ${res.status}`,
-        `Endpoint: ${endpoint}`,
-        "",
-        `Error: ${errMsg}`,
-      ].join("\n")
+      `KV ${path} failed\nHTTP ${res.status}\nEndpoint: ${url}\n\nError: ${errMsg}`
     );
   }
 
-  return (json?.result ?? json) as T;
+  // Upstash returns { result: ... }
+  return (data as KvResult<T>)?.result as T;
 }
 
 export const kv = {
-  get: (key: string) => rest("get", key),
-  set: (key: string, value: any) => rest("set", key, value),
-  zadd: (key: string, arg: ZAddArg) =>
-    Array.isArray(arg)
-      ? rest("zadd", key, ...arg.flatMap((i) => [i.score, i.member]))
-      : rest("zadd", key, arg.score, arg.member),
-  zrange: (key: string, start: number, stop: number) =>
-    rest("zrange", key, start, stop),
+  async get(key: string): Promise<string | null> {
+    return await kvFetch<string | null>("get", [key]);
+  },
 
-  // ✅ Set ops used by the app/store layer
-  sadd: (key: string, ...members: string[]) => rest("sadd", key, ...members),
-  smembers: (key: string) => rest("smembers", key),
+  async set(key: string, value: string): Promise<"OK"> {
+    // IMPORTANT: Must be [key, value]
+    return await kvFetch<"OK">("set", [key, value]);
+  },
 
-  lpush: (key: string, value: any) => rest("lpush", key, value),
-  rpop: (key: string) => rest("rpop", key),
+  async sadd(key: string, member: string): Promise<number> {
+    return await kvFetch<number>("sadd", [key, member]);
+  },
+
+  async smembers(key: string): Promise<string[]> {
+    return await kvFetch<string[]>("smembers", [key]);
+  },
 };
 
-export async function kvJsonGet<T = JsonValue>(key: string): Promise<T | null> {
-  const raw = await kv.get(key);
-  if (raw == null) return null;
-
-  if (typeof raw === "string") {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return raw as T;
-    }
-  }
-  return raw as T;
+export function kvNowISO(): string {
+  return new Date().toISOString();
 }
 
-export async function kvJsonSet(key: string, value: JsonValue) {
-  return kv.set(key, JSON.stringify(value));
+export async function kvJsonSet(key: string, value: unknown): Promise<void> {
+  // Store JSON as a string (SET key "<json>")
+  await kv.set(key, JSON.stringify(value));
+}
+
+export async function kvJsonGet<T>(key: string): Promise<T | null> {
+  const raw = await kv.get(key);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
 }
