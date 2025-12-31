@@ -65,7 +65,7 @@ export async function createRun(input: {
     updatedAt: ts,
   };
 
-  await kv.set(runKey(id), run);
+  await kvJsonSet(runKey(id), run);
   await kv.del(runLogsKey(id));
 
   if (input.projectId) await kv.lpush(projectRunsIndexKey(input.projectId), id);
