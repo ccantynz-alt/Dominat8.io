@@ -1,50 +1,77 @@
-// app/chat/[threadId]/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Msg = {
-  role: "system" | "user" | "assistant";
+  id?: string;
+  role: "user" | "assistant" | "system";
   content: string;
-  at: string;
+  createdAt?: string;
 };
 
-export default function ThreadPage() {
-  const params = useParams();
-  const router = useRouter();
-  const threadId = (params?.threadId as string) || "";
+type RunStatus = "queued" | "running" | "done" | "failed";
 
+type Run = {
+  id: string;
+  threadId?: string;
+  projectId?: string;
+  prompt: string;
+  status: RunStatus;
+  createdAt: string;
+  updatedAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+  error?: string;
+};
+
+export default function ThreadPage({ params }: { params: { threadId: string } }) {
+  const threadId = params.threadId;
+
+  // Chat
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [chatErr, setChatErr] = useState<string | null>(null);
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  // Runs
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [runPrompt, setRunPrompt] = useState(
+    "Continue this thread as a background agent. Summarize progress and propose next actions."
+  );
+  const [creatingRun, setCreatingRun] = useState(false);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [selectedRun, setSelectedRun] = useState<Run | null>(null);
+  const [runLogs, setRunLogs] = useState<string[]>([]);
+  const [runErr, setRunErr] = useState<string | null>(null);
+
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedRunIsActive = useMemo(() => {
+    if (!selectedRun) return false;
+    return selectedRun.status === "queued" || selectedRun.status === "running";
+  }, [selectedRun]);
 
   async function loadMessages() {
-    if (!threadId) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/threads/${threadId}/messages`);
-      const data = await res.json();
-      if (data.ok) setMessages(data.messages);
-      else router.push("/chat");
-    } catch (err) {
-      console.error(err);
-      router.push("/chat");
-    } finally {
-      setLoading(false);
+    setChatErr(null);
+    const res = await fetch(`/api/threads/${threadId}/messages`, { cache: "no-store" });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.ok) {
+      setChatErr(data?.error ?? "Failed to load messages");
+      return;
     }
+    setMessages(data.messages ?? []);
   }
 
   async function sendMessage() {
-    if (!input.trim() || sending || !threadId) return;
     const text = input.trim();
-    setInput("");
-    setSending(true);
+    if (!text || sending) return;
 
-    setMessages((m) => [...m, { role: "user", content: text, at: new Date().toISOString() }]);
+    setSending(true);
+    setChatErr(null);
+
+    // optimistic
+    setMessages((m) => [...m, { role: "user", content: text }]);
+    setInput("");
 
     try {
       const res = await fetch("/api/chat", {
@@ -52,112 +79,285 @@ export default function ThreadPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ threadId, message: text }),
       });
-      const data = await res.json();
-      if (data.ok) setMessages(data.messages);
-    } catch (err) {
-      console.error("Send failed", err);
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.error ?? "Chat failed");
+
+      // Prefer server truth if returned
+      if (Array.isArray(data.messages)) setMessages(data.messages);
+      else await loadMessages();
+    } catch (e: any) {
+      setChatErr(e?.message ?? "Chat failed");
     } finally {
       setSending(false);
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     }
   }
 
+  async function loadRuns() {
+    setRunErr(null);
+    const res = await fetch(`/api/threads/${threadId}/runs`, { cache: "no-store" });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.ok) {
+      setRunErr(data?.error ?? "Failed to load runs");
+      return;
+    }
+    setRuns(data.runs ?? []);
+  }
+
+  async function createThreadRun() {
+    const text = runPrompt.trim();
+    if (!text || creatingRun) return;
+
+    setCreatingRun(true);
+    setRunErr(null);
+
+    try {
+      const res = await fetch(`/api/threads/${threadId}/runs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: text }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.error ?? "Failed to create run");
+
+      // Refresh list and select the new run
+      await loadRuns();
+      const newRunId = data.run?.id as string | undefined;
+      if (newRunId) {
+        setSelectedRunId(newRunId);
+      }
+    } catch (e: any) {
+      setRunErr(e?.message ?? "Failed to create run");
+    } finally {
+      setCreatingRun(false);
+    }
+  }
+
+  async function loadRunDetails(runId: string) {
+    setRunErr(null);
+    const res = await fetch(`/api/runs/${runId}`, { cache: "no-store" });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.ok) {
+      setRunErr(data?.error ?? "Failed to load run");
+      return;
+    }
+    setSelectedRun(data.run ?? null);
+    setRunLogs(data.logs ?? []);
+  }
+
+  // Initial load
   useEffect(() => {
     loadMessages();
+    loadRuns();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId]);
 
+  // Scroll chat to bottom when messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages.length]);
+
+  // When selecting run, load details
+  useEffect(() => {
+    if (!selectedRunId) return;
+    loadRunDetails(selectedRunId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRunId]);
+
+  // Poll runs list occasionally (to update statuses)
+  useEffect(() => {
+    const t = setInterval(() => {
+      loadRuns();
+    }, 3000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId]);
+
+  // Poll selected run logs more frequently while active
+  useEffect(() => {
+    if (!selectedRunId) return;
+    const t = setInterval(() => {
+      loadRunDetails(selectedRunId);
+    }, selectedRunIsActive ? 1500 : 5000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRunId, selectedRunIsActive]);
+
+  function statusBadge(s: RunStatus) {
+    const base =
+      "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border";
+    if (s === "done") return `${base} border-green-600/30 text-green-700`;
+    if (s === "failed") return `${base} border-red-600/30 text-red-700`;
+    if (s === "running") return `${base} border-blue-600/30 text-blue-700`;
+    return `${base} border-zinc-400/40 text-zinc-700`;
+    // queued
+  }
 
   return (
-    <main
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        maxWidth: 900,
-        margin: "0 auto",
-        padding: 16,
-      }}
-    >
-      <header style={{ marginBottom: 12, display: "flex", gap: 12, alignItems: "center" }}>
-        <button
-          onClick={() => router.push("/chat")}
-          style={{ border: "1px solid #ddd", background: "#fff", padding: "8px 10px", borderRadius: 8 }}
-        >
-          ← Back
-        </button>
-        <div style={{ fontSize: 12, opacity: 0.6 }}>Thread: {threadId}</div>
-      </header>
-
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          border: "1px solid #e5e5e5",
-          borderRadius: 8,
-          padding: 12,
-        }}
-      >
-        {loading && <p>Loading…</p>}
-
-        {!loading &&
-          messages.map((m, i) => (
-            <div
-              key={i}
-              style={{
-                marginBottom: 12,
-                display: "flex",
-                justifyContent: m.role === "user" ? "flex-end" : "flex-start",
+    <div className="min-h-screen p-4 md:p-6">
+      <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Chat */}
+        <div className="lg:col-span-2 border rounded-xl p-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <div className="text-sm text-zinc-500">Thread</div>
+              <div className="font-semibold break-all">{threadId}</div>
+            </div>
+            <button
+              className="text-sm border rounded-lg px-3 py-2 hover:bg-zinc-50"
+              onClick={() => {
+                loadMessages();
+                loadRuns();
               }}
             >
-              <div
-                style={{
-                  maxWidth: "70%",
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: m.role === "user" ? "#000" : "#f3f3f3",
-                  color: m.role === "user" ? "#fff" : "#000",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {m.content}
+              Refresh
+            </button>
+          </div>
+
+          {chatErr && (
+            <div className="mb-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-lg p-3">
+              {chatErr}
+            </div>
+          )}
+
+          <div className="h-[58vh] overflow-auto border rounded-lg p-3 bg-white">
+            {messages.length === 0 ? (
+              <div className="text-sm text-zinc-500">No messages yet.</div>
+            ) : (
+              <div className="space-y-3">
+                {messages.map((m, idx) => (
+                  <div key={idx} className="flex gap-3">
+                    <div className="w-20 shrink-0 text-xs uppercase tracking-wide text-zinc-500">
+                      {m.role}
+                    </div>
+                    <div className="text-sm whitespace-pre-wrap">{m.content}</div>
+                  </div>
+                ))}
+                <div ref={bottomRef} />
+              </div>
+            )}
+          </div>
+
+          <div className="mt-3 flex gap-2">
+            <input
+              className="flex-1 border rounded-lg px-3 py-2 text-sm"
+              placeholder="Type a message..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              disabled={sending}
+            />
+            <button
+              className="border rounded-lg px-4 py-2 text-sm hover:bg-zinc-50 disabled:opacity-60"
+              onClick={sendMessage}
+              disabled={sending}
+            >
+              {sending ? "Sending..." : "Send"}
+            </button>
+          </div>
+        </div>
+
+        {/* Runs Panel */}
+        <div className="border rounded-xl p-4">
+          <div className="font-semibold mb-2">Runs (Background Agents)</div>
+          <div className="text-xs text-zinc-500 mb-3">
+            Create a run to process this thread in the background (queued → running → done).
+          </div>
+
+          {runErr && (
+            <div className="mb-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-lg p-3">
+              {runErr}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <textarea
+              className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
+              value={runPrompt}
+              onChange={(e) => setRunPrompt(e.target.value)}
+            />
+            <button
+              className="w-full border rounded-lg px-4 py-2 text-sm hover:bg-zinc-50 disabled:opacity-60"
+              onClick={createThreadRun}
+              disabled={creatingRun}
+            >
+              {creatingRun ? "Creating..." : "Create Run for this thread"}
+            </button>
+          </div>
+
+          <div className="mt-4">
+            <div className="text-sm font-medium mb-2">Recent Runs</div>
+            <div className="border rounded-lg overflow-hidden">
+              {runs.length === 0 ? (
+                <div className="p-3 text-sm text-zinc-500">No runs yet.</div>
+              ) : (
+                <div className="divide-y">
+                  {runs.map((r) => (
+                    <button
+                      key={r.id}
+                      className={`w-full text-left p-3 hover:bg-zinc-50 ${
+                        selectedRunId === r.id ? "bg-zinc-50" : ""
+                      }`}
+                      onClick={() => setSelectedRunId(r.id)}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-medium break-all">{r.id}</div>
+                        <span className={statusBadge(r.status)}>{r.status}</span>
+                      </div>
+                      <div className="text-xs text-zinc-500 mt-1 line-clamp-2">
+                        {r.prompt}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Run details */}
+          {selectedRun && (
+            <div className="mt-4">
+              <div className="text-sm font-medium mb-2">Run Details</div>
+              <div className="text-xs text-zinc-500 mb-2 break-all">
+                {selectedRun.id} • {selectedRun.status}
+                {selectedRun.error ? ` • ERROR: ${selectedRun.error}` : ""}
+              </div>
+
+              <div className="h-56 overflow-auto border rounded-lg p-2 bg-white">
+                {runLogs.length === 0 ? (
+                  <div className="text-sm text-zinc-500">No logs yet.</div>
+                ) : (
+                  <pre className="text-xs whitespace-pre-wrap">
+                    {runLogs.join("\n")}
+                  </pre>
+                )}
+              </div>
+
+              <div className="mt-2 flex gap-2">
+                <button
+                  className="flex-1 border rounded-lg px-3 py-2 text-sm hover:bg-zinc-50"
+                  onClick={() => loadRunDetails(selectedRun.id)}
+                >
+                  Refresh Logs
+                </button>
+                <button
+                  className="flex-1 border rounded-lg px-3 py-2 text-sm hover:bg-zinc-50"
+                  onClick={() => setSelectedRunId(null)}
+                >
+                  Close
+                </button>
               </div>
             </div>
-          ))}
-
-        <div ref={bottomRef} />
+          )}
+        </div>
       </div>
-
-      <footer style={{ marginTop: 12, display: "flex", gap: 8 }}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Type a message…"
-          style={{
-            flex: 1,
-            padding: "10px 12px",
-            borderRadius: 8,
-            border: "1px solid #ccc",
-          }}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={sending}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid #ccc",
-            background: "#000",
-            color: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          {sending ? "…" : "Send"}
-        </button>
-      </footer>
-    </main>
+    </div>
   );
 }
