@@ -1,77 +1,12 @@
 // app/api/projects/[projectId]/runs/route.ts
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-// ✅ IMPORTANT: use relative imports (avoids @ alias resolving to the wrong root)
-import { createRun, listRuns, getProject } from "../../../../lib/store";
-
-const CreateRunSchema = z.object({
-  prompt: z.string().min(1),
-});
+import { listRunsForProject, getRun } from "@/app/lib/runs";
 
 export async function GET(
   _req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  try {
-    const projectId = params.projectId;
-
-    const project = await getProject(projectId);
-    if (!project) {
-      return NextResponse.json(
-        { ok: false, error: "Project not found", projectId },
-        { status: 404 }
-      );
-    }
-
-    const runs = await listRuns(projectId);
-    return NextResponse.json({ ok: true, runs }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err?.message ?? String(err),
-        stack: err?.stack ?? null,
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(
-  req: Request,
-  { params }: { params: { projectId: string } }
-) {
-  try {
-    const projectId = params.projectId;
-
-    const project = await getProject(projectId);
-    if (!project) {
-      return NextResponse.json(
-        { ok: false, error: "Project not found", projectId },
-        { status: 404 }
-      );
-    }
-
-    const body = await req.json().catch(() => ({}));
-    const parsed = CreateRunSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid request", issues: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const run = await createRun({ projectId, prompt: parsed.data.prompt });
-    return NextResponse.json({ ok: true, run }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err?.message ?? String(err),
-        stack: err?.stack ?? null,
-      },
-      { status: 500 }
-    );
-  }
+  const ids = await listRunsForProject(params.projectId, 50);
+  const runs = await Promise.all(ids.map((id) => getRun(id)));
+  return NextResponse.json({ ok: true, runs: runs.filter(Boolean) });
 }
