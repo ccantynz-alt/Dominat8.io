@@ -68,8 +68,8 @@ export async function createRun(input: {
   await kvJsonSet(runKey(id), run);
   await kvJsonSet(runLogsKey(id), []);
 
-  if (input.projectId) await kv.lpush(projectRunsIndexKey(input.projectId), id);
-  if (input.threadId) await kv.lpush(threadRunsIndexKey(input.threadId), id);
+  if (input.projectId) await kv.sadd(projectRunsIndexKey(input.projectId), id);
+if (input.threadId) await kv.sadd(threadRunsIndexKey(input.threadId), id);
 
   await kv.rpush(QUEUE_KEY, id);
 
