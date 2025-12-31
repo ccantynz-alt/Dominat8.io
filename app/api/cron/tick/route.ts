@@ -1,12 +1,6 @@
 // app/api/cron/tick/route.ts
 import { NextResponse } from "next/server";
-import {
-  dequeueRunId,
-  getRun,
-  setRun,
-  appendRunLog,
-  claimRunLock,
-} from "@/app/lib/runs";
+import { dequeueRunId, getRun, setRun, appendRunLog, claimRunLock } from "../../../lib/runs";
 
 async function executeRun(runId: string) {
   await appendRunLog(runId, "Worker claimed run.");
