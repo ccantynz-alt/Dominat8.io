@@ -1,7 +1,7 @@
 // app/api/runs/route.ts
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createRun } from "../../lib/runs";
+import { ... } from "@/lib/runs";
 
 const CreateRunSchema = z.object({
   prompt: z.string().min(1),
