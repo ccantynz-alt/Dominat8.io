@@ -1,6 +1,6 @@
 // app/api/runs/[runId]/route.ts
 import { NextResponse } from "next/server";
-import { getRun, getRunLogs } from "@/app/lib/runs";
+import { getRun } from "../../../../lib/runs";
 
 export async function GET(
   _req: Request,
