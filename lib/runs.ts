@@ -1,5 +1,5 @@
 // lib/runs.ts
-import { kv } from "@vercel/kv";
+import { kv } from "@/app/lib/kv";
 import { randomUUID } from "crypto";
 
 export type RunStatus = "queued" | "running" | "done" | "failed";
@@ -117,6 +117,6 @@ export async function dequeueRunId() {
 
 export async function claimRunLock(runId: string, ttlSeconds = 60) {
   const lockKey = `run:lock:${runId}`;
-  const ok = (await kv.set(lockKey, "1", { nx: true, ex: ttlSeconds })) as unknown;
+  const ok = await kv.set(lockKey, "1", { nx: true, ex: ttlSeconds });
   return !!ok;
 }
