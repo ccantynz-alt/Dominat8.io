@@ -4,7 +4,7 @@ import { getMessages, getThread } from "../../../../lib/memory";
 import { getCurrentUserId } from "../../../../lib/demoAuth";
 
 export async function GET(_: Request, { params }: { params: { threadId: string } }) {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId(); // ✅ FIX
   const threadId = params.threadId;
 
   const t = await getThread(userId, threadId);
