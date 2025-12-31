@@ -200,13 +200,42 @@ export async function executeRun(runId: string) {
   await appendRunLog(runId, "info", "Execution started.");
 
   try {
-    // --- STUB WORK ---
-    await appendRunLog(
-      runId,
-      "info",
-      "Stub executor: no OpenAI call yet. Marking done."
-    );
-    // ---------------
+    // --- REAL WORK ---
+if (!run.threadId) {
+  await appendRunLog(runId, "warn", "No threadId attached; nothing to read/write.");
+} else {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("Missing OPENAI_API_KEY env var");
+
+  const { getThreadMessages, appendThreadMessage } = await import("@/app/lib/threadStore");
+  const { callOpenAIChat } = await import("@/app/lib/openai");
+
+  const threadMessages = await getThreadMessages(run.threadId);
+
+  // Build OpenAI messages
+  const messages = [
+    {
+      role: "system" as const,
+      content:
+        "You are the background agent for this platform. Be helpful, concise, and action-oriented.",
+    },
+    ...threadMessages.map((m) => ({
+      role: m.role as "user" | "assistant" | "system",
+      content: m.content,
+    })),
+    {
+      role: "user" as const,
+      content: run.prompt,
+    },
+  ];
+
+  await appendRunLog(runId, "info", `Calling OpenAI with ${messages.length} messages...`);
+  const reply = await callOpenAIChat({ apiKey, messages });
+
+  await appendRunLog(runId, "info", "Writing assistant reply back into thread...");
+  await appendThreadMessage(run.threadId, { role: "assistant", content: reply });
+}
+// ---------------
 
     await markDone(run);
     await appendRunLog(runId, "info", "Execution finished (done).");
