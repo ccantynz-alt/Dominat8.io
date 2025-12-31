@@ -7,7 +7,7 @@ import { getCurrentUserId } from "../../lib/demoAuth";
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: Request) {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId(); // ✅ FIX: await
   const body = await req.json().catch(() => null);
 
   const message = typeof body?.message === "string" ? body.message.trim() : "";
@@ -18,7 +18,8 @@ export async function POST(req: Request) {
   }
 
   // Ensure thread exists
-  if (!threadId || !(await getThread(userId, threadId))) {
+  const existing = threadId ? await getThread(userId, threadId) : null;
+  if (!threadId || !existing) {
     const t = await createThread(userId, message.slice(0, 40) || "New chat");
     threadId = t.id;
   }
