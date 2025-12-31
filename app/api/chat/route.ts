@@ -1,44 +1,49 @@
+// app/api/chat/route.ts
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { appendMessage, getMessages, getThread, createThread } from "../../lib/memory";
+import { getCurrentUserId } from "../../lib/demoAuth";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    hint: "Use POST to chat. Example: POST { message: 'hello' }",
-  });
-}
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json().catch(() => ({}));
-    const message = String(body?.message ?? "").trim();
+  const userId = getCurrentUserId();
+  const body = await req.json().catch(() => null);
 
-    if (!message) {
-      return NextResponse.json({ ok: false, error: "Missing 'message' in JSON body" }, { status: 400 });
-    }
+  const message = typeof body?.message === "string" ? body.message.trim() : "";
+  let threadId = typeof body?.threadId === "string" ? body.threadId.trim() : "";
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ ok: false, error: "Missing OPENAI_API_KEY" }, { status: 500 });
-    }
-
-    const client = new OpenAI({ apiKey });
-
-    const resp = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.2,
-      messages: [{ role: "user", content: message }],
-    });
-
-    const text = resp.choices?.[0]?.message?.content ?? "";
-    return NextResponse.json({ ok: true, text });
-  } catch (err: any) {
-    return NextResponse.json(
-      { ok: false, error: err?.message ?? "Unknown error" },
-      { status: 500 }
-    );
+  if (!message) {
+    return NextResponse.json({ ok: false, error: "Missing message" }, { status: 400 });
   }
+
+  // Ensure thread exists
+  if (!threadId || !(await getThread(userId, threadId))) {
+    const t = await createThread(userId, message.slice(0, 40) || "New chat");
+    threadId = t.id;
+  }
+
+  await appendMessage(userId, threadId, { role: "user", content: message });
+
+  const history = await getMessages(userId, threadId);
+
+  const system = `You are a helpful assistant inside an AI agent platform.
+Be concise, practical, and action-oriented.`;
+
+  const completion = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: system },
+      ...history.map((m) => ({ role: m.role, content: m.content })),
+    ],
+    temperature: 0.4,
+  });
+
+  const reply = completion.choices?.[0]?.message?.content?.trim() || "…";
+
+  await appendMessage(userId, threadId, { role: "assistant", content: reply });
+
+  const messages = await getMessages(userId, threadId);
+
+  return NextResponse.json({ ok: true, threadId, reply, messages });
 }
