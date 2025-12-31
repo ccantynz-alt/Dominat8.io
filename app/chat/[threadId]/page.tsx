@@ -11,12 +11,15 @@ type Msg = {
 
 type RunStatus = "queued" | "running" | "done" | "failed";
 
+type AgentPersona = "general" | "planner" | "coder" | "reviewer" | "researcher";
+
 type Run = {
   id: string;
   threadId?: string;
   projectId?: string;
   prompt: string;
   status: RunStatus;
+  agent?: AgentPersona; // ← NEW (older runs may not have this)
   createdAt: string;
   updatedAt: string;
   startedAt?: string;
@@ -38,6 +41,10 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
   const [runPrompt, setRunPrompt] = useState(
     "Continue this thread as a background agent. Summarize progress and propose next actions."
   );
+
+  // ✅ NEW: persona selection
+  const [runAgent, setRunAgent] = useState<AgentPersona>("general");
+
   const [creatingRun, setCreatingRun] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedRun, setSelectedRun] = useState<Run | null>(null);
@@ -115,249 +122,4 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
     try {
       const res = await fetch(`/api/threads/${threadId}/runs`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: text }),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) throw new Error(data?.error ?? "Failed to create run");
-
-      // Refresh list and select the new run
-      await loadRuns();
-      const newRunId = data.run?.id as string | undefined;
-      if (newRunId) {
-        setSelectedRunId(newRunId);
-      }
-    } catch (e: any) {
-      setRunErr(e?.message ?? "Failed to create run");
-    } finally {
-      setCreatingRun(false);
-    }
-  }
-
-  async function loadRunDetails(runId: string) {
-    setRunErr(null);
-    const res = await fetch(`/api/runs/${runId}`, { cache: "no-store" });
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !data?.ok) {
-      setRunErr(data?.error ?? "Failed to load run");
-      return;
-    }
-    setSelectedRun(data.run ?? null);
-    setRunLogs(data.logs ?? []);
-  }
-
-  // Initial load
-  useEffect(() => {
-    loadMessages();
-    loadRuns();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threadId]);
-
-  // Scroll chat to bottom when messages change
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
-
-  // When selecting run, load details
-  useEffect(() => {
-    if (!selectedRunId) return;
-    loadRunDetails(selectedRunId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRunId]);
-
-  // Poll runs list occasionally (to update statuses)
-  useEffect(() => {
-    const t = setInterval(() => {
-      loadRuns();
-    }, 3000);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threadId]);
-
-  // Poll selected run logs more frequently while active
-  useEffect(() => {
-    if (!selectedRunId) return;
-    const t = setInterval(() => {
-      loadRunDetails(selectedRunId);
-    }, selectedRunIsActive ? 1500 : 5000);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRunId, selectedRunIsActive]);
-
-  function statusBadge(s: RunStatus) {
-    const base =
-      "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border";
-    if (s === "done") return `${base} border-green-600/30 text-green-700`;
-    if (s === "failed") return `${base} border-red-600/30 text-red-700`;
-    if (s === "running") return `${base} border-blue-600/30 text-blue-700`;
-    return `${base} border-zinc-400/40 text-zinc-700`;
-    // queued
-  }
-
-  return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chat */}
-        <div className="lg:col-span-2 border rounded-xl p-4">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div>
-              <div className="text-sm text-zinc-500">Thread</div>
-              <div className="font-semibold break-all">{threadId}</div>
-            </div>
-            <button
-              className="text-sm border rounded-lg px-3 py-2 hover:bg-zinc-50"
-              onClick={() => {
-                loadMessages();
-                loadRuns();
-              }}
-            >
-              Refresh
-            </button>
-          </div>
-
-          {chatErr && (
-            <div className="mb-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-lg p-3">
-              {chatErr}
-            </div>
-          )}
-
-          <div className="h-[58vh] overflow-auto border rounded-lg p-3 bg-white">
-            {messages.length === 0 ? (
-              <div className="text-sm text-zinc-500">No messages yet.</div>
-            ) : (
-              <div className="space-y-3">
-                {messages.map((m, idx) => (
-                  <div key={idx} className="flex gap-3">
-                    <div className="w-20 shrink-0 text-xs uppercase tracking-wide text-zinc-500">
-                      {m.role}
-                    </div>
-                    <div className="text-sm whitespace-pre-wrap">{m.content}</div>
-                  </div>
-                ))}
-                <div ref={bottomRef} />
-              </div>
-            )}
-          </div>
-
-          <div className="mt-3 flex gap-2">
-            <input
-              className="flex-1 border rounded-lg px-3 py-2 text-sm"
-              placeholder="Type a message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage();
-                }
-              }}
-              disabled={sending}
-            />
-            <button
-              className="border rounded-lg px-4 py-2 text-sm hover:bg-zinc-50 disabled:opacity-60"
-              onClick={sendMessage}
-              disabled={sending}
-            >
-              {sending ? "Sending..." : "Send"}
-            </button>
-          </div>
-        </div>
-
-        {/* Runs Panel */}
-        <div className="border rounded-xl p-4">
-          <div className="font-semibold mb-2">Runs (Background Agents)</div>
-          <div className="text-xs text-zinc-500 mb-3">
-            Create a run to process this thread in the background (queued → running → done).
-          </div>
-
-          {runErr && (
-            <div className="mb-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-lg p-3">
-              {runErr}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <textarea
-              className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
-              value={runPrompt}
-              onChange={(e) => setRunPrompt(e.target.value)}
-            />
-            <button
-              className="w-full border rounded-lg px-4 py-2 text-sm hover:bg-zinc-50 disabled:opacity-60"
-              onClick={createThreadRun}
-              disabled={creatingRun}
-            >
-              {creatingRun ? "Creating..." : "Create Run for this thread"}
-            </button>
-          </div>
-
-          <div className="mt-4">
-            <div className="text-sm font-medium mb-2">Recent Runs</div>
-            <div className="border rounded-lg overflow-hidden">
-              {runs.length === 0 ? (
-                <div className="p-3 text-sm text-zinc-500">No runs yet.</div>
-              ) : (
-                <div className="divide-y">
-                  {runs.map((r) => (
-                    <button
-                      key={r.id}
-                      className={`w-full text-left p-3 hover:bg-zinc-50 ${
-                        selectedRunId === r.id ? "bg-zinc-50" : ""
-                      }`}
-                      onClick={() => setSelectedRunId(r.id)}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm font-medium break-all">{r.id}</div>
-                        <span className={statusBadge(r.status)}>{r.status}</span>
-                      </div>
-                      <div className="text-xs text-zinc-500 mt-1 line-clamp-2">
-                        {r.prompt}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Run details */}
-          {selectedRun && (
-            <div className="mt-4">
-              <div className="text-sm font-medium mb-2">Run Details</div>
-              <div className="text-xs text-zinc-500 mb-2 break-all">
-                {selectedRun.id} • {selectedRun.status}
-                {selectedRun.error ? ` • ERROR: ${selectedRun.error}` : ""}
-              </div>
-
-              <div className="h-56 overflow-auto border rounded-lg p-2 bg-white">
-                {runLogs.length === 0 ? (
-                  <div className="text-sm text-zinc-500">No logs yet.</div>
-                ) : (
-                  <pre className="text-xs whitespace-pre-wrap">
-                    {runLogs.join("\n")}
-                  </pre>
-                )}
-              </div>
-
-              <div className="mt-2 flex gap-2">
-                <button
-                  className="flex-1 border rounded-lg px-3 py-2 text-sm hover:bg-zinc-50"
-                  onClick={() => loadRunDetails(selectedRun.id)}
-                >
-                  Refresh Logs
-                </button>
-                <button
-                  className="flex-1 border rounded-lg px-3 py-2 text-sm hover:bg-zinc-50"
-                  onClick={() => setSelectedRunId(null)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+        headers: { "Content-Type": "appl
