@@ -65,29 +65,19 @@ export async function createRun(input: {
     updatedAt: ts,
   };
 
-  // Store run
   await kv.set(runKey(id), run);
-
-  // Init logs list (optional: keep empty)
   await kv.del(runLogsKey(id));
 
-  // Index
-  if (input.projectId) {
-    await kv.lpush(projectRunsIndexKey(input.projectId), id);
-  }
-  if (input.threadId) {
-    await kv.lpush(threadRunsIndexKey(input.threadId), id);
-  }
+  if (input.projectId) await kv.lpush(projectRunsIndexKey(input.projectId), id);
+  if (input.threadId) await kv.lpush(threadRunsIndexKey(input.threadId), id);
 
-  // Queue (FIFO: push right, pop left)
   await kv.rpush(QUEUE_KEY, id);
 
   return run;
 }
 
 export async function getRun(runId: string) {
-  const run = (await kv.get(runKey(runId))) as Run | null;
-  return run;
+  return (await kv.get(runKey(runId))) as Run | null;
 }
 
 export async function setRun(runId: string, patch: Partial<Run>) {
@@ -104,33 +94,27 @@ export async function appendRunLog(runId: string, line: string) {
 }
 
 export async function getRunLogs(runId: string, limit = 200) {
-  // get last N lines
   const len = (await kv.llen(runLogsKey(runId))) as number;
   const start = Math.max(0, len - limit);
-  const logs = (await kv.lrange(runLogsKey(runId), start, -1)) as string[];
-  return logs ?? [];
+  return ((await kv.lrange(runLogsKey(runId), start, -1)) as string[]) ?? [];
 }
 
 export async function listRunsForProject(projectId: string, limit = 50) {
-  const ids = (await kv.lrange(projectRunsIndexKey(projectId), 0, limit - 1)) as string[];
-  return (ids ?? []).filter(Boolean);
+  return (
+    ((await kv.lrange(projectRunsIndexKey(projectId), 0, limit - 1)) as string[]) ?? []
+  ).filter(Boolean);
 }
 
 export async function listRunsForThread(threadId: string, limit = 50) {
-  const ids = (await kv.lrange(threadRunsIndexKey(threadId), 0, limit - 1)) as string[];
-  return (ids ?? []).filter(Boolean);
+  return (
+    ((await kv.lrange(threadRunsIndexKey(threadId), 0, limit - 1)) as string[]) ?? []
+  ).filter(Boolean);
 }
 
 export async function dequeueRunId() {
-  // FIFO: pop from left
-  const id = (await kv.lpop(QUEUE_KEY)) as string | null;
-  return id;
+  return (await kv.lpop(QUEUE_KEY)) as string | null;
 }
 
-/**
- * Simple "claim lock" so multiple cron invocations don’t process the same run.
- * Uses SETNX-style behavior via kv.set with nx + ex (supported by Upstash/Vercel KV).
- */
 export async function claimRunLock(runId: string, ttlSeconds = 60) {
   const lockKey = `run:lock:${runId}`;
   const ok = (await kv.set(lockKey, "1", { nx: true, ex: ttlSeconds })) as unknown;
