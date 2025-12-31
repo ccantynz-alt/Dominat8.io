@@ -1,7 +1,7 @@
 // app/api/threads/[threadId]/runs/route.ts
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createRun, listRunsForThread, getRun } from "@/app/lib/runs";
+import { createRun, listRunsForThread, getRun } from "../../../../lib/runs";
 
 const CreateThreadRunSchema = z.object({
   prompt: z.string().min(1),
