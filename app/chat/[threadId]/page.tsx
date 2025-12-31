@@ -61,4 +61,103 @@ export default function ThreadPage() {
     }
   }
 
-  useEffect(
+  useEffect(() => {
+    loadMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  return (
+    <main
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        maxWidth: 900,
+        margin: "0 auto",
+        padding: 16,
+      }}
+    >
+      <header style={{ marginBottom: 12, display: "flex", gap: 12, alignItems: "center" }}>
+        <button
+          onClick={() => router.push("/chat")}
+          style={{ border: "1px solid #ddd", background: "#fff", padding: "8px 10px", borderRadius: 8 }}
+        >
+          ← Back
+        </button>
+        <div style={{ fontSize: 12, opacity: 0.6 }}>Thread: {threadId}</div>
+      </header>
+
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          border: "1px solid #e5e5e5",
+          borderRadius: 8,
+          padding: 12,
+        }}
+      >
+        {loading && <p>Loading…</p>}
+
+        {!loading &&
+          messages.map((m, i) => (
+            <div
+              key={i}
+              style={{
+                marginBottom: 12,
+                display: "flex",
+                justifyContent: m.role === "user" ? "flex-end" : "flex-start",
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: "70%",
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: m.role === "user" ? "#000" : "#f3f3f3",
+                  color: m.role === "user" ? "#fff" : "#000",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {m.content}
+              </div>
+            </div>
+          ))}
+
+        <div ref={bottomRef} />
+      </div>
+
+      <footer style={{ marginTop: 12, display: "flex", gap: 8 }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          placeholder="Type a message…"
+          style={{
+            flex: 1,
+            padding: "10px 12px",
+            borderRadius: 8,
+            border: "1px solid #ccc",
+          }}
+        />
+        <button
+          onClick={sendMessage}
+          disabled={sending}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 8,
+            border: "1px solid #ccc",
+            background: "#000",
+            color: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          {sending ? "…" : "Send"}
+        </button>
+      </footer>
+    </main>
+  );
+}
