@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Msg = {
   id?: string;
@@ -28,6 +29,7 @@ type Run = {
 };
 
 export default function ThreadPage({ params }: { params: { threadId: string } }) {
+  const router = useRouter();
   const threadId = params.threadId;
 
   // Chat
@@ -41,8 +43,6 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
   const [runPrompt, setRunPrompt] = useState(
     "Continue this thread as a background agent. Summarize progress and propose next actions."
   );
-
-  // Persona selection
   const [runAgent, setRunAgent] = useState<AgentPersona>("general");
 
   const [creatingRun, setCreatingRun] = useState(false);
@@ -54,6 +54,9 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
   // Manual cron tick UI
   const [tickInfo, setTickInfo] = useState<string | null>(null);
   const [ticking, setTicking] = useState(false);
+
+  // New thread UI
+  const [creatingThread, setCreatingThread] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -170,11 +173,31 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
 
       await loadRuns();
       if (selectedRunId) await loadRunDetails(selectedRunId);
-      await loadMessages(); // in case the agent wrote a message back
+      await loadMessages();
     } catch (e: any) {
       setRunErr(e?.message ?? "Tick failed");
     } finally {
       setTicking(false);
+    }
+  }
+
+  async function createNewThread() {
+    if (creatingThread) return;
+    setCreatingThread(true);
+    setChatErr(null);
+
+    try {
+      const res = await fetch("/api/threads", { method: "POST" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.error ?? "Failed to create thread");
+
+      const newId = data.threadId as string | undefined;
+      if (!newId) throw new Error("No threadId returned");
+      router.push(`/threads/${newId}`);
+    } catch (e: any) {
+      setChatErr(e?.message ?? "Failed to create thread");
+    } finally {
+      setCreatingThread(false);
     }
   }
 
@@ -197,7 +220,7 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRunId]);
 
-  // Poll runs list occasionally (to update statuses)
+  // Poll runs list occasionally
   useEffect(() => {
     const t = setInterval(() => {
       loadRuns();
@@ -206,7 +229,7 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId]);
 
-  // Poll selected run logs more frequently while active
+  // Poll selected run logs while active
   useEffect(() => {
     if (!selectedRunId) return;
     const t = setInterval(() => {
@@ -243,15 +266,27 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
               <div className="text-sm text-zinc-500">Thread</div>
               <div className="font-semibold break-all">{threadId}</div>
             </div>
-            <button
-              className="text-sm border rounded-lg px-3 py-2 hover:bg-zinc-50"
-              onClick={() => {
-                loadMessages();
-                loadRuns();
-              }}
-            >
-              Refresh
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                className="text-sm border rounded-lg px-3 py-2 hover:bg-zinc-50 disabled:opacity-60"
+                onClick={createNewThread}
+                disabled={creatingThread}
+                title="Create a brand new thread"
+              >
+                {creatingThread ? "Creating..." : "New Thread"}
+              </button>
+
+              <button
+                className="text-sm border rounded-lg px-3 py-2 hover:bg-zinc-50"
+                onClick={() => {
+                  loadMessages();
+                  loadRuns();
+                }}
+              >
+                Refresh
+              </button>
+            </div>
           </div>
 
           {chatErr && (
@@ -389,7 +424,6 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
             </div>
           </div>
 
-          {/* Run details */}
           {selectedRun && (
             <div className="mt-4">
               <div className="text-sm font-medium mb-2">Run Details</div>
