@@ -1,65 +1,52 @@
-// app/api/projects/route.ts
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { createProject, listProjects } from "@/app/lib/store";
+import { getCurrentUserId } from "../../lib/demoAuth";
+import { storeGet, storeSet } from "../../lib/store";
 
-const CreateProjectSchema = z.object({
-  name: z.string().min(1),
-});
+export const runtime = "nodejs";
 
-export async function GET(req: Request) {
-  try {
-    const url = new URL(req.url);
+type Project = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
 
-    const debugCreate = url.searchParams.get("debugCreate");
-    const name = url.searchParams.get("name") || "Test";
+function uid(prefix = ""): string {
+  const id = Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2);
+  return prefix ? `${prefix}_${id}` : id;
+}
 
-    // ✅ This makes it impossible to “not know” which code is deployed.
-    if (debugCreate === "1") {
-      const project = await createProject({ name });
-      return NextResponse.json(
-        { ok: true, mode: "debugCreate", name, project },
-        { status: 200 }
-      );
-    }
+export async function GET() {
+  const userId = getCurrentUserId();
+  const key = `projects:index:${userId}`;
 
-    const projects = await listProjects();
-    return NextResponse.json({ ok: true, mode: "list", projects }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json(
-      {
-        ok: false,
-        mode: "error",
-        error: err?.message ?? String(err),
-        stack: err?.stack ?? null,
-      },
-      { status: 500 }
-    );
+  const ids = (await storeGet<string[]>(key)) ?? [];
+  const projects: Project[] = [];
+
+  for (const id of ids) {
+    const p = await storeGet<Project>(`projects:${userId}:${id}`);
+    if (p) projects.push(p);
   }
+
+  return NextResponse.json({ ok: true, projects });
 }
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json().catch(() => ({}));
-    const parsed = CreateProjectSchema.safeParse(body);
+  const userId = getCurrentUserId();
+  const body = await req.json().catch(() => ({}));
+  const name = typeof body?.name === "string" ? body.name : "Untitled Project";
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid request", issues: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
+  const project: Project = {
+    id: uid("proj"),
+    name,
+    createdAt: new Date().toISOString()
+  };
 
-    const project = await createProject({ name: parsed.data.name });
-    return NextResponse.json({ ok: true, project }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err?.message ?? String(err),
-        stack: err?.stack ?? null,
-      },
-      { status: 500 }
-    );
-  }
+  const indexKey = `projects:index:${userId}`;
+  const ids = (await storeGet<string[]>(indexKey)) ?? [];
+  ids.unshift(project.id);
+
+  await storeSet(indexKey, ids);
+  await storeSet(`projects:${userId}:${project.id}`, project);
+
+  return NextResponse.json({ ok: true, project });
 }
