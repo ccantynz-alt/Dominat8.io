@@ -10,7 +10,7 @@ export async function GET(
 ) {
   return NextResponse.json({
     ok: true,
-    userId: getCurrentUserId(),
+    userId: await getCurrentUserId(),
     projectId: params.projectId,
     files: [],
     ts: kvNowISO()
