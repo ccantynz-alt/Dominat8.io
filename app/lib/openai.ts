@@ -1,10 +1,12 @@
 // app/lib/openai.ts
+type ChatMsg = { role: "system" | "user" | "assistant"; content: string };
+
 export async function callOpenAIChat(opts: {
   apiKey: string;
-  messages: { role: "system" | "user" | "assistant"; content: string }[];
+  messages: ChatMsg[];
   model?: string;
-}) {
-  const model = opts.model ?? "gpt-4o-mini";
+}): Promise<string> {
+  const model = opts.model || process.env.OPENAI_MODEL || "gpt-4o-mini";
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -19,12 +21,24 @@ export async function callOpenAIChat(opts: {
     }),
   });
 
+  const data = await res.json().catch(() => null);
+
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`OpenAI error ${res.status}: ${text}`);
+    const msg =
+      data?.error?.message ||
+      data?.message ||
+      `OpenAI request failed (${res.status})`;
+    throw new Error(msg);
   }
 
-  const data = await res.json();
-  const content = data?.choices?.[0]?.message?.content ?? "";
-  return String(content);
+  const content =
+    data?.choices?.[0]?.message?.content ??
+    data?.choices?.[0]?.delta?.content ??
+    "";
+
+  if (!content || typeof content !== "string") {
+    throw new Error("OpenAI returned no content");
+  }
+
+  return content.trim();
 }
