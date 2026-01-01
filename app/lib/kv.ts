@@ -2,10 +2,6 @@ export function kvNowISO() {
   return new Date().toISOString();
 }
 
-/**
- * Minimal placeholder KV helpers so the build compiles.
- * Replace with your real KV implementation later.
- */
 export async function kvJsonGet<T>(_key: string): Promise<T | null> {
   return null;
 }
