@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getCurrentUserId } from "../../../../lib/demoAuth";
+import { getCurrentUserId } from "../../../lib/demoAuth";
 
 export const runtime = "nodejs";
 
@@ -28,10 +28,9 @@ export async function POST(req: Request) {
 
   const userId = await getCurrentUserId();
 
-  const origin =
-    req.headers.get("x-forwarded-proto") && req.headers.get("host")
-      ? `${req.headers.get("x-forwarded-proto")}://${req.headers.get("host")}`
-      : "http://localhost:3000";
+  const proto = req.headers.get("x-forwarded-proto") ?? "https";
+  const host = req.headers.get("host") ?? "localhost:3000";
+  const origin = `${proto}://${host}`;
 
   const successUrl = `${origin}/dashboard?checkout=success`;
   const cancelUrl = `${origin}/pricing?checkout=cancel`;
