@@ -22,6 +22,35 @@ export async function storeKeys(prefix = ""): Promise<string[]> {
   return out;
 }
 
+function uid(prefix = ""): string {
+  const id = Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2);
+  return prefix ? `${prefix}_${id}` : id;
+}
+
+/**
+ * Create a project (demo in-memory).
+ * Matches what debug routes expect.
+ */
+export async function createProject(
+  userId: string,
+  name: string
+): Promise<{ id: string; name: string; createdAt: string }> {
+  const project = {
+    id: uid("proj"),
+    name: name || "Untitled Project",
+    createdAt: new Date().toISOString()
+  };
+
+  const indexKey = `projects:index:${userId}`;
+  const ids = (await storeGet<string[]>(indexKey)) ?? [];
+  ids.unshift(project.id);
+
+  await storeSet(indexKey, ids);
+  await storeSet(`projects:${userId}:${project.id}`, project);
+
+  return project;
+}
+
 /**
  * Compatibility helpers.
  * Supports both:
@@ -68,7 +97,7 @@ export async function listRuns(arg1: string, arg2?: string) {
     return runs;
   }
 
-  const projectId = arg1;
+  const _projectId = arg1;
 
   // Best-effort: return empty list for demo build when userId not provided
   return [];
