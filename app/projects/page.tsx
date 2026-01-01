@@ -59,6 +59,7 @@ export default function ProjectsPage() {
       } else {
         await load();
       }
+      setName("");
     } catch (e: any) {
       setError(e?.message || "Unknown error");
     } finally {
@@ -71,78 +72,84 @@ export default function ProjectsPage() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-4xl p-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold">Projects</h1>
-        <p className="text-sm opacity-80">Create projects and launch runs.</p>
-        <div className="mt-2">
-          <Link href="/dashboard" className="rounded-xl border px-3 py-2 text-sm">
-            ← Back to Dashboard
-          </Link>
+    <div className="space-y-6">
+      <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
+          <p className="text-sm text-zinc-400">
+            Create a project, then run the agent inside it.
+          </p>
         </div>
-      </header>
 
-      <section className="mt-6 rounded-2xl border p-4">
-        <h2 className="text-lg font-medium">Create a project</h2>
-
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Project name"
-            className="w-full rounded-xl border bg-transparent px-3 py-2 outline-none"
+            placeholder="Project name (e.g. Airport Shuttle Landing Page)"
+            className="w-full rounded-2xl border border-white/10 bg-zinc-950/60 px-4 py-3 text-sm outline-none placeholder:text-zinc-600 focus:border-white/20"
           />
+
           <button
             onClick={create}
             disabled={creating || !name.trim()}
-            className="rounded-xl border px-4 py-2 disabled:opacity-50"
+            className="rounded-2xl border border-white/10 bg-white px-5 py-3 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:opacity-50"
           >
             {creating ? "Creating…" : "Create"}
           </button>
+
           <button
             onClick={load}
             disabled={loading}
-            className="rounded-xl border px-4 py-2 disabled:opacity-50"
+            className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm hover:bg-white/10 disabled:opacity-50"
           >
             Refresh
           </button>
         </div>
 
-        {error ? <p className="mt-3 text-sm text-red-400">Error: {error}</p> : null}
+        {error ? (
+          <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
+            {error}
+          </div>
+        ) : null}
       </section>
 
-      <section className="mt-6 rounded-2xl border p-4">
+      <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-medium">All projects</h2>
-          <span className="text-sm opacity-70">{sorted.length} total</span>
+          <h2 className="text-lg font-medium">Your projects</h2>
+          <span className="text-sm text-zinc-400">{sorted.length} total</span>
         </div>
 
         {loading ? (
-          <p className="mt-3 text-sm opacity-70">Loading…</p>
+          <p className="mt-4 text-sm text-zinc-400">Loading…</p>
         ) : sorted.length === 0 ? (
-          <p className="mt-3 text-sm opacity-70">No projects yet — create one above.</p>
+          <p className="mt-4 text-sm text-zinc-400">No projects yet — create one above.</p>
         ) : (
-          <ul className="mt-3 grid gap-2">
+          <ul className="mt-4 grid gap-3">
             {sorted.map((p) => (
-              <li key={p.id} className="rounded-xl border p-3">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <li
+                key={p.id}
+                className="rounded-2xl border border-white/10 bg-zinc-950/40 p-4 hover:bg-zinc-950/60"
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <div className="font-medium">{p.name}</div>
-                    <div className="text-xs opacity-70">
-                      <span className="opacity-70">id:</span> {p.id}
+                    <div className="text-base font-semibold">{p.name}</div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {p.id}
                       {p.createdAt ? (
                         <>
                           {" "}
-                          • <span className="opacity-70">created:</span>{" "}
-                          {new Date(p.createdAt).toLocaleString()}
+                          • {new Date(p.createdAt).toLocaleString()}
                         </>
                       ) : null}
                     </div>
                   </div>
 
-                  <div className="mt-2 flex gap-2 sm:mt-0">
-                    <Link className="rounded-xl border px-3 py-2 text-sm" href={`/projects/${p.id}`}>
-                      Open
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/projects/${p.id}`}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10"
+                    >
+                      Open →
                     </Link>
                   </div>
                 </div>
@@ -151,6 +158,6 @@ export default function ProjectsPage() {
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }
