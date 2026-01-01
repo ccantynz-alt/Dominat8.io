@@ -1,41 +1,27 @@
-type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
-
-const mem = new Map<string, Json>();
-
-export async function storeGet<T = Json>(key: string): Promise<T | null> {
-  return (mem.get(key) as T) ?? null;
-}
-
-export async function storeSet<T = Json>(key: string, value: T): Promise<void> {
-  mem.set(key, value as unknown as Json);
-}
-
-export async function storeDel(key: string): Promise<void> {
-  mem.delete(key);
-}
-
-export async function storeKeys(prefix = ""): Promise<string[]> {
-  const out: string[] = [];
-  for (const k of mem.keys()) {
-    if (!prefix || k.startsWith(prefix)) out.push(k);
-  }
-  return out;
+export function kvNowISO() {
+  return new Date().toISOString();
 }
 
 /**
- * Compatibility helpers for older imports in dashboard pages.
- * These are simple placeholders so the app compiles.
+ * Minimal placeholder KV client + helpers so the build compiles.
+ * Replace with real Upstash/Vercel KV later.
  */
-export async function getProject(userId: string, projectId: string) {
-  return await storeGet(`projects:${userId}:${projectId}`);
+export const kv = {
+  async get<T>(_key: string): Promise<T | null> {
+    return null;
+  },
+  async set<T>(_key: string, _value: T): Promise<void> {
+    return;
+  },
+  async del(_key: string): Promise<void> {
+    return;
+  }
+};
+
+export async function kvJsonGet<T>(_key: string): Promise<T | null> {
+  return null;
 }
 
-export async function listRuns(userId: string, projectId: string) {
-  const ids = (await storeGet<string[]>(`runs:index:${userId}:${projectId}`)) ?? [];
-  const runs = [];
-  for (const id of ids) {
-    const run = await storeGet(`runs:${userId}:${id}`);
-    if (run) runs.push(run);
-  }
-  return runs;
+export async function kvJsonSet<T>(_key: string, _value: T): Promise<void> {
+  return;
 }
