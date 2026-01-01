@@ -2,60 +2,38 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main style={{ padding: 32, maxWidth: 900, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 36, fontWeight: 800 }}>
+    <main style={{ padding: "3rem", fontFamily: "system-ui" }}>
+      <h1 style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>
         AI Website Builder
       </h1>
 
-      <p style={{ marginTop: 12, fontSize: 18, color: "#555" }}>
-        Chat → Runs → Agents → Output
+      <p style={{ fontSize: "1.1rem", marginBottom: "2rem" }}>
+        Build websites using AI. Create projects, run agents, and deploy instantly.
       </p>
 
-      <div
-        style={{
-          marginTop: 32,
-          padding: 24,
-          border: "1px solid #e5e5e5",
-          borderRadius: 12,
-        }}
-      >
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
-          You’re signed in
-        </h2>
+      <div style={{ display: "flex", gap: "1rem" }}>
+        <Link href="/dashboard">
+          <button style={buttonStyle}>Go to Dashboard</button>
+        </Link>
 
-        <p style={{ marginTop: 8, color: "#666" }}>
-          Go to your dashboard to manage projects, runs, and agents.
-        </p>
-
-        <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
-          <Link
-            href="/dashboard"
-            style={{
-              padding: "10px 16px",
-              background: "#000",
-              color: "#fff",
-              borderRadius: 8,
-              textDecoration: "none",
-              fontWeight: 600,
-            }}
-          >
-            Go to Dashboard
-          </Link>
-
-          <Link
-            href="/dashboard/threads"
-            style={{
-              padding: "10px 16px",
-              border: "1px solid #ccc",
-              borderRadius: 8,
-              textDecoration: "none",
-              fontWeight: 600,
-            }}
-          >
-            Open Threads (dev)
-          </Link>
-        </div>
+        <Link href="/sign-in">
+          <button style={buttonStyleSecondary}>Sign In</button>
+        </Link>
       </div>
     </main>
   );
 }
+
+const buttonStyle: React.CSSProperties = {
+  padding: "0.75rem 1.25rem",
+  fontSize: "1rem",
+  background: "#000",
+  color: "#fff",
+  border: "none",
+  cursor: "pointer",
+};
+
+const buttonStyleSecondary: React.CSSProperties = {
+  ...buttonStyle,
+  background: "#555",
+};
