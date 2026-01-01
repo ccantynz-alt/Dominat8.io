@@ -39,11 +39,11 @@ export async function createProject(
   arg1: string | { name: string; userId?: string },
   arg2?: string
 ): Promise<Project> {
-  const userId =
-    typeof arg1 === "string" ? arg1 : arg1.userId ?? "demo";
-
+  const userId = typeof arg1 === "string" ? arg1 : arg1.userId ?? "demo";
   const name =
-    typeof arg1 === "string" ? (arg2 ?? "Untitled Project") : arg1.name ?? "Untitled Project";
+    typeof arg1 === "string"
+      ? (arg2 ?? "Untitled Project")
+      : arg1.name ?? "Untitled Project";
 
   const project: Project = {
     id: uid("proj"),
@@ -62,6 +62,25 @@ export async function createProject(
 }
 
 /**
+ * List projects.
+ * Supports BOTH call styles:
+ *   listProjects(userId)
+ *   listProjects()
+ */
+export async function listProjects(userId?: string): Promise<Project[]> {
+  const uidToUse = userId ?? "demo";
+  const indexKey = `projects:index:${uidToUse}`;
+  const ids = (await storeGet<string[]>(indexKey)) ?? [];
+
+  const out: Project[] = [];
+  for (const id of ids) {
+    const p = await storeGet<Project>(`projects:${uidToUse}:${id}`);
+    if (p) out.push(p);
+  }
+  return out;
+}
+
+/**
  * Compatibility helpers.
  * Supports both:
  *   getProject(projectId)
@@ -71,7 +90,7 @@ export async function getProject(arg1: string, arg2?: string) {
   if (arg2) {
     const userId = arg1;
     const projectId = arg2;
-    return await storeGet(`projects:${userId}:${projectId}`);
+    return await storeGet<Project>(`projects:${userId}:${projectId}`);
   }
 
   const projectId = arg1;
@@ -79,7 +98,7 @@ export async function getProject(arg1: string, arg2?: string) {
   // Try to find any matching project across stored keys (best-effort for demo build)
   for (const k of mem.keys()) {
     if (k.startsWith("projects:") && k.endsWith(`:${projectId}`)) {
-      return await storeGet(k);
+      return await storeGet<Project>(k);
     }
   }
 
