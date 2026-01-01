@@ -11,7 +11,6 @@ type Msg = {
 };
 
 type RunStatus = "queued" | "running" | "done" | "failed";
-
 type AgentPersona = "general" | "planner" | "coder" | "reviewer" | "researcher";
 
 type Run = {
@@ -20,7 +19,7 @@ type Run = {
   projectId?: string;
   prompt: string;
   status: RunStatus;
-  agent?: AgentPersona; // older runs may not have this
+  agent?: AgentPersona;
   createdAt: string;
   updatedAt: string;
   startedAt?: string;
@@ -57,6 +56,9 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
 
   // New thread UI
   const [creatingThread, setCreatingThread] = useState(false);
+
+  // Live log streaming
+  const streamRef = useRef<EventSource | null>(null);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -201,6 +203,50 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
     }
   }
 
+  function stopStream() {
+    if (streamRef.current) {
+      streamRef.current.close();
+      streamRef.current = null;
+    }
+  }
+
+  function startStream(runId: string) {
+    stopStream();
+    setRunErr(null);
+
+    const es = new EventSource(`/api/runs/${runId}/stream`);
+    streamRef.current = es;
+
+    es.addEventListener("hello", () => {
+      // optional
+    });
+
+    es.addEventListener("update", (evt) => {
+      try {
+        const payload = JSON.parse((evt as MessageEvent).data);
+        if (payload?.run) setSelectedRun(payload.run);
+        if (Array.isArray(payload?.delta) && payload.delta.length > 0) {
+          setRunLogs((prev) => [...prev, ...payload.delta]);
+        }
+      } catch {
+        // ignore parse errors
+      }
+    });
+
+    es.addEventListener("done", async () => {
+      stopStream();
+      // Refresh messages in case agent wrote back at the end
+      await loadMessages();
+      await loadRuns();
+    });
+
+    es.addEventListener("error", async () => {
+      // If stream fails (proxy, browser, etc), fall back to polling once
+      stopStream();
+      await loadRunDetails(runId);
+    });
+  }
+
   // Initial load
   useEffect(() => {
     loadMessages();
@@ -213,14 +259,23 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // When selecting run, load details
+  // When selecting run, load details + start streaming
   useEffect(() => {
-    if (!selectedRunId) return;
-    loadRunDetails(selectedRunId);
+    if (!selectedRunId) {
+      stopStream();
+      setSelectedRun(null);
+      setRunLogs([]);
+      return;
+    }
+    // Get initial snapshot (run + full logs), then stream deltas
+    (async () => {
+      await loadRunDetails(selectedRunId);
+      startStream(selectedRunId);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRunId]);
 
-  // Poll runs list occasionally
+  // Poll runs list occasionally (status updates)
   useEffect(() => {
     const t = setInterval(() => {
       loadRuns();
@@ -229,15 +284,10 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId]);
 
-  // Poll selected run logs while active
+  // Cleanup stream on unmount
   useEffect(() => {
-    if (!selectedRunId) return;
-    const t = setInterval(() => {
-      loadRunDetails(selectedRunId);
-    }, selectedRunIsActive ? 1500 : 5000);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRunId, selectedRunIsActive]);
+    return () => stopStream();
+  }, []);
 
   function statusBadge(s: RunStatus) {
     const base = "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border";
@@ -405,7 +455,10 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
                       className={`w-full text-left p-3 hover:bg-zinc-50 ${
                         selectedRunId === r.id ? "bg-zinc-50" : ""
                       }`}
-                      onClick={() => setSelectedRunId(r.id)}
+                      onClick={() => {
+                        setSelectedRunId(r.id);
+                        setRunLogs([]); // logs will fill from snapshot + stream
+                      }}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-sm font-medium break-all">{r.id}</div>
@@ -424,12 +477,14 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
             </div>
           </div>
 
+          {/* Run details */}
           {selectedRun && (
             <div className="mt-4">
               <div className="text-sm font-medium mb-2">Run Details</div>
               <div className="text-xs text-zinc-500 mb-2 break-all">
                 {selectedRun.id} • {agentLabel(selectedRun.agent)} • {selectedRun.status}
                 {selectedRun.error ? ` • ERROR: ${selectedRun.error}` : ""}
+                {selectedRunIsActive ? " • streaming..." : ""}
               </div>
 
               <div className="h-56 overflow-auto border rounded-lg p-2 bg-white">
@@ -445,11 +500,14 @@ export default function ThreadPage({ params }: { params: { threadId: string } })
                   className="flex-1 border rounded-lg px-3 py-2 text-sm hover:bg-zinc-50"
                   onClick={() => loadRunDetails(selectedRun.id)}
                 >
-                  Refresh Logs
+                  Refresh Snapshot
                 </button>
                 <button
                   className="flex-1 border rounded-lg px-3 py-2 text-sm hover:bg-zinc-50"
-                  onClick={() => setSelectedRunId(null)}
+                  onClick={() => {
+                    stopStream();
+                    setSelectedRunId(null);
+                  }}
                 >
                   Close
                 </button>
