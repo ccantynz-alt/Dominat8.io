@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { kvNowISO } from "../../../../lib/kv";
-import { getCurrentUserId } from "../../../lib/demoAuth";
+import { getCurrentUserId } from "../../../../lib/demoAuth";
 
 export const runtime = "nodejs";
 
