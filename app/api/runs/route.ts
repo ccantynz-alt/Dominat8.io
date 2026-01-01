@@ -1,35 +1,51 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { createRun } from "@/lib/runs";
+import { nowISO } from "../../../lib/runs";
+import { getCurrentUserId } from "../../lib/demoAuth";
+import { storeGet, storeSet } from "../../lib/store";
 
-const CreateRunSchema = z.object({
-  prompt: z.string().optional(),
-  agent: z.enum(["general", "planner", "coder", "reviewer", "researcher"]).optional(),
-  threadId: z.string().optional(),
-  projectId: z.string().optional(),
-});
+export const runtime = "nodejs";
+
+type Run = {
+  id: string;
+  projectId: string;
+  status: "queued" | "running" | "completed" | "failed";
+  prompt?: string;
+  createdAt: string;
+};
+
+function uid(prefix = ""): string {
+  const id = Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2);
+  return prefix ? `${prefix}_${id}` : id;
+}
 
 export async function POST(req: Request) {
+  const userId = getCurrentUserId();
   const body = await req.json().catch(() => ({}));
-  const parsed = CreateRunSchema.safeParse(body);
 
-  if (!parsed.success) {
+  const projectId = typeof body?.projectId === "string" ? body.projectId : "";
+  const prompt = typeof body?.prompt === "string" ? body.prompt : "";
+
+  if (!projectId || !prompt) {
     return NextResponse.json(
-      { ok: false, error: "Invalid request", issues: parsed.error.issues },
+      { ok: false, error: "Missing projectId or prompt" },
       { status: 400 }
     );
   }
 
-  const { prompt, agent, threadId, projectId } = parsed.data;
+  const run: Run = {
+    id: uid("run"),
+    projectId,
+    status: "queued",
+    prompt,
+    createdAt: nowISO()
+  };
 
-  // ✅ runtime check + TypeScript narrowing (fixes the build)
-  if (!prompt || prompt.trim().length === 0) {
-    return NextResponse.json(
-      { ok: false, error: "prompt is required" },
-      { status: 400 }
-    );
-  }
+  const indexKey = `runs:index:${userId}:${projectId}`;
+  const ids = (await storeGet<string[]>(indexKey)) ?? [];
+  ids.unshift(run.id);
 
-  const run = await createRun({ prompt, agent, threadId, projectId });
+  await storeSet(indexKey, ids);
+  await storeSet(`runs:${userId}:${run.id}`, run);
+
   return NextResponse.json({ ok: true, run });
 }
