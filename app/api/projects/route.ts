@@ -16,7 +16,7 @@ function uid(prefix = ""): string {
 }
 
 export async function GET() {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId();
   const key = `projects:index:${userId}`;
 
   const ids = (await storeGet<string[]>(key)) ?? [];
@@ -31,7 +31,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const userId = getCurrentUserId();
+  const userId = await getCurrentUserId();
   const body = await req.json().catch(() => ({}));
   const name = typeof body?.name === "string" ? body.name : "Untitled Project";
 
