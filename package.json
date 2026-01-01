@@ -2,29 +2,18 @@
   "name": "my-saas-app",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": "20.x"
-  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "vercel-build": "next build"
+    "vercel-build": "next build",
+    "start": "next start"
   },
   "dependencies": {
-  "@clerk/nextjs": "^5.0.0",
-  "@vercel/kv": "^1.0.1",
-  "next": "14.2.5",
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0",
-  "zod": "^3.23.8"
-}
-  },
-  "devDependencies": {
-    "@types/node": "^20.11.30",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "typescript": "^5.5.4"
+    "@clerk/nextjs": "^5.0.0",
+    "@vercel/kv": "^1.0.1",
+    "next": "14.2.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zod": "^3.23.8"
   }
 }
