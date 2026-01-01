@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { kvNowISO } from "@/app/lib/kv";
+import { kvNowISO } from "../../lib/kv";
 
 export const runtime = "nodejs";
 
