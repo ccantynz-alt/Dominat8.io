@@ -22,16 +22,54 @@ export async function storeKeys(prefix = ""): Promise<string[]> {
   return out;
 }
 
-export async function getProject(userId: string, projectId: string) {
-  return await storeGet(`projects:${userId}:${projectId}`);
+/**
+ * Compatibility helpers.
+ * Supports both:
+ *   getProject(projectId)
+ *   getProject(userId, projectId)
+ */
+export async function getProject(arg1: string, arg2?: string) {
+  if (arg2) {
+    const userId = arg1;
+    const projectId = arg2;
+    return await storeGet(`projects:${userId}:${projectId}`);
+  }
+
+  const projectId = arg1;
+
+  // Try to find any matching project across stored keys (best-effort for demo build)
+  for (const k of mem.keys()) {
+    if (k.startsWith("projects:") && k.endsWith(`:${projectId}`)) {
+      return await storeGet(k);
+    }
+  }
+
+  return null;
 }
 
-export async function listRuns(userId: string, projectId: string) {
-  const ids = (await storeGet<string[]>(`runs:index:${userId}:${projectId}`)) ?? [];
-  const runs: any[] = [];
-  for (const id of ids) {
-    const run = await storeGet<any>(`runs:${userId}:${id}`);
-    if (run) runs.push(run);
+/**
+ * Supports both:
+ *   listRuns(projectId)
+ *   listRuns(userId, projectId)
+ */
+export async function listRuns(arg1: string, arg2?: string) {
+  if (arg2) {
+    const userId = arg1;
+    const projectId = arg2;
+
+    const ids = (await storeGet<string[]>(`runs:index:${userId}:${projectId}`)) ?? [];
+    const runs: any[] = [];
+
+    for (const id of ids) {
+      const run = await storeGet<any>(`runs:${userId}:${id}`);
+      if (run) runs.push(run);
+    }
+
+    return runs;
   }
-  return runs;
+
+  const projectId = arg1;
+
+  // Best-effort: return empty list for demo build when userId not provided
+  return [];
 }
