@@ -11,6 +11,14 @@ export type Project = {
   createdAt: string;
 };
 
+export type Run = {
+  id: string;
+  projectId: string;
+  prompt: string;
+  status: "queued" | "running" | "completed" | "failed";
+  createdAt: string;
+};
+
 /* =========================
    Keys
 ========================= */
@@ -21,8 +29,16 @@ function projectKey(id: string) {
   return `project:${id}`;
 }
 
+function runIndexKey(projectId: string) {
+  return `runs:index:${projectId}`;
+}
+
+function runKey(runId: string) {
+  return `run:${runId}`;
+}
+
 /* =========================
-   Reads
+   Projects
 ========================= */
 
 export async function listProjects(): Promise<Project[]> {
@@ -46,10 +62,6 @@ export async function getProject(id: string): Promise<Project | null> {
   return JSON.parse(raw as string) as Project;
 }
 
-/* =========================
-   Writes
-========================= */
-
 export async function createProject(name: string): Promise<Project> {
   const id = randomUUID();
 
@@ -63,4 +75,43 @@ export async function createProject(name: string): Promise<Project> {
   await kv.sadd(PROJECT_INDEX_KEY, id);
 
   return project;
+}
+
+/* =========================
+   Runs
+========================= */
+
+export async function listRuns(projectId: string): Promise<Run[]> {
+  const ids = (await kv.smembers(runIndexKey(projectId))) as string[];
+  if (!ids || ids.length === 0) return [];
+
+  const runs = await Promise.all(
+    ids.map(async (id) => {
+      const raw = await kv.get(runKey(id));
+      if (!raw) return null;
+      return JSON.parse(raw as string) as Run;
+    })
+  );
+
+  return runs.filter(Boolean) as Run[];
+}
+
+export async function createRun(
+  projectId: string,
+  prompt: string
+): Promise<Run> {
+  const id = randomUUID();
+
+  const run: Run = {
+    id,
+    projectId,
+    prompt,
+    status: "queued",
+    createdAt: new Date().toISOString(),
+  };
+
+  await kv.set(runKey(id), JSON.stringify(run));
+  await kv.sadd(runIndexKey(projectId), id);
+
+  return run;
 }
