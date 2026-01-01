@@ -1,33 +1,43 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { kvJsonSet, kvNowISO } from "@/app/lib/kv";
+import { kvNowISO } from "../../lib/kv";
+import { getCurrentUserId } from "../../lib/demoAuth";
 
-function nowISO() {
-  return kvNowISO ? kvNowISO() : new Date().toISOString();
+export const runtime = "nodejs";
+
+type Thread = {
+  id: string;
+  title: string;
+  createdAt: string;
+};
+
+function uid(prefix = ""): string {
+  const id = Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2);
+  return prefix ? `${prefix}_${id}` : id;
 }
 
-function threadKey(threadId: string) {
-  return `threads:${threadId}`;
-}
-
-function threadMessagesKey(threadId: string) {
-  return `threads:${threadId}:messages`;
-}
-
-export async function POST() {
-  // Use your existing thread id style (you currently have th_...)
-  const threadId = `th_${randomUUID().replace(/-/g, "")}`;
-  const createdAt = nowISO();
-
-  // Minimal thread object (safe, extensible)
-  await kvJsonSet(threadKey(threadId), {
-    id: threadId,
-    createdAt,
-    updatedAt: createdAt,
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    userId: getCurrentUserId(),
+    threads: [],
+    ts: kvNowISO()
   });
+}
 
-  // Initialize empty messages array
-  await kvJsonSet(threadMessagesKey(threadId), []);
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => ({}));
+  const title = typeof body?.title === "string" ? body.title : "New Thread";
 
-  return NextResponse.json({ ok: true, threadId });
+  const thread: Thread = {
+    id: uid("thread"),
+    title,
+    createdAt: kvNowISO()
+  };
+
+  return NextResponse.json({
+    ok: true,
+    userId: getCurrentUserId(),
+    thread,
+    ts: kvNowISO()
+  });
 }
