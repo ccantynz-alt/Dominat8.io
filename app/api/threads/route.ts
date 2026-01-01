@@ -1,18 +1,33 @@
-// app/api/threads/route.ts
 import { NextResponse } from "next/server";
-import { createThread, listThreads } from "../../lib/memory";
-import { getCurrentUserId } from "../../lib/demoAuth";
+import { randomUUID } from "crypto";
+import { kvJsonSet, kvNowISO } from "@/app/lib/kv";
 
-export async function GET() {
-  const userId = await getCurrentUserId(); // ✅ FIX
-  const threads = await listThreads(userId);
-  return NextResponse.json({ ok: true, threads });
+function nowISO() {
+  return kvNowISO ? kvNowISO() : new Date().toISOString();
 }
 
-export async function POST(req: Request) {
-  const userId = await getCurrentUserId(); // ✅ FIX
-  const body = await req.json().catch(() => ({}));
-  const title = typeof body?.title === "string" && body.title.trim() ? body.title.trim() : "New chat";
-  const thread = await createThread(userId, title);
-  return NextResponse.json({ ok: true, thread });
+function threadKey(threadId: string) {
+  return `threads:${threadId}`;
+}
+
+function threadMessagesKey(threadId: string) {
+  return `threads:${threadId}:messages`;
+}
+
+export async function POST() {
+  // Use your existing thread id style (you currently have th_...)
+  const threadId = `th_${randomUUID().replace(/-/g, "")}`;
+  const createdAt = nowISO();
+
+  // Minimal thread object (safe, extensible)
+  await kvJsonSet(threadKey(threadId), {
+    id: threadId,
+    createdAt,
+    updatedAt: createdAt,
+  });
+
+  // Initialize empty messages array
+  await kvJsonSet(threadMessagesKey(threadId), []);
+
+  return NextResponse.json({ ok: true, threadId });
 }
