@@ -18,7 +18,7 @@ function uid(prefix = ""): string {
 export async function GET() {
   return NextResponse.json({
     ok: true,
-    userId: getCurrentUserId(),
+    userId: await getCurrentUserId(),
     threads: [],
     ts: kvNowISO()
   });
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    userId: getCurrentUserId(),
+    userId: await getCurrentUserId(),
     thread,
     ts: kvNowISO()
   });
