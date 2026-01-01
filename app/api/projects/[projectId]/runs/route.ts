@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
-import { listProjectRuns } from "@/lib/runs";
+import { nowISO } from "../../../../../lib/runs";
+import { getCurrentUserId } from "../../../../lib/demoAuth";
+
+export const runtime = "nodejs";
 
 export async function GET(
   _req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  const projectId = params.projectId;
-  const runs = await listProjectRuns(projectId);
-  return NextResponse.json({ ok: true, runs });
+  return NextResponse.json({
+    ok: true,
+    userId: getCurrentUserId(),
+    projectId: params.projectId,
+    runs: [],
+    ts: nowISO()
+  });
 }
