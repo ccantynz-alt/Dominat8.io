@@ -27,15 +27,25 @@ function uid(prefix = ""): string {
   return prefix ? `${prefix}_${id}` : id;
 }
 
+type Project = { id: string; name: string; createdAt: string };
+
 /**
  * Create a project (demo in-memory).
- * Matches what debug routes expect.
+ * Supports BOTH call styles:
+ *   createProject(userId, name)
+ *   createProject({ name, userId? })
  */
 export async function createProject(
-  userId: string,
-  name: string
-): Promise<{ id: string; name: string; createdAt: string }> {
-  const project = {
+  arg1: string | { name: string; userId?: string },
+  arg2?: string
+): Promise<Project> {
+  const userId =
+    typeof arg1 === "string" ? arg1 : arg1.userId ?? "demo";
+
+  const name =
+    typeof arg1 === "string" ? (arg2 ?? "Untitled Project") : arg1.name ?? "Untitled Project";
+
+  const project: Project = {
     id: uid("proj"),
     name: name || "Untitled Project",
     createdAt: new Date().toISOString()
