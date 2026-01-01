@@ -1,8 +1,13 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function AdminPage() {
-  auth().protect();
+  const session = await auth();
+
+  // Not signed in → send to sign-in
+  if (!session.userId) {
+    redirect("/sign-in");
+  }
 
   const user = await currentUser();
   if (!user) notFound();
@@ -23,7 +28,7 @@ export default async function AdminPage() {
           <ul className="list-disc pl-5 text-sm text-zinc-700 mt-2 space-y-1">
             <li>Set user plans (starter / pro / elite)</li>
             <li>View usage + costs</li>
-            <li>Model routing rules (Auto → Mini / Pro / Best)</li>
+            <li>Model routing rules (Auto → Mini/Pro/Best)</li>
             <li>Run queue inspector</li>
           </ul>
         </div>
