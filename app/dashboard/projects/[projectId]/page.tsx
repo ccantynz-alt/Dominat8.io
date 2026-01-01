@@ -1,56 +1,59 @@
 import Link from "next/link";
-import RunCreator from "./RunCreator";
-
-// IMPORTANT: avoid alias resolution issues
 import { getProject, listRuns } from "../../../lib/store";
 
-export default async function ProjectPage({
-  params,
+export const runtime = "nodejs";
+
+export default async function ProjectDetailPage({
+  params
 }: {
   params: { projectId: string };
 }) {
   const projectId = params.projectId;
 
-  const project = await getProject(projectId);
+  const project: any = await getProject(projectId);
+  const runs: any[] = await listRuns(projectId);
 
   if (!project) {
     return (
       <div style={{ padding: 24 }}>
-        <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+        <Link href="/dashboard/projects">← Back</Link>
+        <h1 style={{ marginTop: 16, fontSize: 20, fontWeight: 700 }}>
           Project not found
         </h1>
-        <Link href="/dashboard/projects">Back to projects</Link>
+        <p style={{ marginTop: 8, color: "#666" }}>
+          No project exists for id: <code>{projectId}</code>
+        </p>
       </div>
     );
   }
 
-  const runs = await listRuns(projectId);
+  const name =
+    typeof project?.name === "string" && project.name.trim()
+      ? project.name
+      : "Untitled Project";
 
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Link href="/dashboard/projects">← Back</Link>
-        <h1 style={{ fontSize: 20, fontWeight: 700 }}>{project.name}</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 700 }}>{name}</h1>
       </div>
 
       <div style={{ marginTop: 16, marginBottom: 16, color: "#666" }}>
-        <div>Project ID: {project.id}</div>
-        <div>Created: {project.createdAt}</div>
+        Project ID: <code>{projectId}</code>
       </div>
 
-      <RunCreator projectId={projectId} />
-
-      <div style={{ marginTop: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Runs</h2>
+      <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 16 }}>
+        <div style={{ fontWeight: 600, marginBottom: 8 }}>Runs</div>
 
         {runs.length === 0 ? (
           <div style={{ color: "#666" }}>No runs yet.</div>
         ) : (
-          <ul style={{ paddingLeft: 18 }}>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
             {runs.map((r) => (
-              <li key={r.id} style={{ marginBottom: 6 }}>
-                <span style={{ fontFamily: "monospace" }}>{r.id}</span>{" "}
-                <span style={{ color: "#666" }}>({r.status})</span>
+              <li key={String(r?.id ?? Math.random())}>
+                <code>{String(r?.id ?? "run")}</code> —{" "}
+                <span>{String(r?.status ?? "queued")}</span>
               </li>
             ))}
           </ul>
