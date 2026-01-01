@@ -47,7 +47,7 @@ export async function listProjects(): Promise<Project[]> {
 
   const projects = await Promise.all(
     ids.map(async (id) => {
-      const p = (await kv.get(projectKey(id))) as Project | null;
+      const p = (await kv.get(projectKey(id))) as unknown as Project | null;
       return p;
     })
   );
