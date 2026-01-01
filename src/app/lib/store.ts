@@ -38,7 +38,7 @@ async function kvGetJson<T>(key: string): Promise<T | null> {
     }
   }
 
-  // If kv returns an already-parsed object (some setups do)
+  // If kv returns an already-parsed object
   if (typeof raw === "object") {
     return raw as T;
   }
@@ -82,4 +82,20 @@ export async function createRun(projectId: string, prompt: string): Promise<Run>
   await kvSetJson(RUN_KEY(id), run);
   await kv.sadd(RUNS_INDEX_KEY(projectId), id);
   return run;
+}
+
+/**
+ * ---------------------------------------------------------------------
+ * Legacy compatibility layer
+ * Some older API routes still import storeGet/storeSet.
+ * Keep these so the build compiles while we migrate routes gradually.
+ * ---------------------------------------------------------------------
+ */
+
+export async function storeGet<T = unknown>(key: string): Promise<T | null> {
+  return kvGetJson<T>(key);
+}
+
+export async function storeSet(key: string, value: unknown): Promise<void> {
+  await kvSetJson(key, value);
 }
