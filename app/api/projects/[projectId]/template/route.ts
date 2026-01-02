@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { getProjectTemplate, setProjectTemplate, clearProjectTemplate } from "../../../../../lib/projectTemplateKV";
+import {
+  getProjectTemplate,
+  setProjectTemplate,
+  clearProjectTemplate,
+} from "@/app/lib/projectTemplateKV";
 
 export async function GET(
   _: Request,
@@ -17,7 +21,10 @@ export async function POST(
   const templateId = String(body?.templateId || "");
 
   if (!templateId) {
-    return NextResponse.json({ ok: false, error: "Missing templateId" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "Missing templateId" },
+      { status: 400 }
+    );
   }
 
   const sel = await setProjectTemplate(params.projectId, templateId);
