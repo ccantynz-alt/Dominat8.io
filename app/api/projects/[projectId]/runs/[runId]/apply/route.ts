@@ -21,6 +21,15 @@ function homeKey() {
   return `home:latest`;
 }
 
+function escapeHtml(s: string) {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function buildFallbackHtml(projectId: string, runId: string, files: RunFile[]) {
   const list = files
     .slice(0, 50)
@@ -56,12 +65,13 @@ function buildFallbackHtml(projectId: string, runId: string, files: RunFile[]) {
       <p><b>Project:</b> <code>${escapeHtml(projectId)}</code></p>
       <p><b>Run:</b> <code>${escapeHtml(runId)}</code></p>
       <p>
-        We did not find a direct HTML preview. This is a fallback preview page to confirm the apply worked.
+        No explicit HTML preview found. This is a fallback preview page to confirm the apply worked.
       </p>
       <p><b>Files in this run:</b></p>
       <ul>${list || "<li><i>No files</i></li>"}</ul>
       <p style="margin-top:14px;">
-        Tip: Ensure your generator returns <code>previewHtml</code> (string) inside the run output for best previews.
+        Tip: For multi-page, include <code>pages</code> in the run object: an object like
+        <code>{"{ '/': '<html...>', '/pricing': '<html...>' }"}</code>
       </p>
     </div>
   </div>
@@ -69,13 +79,26 @@ function buildFallbackHtml(projectId: string, runId: string, files: RunFile[]) {
 </html>`;
 }
 
-function escapeHtml(s: string) {
-  return s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+/**
+ * Extract pages map from the run output if present.
+ * We support:
+ * - run.pages: { "/": "<html>", "/pricing": "<html>" }
+ * Otherwise fallback to run.previewHtml as "/".
+ */
+function extractPages(run: any): Record<string, string> | null {
+  const pages = run?.pages;
+  if (pages && typeof pages === "object" && !Array.isArray(pages)) {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(pages)) {
+      const path = String(k || "").trim();
+      const html = typeof v === "string" ? v : "";
+      if (!path.startsWith("/")) continue;
+      if (!html.trim()) continue;
+      out[path] = html;
+    }
+    if (Object.keys(out).length > 0) return out;
+  }
+  return null;
 }
 
 export async function POST(
@@ -105,12 +128,23 @@ export async function POST(
       ? previewHtmlRaw
       : null;
 
+  const pages = extractPages(run as any);
+
+  // If no pages provided, treat previewHtml as the home page
+  const effectivePages =
+    pages && Object.keys(pages).length > 0
+      ? pages
+      : { "/": previewHtml || buildFallbackHtml(projectId, runId, files) };
+
   const applied = {
     projectId,
     runId,
     appliedAt: new Date().toISOString(),
     files,
-    previewHtml: previewHtml || buildFallbackHtml(projectId, runId, files),
+    // Keep legacy field:
+    previewHtml: effectivePages["/"] || previewHtml || buildFallbackHtml(projectId, runId, files),
+    // New multi-page field:
+    pages: effectivePages,
   };
 
   await storeSet(latestGlobalKey(), applied);
@@ -125,6 +159,7 @@ export async function POST(
     projectId,
     runId,
     setHome,
+    pagesCount: Object.keys(effectivePages).length,
     wrote: {
       global: latestGlobalKey(),
       project: latestProjectKey(projectId),
