@@ -1,128 +1,50 @@
 import { kvJsonGet, kvJsonSet, kvNowISO } from "@/app/lib/kv";
-import { randomUUID } from "crypto";
 
-export type DomainStatus =
-  | "pending_dns"
-  | "verifying"
-  | "verified"
-  | "ssl_active"
-  | "error";
-
-export type ProjectDomain = {
-  id: string;
-  projectId: string;
-  domain: string;
-  status: DomainStatus;
+export type ConnectedDomain = {
+  domain: string;          // normalized host (example.com or www.example.com)
   createdAt: string;
   lastCheckedAt?: string;
-  notes?: string;
-  dnsInstructions: {
-    type: "apex" | "subdomain";
-    records: Array<{ type: "A" | "CNAME" | "TXT"; name: string; value: string }>;
-  };
+  lastStatus?: "ok" | "needs_action" | "propagating_or_unknown" | "domain_not_found" | "blocked_or_conflicting";
+  lastCode?: string;       // diagnosis code like wrong_www_cname
 };
 
-function domainsKey(projectId: string) {
+function key(projectId: string) {
   return `project:domains:${projectId}`;
 }
 
-function normalizeDomain(input: string) {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, "")
-    .replace(/\/.*$/, "");
+function normalizeHost(input: string): string {
+  let s = (input || "").trim().toLowerCase();
+  s = s.replace(/^https?:\/\//, "");
+  s = s.split("/")[0].split("?")[0].split("#")[0];
+  s = s.split(":")[0];
+  s = s.replace(/\.$/, "");
+  return s;
 }
 
-function isApex(domain: string) {
-  // rough rule: apex like example.com (2 labels) vs www.example.com (3+)
-  // not perfect for co.nz, but good enough for initial UX; you can refine later.
-  const parts = domain.split(".").filter(Boolean);
-  return parts.length <= 2;
+export async function getDomains(projectId: string): Promise<ConnectedDomain[]> {
+  const list = await kvJsonGet<ConnectedDomain[]>(key(projectId));
+  return Array.isArray(list) ? list : [];
 }
 
-export async function getProjectDomains(projectId: string): Promise<ProjectDomain[]> {
-  const v = await kvJsonGet<ProjectDomain[]>(domainsKey(projectId));
-  return Array.isArray(v) ? v : [];
-}
+export async function addDomain(projectId: string, domain: string, meta?: Partial<ConnectedDomain>) {
+  const now = kvNowISO();
+  const host = normalizeHost(domain);
 
-export async function addProjectDomain(projectId: string, domainInput: string) {
-  const domain = normalizeDomain(domainInput);
-  if (!domain || domain.length < 3 || !domain.includes(".")) {
-    throw new Error("Invalid domain");
-  }
+  const list = await getDomains(projectId);
+  const exists = list.some((d) => d.domain === host);
 
-  const existing = await getProjectDomains(projectId);
-  if (existing.some((d) => d.domain === domain)) {
-    return existing;
-  }
+  const next: ConnectedDomain[] = exists
+    ? list.map((d) => (d.domain === host ? { ...d, ...meta, domain: host } : d))
+    : [{ domain: host, createdAt: now, ...meta }, ...list];
 
-  const apex = isApex(domain);
-
-  // Generic DNS guidance for Vercel-style hosting.
-  // Later you can tailor per provider, and/or integrate real Vercel domain verification.
-  const dnsInstructions: ProjectDomain["dnsInstructions"] = apex
-    ? {
-        type: "apex",
-        records: [
-          { type: "A", name: "@", value: "76.76.21.21" },
-          { type: "TXT", name: "@", value: "vercel-domain-verify=<add-later>" },
-        ],
-      }
-    : {
-        type: "subdomain",
-        records: [{ type: "CNAME", name: domain.split(".")[0], value: "cname.vercel-dns.com" }],
-      };
-
-  const next: ProjectDomain[] = [
-    ...existing,
-    {
-      id: `dom_${randomUUID().replace(/-/g, "")}`,
-      projectId,
-      domain,
-      status: "pending_dns",
-      createdAt: kvNowISO(),
-      dnsInstructions,
-    },
-  ];
-
-  await kvJsonSet(domainsKey(projectId), next);
+  await kvJsonSet(key(projectId), next);
   return next;
 }
 
-export async function checkProjectDomain(projectId: string, domainId: string) {
-  const all = await getProjectDomains(projectId);
-  const idx = all.findIndex((d) => d.id === domainId);
-  if (idx === -1) throw new Error("Domain not found");
-
-  const d = all[idx];
-
-  // This is a SAFE placeholder check.
-  // Real implementation later:
-  // - call Vercel Domains API OR use webhooks
-  // - verify DNS + cert status for real
-  //
-  // For now: move status along for demo/testing flows.
-  const nextStatus: DomainStatus =
-    d.status === "pending_dns"
-      ? "verifying"
-      : d.status === "verifying"
-      ? "verified"
-      : d.status === "verified"
-      ? "ssl_active"
-      : d.status;
-
-  const updated = { ...d, status: nextStatus, lastCheckedAt: kvNowISO() };
-  const next = [...all];
-  next[idx] = updated;
-
-  await kvJsonSet(domainsKey(projectId), next);
-  return updated;
-}
-
-export async function removeProjectDomain(projectId: string, domainId: string) {
-  const all = await getProjectDomains(projectId);
-  const next = all.filter((d) => d.id !== domainId);
-  await kvJsonSet(domainsKey(projectId), next);
+export async function removeDomain(projectId: string, domain: string) {
+  const host = normalizeHost(domain);
+  const list = await getDomains(projectId);
+  const next = list.filter((d) => d.domain !== host);
+  await kvJsonSet(key(projectId), next);
   return next;
 }
