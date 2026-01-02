@@ -13,9 +13,7 @@ export type AnalyticsEvent = {
 type DayTotals = {
   pv: number;
   uv: number;
-  // track visitors seen today (approx; capped)
   seen: Record<string, 1>;
-  // per-path pageviews today
   pages: Record<string, number>;
 };
 
@@ -34,13 +32,12 @@ function recentKey(projectId: string) {
   return `analytics:recent:${projectId}`;
 }
 
-const MAX_SEEN_PER_DAY = 5000; // cap memory per day per project
+const MAX_SEEN_PER_DAY = 5000;
 const MAX_RECENT = 200;
 
 async function getDayTotals(projectId: string, day: string): Promise<DayTotals> {
   const existing = (await kv.get(totalsKey(projectId, day))) as DayTotals | null;
   if (existing) return existing;
-
   return { pv: 0, uv: 0, seen: {}, pages: {} };
 }
 
@@ -62,10 +59,8 @@ export async function recordEvent(e: AnalyticsEvent) {
 
   const totals = await getDayTotals(e.projectId, day);
 
-  // PV
   totals.pv += 1;
 
-  // UV (best-effort)
   if (Object.keys(totals.seen).length < MAX_SEEN_PER_DAY) {
     if (!totals.seen[e.visitorId]) {
       totals.seen[e.visitorId] = 1;
@@ -73,12 +68,10 @@ export async function recordEvent(e: AnalyticsEvent) {
     }
   }
 
-  // per-page PV
   totals.pages[e.path] = (totals.pages[e.path] || 0) + 1;
 
   await setDayTotals(e.projectId, day, totals);
 
-  // recent feed
   const recent = await getRecent(e.projectId);
   recent.unshift(e);
   if (recent.length > MAX_RECENT) recent.length = MAX_RECENT;
@@ -119,6 +112,7 @@ export async function getTopPages(projectId: string, days: number, limit = 10) {
     const day = dayKey(d);
 
     const totals = await getDayTotals(projectId, day);
+
     for (const [path, pv] of Object.entries(totals.pages || {})) {
       counts[path] = (counts[path] || 0) + (pv || 0);
     }
