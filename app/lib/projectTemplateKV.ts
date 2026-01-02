@@ -9,7 +9,9 @@ function key(projectId: string) {
   return `project:template:${projectId}`;
 }
 
-export async function getProjectTemplate(projectId: string): Promise<ProjectTemplateSelection | null> {
+export async function getProjectTemplate(
+  projectId: string
+): Promise<ProjectTemplateSelection | null> {
   const v = (await kv.get(key(projectId))) as ProjectTemplateSelection | null;
   return v?.templateId ? v : null;
 }
