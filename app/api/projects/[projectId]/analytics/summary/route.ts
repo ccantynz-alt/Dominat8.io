@@ -8,7 +8,7 @@ export async function GET(
   const projectId = params.projectId;
 
   const series = await getDailySeries(projectId, 14);
-  const topPages = await getTopPages(projectId, 10);
+  const topPages = await getTopPages(projectId, 7, 10);
   const recent = await getRecentEvents(projectId, 30);
 
   return NextResponse.json({
