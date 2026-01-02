@@ -27,6 +27,8 @@ export default function ProjectRunsPage({ params }: { params: { projectId: strin
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openRunId, setOpenRunId] = useState<string | null>(null);
+  const [step, setStep] = useState<string | null>(null);
+  const [applyingRunId, setApplyingRunId] = useState<string | null>(null);
 
   const sorted = useMemo(() => {
     return [...runs].sort((a, b) => {
@@ -51,12 +53,32 @@ export default function ProjectRunsPage({ params }: { params: { projectId: strin
     }
   }
 
+  async function applyRun(runId: string) {
+    setApplyingRunId(runId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/runs/${runId}/apply`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "Failed to apply run");
+
+      // Send user to the preview page
+      window.location.href = "/generated";
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setApplyingRunId(null);
+    }
+  }
+
   async function createRun() {
     const trimmed = prompt.trim();
     if (!trimmed) return;
 
     setCreating(true);
     setError(null);
+    setStep("Starting…");
 
     try {
       // 1) Create run
@@ -144,20 +166,27 @@ export default function ProjectRunsPage({ params }: { params: { projectId: strin
               );
             }
 
+            if (event === "step" && payload?.label) {
+              setStep(payload.label);
+            }
+
             if (event === "error") {
               throw new Error(payload?.message || "Streaming error");
             }
 
             if (event === "done") {
               await load();
+              setStep(null);
             }
           }
         }
       } else {
         await load();
+        setStep(null);
       }
     } catch (e: any) {
       setError(e?.message || "Unknown error");
+      setStep(null);
     } finally {
       setCreating(false);
     }
@@ -214,6 +243,13 @@ export default function ProjectRunsPage({ params }: { params: { projectId: strin
             </button>
           </div>
 
+          {step ? (
+            <div className="mt-3 text-sm text-zinc-400">
+              <span className="opacity-70">Progress:</span>{" "}
+              <span className="text-zinc-200">{step}</span>
+            </div>
+          ) : null}
+
           {error ? (
             <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
               {error}
@@ -236,6 +272,9 @@ export default function ProjectRunsPage({ params }: { params: { projectId: strin
           <ul className="mt-4 grid gap-3">
             {sorted.map((r) => {
               const isOpen = openRunId === r.id;
+              const canApply =
+                r.status === "complete" && Array.isArray(r.output?.files) && r.output!.files!.length > 0;
+
               return (
                 <li key={r.id} className="rounded-2xl border border-white/10 bg-zinc-950/40 p-4">
                   <button
@@ -262,8 +301,25 @@ export default function ProjectRunsPage({ params }: { params: { projectId: strin
 
                   {isOpen ? (
                     <div className="mt-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
-                      <div className="text-sm font-medium text-zinc-200">Output</div>
-                      <div className="mt-2 text-sm text-zinc-300">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-sm font-medium text-zinc-200">Output</div>
+
+                        {canApply ? (
+                          <button
+                            onClick={() => applyRun(r.id)}
+                            disabled={applyingRunId === r.id}
+                            className="rounded-2xl border border-white/10 bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:opacity-60"
+                          >
+                            {applyingRunId === r.id ? "Applying…" : "Apply → /generated"}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-zinc-500">
+                            {r.status === "complete" ? "No files to apply" : "Complete the run to apply"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-3 text-sm text-zinc-300">
                         {r.output?.summary || "No output yet."}
                       </div>
 
