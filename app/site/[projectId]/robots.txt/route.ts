@@ -1,51 +1,32 @@
-// app/site/[projectId]/robots.txt/route.ts
-import { NextResponse } from "next/server";
-import { storeGet } from "@/app/lib/store";
-import { isAdmin } from "@/app/lib/isAdmin";
-import { getProjectSEO, buildCanonical } from "@/app/lib/seo";
-
-type Visibility = "public" | "private";
-
-function visibilityKey(projectId: string) {
-  return `project:visibility:${projectId}`;
-}
+import { getSeoSettings } from "@/app/lib/seoSettingsKV";
 
 export async function GET(
-  _req: Request,
+  _: Request,
   { params }: { params: { projectId: string } }
 ) {
-  const admin = await isAdmin();
+  const settings = await getSeoSettings(params.projectId);
 
-  const v = await storeGet(visibilityKey(params.projectId));
-  const visibility: Visibility = v === "public" ? "public" : "private";
+  const base = process.env.NEXT_PUBLIC_BASE_URL || "";
 
-  // If private and not admin: disallow everything
-  if (visibility === "private" && !admin) {
-    const body = `User-agent: *\nDisallow: /\n`;
-    return new NextResponse(body, {
-      status: 200,
-      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+  const sitemapUrl = `${base}/site/${params.projectId}/sitemap.xml`;
+
+  // If indexing OFF: disallow everything
+  if (settings.indexing === "off") {
+    const txt = `User-agent: *
+Disallow: /
+Sitemap: ${sitemapUrl}
+`;
+    return new Response(txt, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   }
 
-  const seo = await getProjectSEO(params.projectId);
-
-  // If no canonicalBase, keep it safe: allow, but no sitemap link
-  const sitemapUrl = seo.canonicalBase
-    ? (seo.canonicalBase.replace(/\/+$/, "") + `/site/${params.projectId}/sitemap.xml`)
-    : "";
-
-  // Robots meta can be "noindex", but robots.txt cannot set noindex reliably across engines,
-  // so we honor private mode here and otherwise allow crawl.
-  const lines = [
-    `User-agent: *`,
-    `Allow: /`,
-    sitemapUrl ? `Sitemap: ${sitemapUrl}` : "",
-    ``,
-  ].filter(Boolean);
-
-  return new NextResponse(lines.join("\n"), {
-    status: 200,
-    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+  // If indexing ON: allow everything
+  const txt = `User-agent: *
+Allow: /
+Sitemap: ${sitemapUrl}
+`;
+  return new Response(txt, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 }
