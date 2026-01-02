@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { storeGet, storeSet } from "../../../../../lib/store";
+import { storeGet, storeSet } from "../../../../lib/store";
 
 export const runtime = "nodejs";
 
