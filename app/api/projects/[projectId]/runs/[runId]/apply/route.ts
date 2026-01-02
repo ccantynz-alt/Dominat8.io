@@ -1,41 +1,50 @@
+// app/api/projects/[projectId]/runs/[runId]/apply/route.ts
 import { NextResponse } from "next/server";
-import { storeGet, storeSet } from "../../../../../../lib/store";
+import { storeGet, storeSet } from "../../../../../lib/store";
+import { isAdmin } from "../../../../../lib/isAdmin";
 
-export const runtime = "nodejs";
+type RunFile = { path: string; content: string };
 
-type Run = {
-  id: string;
-  projectId: string;
-  prompt: string;
-  status: "queued" | "running" | "complete" | "failed";
-  createdAt: string;
-  updatedAt?: string;
-  output?: {
-    summary?: string;
-    files?: { path: string; content: string }[];
-  };
-};
-
-const RUN_KEY = (id: string) => `run:${id}`;
-
-// Where we store "applied" output for /generated
-const GENERATED_LATEST_KEY = "generated:latest";
-const GENERATED_BY_PROJECT_KEY = (projectId: string) => `generated:project:${projectId}:latest`;
-
-// Where we store the "live homepage"
-const HOME_LATEST_KEY = "home:latest";
-
-function nowISO() {
-  return new Date().toISOString();
+function runKey(runId: string) {
+  return `run:${runId}`;
 }
 
-function buildFallbackPreviewHtml(run: Run) {
-  const files = run.output?.files || [];
-  const code = files.map((f) => `--- ${f.path} ---\n${f.content}`).join("\n\n");
-  const escaped = code
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+function latestGlobalKey() {
+  return `generated:latest`;
+}
+
+function latestProjectKey(projectId: string) {
+  return `generated:project:${projectId}:latest`;
+}
+
+function homeKey() {
+  return `home:latest`;
+}
+
+function pickHtml(files: RunFile[]): string | null {
+  // Prefer generated page, then any index/home, then first .html
+  const preferred = [
+    "app/generated/page.tsx",
+    "app/generated/index.tsx",
+    "app/generated/home.tsx",
+    "app/page.tsx",
+  ];
+
+  // If it's TSX, we can't directly render it as HTML. So we rely on previewHtml.
+  // But if your agent writes previewHtml, we use it. Otherwise we build a simple HTML page.
+  return null;
+}
+
+function buildFallbackHtml(projectId: string, runId: string, files: RunFile[]) {
+  const list = files
+    .slice(0, 50)
+    .map(
+      (f) =>
+        `<li style="margin:6px 0;"><code style="opacity:.85">${escapeHtml(
+          f.path
+        )}</code></li>`
+    )
+    .join("");
 
   return `<!doctype html>
 <html>
@@ -44,81 +53,102 @@ function buildFallbackPreviewHtml(run: Run) {
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Generated Preview</title>
   <style>
-    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; padding: 24px; background:#0b0b0f; color:#eaeaf2; }
-    .card { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); border-radius: 16px; padding: 16px; }
-    pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; line-height: 1.4; color:#d7d7ff; }
-    h1 { margin: 0 0 8px; font-size: 18px; }
-    p { margin: 0 0 12px; color: rgba(255,255,255,.7); }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; background:#0b0b0d; color:#fff; }
+    .wrap { max-width: 900px; margin: 40px auto; padding: 0 16px; }
+    .card { border:1px solid rgba(255,255,255,.12); border-radius:16px; padding:16px; background: rgba(255,255,255,.03); }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p { margin: 8px 0; opacity: .78; line-height: 1.6; }
+    ul { margin: 10px 0 0; padding-left: 18px; opacity:.9; }
+    a { color: #9bdcff; }
+    code { background: rgba(255,255,255,.08); padding: 2px 6px; border-radius: 8px; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>No HTML preview was generated</h1>
-    <p>This run did not include <code>app/generated/preview.html</code>. Showing code instead.</p>
-    <pre>${escaped}</pre>
+  <div class="wrap">
+    <div class="card">
+      <h1>Generated run applied ✅</h1>
+      <p><b>Project:</b> <code>${escapeHtml(projectId)}</code></p>
+      <p><b>Run:</b> <code>${escapeHtml(runId)}</code></p>
+      <p>
+        We did not find a direct HTML preview. This is a fallback preview page to confirm the apply worked.
+      </p>
+      <p><b>Files in this run:</b></p>
+      <ul>${list || "<li><i>No files</i></li>"}</ul>
+      <p style="margin-top:14px;">
+        Tip: Ensure your generator returns <code>previewHtml</code> (string) inside the run output for best previews.
+      </p>
+    </div>
   </div>
 </body>
 </html>`;
+}
+
+function escapeHtml(s: string) {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 export async function POST(
   req: Request,
   { params }: { params: { projectId: string; runId: string } }
 ) {
-  const { projectId, runId } = params;
+  // Admin-only apply
+  const admin = await isAdmin();
+  if (!admin) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const projectId = params.projectId;
+  const runId = params.runId;
+
+  // Read run record
+  const run = await storeGet(runKey(runId));
+  if (!run || typeof run !== "object") {
+    return NextResponse.json({ ok: false, error: "Run not found" }, { status: 404 });
+  }
 
   const url = new URL(req.url);
   const setHome = url.searchParams.get("setHome") === "1";
 
-  const run = await storeGet<Run>(RUN_KEY(runId));
-  if (!run) {
-    return NextResponse.json({ ok: false, error: "Run not found" }, { status: 404 });
-  }
-  if (run.projectId !== projectId) {
-    return NextResponse.json({ ok: false, error: "Run/project mismatch" }, { status: 400 });
-  }
-  if (run.status !== "complete") {
-    return NextResponse.json(
-      { ok: false, error: "Run is not complete yet" },
-      { status: 400 }
-    );
-  }
+  // Run schema (best-effort)
+  const files: RunFile[] = Array.isArray((run as any).files) ? (run as any).files : [];
+  const previewHtmlRaw = (run as any).previewHtml;
+  const previewHtml =
+    typeof previewHtmlRaw === "string" && previewHtmlRaw.trim().length > 0
+      ? previewHtmlRaw
+      : null;
 
-  const files = run.output?.files || [];
-  if (!Array.isArray(files) || files.length === 0) {
-    return NextResponse.json({ ok: false, error: "Run has no files to apply" }, { status: 400 });
-  }
-
-  const previewFile =
-    files.find((f) => f.path === "app/generated/preview.html") ||
-    files.find((f) => f.path.endsWith("/preview.html"));
-
-  const previewHtml = previewFile?.content || buildFallbackPreviewHtml(run);
-
+  // Build applied payload (what we store as latest)
   const applied = {
-    ok: true,
-    appliedAt: nowISO(),
     projectId,
     runId,
-    prompt: run.prompt,
-    summary: run.output?.summary || "",
+    appliedAt: new Date().toISOString(),
     files,
-    previewHtml,
+    previewHtml: previewHtml || buildFallbackHtml(projectId, runId, files),
   };
 
-  await storeSet(GENERATED_LATEST_KEY, applied);
-  await storeSet(GENERATED_BY_PROJECT_KEY(projectId), applied);
+  // ✅ WRITE GLOBAL + PROJECT-SCOPED LATEST
+  await storeSet(latestGlobalKey(), applied);
+  await storeSet(latestProjectKey(projectId), applied);
 
+  // ✅ OPTIONALLY SET HOME
   if (setHome) {
-    await storeSet(HOME_LATEST_KEY, {
-      setAt: nowISO(),
-      projectId,
-      runId,
-      summary: applied.summary,
-      previewHtml: applied.previewHtml,
-    });
+    await storeSet(homeKey(), applied.previewHtml);
   }
 
-  return NextResponse.json({ ok: true, applied, setHome });
+  return NextResponse.json({
+    ok: true,
+    projectId,
+    runId,
+    setHome,
+    wrote: {
+      global: latestGlobalKey(),
+      project: latestProjectKey(projectId),
+      home: setHome ? homeKey() : null,
+    },
+  });
 }
-
