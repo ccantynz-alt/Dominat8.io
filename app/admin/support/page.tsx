@@ -28,9 +28,11 @@ export default function AdminSupportInboxPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   async function refresh() {
     setErr(null);
+    setInfo(null);
     setLoading(true);
     try {
       const res = await fetch("/api/support/tickets", { cache: "no-store" });
@@ -46,6 +48,7 @@ export default function AdminSupportInboxPage() {
 
   async function autoTriage(ticketId: string) {
     setErr(null);
+    setInfo(null);
     setBusy(ticketId);
     try {
       const res = await fetch(`/api/support/tickets/${ticketId}/triage`, {
@@ -63,6 +66,38 @@ export default function AdminSupportInboxPage() {
     }
   }
 
+  async function triageAll() {
+    setErr(null);
+    setInfo(null);
+    setBusy("triage-all");
+    try {
+      const res = await fetch("/api/support/tickets/triage-all", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!data?.ok) throw new Error(data?.error || "Failed to triage all");
+      setInfo(`Triaged ${data.triaged} ticket(s). Skipped ${data.skipped}. Total ${data.total}.`);
+      await refresh();
+    } catch (e: any) {
+      setErr(e?.message || "Failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function priorityBadge(priority?: string) {
+    if (!priority) return null;
+    const isUrgent = priority === "urgent";
+    const isHigh = priority === "high";
+    const cls = isUrgent
+      ? "border-red-500 text-red-600"
+      : isHigh
+      ? "border-orange-500 text-orange-600"
+      : "border";
+
+    return <span className={`text-xs rounded-full px-2 py-1 border ${cls}`}>{priority}</span>;
+  }
+
   useEffect(() => {
     refresh();
   }, []);
@@ -73,14 +108,15 @@ export default function AdminSupportInboxPage() {
         <div>
           <h1 className="text-3xl font-bold">Support Inbox</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            View and respond to customer tickets. Auto-triage suggests category, priority, and tags.
+            Auto-triage suggests category, priority, tags, and summary.
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link href="/admin" className="rounded-md border px-4 py-2 hover:bg-muted transition">
             Admin Home
           </Link>
+
           <button
             onClick={refresh}
             disabled={loading || busy !== null}
@@ -88,8 +124,23 @@ export default function AdminSupportInboxPage() {
           >
             Refresh
           </button>
+
+          <button
+            onClick={triageAll}
+            disabled={loading || busy !== null}
+            className="rounded-md border px-4 py-2 hover:bg-muted transition"
+          >
+            {busy === "triage-all" ? "Triaging ALL..." : "Triage ALL (missing only)"}
+          </button>
         </div>
       </div>
+
+      {info ? (
+        <div className="rounded-lg border p-4 text-sm">
+          <div className="font-semibold">Info</div>
+          <div className="text-muted-foreground mt-1">{info}</div>
+        </div>
+      ) : null}
 
       {err ? (
         <div className="rounded-lg border p-4 text-sm">
@@ -108,23 +159,26 @@ export default function AdminSupportInboxPage() {
             {tickets.map((t) => {
               const last = t.messages?.[t.messages.length - 1];
               const tags = t.triage?.tags || [];
+              const priority = t.triage?.priority;
+              const isUrgent = priority === "urgent";
+              const isHigh = priority === "high";
+
+              const cardBorder = isUrgent
+                ? "border-red-500"
+                : isHigh
+                ? "border-orange-500"
+                : "border";
+
               return (
-                <div key={t.id} className="rounded-lg border p-4">
+                <div key={t.id} className={`rounded-lg ${cardBorder} p-4 border`}>
                   <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <Link
-                      href={`/admin/support/${t.id}`}
-                      className="font-semibold hover:underline"
-                    >
+                    <Link href={`/admin/support/${t.id}`} className="font-semibold hover:underline">
                       {t.subject}
                     </Link>
 
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs rounded-full border px-2 py-1">{t.status}</span>
-                      {t.triage?.priority ? (
-                        <span className="text-xs rounded-full border px-2 py-1">
-                          {t.triage.priority}
-                        </span>
-                      ) : null}
+                      {priorityBadge(priority)}
                       {t.triage?.category ? (
                         <span className="text-xs rounded-full border px-2 py-1">
                           {t.triage.category}
@@ -152,9 +206,7 @@ export default function AdminSupportInboxPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      No triage yet.
-                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">No triage yet.</div>
                   )}
 
                   {t.triage?.summary ? (
@@ -163,8 +215,7 @@ export default function AdminSupportInboxPage() {
                     </div>
                   ) : last ? (
                     <div className="text-sm mt-2 text-muted-foreground">
-                      <span className="font-semibold">{last.from}:</span>{" "}
-                      {last.text.slice(0, 140)}
+                      <span className="font-semibold">{last.from}:</span> {last.text.slice(0, 140)}
                       {last.text.length > 140 ? "…" : ""}
                     </div>
                   ) : null}
