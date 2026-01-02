@@ -12,27 +12,43 @@ type RecentEvent = {
   visitorId: string;
 };
 
-export default function AnalyticsPage({ params }: { params: { projectId: string } }) {
+export default function AnalyticsPage({
+  params,
+}: {
+  params: { projectId: string };
+}) {
   const [series, setSeries] = useState<SeriesPoint[]>([]);
   const [topPages, setTopPages] = useState<TopPage[]>([]);
   const [recent, setRecent] = useState<RecentEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
-    const res = await fetch(`/api/projects/${params.projectId}/analytics/summary`, {
-      cache: "no-store",
-    });
-    const data = await res.json();
+    setErr(null);
 
-    setSeries((data.series || []).slice().reverse()); // oldest->newest for display
-    setTopPages(data.topPages || []);
-    setRecent(data.recent || []);
-    setLoading(false);
+    try {
+      const res = await fetch(
+        `/api/projects/${params.projectId}/analytics/summary`,
+        { cache: "no-store" }
+      );
+
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Failed to load analytics");
+
+      setSeries((data.series || []).slice().reverse()); // oldest -> newest
+      setTopPages(data.topPages || []);
+      setRecent(data.recent || []);
+    } catch (e: any) {
+      setErr(e?.message || "Failed to load");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const totals = useMemo(() => {
@@ -49,6 +65,8 @@ export default function AnalyticsPage({ params }: { params: { projectId: string 
         {loading ? "Loading..." : "Refresh"}
       </button>
 
+      {err ? <p style={{ marginTop: 12 }}>❌ {err}</p> : null}
+
       <div style={{ marginTop: 16 }}>
         <strong>Last 14 days:</strong>
         <div>Pageviews: {totals.pv}</div>
@@ -57,28 +75,38 @@ export default function AnalyticsPage({ params }: { params: { projectId: string 
 
       <div style={{ marginTop: 24 }}>
         <h2>Daily</h2>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>Day</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>PV</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>UV</th>
-            </tr>
-          </thead>
-          <tbody>
-            {series.map((s) => (
-              <tr key={s.day}>
-                <td style={{ padding: "6px 0" }}>{s.day}</td>
-                <td>{s.pv}</td>
-                <td>{s.uv}</td>
+        {series.length === 0 ? (
+          <p>No data yet.</p>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
+                  Day
+                </th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
+                  PV
+                </th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
+                  UV
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {series.map((s) => (
+                <tr key={s.day}>
+                  <td style={{ padding: "6px 0" }}>{s.day}</td>
+                  <td>{s.pv}</td>
+                  <td>{s.uv}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       <div style={{ marginTop: 24 }}>
-        <h2>Top pages (from recent traffic)</h2>
+        <h2>Top pages (last 7 days)</h2>
         {topPages.length === 0 ? (
           <p>No traffic yet.</p>
         ) : (
@@ -99,12 +127,25 @@ export default function AnalyticsPage({ params }: { params: { projectId: string 
         ) : (
           <div style={{ display: "grid", gap: 8 }}>
             {recent.map((e) => (
-              <div key={e.ts + e.visitorId + e.path} style={{ border: "1px solid #ddd", padding: 8 }}>
-                <div><strong>{new Date(e.ts).toLocaleString()}</strong></div>
-                <div>Path: <code>{e.path}</code></div>
+              <div
+                key={e.ts + e.visitorId + e.path}
+                style={{ border: "1px solid #ddd", padding: 8 }}
+              >
+                <div>
+                  <strong>{new Date(e.ts).toLocaleString()}</strong>
+                </div>
+                <div>
+                  Path: <code>{e.path}</code>
+                </div>
                 {e.country ? <div>Country: {e.country}</div> : null}
-                {e.ref ? <div>Ref: <code>{e.ref}</code></div> : null}
-                <div>Visitor: <code>{e.visitorId}</code></div>
+                {e.ref ? (
+                  <div>
+                    Ref: <code>{e.ref}</code>
+                  </div>
+                ) : null}
+                <div>
+                  Visitor: <code>{e.visitorId}</code>
+                </div>
               </div>
             ))}
           </div>
