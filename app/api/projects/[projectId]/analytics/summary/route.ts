@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { getDailySeries, getTopPages, getRecentEvents } from "@/app/lib/analyticsKV";
+import {
+  getDailySeries,
+  getTopPages,
+  getRecentEvents,
+} from "../../../../../../lib/analyticsKV";
 
 export async function GET(
   _: Request,
@@ -13,8 +17,8 @@ export async function GET(
 
   return NextResponse.json({
     ok: true,
-    series,    // newest->oldest
-    topPages,  // derived from last 200 events
+    series,
+    topPages,
     recent,
   });
 }
