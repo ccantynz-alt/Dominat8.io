@@ -1,7 +1,7 @@
 // app/api/projects/[projectId]/runs/[runId]/apply/route.ts
 import { NextResponse } from "next/server";
-import { storeGet, storeSet } from "../../../../../../lib/store";
-import { isAdmin } from "../../../../../../lib/isAdmin";
+import { storeGet, storeSet } from "@/app/lib/store";
+import { isAdmin } from "@/app/lib/isAdmin";
 
 type RunFile = { path: string; content: string };
 
@@ -82,7 +82,6 @@ export async function POST(
   req: Request,
   { params }: { params: { projectId: string; runId: string } }
 ) {
-  // Admin-only apply
   const admin = await isAdmin();
   if (!admin) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
@@ -91,7 +90,6 @@ export async function POST(
   const projectId = params.projectId;
   const runId = params.runId;
 
-  // Read run record
   const run = await storeGet(runKey(runId));
   if (!run || typeof run !== "object") {
     return NextResponse.json({ ok: false, error: "Run not found" }, { status: 404 });
@@ -100,7 +98,6 @@ export async function POST(
   const url = new URL(req.url);
   const setHome = url.searchParams.get("setHome") === "1";
 
-  // Run schema (best-effort)
   const files: RunFile[] = Array.isArray((run as any).files) ? (run as any).files : [];
   const previewHtmlRaw = (run as any).previewHtml;
   const previewHtml =
@@ -108,7 +105,6 @@ export async function POST(
       ? previewHtmlRaw
       : null;
 
-  // Build applied payload (what we store as latest)
   const applied = {
     projectId,
     runId,
@@ -117,11 +113,9 @@ export async function POST(
     previewHtml: previewHtml || buildFallbackHtml(projectId, runId, files),
   };
 
-  // ✅ WRITE GLOBAL + PROJECT-SCOPED LATEST
   await storeSet(latestGlobalKey(), applied);
   await storeSet(latestProjectKey(projectId), applied);
 
-  // ✅ OPTIONALLY SET HOME
   if (setHome) {
     await storeSet(homeKey(), applied.previewHtml);
   }
