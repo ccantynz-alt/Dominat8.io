@@ -1,41 +1,38 @@
 import { NextResponse } from "next/server";
-import { createTicket, listTickets } from "@/app/lib/supportKV";
-import { autoTriage } from "@/app/lib/supportTriage";
+import { getTicket, addMessage } from "@/app/lib/supportKV";
 import { randomUUID } from "crypto";
 
-export async function GET() {
-  const tickets = await listTickets();
-  return NextResponse.json({ ok: true, tickets });
+export async function GET(
+  _: Request,
+  { params }: { params: { ticketId: string } }
+) {
+  const ticket = await getTicket(params.ticketId);
+  if (!ticket) {
+    return NextResponse.json({ ok: false }, { status: 404 });
+  }
+  return NextResponse.json({ ok: true, ticket });
 }
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: { ticketId: string } }
+) {
   const body = await req.json();
+  const { author, message } = body;
 
-  const { subject, message, userId, projectId, email } = body;
-
-  if (!subject || !message || !userId) {
-    return NextResponse.json({ ok: false, error: "Missing fields" }, { status: 400 });
+  if (!author || !message) {
+    return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  const triage = autoTriage(subject, message);
+  const newStatus =
+    author === "user" ? "open" : "waiting_on_customer";
 
-  const ticket = await createTicket({
-    userId,
-    projectId,
-    email,
-    subject,
-    status: "open",
-    tags: triage.tags,
-    priority: triage.priority,
-    messages: [
-      {
-        id: randomUUID(),
-        author: "user",
-        body: message,
-        createdAt: new Date().toISOString(),
-      },
-    ],
-  });
+  await addMessage(params.ticketId, {
+    id: randomUUID(),
+    author,
+    body: message,
+    createdAt: new Date().toISOString(),
+  }, newStatus);
 
-  return NextResponse.json({ ok: true, ticket });
+  return NextResponse.json({ ok: true });
 }
