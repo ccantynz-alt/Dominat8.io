@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 type DnsResult = any;
@@ -17,17 +17,66 @@ function prettyNowISO() {
   return new Date().toISOString();
 }
 
+function asRecordsText(dns: any) {
+  const recs = dns?.recommendedRecords || [];
+  const apex = dns?.input?.apex || "example.com";
+  const www = dns?.input?.www || `www.${apex}`;
+  const lines = [
+    `DNS records to add (recommended):`,
+    ``,
+    `Apex (${apex})`,
+    `- Type: A`,
+    `- Name/Host: @`,
+    `- Value: ${dns?.expected?.apexA || "76.76.21.21"}`,
+    `- TTL: Auto`,
+    ``,
+    `WWW (${www})`,
+    `- Type: CNAME`,
+    `- Name/Host: www`,
+    `- Value: ${dns?.expected?.wwwCname || "cname.vercel-dns.com"}`,
+    `- TTL: Auto`,
+    ``,
+    `If your hosting provider shows different values for your project, use those exact values instead.`,
+  ];
+
+  // If we have recs, include them in a compact table-ish form too
+  if (recs.length) {
+    lines.push(``, `Compact list:`);
+    for (const r of recs) {
+      lines.push(`- ${r.type}  ${r.name}  →  ${r.value} (TTL: ${r.ttl})`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+async function copyToClipboard(text: string) {
+  if (navigator?.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  // fallback
+  const el = document.createElement("textarea");
+  el.value = text;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand("copy");
+  document.body.removeChild(el);
+}
+
 export default function ProjectDomainsPage({ params }: { params: { projectId: string } }) {
   const projectId = params.projectId;
 
   const [domain, setDomain] = useState("");
-  const [email, setEmail] = useState(""); // optional, helps support tickets
+  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const [dns, setDns] = useState<DnsResult | null>(null);
   const [domains, setDomains] = useState<ConnectedDomain[]>([]);
   const [info, setInfo] = useState<string | null>(null);
+
+  const copyText = useMemo(() => (dns ? asRecordsText(dns) : ""), [dns]);
 
   async function loadDomains() {
     try {
@@ -139,13 +188,16 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
       const message =
         `Hi, I’m trying to connect my domain and I’m stuck.\n\n` +
         `Project: ${projectId}\n` +
-        `Domain: ${host}\n\n` +
+        `Domain: ${host}\n` +
+        `Provider detected: ${dns?.provider?.detected || "unknown"} (${dns?.provider?.confidence || "low"})\n\n` +
         `AutoDetectDNS diagnosis:\n` +
         `- status: ${dns?.diagnosis?.status}\n` +
         `- code: ${dns?.diagnosis?.code}\n` +
         `- message: ${dns?.diagnosis?.message}\n\n` +
         `Suggested next steps:\n` +
         `${(dns?.diagnosis?.nextSteps || []).map((s: string) => `- ${s}`).join("\n")}\n\n` +
+        `Recommended records:\n` +
+        `${asRecordsText(dns)}\n\n` +
         `DNS snapshot JSON (for support):\n` +
         `${JSON.stringify(dns, null, 2)}`;
 
@@ -180,7 +232,7 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
         <div>
           <h1 className="text-3xl font-bold">Connect a Domain</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Paste your domain, we’ll check DNS + SSL and tell you exactly what to do. Then you can save it to your project.
+            Paste your domain, we’ll detect your DNS provider, check DNS + SSL, and tell you exactly what to do.
           </p>
           <div className="text-xs text-muted-foreground mt-2">
             Project: <span className="font-mono">{projectId}</span>
@@ -258,11 +310,30 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
       {showDns ? (
         <section className="rounded-lg border p-4 space-y-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="text-xl font-semibold">Step 2 — Do what the checker says</h2>
+            <h2 className="text-xl font-semibold">Step 2 — Follow the instructions</h2>
             <span className="text-xs rounded-full border px-2 py-1">
               {dns?.diagnosis?.status} • {dns?.diagnosis?.code}
             </span>
           </div>
+
+          <div className="text-sm">
+            <div className="font-semibold">DNS provider detected</div>
+            <div className="text-muted-foreground mt-1">
+              {dns?.provider?.message}{" "}
+              <span className="text-xs">({dns?.provider?.detected} • {dns?.provider?.confidence})</span>
+            </div>
+          </div>
+
+          {dns?.diagnosis?.warnings?.length ? (
+            <div className="rounded-lg border p-3 text-sm">
+              <div className="font-semibold">Warnings</div>
+              <ul className="list-disc pl-5 text-muted-foreground mt-1 space-y-1">
+                {dns.diagnosis.warnings.map((w: string, i: number) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <div className="text-sm">
             <div className="font-semibold">What we found</div>
@@ -270,7 +341,60 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
           </div>
 
           <div className="text-sm">
-            <div className="font-semibold">Next steps</div>
+            <div className="font-semibold">Recommended DNS records (copy/paste)</div>
+            <div className="text-muted-foreground mt-1">
+              Add these records in your DNS provider. (If your host shows different values for your project, use the host’s values.)
+            </div>
+
+            <div className="mt-2 rounded-lg border p-3 space-y-2">
+              {(dns?.recommendedRecords || []).map((r: any, idx: number) => (
+                <div key={idx} className="text-sm">
+                  <div className="font-semibold">{r.type} — {r.host}</div>
+                  <div className="text-muted-foreground">
+                    Name/Host: <span className="font-mono">{r.name}</span> • Value: <span className="font-mono">{r.value}</span> • TTL: {r.ttl}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">{r.why}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2 flex-wrap mt-3">
+              <button
+                onClick={async () => {
+                  try {
+                    await copyToClipboard(copyText);
+                    setInfo("Copied DNS records to clipboard.");
+                  } catch {
+                    setErr("Could not copy to clipboard.");
+                  }
+                }}
+                disabled={busy !== null}
+                className="rounded-md border px-4 py-2 hover:bg-muted transition"
+              >
+                Copy DNS records
+              </button>
+
+              <button
+                onClick={checkDns}
+                disabled={busy !== null}
+                className="rounded-md border px-4 py-2 hover:bg-muted transition"
+              >
+                {busy === "check" ? "Checking..." : "Re-check DNS"}
+              </button>
+            </div>
+          </div>
+
+          <div className="text-sm">
+            <div className="font-semibold">Provider-specific steps</div>
+            <ol className="list-decimal pl-5 text-muted-foreground mt-1 space-y-1">
+              {(dns?.diagnosis?.providerSteps || []).map((s: string, i: number) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="text-sm">
+            <div className="font-semibold">General next steps</div>
             <ul className="list-disc pl-5 text-muted-foreground mt-1 space-y-1">
               {(dns?.diagnosis?.nextSteps || []).map((s: string, i: number) => (
                 <li key={i}>{s}</li>
@@ -279,14 +403,6 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
           </div>
 
           <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={checkDns}
-              disabled={busy !== null}
-              className="rounded-md border px-4 py-2 hover:bg-muted transition"
-            >
-              {busy === "check" ? "Checking..." : "Re-check DNS"}
-            </button>
-
             <button
               onClick={saveDomain}
               disabled={busy !== null || !canSave}
@@ -351,3 +467,4 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
       </section>
     </main>
   );
+}
