@@ -5,15 +5,29 @@ import { isAdmin } from "../../../../lib/isAdmin";
 
 type Visibility = "public" | "private";
 
-function key(projectId: string) {
+function visibilityKey(projectId: string) {
   return `project:visibility:${projectId}`;
+}
+
+const publicIndexKey = "public:projects:index";
+
+async function readPublicIndex(): Promise<string[]> {
+  const v = await storeGet(publicIndexKey);
+  if (Array.isArray(v)) return v.filter((x) => typeof x === "string") as string[];
+  return [];
+}
+
+async function writePublicIndex(ids: string[]) {
+  // de-dupe + stable
+  const unique = Array.from(new Set(ids)).filter(Boolean);
+  await storeSet(publicIndexKey, unique);
 }
 
 export async function GET(
   _req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  const v = await storeGet(key(params.projectId));
+  const v = await storeGet(visibilityKey(params.projectId));
   const visibility: Visibility = v === "public" ? "public" : "private";
   return NextResponse.json({ ok: true, projectId: params.projectId, visibility });
 }
@@ -34,8 +48,21 @@ export async function POST(
     body = null;
   }
 
+  const projectId = params.projectId;
   const visibility: Visibility = body?.visibility === "public" ? "public" : "private";
-  await storeSet(key(params.projectId), visibility);
 
-  return NextResponse.json({ ok: true, projectId: params.projectId, visibility });
+  // Save per-project visibility
+  await storeSet(visibilityKey(projectId), visibility);
+
+  // Update public index
+  const idx = await readPublicIndex();
+  if (visibility === "public") {
+    idx.unshift(projectId);
+    await writePublicIndex(idx);
+  } else {
+    const filtered = idx.filter((id) => id !== projectId);
+    await writePublicIndex(filtered);
+  }
+
+  return NextResponse.json({ ok: true, projectId, visibility });
 }
