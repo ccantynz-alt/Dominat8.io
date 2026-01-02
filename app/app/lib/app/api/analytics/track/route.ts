@@ -17,7 +17,6 @@ export async function POST(req: Request) {
 
     const h = req.headers;
 
-    // Best-effort identity (approx unique): ip + UA hashed
     const ip =
       h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       h.get("x-real-ip") ||
