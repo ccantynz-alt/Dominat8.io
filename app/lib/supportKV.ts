@@ -52,11 +52,11 @@ export async function createTicket(
 /* ---------------- READ ---------------- */
 
 export async function getTicket(id: string): Promise<SupportTicket | null> {
-  return await kv.get<SupportTicket>(ticketKey(id));
+  return (await kv.get(ticketKey(id))) as SupportTicket | null;
 }
 
 export async function listTickets(): Promise<SupportTicket[]> {
-  const ids = await kv.smembers<string>(INDEX_KEY);
+  const ids = (await kv.smembers(INDEX_KEY)) as string[];
   const tickets: SupportTicket[] = [];
 
   for (const id of ids) {
