@@ -2,8 +2,8 @@
 import "./globals.css";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getPublicMode } from "../lib/publicMode";
-import { isAdmin } from "../lib/isAdmin";
+import { getPublicMode } from "./lib/publicMode";
+import { isAdmin } from "./lib/isAdmin";
 
 export const metadata: Metadata = {
   title: "my-saas-app",
