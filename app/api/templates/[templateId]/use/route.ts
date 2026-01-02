@@ -5,7 +5,6 @@ import { kv } from "@/app/lib/kv";
 
 const BodySchema = z.object({
   projectName: z.string().min(1).max(80),
-  // optional: let UI disable auto-run later if needed
   createRun: z.boolean().optional().default(true),
 });
 
@@ -43,7 +42,6 @@ async function postJson(url: string, body: any) {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    // IMPORTANT: never cache mutations
     cache: "no-store",
     body: JSON.stringify(body),
   });
@@ -80,7 +78,7 @@ export async function POST(
 ) {
   try {
     const userId = getCurrentUserId();
-    await rateLimitOrThrow(`rl:templateUse:${userId}`, 10, 60); // 10/min
+    await rateLimitOrThrow(`rl:templateUse:${userId}`, 10, 60);
 
     const body = await req.json().catch(() => ({}));
     const parsed = BodySchema.safeParse(body);
@@ -109,7 +107,6 @@ export async function POST(
     }
 
     if (!template.published) {
-      // You can allow drafts for admin later, but keep MVP safe.
       return NextResponse.json(
         { ok: false, error: "Template is not published" },
         { status: 400 }
@@ -124,7 +121,7 @@ export async function POST(
       );
     }
 
-    // 2) Create project (uses your existing endpoint)
+    // 2) Create project
     const projectRes = await postJson(`${origin}/api/projects`, {
       name: projectName,
     });
@@ -144,7 +141,7 @@ export async function POST(
       templateId,
     });
 
-    // 4) Create run from the template prompt (optional)
+    // 4) Create run (optional)
     let run: any = null;
     if (createRun) {
       const runPrompt = [
