@@ -23,6 +23,9 @@ export default function AdminTicketPage({ params }: { params: { ticketId: string
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  // Optional admin notes to help the AI draft better
+  const [adminNotes, setAdminNotes] = useState("");
+
   async function load() {
     setErr(null);
     try {
@@ -75,6 +78,26 @@ export default function AdminTicketPage({ params }: { params: { ticketId: string
     }
   }
 
+  async function draftWithAI() {
+    setErr(null);
+    setBusy("draft");
+    try {
+      const res = await fetch(`/api/support/tickets/${ticketId}/draft-reply`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ adminNotes }),
+      });
+      const data = await res.json();
+      if (!data?.ok) throw new Error(data?.error || "Failed to draft reply");
+      // Put the draft into the reply box (you can edit before sending)
+      setReply(data.draft || "");
+    } catch (e: any) {
+      setErr(e?.message || "Failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,10 +114,17 @@ export default function AdminTicketPage({ params }: { params: { ticketId: string
         </div>
 
         <div className="flex gap-2">
-          <Link href="/admin/support" className="rounded-md border px-4 py-2 hover:bg-muted transition">
+          <Link
+            href="/admin/support"
+            className="rounded-md border px-4 py-2 hover:bg-muted transition"
+          >
             Back to Inbox
           </Link>
-          <button onClick={load} className="rounded-md border px-4 py-2 hover:bg-muted transition">
+          <button
+            onClick={load}
+            className="rounded-md border px-4 py-2 hover:bg-muted transition"
+            disabled={busy !== null}
+          >
             Refresh
           </button>
         </div>
@@ -144,12 +174,37 @@ export default function AdminTicketPage({ params }: { params: { ticketId: string
           </section>
 
           <section className="rounded-lg border p-4 space-y-3">
+            <h2 className="text-xl font-semibold">AI Drafting (optional)</h2>
+            <p className="text-sm text-muted-foreground">
+              Add any notes you want the AI to consider (e.g. “Known DNS issue on Cloudflare”),
+              then click “Draft reply with AI”. It will fill the reply box below.
+            </p>
+
+            <textarea
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              className="border rounded-md px-3 py-2 w-full min-h-[90px]"
+              placeholder="Admin notes (optional)…"
+              disabled={busy !== null}
+            />
+
+            <button
+              onClick={draftWithAI}
+              disabled={busy !== null}
+              className="rounded-md border px-4 py-2 hover:bg-muted transition"
+            >
+              {busy === "draft" ? "Drafting..." : "Draft reply with AI"}
+            </button>
+          </section>
+
+          <section className="rounded-lg border p-4 space-y-3">
             <h2 className="text-xl font-semibold">Reply</h2>
             <textarea
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              className="border rounded-md px-3 py-2 w-full min-h-[120px]"
-              placeholder="Write a helpful step-by-step reply..."
+              className="border rounded-md px-3 py-2 w-full min-h-[160px]"
+              placeholder="Write a helpful step-by-step reply (or use AI draft above)..."
+              disabled={busy !== null}
             />
             <div className="flex gap-2 flex-wrap">
               <button
