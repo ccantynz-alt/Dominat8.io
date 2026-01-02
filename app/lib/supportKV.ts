@@ -2,12 +2,32 @@ import { kvJsonGet, kvJsonSet, kvNowISO } from "@/app/lib/kv";
 import { randomUUID } from "crypto";
 
 export type TicketStatus = "open" | "pending" | "resolved" | "closed";
+export type TicketPriority = "low" | "medium" | "high" | "urgent";
+export type TicketCategory =
+  | "domains_ssl"
+  | "billing"
+  | "account_access"
+  | "build_deploy"
+  | "bug"
+  | "feature_request"
+  | "how_to"
+  | "other";
 
 export type SupportMessage = {
   id: string;
   at: string;
   from: "customer" | "admin";
   text: string;
+};
+
+export type TicketTriage = {
+  triagedAt: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  tags: string[]; // suggested tags like ["dns", "cloudflare", "cname", "ssl"]
+  summary: string; // 1–2 sentences
+  suggestedStatus?: TicketStatus; // optional: open/pending/resolved/closed
+  suggestedNextSteps?: string[]; // bullet steps
 };
 
 export type SupportTicket = {
@@ -19,6 +39,9 @@ export type SupportTicket = {
   email?: string;
   subject: string;
   messages: SupportMessage[];
+
+  // NEW:
+  triage?: TicketTriage;
 };
 
 function ticketKey(ticketId: string) {
@@ -98,8 +121,11 @@ export async function addMessage(ticketId: string, from: "customer" | "admin", t
     ],
   };
 
-  // If admin replies, move to pending (waiting on customer) unless resolved/closed.
+  // AUTO-STATUS CHANGES:
+  // - Admin reply means we're waiting on customer (pending), unless already resolved/closed.
   if (from === "admin" && next.status === "open") next.status = "pending";
+
+  // - Customer reply re-opens the ticket (open) if it was pending or resolved.
   if (from === "customer" && (next.status === "pending" || next.status === "resolved"))
     next.status = "open";
 
@@ -112,6 +138,15 @@ export async function setStatus(ticketId: string, status: TicketStatus) {
   if (!t) throw new Error("Ticket not found");
   const now = kvNowISO();
   const next: SupportTicket = { ...t, status, updatedAt: now };
+  await kvJsonSet(ticketKey(ticketId), next);
+  return next;
+}
+
+export async function setTriage(ticketId: string, triage: TicketTriage) {
+  const t = await getTicket(ticketId);
+  if (!t) throw new Error("Ticket not found");
+  const now = kvNowISO();
+  const next: SupportTicket = { ...t, triage, updatedAt: now };
   await kvJsonSet(ticketKey(ticketId), next);
   return next;
 }
