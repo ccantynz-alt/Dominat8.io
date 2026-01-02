@@ -1,4 +1,4 @@
-import AnalyticsBeacon from "@/app/components/AnalyticsBeacon";
+import AnalyticsBeacon from "../../components/AnalyticsBeacon";
 
 export default function SiteProjectLayout({
   children,
