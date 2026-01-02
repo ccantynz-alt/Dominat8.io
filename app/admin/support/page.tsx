@@ -12,11 +12,21 @@ type Ticket = {
   email?: string;
   subject: string;
   messages: Array<{ id: string; at: string; from: "customer" | "admin"; text: string }>;
+  triage?: {
+    triagedAt: string;
+    category: string;
+    priority: string;
+    tags: string[];
+    summary: string;
+    suggestedStatus?: string;
+    suggestedNextSteps?: string[];
+  };
 };
 
 export default function AdminSupportInboxPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   async function refresh() {
@@ -34,6 +44,25 @@ export default function AdminSupportInboxPage() {
     }
   }
 
+  async function autoTriage(ticketId: string) {
+    setErr(null);
+    setBusy(ticketId);
+    try {
+      const res = await fetch(`/api/support/tickets/${ticketId}/triage`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!data?.ok) throw new Error(data?.error || "Failed to triage");
+      await refresh();
+    } catch (e: any) {
+      setErr(e?.message || "Failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   useEffect(() => {
     refresh();
   }, []);
@@ -44,7 +73,7 @@ export default function AdminSupportInboxPage() {
         <div>
           <h1 className="text-3xl font-bold">Support Inbox</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            View and respond to customer tickets.
+            View and respond to customer tickets. Auto-triage suggests category, priority, and tags.
           </p>
         </div>
 
@@ -54,7 +83,7 @@ export default function AdminSupportInboxPage() {
           </Link>
           <button
             onClick={refresh}
-            disabled={loading}
+            disabled={loading || busy !== null}
             className="rounded-md border px-4 py-2 hover:bg-muted transition"
           >
             Refresh
@@ -78,16 +107,32 @@ export default function AdminSupportInboxPage() {
           <div className="space-y-3">
             {tickets.map((t) => {
               const last = t.messages?.[t.messages.length - 1];
+              const tags = t.triage?.tags || [];
               return (
-                <Link
-                  key={t.id}
-                  href={`/admin/support/${t.id}`}
-                  className="block rounded-lg border p-4 hover:bg-muted transition"
-                >
+                <div key={t.id} className="rounded-lg border p-4">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <div className="font-semibold">{t.subject}</div>
-                    <span className="text-xs rounded-full border px-2 py-1">{t.status}</span>
+                    <Link
+                      href={`/admin/support/${t.id}`}
+                      className="font-semibold hover:underline"
+                    >
+                      {t.subject}
+                    </Link>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs rounded-full border px-2 py-1">{t.status}</span>
+                      {t.triage?.priority ? (
+                        <span className="text-xs rounded-full border px-2 py-1">
+                          {t.triage.priority}
+                        </span>
+                      ) : null}
+                      {t.triage?.category ? (
+                        <span className="text-xs rounded-full border px-2 py-1">
+                          {t.triage.category}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
+
                   <div className="text-xs text-muted-foreground mt-1">
                     Ticket: <span className="font-mono">{t.id}</span>
                     {t.projectId ? (
@@ -97,13 +142,50 @@ export default function AdminSupportInboxPage() {
                     ) : null}
                     {t.email ? <> • {t.email}</> : null}
                   </div>
-                  {last ? (
+
+                  {tags.length ? (
+                    <div className="mt-2 flex gap-2 flex-wrap">
+                      {tags.map((tag) => (
+                        <span key={tag} className="text-xs rounded-full border px-2 py-1">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      No triage yet.
+                    </div>
+                  )}
+
+                  {t.triage?.summary ? (
                     <div className="text-sm mt-2 text-muted-foreground">
-                      <span className="font-semibold">{last.from}:</span> {last.text.slice(0, 140)}
+                      <span className="font-semibold">Summary:</span> {t.triage.summary}
+                    </div>
+                  ) : last ? (
+                    <div className="text-sm mt-2 text-muted-foreground">
+                      <span className="font-semibold">{last.from}:</span>{" "}
+                      {last.text.slice(0, 140)}
                       {last.text.length > 140 ? "…" : ""}
                     </div>
                   ) : null}
-                </Link>
+
+                  <div className="mt-3 flex gap-2 flex-wrap">
+                    <Link
+                      href={`/admin/support/${t.id}`}
+                      className="rounded-md border px-3 py-2 hover:bg-muted transition text-sm"
+                    >
+                      Open
+                    </Link>
+
+                    <button
+                      onClick={() => autoTriage(t.id)}
+                      disabled={busy !== null}
+                      className="rounded-md border px-3 py-2 hover:bg-muted transition text-sm"
+                    >
+                      {busy === t.id ? "Triaging..." : "Auto-triage"}
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>
