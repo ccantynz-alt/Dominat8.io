@@ -1,7 +1,7 @@
 // app/api/projects/[projectId]/runs/[runId]/apply/route.ts
 import { NextResponse } from "next/server";
-import { storeGet, storeSet } from "../../../../../lib/store";
-import { isAdmin } from "../../../../../lib/isAdmin";
+import { storeGet, storeSet } from "../../../../lib/store";
+import { isAdmin } from "../../../../lib/isAdmin";
 
 type RunFile = { path: string; content: string };
 
@@ -19,20 +19,6 @@ function latestProjectKey(projectId: string) {
 
 function homeKey() {
   return `home:latest`;
-}
-
-function pickHtml(files: RunFile[]): string | null {
-  // Prefer generated page, then any index/home, then first .html
-  const preferred = [
-    "app/generated/page.tsx",
-    "app/generated/index.tsx",
-    "app/generated/home.tsx",
-    "app/page.tsx",
-  ];
-
-  // If it's TSX, we can't directly render it as HTML. So we rely on previewHtml.
-  // But if your agent writes previewHtml, we use it. Otherwise we build a simple HTML page.
-  return null;
 }
 
 function buildFallbackHtml(projectId: string, runId: string, files: RunFile[]) {
