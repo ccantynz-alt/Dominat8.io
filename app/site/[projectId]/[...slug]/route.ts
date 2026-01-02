@@ -26,7 +26,7 @@ function titleFromPath(path: string) {
 }
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: { projectId: string; slug: string[] } }
 ) {
   const admin = await isAdmin();
@@ -53,18 +53,22 @@ export async function GET(
     "<!doctype html><html><head><title>Not Published</title></head><body><h1>No published HTML found yet</h1></body></html>";
 
   const seo = await getProjectSEO(params.projectId);
+
+  const pageOverride =
+    latest && typeof latest === "object" && (latest as any).pagesMeta && typeof (latest as any).pagesMeta === "object"
+      ? ( (latest as any).pagesMeta[path] || null )
+      : null;
+
   const html = injectSEOIntoHtml({
     html: String(baseHtml),
-    path,
+    path: `/site/${params.projectId}${path === "/" ? "" : path}`,
     seo,
-    pageTitle: titleFromPath(path),
+    pageOverride: pageOverride || undefined,
+    pageTitleFallback: titleFromPath(path),
   });
 
   return new NextResponse(html, {
     status: 200,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
   });
 }
