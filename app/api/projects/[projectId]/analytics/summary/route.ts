@@ -8,13 +8,13 @@ export async function GET(
   const projectId = params.projectId;
 
   const series = await getDailySeries(projectId, 14);
-  const topPages = await getTopPages(projectId, 7, 10);
+  const topPages = await getTopPages(projectId, 10);
   const recent = await getRecentEvents(projectId, 30);
 
   return NextResponse.json({
     ok: true,
     series,    // newest->oldest
-    topPages,  // last 7 days approx (from recent feed)
+    topPages,  // derived from last 200 events
     recent,
   });
 }
