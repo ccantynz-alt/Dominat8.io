@@ -13,14 +13,37 @@ type ConnectedDomain = {
   lastCode?: string;
 };
 
+type ProviderChoice =
+  | "auto"
+  | "cloudflare"
+  | "godaddy"
+  | "namecheap"
+  | "google"
+  | "aws_route53"
+  | "squarespace"
+  | "other";
+
 function prettyNowISO() {
   return new Date().toISOString();
 }
 
+function normalizeHost(input: string): string {
+  let s = (input || "").trim().toLowerCase();
+  s = s.replace(/^https?:\/\//, "");
+  s = s.split("/")[0].split("?")[0].split("#")[0];
+  s = s.split(":")[0];
+  s = s.replace(/\.$/, "");
+  return s;
+}
+
+function isLikelyApex(host: string) {
+  return host && !host.startsWith("www.");
+}
+
 function asRecordsText(dns: any) {
-  const recs = dns?.recommendedRecords || [];
   const apex = dns?.input?.apex || "example.com";
   const www = dns?.input?.www || `www.${apex}`;
+
   const lines = [
     `DNS records to add (recommended):`,
     ``,
@@ -39,7 +62,7 @@ function asRecordsText(dns: any) {
     `If your hosting provider shows different values for your project, use those exact values instead.`,
   ];
 
-  // If we have recs, include them in a compact table-ish form too
+  const recs = dns?.recommendedRecords || [];
   if (recs.length) {
     lines.push(``, `Compact list:`);
     for (const r of recs) {
@@ -55,7 +78,6 @@ async function copyToClipboard(text: string) {
     await navigator.clipboard.writeText(text);
     return;
   }
-  // fallback
   const el = document.createElement("textarea");
   el.value = text;
   document.body.appendChild(el);
@@ -67,14 +89,18 @@ async function copyToClipboard(text: string) {
 export default function ProjectDomainsPage({ params }: { params: { projectId: string } }) {
   const projectId = params.projectId;
 
+  // Wizard
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [providerChoice, setProviderChoice] = useState<ProviderChoice>("auto");
   const [domain, setDomain] = useState("");
   const [email, setEmail] = useState("");
+
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   const [dns, setDns] = useState<DnsResult | null>(null);
   const [domains, setDomains] = useState<ConnectedDomain[]>([]);
-  const [info, setInfo] = useState<string | null>(null);
 
   const copyText = useMemo(() => (dns ? asRecordsText(dns) : ""), [dns]);
 
@@ -93,23 +119,43 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  async function checkDns() {
+  function resetFlow() {
+    setStep(1);
+    setProviderChoice("auto");
+    setDns(null);
+    setErr(null);
+    setInfo(null);
+  }
+
+  async function checkDns(forcedDomain?: string) {
     setErr(null);
     setInfo(null);
     setDns(null);
     setBusy("check");
 
+    const d = normalizeHost(forcedDomain ?? domain);
+
     try {
       const res = await fetch("/api/dns/check", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ domain }),
+        body: JSON.stringify({ domain: d }),
       });
 
       const data = await res.json();
       if (!data?.ok) throw new Error(data?.error || "DNS check failed");
 
-      setDns(data.result);
+      const result = data.result;
+
+      // If user chose a provider manually, we just show their choice as a hint message.
+      // (We do not currently override backend detection; it’s for UX.)
+      if (providerChoice !== "auto") {
+        result.provider = result.provider || {};
+        result.provider.userChoice = providerChoice;
+      }
+
+      setDns(result);
+      setStep(3);
     } catch (e: any) {
       setErr(e?.message || "Failed");
     } finally {
@@ -185,11 +231,16 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
       const host = dns?.input?.host || domain;
       const subject = `Domain connection help: ${host}`;
 
+      const providerDetected = dns?.provider?.detected || "unknown";
+      const providerConfidence = dns?.provider?.confidence || "low";
+      const providerUserChoice = dns?.provider?.userChoice || providerChoice;
+
       const message =
         `Hi, I’m trying to connect my domain and I’m stuck.\n\n` +
         `Project: ${projectId}\n` +
         `Domain: ${host}\n` +
-        `Provider detected: ${dns?.provider?.detected || "unknown"} (${dns?.provider?.confidence || "low"})\n\n` +
+        `Provider detected: ${providerDetected} (${providerConfidence})\n` +
+        `Provider chosen by user: ${providerUserChoice}\n\n` +
         `AutoDetectDNS diagnosis:\n` +
         `- status: ${dns?.diagnosis?.status}\n` +
         `- code: ${dns?.diagnosis?.code}\n` +
@@ -215,7 +266,7 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
       const data = await res.json();
       if (!data?.ok) throw new Error(data?.error || "Failed to create support ticket");
 
-      setInfo(`Support ticket created: ${data.ticket?.id || "created"}. Our team will reply inside the ticket.`);
+      setInfo(`Support ticket created: ${data.ticket?.id || "created"}. We’ll reply inside the ticket.`);
     } catch (e: any) {
       setErr(e?.message || "Failed");
     } finally {
@@ -224,7 +275,38 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
   }
 
   const canSave = dns?.diagnosis?.status === "ok";
-  const showDns = !!dns;
+
+  // Smart suggestion: if user typed apex and it’s failing, suggest trying www (and vice versa)
+  const suggestion = useMemo(() => {
+    const host = normalizeHost(domain);
+    const apex = host.startsWith("www.") ? host.slice(4) : host;
+    const www = `www.${apex}`;
+
+    if (!dns) return null;
+
+    const status = dns?.diagnosis?.status;
+    const code = dns?.diagnosis?.code;
+
+    // If user typed apex and we see apex wrong/missing, offer www.
+    if (isLikelyApex(host) && status !== "ok" && (code === "wrong_apex_a" || code === "missing_records" || code === "domain_not_found")) {
+      return {
+        label: `Try www instead (${www})`,
+        nextDomain: www,
+        reason: "Many people connect the www subdomain first because it’s usually a simple CNAME record.",
+      };
+    }
+
+    // If user typed www and www cname wrong/missing, offer apex.
+    if (host.startsWith("www.") && status !== "ok" && (code === "wrong_www_cname" || code === "missing_records")) {
+      return {
+        label: `Try apex instead (${apex})`,
+        nextDomain: apex,
+        reason: "Sometimes the apex domain is already set up; we can check it too.",
+      };
+    }
+
+    return null;
+  }, [domain, dns]);
 
   return (
     <main className="p-8 max-w-4xl mx-auto space-y-6">
@@ -232,7 +314,7 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
         <div>
           <h1 className="text-3xl font-bold">Connect a Domain</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Paste your domain, we’ll detect your DNS provider, check DNS + SSL, and tell you exactly what to do.
+            A simple wizard for beginners: tell us your DNS provider (optional), paste your domain, then follow the steps.
           </p>
           <div className="text-xs text-muted-foreground mt-2">
             Project: <span className="font-mono">{projectId}</span>
@@ -263,64 +345,133 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
         </div>
       ) : null}
 
-      <section className="rounded-lg border p-4 space-y-3">
-        <h2 className="text-xl font-semibold">Step 1 — Paste your domain</h2>
+      {/* Wizard Step 1 */}
+      {step === 1 ? (
+        <section className="rounded-lg border p-4 space-y-3">
+          <h2 className="text-xl font-semibold">Step 1 — Where is your DNS hosted?</h2>
+          <p className="text-sm text-muted-foreground">
+            If you’re not sure, choose “Auto-detect”. We’ll try to detect it from nameservers.
+          </p>
 
-        <label className="text-sm font-semibold">Domain</label>
-        <input
-          value={domain}
-          onChange={(e) => setDomain(e.target.value)}
-          placeholder="example.com or www.example.com"
-          className="border rounded-md px-3 py-2 w-full"
-          disabled={busy !== null}
-        />
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => setProviderChoice("auto")} className={`rounded-md border px-4 py-2 hover:bg-muted transition ${providerChoice === "auto" ? "font-semibold" : ""}`} disabled={busy !== null}>
+              Auto-detect
+            </button>
+            <button onClick={() => setProviderChoice("cloudflare")} className={`rounded-md border px-4 py-2 hover:bg-muted transition ${providerChoice === "cloudflare" ? "font-semibold" : ""}`} disabled={busy !== null}>
+              Cloudflare
+            </button>
+            <button onClick={() => setProviderChoice("godaddy")} className={`rounded-md border px-4 py-2 hover:bg-muted transition ${providerChoice === "godaddy" ? "font-semibold" : ""}`} disabled={busy !== null}>
+              GoDaddy
+            </button>
+            <button onClick={() => setProviderChoice("namecheap")} className={`rounded-md border px-4 py-2 hover:bg-muted transition ${providerChoice === "namecheap" ? "font-semibold" : ""}`} disabled={busy !== null}>
+              Namecheap
+            </button>
+            <button onClick={() => setProviderChoice("google")} className={`rounded-md border px-4 py-2 hover:bg-muted transition ${providerChoice === "google" ? "font-semibold" : ""}`} disabled={busy !== null}>
+              Google
+            </button>
+            <button onClick={() => setProviderChoice("aws_route53")} className={`rounded-md border px-4 py-2 hover:bg-muted transition ${providerChoice === "aws_route53" ? "font-semibold" : ""}`} disabled={busy !== null}>
+              Route 53
+            </button>
+            <button onClick={() => setProviderChoice("squarespace")} className={`rounded-md border px-4 py-2 hover:bg-muted transition ${providerChoice === "squarespace" ? "font-semibold" : ""}`} disabled={busy !== null}>
+              Squarespace
+            </button>
+            <button onClick={() => setProviderChoice("other")} className={`rounded-md border px-4 py-2 hover:bg-muted transition ${providerChoice === "other" ? "font-semibold" : ""}`} disabled={busy !== null}>
+              Other
+            </button>
+          </div>
 
-        <label className="text-sm font-semibold">Email (optional)</label>
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@domain.com (optional, for support replies)"
-          className="border rounded-md px-3 py-2 w-full"
-          disabled={busy !== null}
-        />
+          <div className="flex gap-2 flex-wrap pt-2">
+            <button
+              onClick={() => setStep(2)}
+              disabled={busy !== null}
+              className="rounded-md border px-4 py-2 hover:bg-muted transition"
+            >
+              Continue
+            </button>
 
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={checkDns}
-            disabled={busy !== null || !domain.trim()}
-            className="rounded-md border px-4 py-2 hover:bg-muted transition"
-          >
-            {busy === "check" ? "Checking..." : "Check DNS"}
-          </button>
+            <button
+              onClick={resetFlow}
+              disabled={busy !== null}
+              className="rounded-md border px-4 py-2 hover:bg-muted transition"
+            >
+              Reset
+            </button>
+          </div>
+        </section>
+      ) : null}
 
-          <button
-            onClick={() => {
-              setDns(null);
-              setErr(null);
-              setInfo(null);
-            }}
+      {/* Wizard Step 2 */}
+      {step === 2 ? (
+        <section className="rounded-lg border p-4 space-y-3">
+          <h2 className="text-xl font-semibold">Step 2 — Paste your domain</h2>
+          <p className="text-sm text-muted-foreground">
+            Example: <span className="font-mono">example.com</span> or <span className="font-mono">www.example.com</span>
+          </p>
+
+          <label className="text-sm font-semibold">Domain</label>
+          <input
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+            placeholder="example.com or www.example.com"
+            className="border rounded-md px-3 py-2 w-full"
             disabled={busy !== null}
-            className="rounded-md border px-4 py-2 hover:bg-muted transition"
-          >
-            Clear
-          </button>
-        </div>
-      </section>
+          />
 
-      {showDns ? (
+          <label className="text-sm font-semibold">Email (optional)</label>
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@domain.com (optional, for support replies)"
+            className="border rounded-md px-3 py-2 w-full"
+            disabled={busy !== null}
+          />
+
+          <div className="flex gap-2 flex-wrap pt-2">
+            <button
+              onClick={() => checkDns()}
+              disabled={busy !== null || !domain.trim()}
+              className="rounded-md border px-4 py-2 hover:bg-muted transition"
+            >
+              {busy === "check" ? "Checking..." : "Check DNS"}
+            </button>
+
+            <button
+              onClick={() => setStep(1)}
+              disabled={busy !== null}
+              className="rounded-md border px-4 py-2 hover:bg-muted transition"
+            >
+              Back
+            </button>
+
+            <button
+              onClick={resetFlow}
+              disabled={busy !== null}
+              className="rounded-md border px-4 py-2 hover:bg-muted transition"
+            >
+              Reset
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {/* Wizard Step 3 */}
+      {step === 3 && dns ? (
         <section className="rounded-lg border p-4 space-y-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="text-xl font-semibold">Step 2 — Follow the instructions</h2>
+            <h2 className="text-xl font-semibold">Step 3 — Follow the steps</h2>
             <span className="text-xs rounded-full border px-2 py-1">
               {dns?.diagnosis?.status} • {dns?.diagnosis?.code}
             </span>
           </div>
 
           <div className="text-sm">
-            <div className="font-semibold">DNS provider detected</div>
+            <div className="font-semibold">Provider</div>
             <div className="text-muted-foreground mt-1">
               {dns?.provider?.message}{" "}
               <span className="text-xs">({dns?.provider?.detected} • {dns?.provider?.confidence})</span>
+              {providerChoice !== "auto" ? (
+                <span className="text-xs"> • you selected: {providerChoice}</span>
+              ) : null}
             </div>
           </div>
 
@@ -341,17 +492,15 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
           </div>
 
           <div className="text-sm">
-            <div className="font-semibold">Recommended DNS records (copy/paste)</div>
-            <div className="text-muted-foreground mt-1">
-              Add these records in your DNS provider. (If your host shows different values for your project, use the host’s values.)
-            </div>
+            <div className="font-semibold">DNS records to add (copy/paste)</div>
 
             <div className="mt-2 rounded-lg border p-3 space-y-2">
               {(dns?.recommendedRecords || []).map((r: any, idx: number) => (
                 <div key={idx} className="text-sm">
                   <div className="font-semibold">{r.type} — {r.host}</div>
                   <div className="text-muted-foreground">
-                    Name/Host: <span className="font-mono">{r.name}</span> • Value: <span className="font-mono">{r.value}</span> • TTL: {r.ttl}
+                    Name/Host: <span className="font-mono">{r.name}</span> • Value:{" "}
+                    <span className="font-mono">{r.value}</span> • TTL: {r.ttl}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">{r.why}</div>
                 </div>
@@ -375,14 +524,42 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
               </button>
 
               <button
-                onClick={checkDns}
+                onClick={() => checkDns()}
                 disabled={busy !== null}
                 className="rounded-md border px-4 py-2 hover:bg-muted transition"
               >
                 {busy === "check" ? "Checking..." : "Re-check DNS"}
               </button>
+
+              <button
+                onClick={() => {
+                  setDns(null);
+                  setStep(2);
+                }}
+                disabled={busy !== null}
+                className="rounded-md border px-4 py-2 hover:bg-muted transition"
+              >
+                Change domain
+              </button>
             </div>
           </div>
+
+          {suggestion ? (
+            <div className="rounded-lg border p-3 text-sm">
+              <div className="font-semibold">Tip</div>
+              <div className="text-muted-foreground mt-1">{suggestion.reason}</div>
+              <button
+                onClick={() => {
+                  setDomain(suggestion.nextDomain);
+                  checkDns(suggestion.nextDomain);
+                }}
+                disabled={busy !== null}
+                className="mt-2 rounded-md border px-4 py-2 hover:bg-muted transition"
+              >
+                {suggestion.label}
+              </button>
+            </div>
+          ) : null}
 
           <div className="text-sm">
             <div className="font-semibold">Provider-specific steps</div>
@@ -419,6 +596,14 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
             >
               {busy === "ticket" ? "Creating ticket..." : "I’m stuck — create support ticket"}
             </button>
+
+            <button
+              onClick={resetFlow}
+              disabled={busy !== null}
+              className="rounded-md border px-4 py-2 hover:bg-muted transition"
+            >
+              Start over
+            </button>
           </div>
 
           <details className="text-sm">
@@ -430,6 +615,7 @@ export default function ProjectDomainsPage({ params }: { params: { projectId: st
         </section>
       ) : null}
 
+      {/* Saved domains */}
       <section className="rounded-lg border p-4 space-y-3">
         <h2 className="text-xl font-semibold">Connected domains (saved)</h2>
 
