@@ -1,366 +1,185 @@
+// app/projects/[projectId]/page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Run = {
   id: string;
-  projectId: string;
-  prompt: string;
   status: string;
   createdAt?: string;
-  updatedAt?: string;
-  output?: {
-    summary?: string;
-    files?: { path: string; content: string }[];
-  };
 };
 
-export default function ProjectRunsPage({ params }: { params: { projectId: string } }) {
+export default function ProjectPage({
+  params,
+}: {
+  params: { projectId: string };
+}) {
+  const router = useRouter();
   const projectId = params.projectId;
 
   const [runs, setRuns] = useState<Run[]>([]);
-  const [prompt, setPrompt] = useState(
-    "Build a modern landing page with pricing, FAQ, and a contact form."
-  );
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const [openRunId, setOpenRunId] = useState<string | null>(null);
-  const [step, setStep] = useState<string | null>(null);
-  const [applyingRunId, setApplyingRunId] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
-  const sorted = useMemo(() => {
-    return [...runs].sort((a, b) => {
-      const ad = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bd = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return bd - ad;
-    });
-  }, [runs]);
+  const [prompt, setPrompt] = useState(
+`You are an expert web designer and front-end engineer.
 
-  async function load() {
+Your task is to generate a COMPLETE, PRODUCTION-READY MULTI-PAGE WEBSITE.
+
+IMPORTANT OUTPUT RULES (MUST FOLLOW EXACTLY):
+
+1. You MUST return a JSON object.
+2. The JSON MUST contain a "pages" object.
+3. Each key in "pages" MUST be a URL path starting with "/".
+4. Each value in "pages" MUST be a FULL, VALID HTML DOCUMENT.
+5. DO NOT include markdown, explanations, or comments outside the JSON.
+6. DO NOT include JSX, React, or Next.js code — HTML ONLY.
+
+REQUIRED PAGES:
+- "/" (Home)
+- "/about"
+- "/pricing"
+- "/contact"
+
+DESIGN REQUIREMENTS:
+- Modern, clean, professional layout
+- Responsive (mobile + desktop)
+- Consistent navigation across all pages
+- Clear headings and sections
+- Strong typography hierarchy
+- Neutral color palette
+- Use inline CSS or <style> tags (no external assets)
+
+CONTENT REQUIREMENTS:
+- Homepage: hero section, features, call-to-action
+- About: company mission, values, credibility
+- Pricing: 2–3 clear pricing tiers
+- Contact: contact form + business info (no backend logic)
+
+OUTPUT FORMAT EXAMPLE (STRUCTURE ONLY):
+
+{
+  "pages": {
+    "/": "<!doctype html><html>...</html>",
+    "/about": "<!doctype html><html>...</html>",
+    "/pricing": "<!doctype html><html>...</html>",
+    "/contact": "<!doctype html><html>...</html>"
+  }
+}
+
+Now generate the website.
+`
+  );
+
+  async function loadRuns() {
     setLoading(true);
-    setError(null);
+    setErr(null);
     try {
-      const res = await fetch(`/api/projects/${projectId}/runs`, { cache: "no-store" });
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) throw new Error(data?.error || "Failed to load runs");
+      const res = await fetch(`/api/projects/${projectId}/runs`, {
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!data?.ok) throw new Error(data?.error || "Failed to load runs");
       setRuns(Array.isArray(data.runs) ? data.runs : []);
     } catch (e: any) {
-      setError(e?.message || "Unknown error");
+      setErr(e?.message || "Failed to load");
     } finally {
       setLoading(false);
     }
   }
 
-  async function applyRun(runId: string, setHome: boolean) {
-    setApplyingRunId(runId);
-    setError(null);
-    setToast(null);
-    try {
-      const url = setHome
-        ? `/api/projects/${projectId}/runs/${runId}/apply?setHome=1`
-        : `/api/projects/${projectId}/runs/${runId}/apply`;
-
-      const res = await fetch(url, { method: "POST" });
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) throw new Error(data?.error || "Failed to apply run");
-
-      if (setHome) {
-        setToast("Applied + set as Home! Opening / …");
-        setTimeout(() => (window.location.href = "/"), 300);
-      } else {
-        setToast("Applied! Opening /generated…");
-        setTimeout(() => (window.location.href = "/generated"), 300);
-      }
-    } catch (e: any) {
-      setError(e?.message || "Unknown error");
-    } finally {
-      setApplyingRunId(null);
-    }
-  }
-
   async function createRun() {
-    const trimmed = prompt.trim();
-    if (!trimmed) return;
-
-    setCreating(true);
-    setError(null);
-    setToast(null);
-    setStep("Starting…");
-
+    setErr(null);
     try {
       const res = await fetch(`/api/projects/${projectId}/runs`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ prompt: trimmed }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
       });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) throw new Error(data?.error || "Failed to create run");
-
-      const newRun = data.run as Run | undefined;
-
-      if (newRun?.id) {
-        setRuns((prev) => [newRun, ...prev]);
-        setOpenRunId(newRun.id);
-
-        const streamRes = await fetch(
-          `/api/projects/${projectId}/runs/${newRun.id}/run-stream`,
-          { method: "POST" }
-        );
-
-        if (!streamRes.ok || !streamRes.body) throw new Error("Failed to start streaming run");
-
-        const reader = streamRes.body.getReader();
-        const decoder = new TextDecoder();
-
-        let buffer = "";
-        let liveText = "";
-
-        const applyLive = (text: string) => {
-          liveText += text;
-          setRuns((prev) =>
-            prev.map((r) =>
-              r.id === newRun.id
-                ? {
-                    ...r,
-                    status: "running",
-                    output: {
-                      ...(r.output || {}),
-                      summary:
-                        liveText.slice(0, 240) + (liveText.length > 240 ? "…" : ""),
-                    },
-                  }
-                : r
-            )
-          );
-        };
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split("\n\n");
-          buffer = parts.pop() || "";
-
-          for (const part of parts) {
-            const lines = part.split("\n");
-            const eventLine = lines.find((l) => l.startsWith("event:"));
-            const dataLine = lines.find((l) => l.startsWith("data:"));
-
-            const event = eventLine?.slice(6).trim();
-            const dataStr = dataLine?.slice(5).trim();
-            if (!event || !dataStr) continue;
-
-            let payload: any = null;
-            try {
-              payload = JSON.parse(dataStr);
-            } catch {
-              payload = { raw: dataStr };
-            }
-
-            if (event === "delta" && payload?.text) applyLive(payload.text);
-            if (event === "status" && payload?.status) {
-              setRuns((prev) =>
-                prev.map((r) => (r.id === newRun.id ? { ...r, status: payload.status } : r))
-              );
-            }
-            if (event === "step" && payload?.label) setStep(payload.label);
-            if (event === "error") throw new Error(payload?.message || "Streaming error");
-
-            if (event === "done") {
-              await load();
-              setStep(null);
-            }
-          }
-        }
-      } else {
-        await load();
-        setStep(null);
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Failed to create run");
       }
+      await loadRuns();
     } catch (e: any) {
-      setError(e?.message || "Unknown error");
-      setStep(null);
-    } finally {
-      setCreating(false);
+      setErr(e?.message || "Failed to create run");
     }
   }
 
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId]);
+    loadRuns();
+  }, []);
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Runs</h1>
-            <p className="mt-1 text-sm text-zinc-400">
-              Project: <span className="text-zinc-200">{projectId}</span>
-            </p>
-          </div>
+    <div style={{ padding: 16 }}>
+      <div style={{ marginBottom: 16 }}>
+        <Link href="/projects">← Back to Projects</Link>
+        <h1 style={{ fontSize: 28, fontWeight: 900, marginTop: 8 }}>
+          Project {projectId}
+        </h1>
+      </div>
 
-          <Link
-            href="/projects"
-            className="mt-2 inline-flex rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10 sm:mt-0"
+      <div
+        style={{
+          border: "1px solid rgba(255,255,255,0.12)",
+          borderRadius: 16,
+          padding: 16,
+          marginBottom: 20,
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Generate Website</h2>
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          rows={22}
+          style={{
+            width: "100%",
+            padding: 12,
+            borderRadius: 12,
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "transparent",
+            fontFamily: "ui-monospace, monospace",
+            fontSize: 13,
+          }}
+        />
+        <div style={{ marginTop: 10 }}>
+          <button
+            onClick={createRun}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.12)",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
           >
-            ← Back
-          </Link>
+            Run Generator
+          </button>
         </div>
+      </div>
 
-        <div className="mt-5">
-          <div className="text-sm font-medium text-zinc-200">Run the agent</div>
-
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            className="mt-3 min-h-[130px] w-full rounded-2xl border border-white/10 bg-zinc-950/60 p-4 text-sm outline-none placeholder:text-zinc-600 focus:border-white/20"
-          />
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              onClick={createRun}
-              disabled={creating || !prompt.trim()}
-              className="rounded-2xl border border-white/10 bg-white px-5 py-3 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:opacity-50"
-            >
-              {creating ? "Running…" : "Run Agent"}
-            </button>
-
-            <button
-              onClick={load}
-              disabled={loading}
-              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm hover:bg-white/10 disabled:opacity-50"
-            >
-              Refresh
-            </button>
-
-            <Link
-              href="/"
-              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm hover:bg-white/10"
-            >
-              Open Home /
-            </Link>
-
-            <Link
-              href="/generated"
-              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm hover:bg-white/10"
-            >
-              /generated
-            </Link>
-          </div>
-
-          {step ? (
-            <div className="mt-3 text-sm text-zinc-400">
-              <span className="opacity-70">Progress:</span>{" "}
-              <span className="text-zinc-200">{step}</span>
-            </div>
-          ) : null}
-
-          {toast ? (
-            <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
-              {toast}
-            </div>
-          ) : null}
-
-          {error ? (
-            <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
-              {error}
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-medium">Run history</h2>
-          <span className="text-sm text-zinc-400">{sorted.length} total</span>
-        </div>
-
+      <div>
+        <h2>Runs</h2>
         {loading ? (
-          <p className="mt-4 text-sm text-zinc-400">Loading…</p>
-        ) : sorted.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-400">No runs yet — run the agent above.</p>
+          <div>Loading…</div>
+        ) : err ? (
+          <div style={{ color: "red" }}>{err}</div>
+        ) : runs.length === 0 ? (
+          <div>No runs yet.</div>
         ) : (
-          <ul className="mt-4 grid gap-3">
-            {sorted.map((r) => {
-              const isOpen = openRunId === r.id;
-              const canApply =
-                r.status === "complete" &&
-                Array.isArray(r.output?.files) &&
-                (r.output?.files?.length || 0) > 0;
-
-              return (
-                <li key={r.id} className="rounded-2xl border border-white/10 bg-zinc-950/40 p-4">
-                  <button
-                    className="w-full text-left"
-                    onClick={() => setOpenRunId(isOpen ? null : r.id)}
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold">{r.id}</span>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-zinc-200">
-                        {r.status}
-                      </span>
-                      {r.createdAt ? (
-                        <span className="text-xs text-zinc-500">
-                          {new Date(r.createdAt).toLocaleString()}
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <p className="mt-2 text-sm text-zinc-300">{r.prompt}</p>
-                    <p className="mt-2 text-xs text-zinc-500">
-                      Click to {isOpen ? "hide" : "view"} output
-                    </p>
-                  </button>
-
-                  {isOpen ? (
-                    <div className="mt-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-sm font-medium text-zinc-200">Output</div>
-
-                        {canApply ? (
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={() => applyRun(r.id, false)}
-                              disabled={applyingRunId === r.id}
-                              className="rounded-2xl border border-white/10 bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:opacity-60"
-                            >
-                              {applyingRunId === r.id ? "Applying…" : "Apply → /generated"}
-                            </button>
-
-                            <button
-                              onClick={() => applyRun(r.id, true)}
-                              disabled={applyingRunId === r.id}
-                              className="rounded-2xl border border-emerald-500/30 bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-60"
-                            >
-                              {applyingRunId === r.id ? "Setting…" : "Apply & Set Home"}
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-zinc-500">
-                            {r.status === "complete"
-                              ? "No files to apply"
-                              : "Complete the run to apply"}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-3 text-sm text-zinc-300">
-                        {r.output?.summary || "No output yet."}
-                      </div>
-                    </div>
-                  ) : null}
-                </li>
-              );
-            })}
+          <ul>
+            {runs.map((r) => (
+              <li key={r.id}>
+                <Link href={`/projects/${projectId}/runs/${r.id}`}>
+                  {r.id} — {r.status}
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
-      </section>
+      </div>
     </div>
   );
 }
