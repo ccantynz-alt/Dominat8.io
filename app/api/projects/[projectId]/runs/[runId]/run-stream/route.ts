@@ -75,7 +75,7 @@ export async function POST(
 Generate:
 1) A short summary of what you built
 2) A Next.js page component at app/generated/page.tsx
-3) A standalone HTML preview at app/generated/preview.html (this should be a full HTML document with inline CSS so it looks great)
+3) A standalone HTML preview at app/generated/preview.html (full HTML doc + inline CSS)
 
 Prompt:
 ${run.prompt}
@@ -126,7 +126,6 @@ Return STRICT JSON ONLY with this shape:
         controller.close();
       } catch (err: any) {
         await storeSet(RUN_KEY(runId), { ...run, status: "failed", updatedAt: nowISO() });
-
         send("error", { ok: false, message: err?.message || "Streaming run failed" });
         controller.close();
       }
