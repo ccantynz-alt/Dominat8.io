@@ -1,186 +1,196 @@
-// app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 
-type Mode = "on" | "off";
+type Project = { id: string; name: string; createdAt?: string };
+type Template = { id: string; name: string; description: string; published?: boolean };
 
 export default function DashboardPage() {
-  const [mode, setMode] = useState<Mode>("on");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [okMsg, setOkMsg] = useState<string | null>(null);
-
-  async function load() {
-    setLoading(true);
-    setErr(null);
-    setOkMsg(null);
-    try {
-      const res = await fetch("/api/public-mode", { cache: "no-store" });
-      const data = await res.json();
-      if (!data?.ok) throw new Error(data?.error || "Failed to load public mode");
-      setMode(data.mode === "off" ? "off" : "on");
-    } catch (e: any) {
-      setErr(e?.message || "Failed to load");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function save(nextMode: Mode) {
-    setSaving(true);
-    setErr(null);
-    setOkMsg(null);
-    try {
-      const res = await fetch("/api/public-mode", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: nextMode }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.ok) throw new Error(data?.error || "Failed to save");
-      setMode(data.mode === "off" ? "off" : "on");
-      setOkMsg(`Saved: Public Mode is now ${data.mode.toUpperCase()}`);
-      // If turning public mode ON, the admin routes will redirect for non-admins,
-      // but you are admin so you can stay here.
-    } catch (e: any) {
-      setErr(e?.message || "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  }
+  const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        setMsg(null);
+
+        // Projects (if API exists)
+        const pr = await fetch("/api/projects", { cache: "no-store" });
+        if (pr.ok) {
+          const pj = await pr.json();
+          const list = Array.isArray(pj?.projects) ? pj.projects : Array.isArray(pj) ? pj : [];
+          if (!cancelled) setProjects(list);
+        }
+
+        // Templates (if API exists)
+        const tr = await fetch("/api/templates", { cache: "no-store" });
+        if (tr.ok) {
+          const tj = await tr.json();
+          const list = Array.isArray(tj?.templates) ? tj.templates : Array.isArray(tj) ? tj : [];
+          if (!cancelled) setTemplates(list);
+        }
+      } catch (e: any) {
+        if (!cancelled) setMsg(e?.message || "Could not load dashboard data.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
     load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const badge =
-    mode === "on"
-      ? { text: "PUBLIC MODE: ON", hint: "Visitors see only the published site. Admin routes are blocked." }
-      : { text: "PUBLIC MODE: OFF", hint: "Builder mode. Admin UI is visible (to everyone unless you add auth later)." };
-
   return (
-    <div style={{ padding: 16 }}>
-      <div style={{ marginBottom: 16 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>Dashboard</h1>
-        <p style={{ marginTop: 6, opacity: 0.75 }}>
-          Control platform settings. This page adds a safe toggle for Public Mode.
-        </p>
-      </div>
-
-      <div
-        style={{
-          border: "1px solid rgba(255,255,255,0.10)",
-          borderRadius: 16,
-          padding: 16,
-          maxWidth: 760,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <div style={{ fontWeight: 800, letterSpacing: 0.3 }}>{badge.text}</div>
-            <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>{badge.hint}</div>
-          </div>
-
-          <button
-            onClick={load}
-            disabled={loading || saving}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "transparent",
-              cursor: loading || saving ? "not-allowed" : "pointer",
-              opacity: loading || saving ? 0.6 : 1,
-            }}
-          >
-            {loading ? "Loading..." : "Refresh"}
-          </button>
+    <main style={{ padding: "3rem", fontFamily: "sans-serif", maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
+        <div>
+          <h1 style={{ fontSize: "2.5rem", margin: 0 }}>Dashboard</h1>
+          <p style={{ marginTop: 10, color: "#555" }}>
+            Your control centre: projects, templates, and what to do next.
+          </p>
         </div>
 
-        <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-          <button
-            onClick={() => save("on")}
-            disabled={saving || loading || mode === "on"}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: mode === "on" ? "rgba(255,255,255,0.08)" : "transparent",
-              cursor: saving || loading || mode === "on" ? "not-allowed" : "pointer",
-              opacity: saving || loading ? 0.6 : 1,
-              fontWeight: 700,
-            }}
-          >
-            Set Public Mode ON
-          </button>
+        <div style={{ display: "flex", gap: 12 }}>
+          <a href="/" style={linkStyle}>Home</a>
+          <a href="/templates" style={linkStyle}>Templates</a>
+          <a href="/projects" style={linkStyle}>Projects</a>
+          <a href="/admin" style={linkStyle}>Admin</a>
+        </div>
+      </div>
 
-          <button
-            onClick={() => save("off")}
-            disabled={saving || loading || mode === "off"}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: mode === "off" ? "rgba(255,255,255,0.08)" : "transparent",
-              cursor: saving || loading || mode === "off" ? "not-allowed" : "pointer",
-              opacity: saving || loading ? 0.6 : 1,
-              fontWeight: 700,
-            }}
-          >
-            Set Public Mode OFF
-          </button>
+      {loading && <div style={panelStyle}>Loading…</div>}
+      {msg && (
+        <div style={{ ...panelStyle, borderColor: "#f3c2c2", background: "#fff7f7", color: "#8a1f1f" }}>
+          {msg}
+          <div style={{ marginTop: 8, color: "#555" }}>
+            This is OK if your APIs aren’t wired yet — the dashboard still works.
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14, marginTop: 18 }}>
+        <div style={panelStyle}>
+          <h2 style={h2Style}>Quick actions</h2>
+          <div style={{ display: "grid", gap: 10 }}>
+            <a href="/templates" style={primaryAction}>Create a project from a template</a>
+            <a href="/projects" style={secondaryAction}>View your projects</a>
+            <a href="/generated" style={secondaryAction}>View generated output</a>
+          </div>
         </div>
 
-        {(err || okMsg) && (
-          <div style={{ marginTop: 14 }}>
-            {err && (
-              <div
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,0,0,0.25)",
-                  background: "rgba(255,0,0,0.08)",
-                  fontSize: 13,
-                }}
-              >
-                {err}
+        <div style={panelStyle}>
+          <h2 style={h2Style}>Projects</h2>
+          {projects.length === 0 ? (
+            <div style={{ color: "#666" }}>
+              No projects loaded yet.
+              <div style={{ marginTop: 10 }}>
+                <a href="/templates" style={secondaryAction}>Make your first project</a>
               </div>
-            )}
-            {okMsg && (
-              <div
-                style={{
-                  marginTop: err ? 10 : 0,
-                  padding: "10px 12px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,255,0,0.18)",
-                  background: "rgba(0,255,0,0.07)",
-                  fontSize: 13,
-                }}
-              >
-                {okMsg}
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {projects.slice(0, 5).map((p) => (
+                <a key={p.id} href={`/projects/${p.id}`} style={itemCard}>
+                  <div style={{ fontWeight: 700 }}>{p.name}</div>
+                  <div style={{ color: "#666", fontSize: 13 }}>
+                    <code>{p.id}</code>
+                    {p.createdAt ? ` • ${new Date(p.createdAt).toLocaleString()}` : ""}
+                  </div>
+                </a>
+              ))}
+              {projects.length > 5 && (
+                <a href="/projects" style={linkStyle}>See all projects →</a>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={panelStyle}>
+          <h2 style={h2Style}>Templates</h2>
+          {templates.length === 0 ? (
+            <div style={{ color: "#666" }}>
+              Templates API not loaded (or not published yet).
+              <div style={{ marginTop: 10 }}>
+                <a href="/templates" style={secondaryAction}>Browse templates</a>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {templates
+                .filter((t) => t?.published !== false)
+                .slice(0, 5)
+                .map((t) => (
+                  <div key={t.id} style={itemCard}>
+                    <div style={{ fontWeight: 700 }}>{t.name}</div>
+                    <div style={{ color: "#666", fontSize: 13 }}>{t.description}</div>
+                  </div>
+                ))}
+              <a href="/templates" style={linkStyle}>See all templates →</a>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div style={{ marginTop: 18, maxWidth: 760, opacity: 0.8, fontSize: 13, lineHeight: 1.5 }}>
-        <div style={{ fontWeight: 800, marginBottom: 6 }}>Notes</div>
-        <ul style={{ margin: 0, paddingLeft: 18 }}>
-          <li>
-            Public Mode <b>ON</b>: hides admin nav + blocks admin routes for non-admin users.
-          </li>
-          <li>
-            Public Mode <b>OFF</b>: builder mode (admin nav shown).
-          </li>
-          <li>
-            Current “admin” definition is your existing <code>getCurrentUserId()</code>. Later we can upgrade to Clerk
-            roles.
-          </li>
-        </ul>
+      <div style={{ marginTop: 22, color: "#666", fontSize: 13 }}>
+        Next we’ll wire the “Use Template” button to always create a project + run automatically (if your APIs are present).
       </div>
-    </div>
+    </main>
   );
 }
+
+const panelStyle: React.CSSProperties = {
+  padding: 16,
+  border: "1px solid #eee",
+  borderRadius: 12,
+  background: "#fff",
+};
+
+const h2Style: React.CSSProperties = {
+  marginTop: 0,
+  marginBottom: 10,
+  fontSize: "1.1rem",
+};
+
+const linkStyle: React.CSSProperties = {
+  color: "#111",
+  textDecoration: "underline",
+  fontSize: 14,
+};
+
+const primaryAction: React.CSSProperties = {
+  display: "block",
+  padding: "12px 14px",
+  borderRadius: 10,
+  border: "1px solid #111",
+  background: "#111",
+  color: "#fff",
+  textDecoration: "none",
+  fontWeight: 700,
+};
+
+const secondaryAction: React.CSSProperties = {
+  display: "inline-block",
+  padding: "10px 12px",
+  borderRadius: 10,
+  border: "1px solid #ddd",
+  background: "#fff",
+  color: "#111",
+  textDecoration: "none",
+};
+
+const itemCard: React.CSSProperties = {
+  display: "block",
+  padding: 12,
+  borderRadius: 10,
+  border: "1px solid #eee",
+  background: "#fff",
+  textDecoration: "none",
+  color: "#111",
+};
