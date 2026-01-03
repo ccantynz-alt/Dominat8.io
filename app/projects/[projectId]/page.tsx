@@ -27,52 +27,32 @@ export default function ProjectDetailPage() {
   const projectId = String(params?.projectId || "");
 
   const [project, setProject] = useState<Project | null>(null);
-
-  const [prompt, setPrompt] = useState(
-    "Build a modern landing page with hero, pricing, FAQ, and contact form. Use clean, minimal styling."
-  );
-
+  const [prompt, setPrompt] = useState("");
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function loadProjectAndRuns() {
+  async function load() {
     setLoading(true);
     setErr(null);
 
     try {
-      // 1) Load project from API list (simple approach)
       const pRes = await fetch("/api/projects", { cache: "no-store" });
       const pJson = await pRes.json();
-      const list: Project[] = Array.isArray(pJson?.projects) ? pJson.projects : [];
+      const projects: Project[] = pJson?.projects || [];
+      const found = projects.find((p) => p.id === projectId) || null;
 
-      const found = list.find((p) => p.id === projectId) || null;
-
-      // Fallback to localStorage if not found in API
-      if (!found) {
-        try {
-          const raw = localStorage.getItem(`project:${projectId}`);
-          if (raw) {
-            const lp = JSON.parse(raw) as Project;
-            setProject(lp);
-            if (lp?.seedPrompt) setPrompt(lp.seedPrompt);
-          } else {
-            setProject({ id: projectId, name: `Project ${projectId.slice(0, 6)}` });
-          }
-        } catch {
-          setProject({ id: projectId, name: `Project ${projectId.slice(0, 6)}` });
-        }
-      } else {
+      if (found) {
         setProject(found);
         if (found.seedPrompt) setPrompt(found.seedPrompt);
+      } else {
+        setProject({ id: projectId, name: `Project ${projectId.slice(0, 6)}` });
       }
 
-      // 2) Load runs for this project
       const rRes = await fetch(`/api/projects/${projectId}/runs`, { cache: "no-store" });
       const rJson = await rRes.json();
-      const rList: Run[] = Array.isArray(rJson?.runs) ? rJson.runs : [];
-      setRuns(rList);
+      setRuns(rJson?.runs || []);
 
       setLoading(false);
     } catch (e: any) {
@@ -82,8 +62,7 @@ export default function ProjectDetailPage() {
   }
 
   useEffect(() => {
-    loadProjectAndRuns();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    load();
   }, [projectId]);
 
   async function createRun() {
@@ -98,9 +77,9 @@ export default function ProjectDetailPage() {
       });
 
       const json = await res.json();
-      if (!json?.ok) throw new Error(json?.error || "Failed to create run");
+      if (!json?.ok) throw new Error("Failed to create run");
 
-      await loadProjectAndRuns();
+      await load();
       setBusy(null);
     } catch (e: any) {
       setErr(e?.message || "Failed to create run");
@@ -113,16 +92,16 @@ export default function ProjectDetailPage() {
     setErr(null);
 
     try {
-      const res = await fetch(`/api/projects/${projectId}/runs/${runId}/execute`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `/api/projects/${projectId}/runs/${runId}/execute`,
+        { method: "POST" }
+      );
+
       const json = await res.json();
-      if (!json?.ok) throw new Error(json?.error || "Failed to execute run");
+      if (!json?.ok) throw new Error("Failed to execute run");
 
-      await loadProjectAndRuns();
-
-      // open generated page
-      window.location.href = "/generated";
+      await load();
+      window.location.href = `/generated/${runId}`;
     } catch (e: any) {
       setErr(e?.message || "Failed to execute run");
       setBusy(null);
@@ -131,176 +110,63 @@ export default function ProjectDetailPage() {
 
   return (
     <main style={{ padding: "3rem", fontFamily: "sans-serif", maxWidth: 980, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
-        <div>
-          <h1 style={{ fontSize: "2.2rem", margin: 0 }}>{project?.name || "Project"}</h1>
-          <div style={{ marginTop: 8, color: "#666", fontSize: 14 }}>
-            ID: <code>{projectId}</code>
-          </div>
-          {project?.templateName && (
-            <div style={{ marginTop: 8, color: "#111", fontSize: 14 }}>
-              Template: <b>{project.templateName}</b>
-            </div>
-          )}
-        </div>
+      <h1>{project?.name || "Project"}</h1>
+      <p>ID: <code>{projectId}</code></p>
 
-        <div style={{ display: "flex", gap: 12 }}>
-          <a href="/templates" style={linkStyle}>Templates</a>
-          <a href="/projects" style={linkStyle}>Projects</a>
-          <a href="/runs/latest" style={linkStyle}>Latest Run</a>
-          <a href="/generated" style={linkStyle}>Generated</a>
-        </div>
-      </div>
+      {err && <p style={{ color: "crimson" }}>{err}</p>}
 
-      {err && (
-        <div style={errorStyle}>
-          Error: {err}
-        </div>
-      )}
-
-      <section style={{ marginTop: 22 }}>
-        <h2 style={{ fontSize: "1.2rem" }}>Run Prompt</h2>
+      <section>
+        <h2>Prompt</h2>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           rows={8}
-          style={{
-            width: "100%",
-            padding: 12,
-            borderRadius: 10,
-            border: "1px solid #ddd",
-            fontSize: 14,
-            lineHeight: 1.4,
-          }}
+          style={{ width: "100%", padding: 10 }}
         />
-
-        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button
-            onClick={createRun}
-            disabled={busy === "create"}
-            style={{
-              ...buttonStyle,
-              background: busy === "create" ? "#ddd" : "#000",
-              color: busy === "create" ? "#333" : "#fff",
-              cursor: busy === "create" ? "not-allowed" : "pointer",
-            }}
-          >
-            {busy === "create" ? "Creating…" : "Create Run"}
-          </button>
-
-          <a href="/generated" style={{ ...buttonStyle, display: "inline-block", textAlign: "center", textDecoration: "none" }}>
-            View Generated
-          </a>
-
-          <button onClick={loadProjectAndRuns} style={buttonStyle}>
-            Refresh
-          </button>
-        </div>
+        <button onClick={createRun} disabled={busy === "create"}>
+          {busy === "create" ? "Creating…" : "Create Run"}
+        </button>
       </section>
 
-      <section style={{ marginTop: 24 }}>
-        <h2 style={{ fontSize: "1.2rem" }}>Runs</h2>
+      <section style={{ marginTop: 30 }}>
+        <h2>Runs</h2>
 
         {loading && <p>Loading…</p>}
 
-        {!loading && runs.length === 0 && (
-          <div style={cardStyle}>
-            No runs yet. Click <b>Create Run</b>.
+        {!loading && runs.map((r) => (
+          <div key={r.id} style={{ border: "1px solid #ddd", padding: 12, marginBottom: 12 }}>
+            <b>{r.status.toUpperCase()}</b>
+            <div>Run ID: <code>{r.id}</code></div>
+
+            <div style={{ marginTop: 8, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button
+                onClick={() => executeRun(r.id)}
+                disabled={busy === r.id}
+              >
+                {busy === r.id ? "Running…" : "Execute"}
+              </button>
+
+              <a
+                href={`/generated/${r.id}`}
+                style={{
+                  padding: "6px 12px",
+                  border: "1px solid #000",
+                  textDecoration: "none",
+                  borderRadius: 6,
+                }}
+              >
+                View Generated for this Run
+              </a>
+            </div>
+
+            <details style={{ marginTop: 10 }}>
+              <summary>View prompt / output</summary>
+              <pre>{r.prompt}</pre>
+              {r.output && <pre>{r.output}</pre>}
+            </details>
           </div>
-        )}
-
-        {!loading && runs.length > 0 && (
-          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-            {runs.map((r) => (
-              <div key={r.id} style={cardStyle}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                  <div>
-                    <div style={{ fontWeight: 800 }}>
-                      {r.status.toUpperCase()}{" "}
-                      <span style={{ fontWeight: 400, color: "#666", fontSize: 13 }}>
-                        ({new Date(r.createdAt).toLocaleString()})
-                      </span>
-                    </div>
-                    <div style={{ marginTop: 6, fontSize: 13, color: "#666" }}>
-                      Run ID: <code>{r.id}</code>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => executeRun(r.id)}
-                    disabled={busy === r.id}
-                    style={{
-                      ...buttonStyle,
-                      background: busy === r.id ? "#ddd" : "#000",
-                      color: busy === r.id ? "#333" : "#fff",
-                      cursor: busy === r.id ? "not-allowed" : "pointer",
-                      minWidth: 130,
-                      height: 40,
-                      alignSelf: "center",
-                    }}
-                  >
-                    {busy === r.id ? "Running…" : "Execute"}
-                  </button>
-                </div>
-
-                <details style={{ marginTop: 10 }}>
-                  <summary style={{ cursor: "pointer" }}>View prompt/output</summary>
-                  <div style={{ marginTop: 8, fontSize: 13, color: "#444", fontWeight: 700 }}>Prompt</div>
-                  <pre style={preStyle}>{r.prompt}</pre>
-                  {r.output && (
-                    <>
-                      <div style={{ marginTop: 8, fontSize: 13, color: "#444", fontWeight: 700 }}>Output</div>
-                      <pre style={preStyle}>{r.output}</pre>
-                    </>
-                  )}
-                </details>
-              </div>
-            ))}
-          </div>
-        )}
+        ))}
       </section>
     </main>
   );
 }
-
-const linkStyle: React.CSSProperties = {
-  color: "#111",
-  textDecoration: "underline",
-  fontSize: 14,
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: "0.6rem 1rem",
-  borderRadius: 10,
-  border: "1px solid #ddd",
-  background: "#fff",
-  cursor: "pointer",
-  fontSize: 14,
-};
-
-const cardStyle: React.CSSProperties = {
-  border: "1px solid #ddd",
-  borderRadius: 12,
-  padding: "1rem",
-  background: "#fff",
-};
-
-const errorStyle: React.CSSProperties = {
-  marginTop: 18,
-  padding: 12,
-  border: "1px solid #ffb4b4",
-  background: "#ffecec",
-  borderRadius: 10,
-  color: "#6b0000",
-  fontSize: 14,
-};
-
-const preStyle: React.CSSProperties = {
-  marginTop: 8,
-  padding: 12,
-  background: "#f7f7f7",
-  borderRadius: 10,
-  whiteSpace: "pre-wrap",
-  fontSize: 13,
-  lineHeight: 1.4,
-};
