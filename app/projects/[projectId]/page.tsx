@@ -22,22 +22,16 @@ export default function ProjectDetailPage() {
   );
 
   useEffect(() => {
-    // Load project info saved from Templates page (localStorage)
     try {
       const raw = localStorage.getItem(`project:${projectId}`);
       if (raw) {
         const p = JSON.parse(raw) as LocalProject;
         setProject(p);
-
-        // Prefill prompt with seedPrompt if available
         if (p?.seedPrompt) setPrompt(p.seedPrompt);
         return;
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
 
-    // Fallback if nothing saved
     setProject({ id: projectId, name: `Project ${projectId.slice(0, 6)}` });
   }, [projectId]);
 
@@ -80,7 +74,7 @@ export default function ProjectDetailPage() {
         />
 
         <div style={{ marginTop: 10, color: "#666", fontSize: 13 }}>
-          Next step: we’ll wire the real backend run creation. For now, this is your project workspace.
+          Next step: wire the real backend run creation. For now, this is your project workspace.
         </div>
       </section>
     </main>
