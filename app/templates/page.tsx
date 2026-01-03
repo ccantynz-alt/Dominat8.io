@@ -68,8 +68,6 @@ export default function TemplatesPage() {
         // ignore if storage blocked
       }
 
-      // If you DO have the real orchestrator later, you can swap this to call it.
-      // For now, we redirect immediately.
       router.push(`/projects/${projectId}`);
     } finally {
       setBusyId(null);
@@ -81,9 +79,7 @@ export default function TemplatesPage() {
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
         <div>
           <h1 style={{ fontSize: "2.5rem", margin: 0 }}>Templates</h1>
-          <p style={{ marginTop: 10, color: "#555" }}>
-            Choose a template to start a new project.
-          </p>
+          <p style={{ marginTop: 10, color: "#555" }}>Choose a template to start a new project.</p>
         </div>
 
         <div style={{ display: "flex", gap: 12 }}>
