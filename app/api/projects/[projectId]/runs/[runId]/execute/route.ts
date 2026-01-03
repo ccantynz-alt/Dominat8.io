@@ -28,29 +28,33 @@ export async function POST(
   run.status = "running";
   await saveRun(run);
 
-  // generate nicer HTML based on prompt
+  // generate nice HTML based on prompt
   const html = buildHtml(run.prompt, projectId, runId);
 
-  // save generated HTML for /generated
-  // Save latest
-await kv.set("generated:latest", {
-  projectId,
-  runId,
-  html,
-  createdAt: new Date().toISOString(),
-});
+  // ✅ Save LATEST
+  await kv.set("generated:latest", {
+    projectId,
+    runId,
+    html,
+    createdAt: new Date().toISOString(),
+  });
 
-// Save per-run (so we can view any run later)
-await kv.set(`generated:run:${runId}`, {
-  projectId,
-  runId,
-  html,
-  createdAt: new Date().toISOString(),
-});
+  // ✅ Save PER-RUN
+  await kv.set(`generated:run:${runId}`, {
+    projectId,
+    runId,
+    html,
+    createdAt: new Date().toISOString(),
+  });
 
   // mark complete
   run.status = "complete";
-  run.output = `Saved generated website HTML to KV key: generated:latest\nProject: ${projectId}\nRun: ${runId}`;
+  run.output =
+    `Saved generated website HTML to KV\n` +
+    `latest: generated:latest\n` +
+    `per-run: generated:run:${runId}\n` +
+    `Project: ${projectId}\n` +
+    `Run: ${runId}`;
   run.completedAt = new Date().toISOString();
 
   await saveRun(run);
@@ -60,10 +64,8 @@ await kv.set(`generated:run:${runId}`, {
 
 function buildHtml(prompt: string, projectId: string, runId: string) {
   const p = prompt.toLowerCase();
-
   if (p.includes("business")) return businessHtml(prompt, projectId, runId);
   if (p.includes("landing")) return landingHtml(prompt, projectId, runId);
-
   return defaultHtml(prompt, projectId, runId);
 }
 
