@@ -30,7 +30,6 @@ export default function LatestRunPage() {
     setErr(null);
 
     try {
-      // 1) Load projects
       const projRes = await fetch("/api/projects", { cache: "no-store" });
       if (!projRes.ok) throw new Error(`Failed to load projects (HTTP ${projRes.status})`);
       const projData = await projRes.json();
@@ -43,12 +42,10 @@ export default function LatestRunPage() {
         return;
       }
 
-      // newest project first
       projects.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
       const latestProject = projects[0];
       setProject(latestProject);
 
-      // 2) Load runs for that project
       const runsRes = await fetch(`/api/projects/${latestProject.id}/runs`, { cache: "no-store" });
       if (!runsRes.ok) throw new Error(`Failed to load runs (HTTP ${runsRes.status})`);
       const runsData = await runsRes.json();
@@ -60,7 +57,6 @@ export default function LatestRunPage() {
         return;
       }
 
-      // newest run first
       runs.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
       setRun(runs[0]);
 
@@ -98,11 +94,7 @@ export default function LatestRunPage() {
 
       {loading && <p style={{ marginTop: 18 }}>Loading…</p>}
 
-      {err && (
-        <div style={errorStyle}>
-          Error: {err}
-        </div>
-      )}
+      {err && <div style={errorStyle}>Error: {err}</div>}
 
       {!loading && !err && !project && (
         <div style={cardStyle}>
@@ -136,14 +128,6 @@ export default function LatestRunPage() {
             <div style={{ marginTop: 6, fontSize: 13 }}>
               Status: <b>{run.status}</b>
             </div>
-            <div style={{ marginTop: 6, fontSize: 13, color: "#666" }}>
-              Created: {new Date(run.createdAt).toLocaleString()}
-            </div>
-            {run.completedAt && (
-              <div style={{ marginTop: 6, fontSize: 13, color: "#666" }}>
-                Completed: {new Date(run.completedAt).toLocaleString()}
-              </div>
-            )}
 
             <div style={{ marginTop: 14, fontWeight: 700 }}>Prompt</div>
             <pre style={preStyle}>{run.prompt}</pre>
