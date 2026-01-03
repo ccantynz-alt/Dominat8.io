@@ -10,6 +10,7 @@ export type Run = {
   createdAt: string;
   completedAt?: string;
   output?: string;
+  error?: string;
 };
 
 const runIndexKey = (projectId: string) => `runs:index:${projectId}`;
@@ -78,4 +79,25 @@ export async function listRuns(projectId: string): Promise<Run[] | null> {
   runs.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 
   return runs;
+}
+
+export async function getRun(projectId: string, runId: string): Promise<Run | null> {
+  if (!hasKV()) return null;
+
+  const raw = await kv.get(runKey(runId));
+  const run = toRun(raw);
+
+  if (!run) return null;
+  if (run.projectId !== projectId) return null;
+
+  return run;
+}
+
+export async function saveRun(run: Run): Promise<Run | null> {
+  if (!hasKV()) return null;
+
+  await kv.set(runKey(run.id), run);
+  await kv.sadd(runIndexKey(run.projectId), run.id);
+
+  return run;
 }
