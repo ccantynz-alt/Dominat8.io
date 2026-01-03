@@ -34,67 +34,40 @@ const TEMPLATES: Template[] = [
   },
 ];
 
-function makeProjectId() {
-  return "proj_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
-}
-
 export default function TemplatesPage() {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   async function useTemplate(t: Template) {
-    setError(null);
-
     try {
+      setErr(null);
       setBusyId(t.id);
 
       const projectName = window.prompt("Name your new project:", `${t.name} Project`) || "";
       if (!projectName.trim()) return;
 
-      const projectId = makeProjectId();
+      // ✅ Create project via API (KV)
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: projectName.trim(),
+          templateId: t.id,
+          templateName: t.name,
+          seedPrompt: t.seedPrompt,
+        }),
+      });
 
-      // Save locally FIRST (fallback)
-      try {
-        localStorage.setItem(
-          `project:${projectId}`,
-          JSON.stringify({
-            id: projectId,
-            name: projectName.trim(),
-            templateId: t.id,
-            templateName: t.name,
-            seedPrompt: t.seedPrompt,
-            createdAt: new Date().toISOString(),
-          })
-        );
-      } catch {
-        // ignore if storage blocked
-      }
+      const json = await res.json();
+      if (!json?.ok) throw new Error(json?.error || "Failed to create project");
 
-      // Then try to save on the server
-      try {
-        const res = await fetch("/api/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: projectId,
-            name: projectName.trim(),
-            templateId: t.id,
-            templateName: t.name,
-            seedPrompt: t.seedPrompt,
-          }),
-        });
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => null);
-          throw new Error(data?.error || `Failed to create project (HTTP ${res.status})`);
-        }
-      } catch (e: any) {
-        // Keep going even if server fails — local fallback still works
-        setError(`Server save failed (local save still works): ${e?.message || "Unknown error"}`);
-      }
+      const projectId = json?.project?.id;
+      if (!projectId) throw new Error("Missing projectId from API response");
 
       router.push(`/projects/${projectId}`);
+    } catch (e: any) {
+      setErr(e?.message || "Failed to create project");
     } finally {
       setBusyId(null);
     }
@@ -106,36 +79,22 @@ export default function TemplatesPage() {
         <div>
           <h1 style={{ fontSize: "2.5rem", margin: 0 }}>Templates</h1>
           <p style={{ marginTop: 10, color: "#555" }}>Choose a template to start a new project.</p>
-
-          {error && (
-            <div
-              style={{
-                marginTop: 12,
-                padding: 12,
-                border: "1px solid #f2c200",
-                background: "#fff7d6",
-                borderRadius: 10,
-                color: "#3a2a00",
-                fontSize: 14,
-              }}
-            >
-              {error}
-            </div>
-          )}
         </div>
 
         <div style={{ display: "flex", gap: 12 }}>
-          <a href="/" style={linkStyle}>
-            Home
-          </a>
-          <a href="/projects" style={linkStyle}>
-            Projects
-          </a>
-          <a href="/dashboard" style={linkStyle}>
-            Dashboard
-          </a>
+          <a href="/" style={linkStyle}>Home</a>
+          <a href="/projects" style={linkStyle}>Projects</a>
+          <a href="/dashboard" style={linkStyle}>Dashboard</a>
+          <a href="/runs/latest" style={linkStyle}>Latest Run</a>
+          <a href="/generated" style={linkStyle}>Generated</a>
         </div>
       </div>
+
+      {err && (
+        <div style={errorStyle}>
+          Error: {err}
+        </div>
+      )}
 
       <div
         style={{
@@ -204,4 +163,14 @@ const preStyle: React.CSSProperties = {
   whiteSpace: "pre-wrap",
   fontSize: 13,
   lineHeight: 1.4,
+};
+
+const errorStyle: React.CSSProperties = {
+  marginTop: 18,
+  padding: 12,
+  border: "1px solid #ffb4b4",
+  background: "#ffecec",
+  borderRadius: 10,
+  color: "#6b0000",
+  fontSize: 14,
 };
