@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 type Project = {
   id: string;
   name: string;
-  createdAt?: string;
 };
 
 type Run = {
@@ -21,45 +20,41 @@ type Run = {
 export default function LatestRunPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-
-  const [project, setProject] = useState<Project | null>(null);
   const [run, setRun] = useState<Run | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
 
-  async function loadLatest() {
+  async function loadLatestRun() {
     setLoading(true);
     setErr(null);
 
     try {
+      // 1) Load all projects
       const projRes = await fetch("/api/projects", { cache: "no-store" });
-      if (!projRes.ok) throw new Error(`Failed to load projects (HTTP ${projRes.status})`);
+      if (!projRes.ok) throw new Error("Failed to load projects");
       const projData = await projRes.json();
+      const projects: Project[] = projData.projects || [];
 
-      const projects: Project[] = Array.isArray(projData?.projects) ? projData.projects : [];
-      if (!projects.length) {
-        setProject(null);
-        setRun(null);
-        setLoading(false);
-        return;
+      let newestRun: Run | null = null;
+      let newestProject: Project | null = null;
+
+      // 2) For each project, load runs
+      for (const p of projects) {
+        const runsRes = await fetch(`/api/projects/${p.id}/runs`, { cache: "no-store" });
+        if (!runsRes.ok) continue;
+
+        const runsData = await runsRes.json();
+        const runs: Run[] = runsData.runs || [];
+
+        for (const r of runs) {
+          if (!newestRun || r.createdAt > newestRun.createdAt) {
+            newestRun = r;
+            newestProject = p;
+          }
+        }
       }
 
-      projects.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-      const latestProject = projects[0];
-      setProject(latestProject);
-
-      const runsRes = await fetch(`/api/projects/${latestProject.id}/runs`, { cache: "no-store" });
-      if (!runsRes.ok) throw new Error(`Failed to load runs (HTTP ${runsRes.status})`);
-      const runsData = await runsRes.json();
-
-      const runs: Run[] = Array.isArray(runsData?.runs) ? runsData.runs : [];
-      if (!runs.length) {
-        setRun(null);
-        setLoading(false);
-        return;
-      }
-
-      runs.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-      setRun(runs[0]);
-
+      setRun(newestRun);
+      setProject(newestProject);
       setLoading(false);
     } catch (e: any) {
       setErr(e?.message || "Failed to load latest run");
@@ -68,72 +63,52 @@ export default function LatestRunPage() {
   }
 
   useEffect(() => {
-    loadLatest();
+    loadLatestRun();
   }, []);
 
   return (
     <main style={{ padding: "3rem", fontFamily: "sans-serif", maxWidth: 980, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
-        <div>
-          <h1 style={{ fontSize: "2.4rem", margin: 0 }}>Latest Run Output</h1>
-          <p style={{ marginTop: 10, color: "#555" }}>
-            Shows the newest run from the newest project (from KV).
-          </p>
-        </div>
+      <h1 style={{ fontSize: "2.4rem" }}>Latest Run Output</h1>
+      <p style={{ color: "#555" }}>
+        Shows the most recent run across all projects.
+      </p>
 
-        <div style={{ display: "flex", gap: 12 }}>
-          <a href="/templates" style={linkStyle}>Templates</a>
-          <a href="/projects" style={linkStyle}>Projects</a>
-          <a href="/dashboard" style={linkStyle}>Dashboard</a>
-        </div>
-      </div>
+      <button onClick={loadLatestRun} style={buttonStyle}>
+        Refresh
+      </button>
 
-      <div style={{ marginTop: 16 }}>
-        <button onClick={loadLatest} style={buttonStyle}>Refresh</button>
-      </div>
-
-      {loading && <p style={{ marginTop: 18 }}>Loading…</p>}
+      {loading && <p style={{ marginTop: 20 }}>Loading…</p>}
 
       {err && <div style={errorStyle}>Error: {err}</div>}
 
-      {!loading && !err && !project && (
-        <div style={cardStyle}>
-          No projects found yet. Go to <a href="/templates">Templates</a> and create one.
-        </div>
+      {!loading && !err && !run && (
+        <div style={cardStyle}>No runs found yet.</div>
       )}
 
-      {!loading && !err && project && !run && (
-        <div style={cardStyle}>
-          <div style={{ fontWeight: 700 }}>Project: {project.name}</div>
-          <div style={{ marginTop: 8, color: "#666", fontSize: 13 }}>
-            No runs found for this project yet.
-          </div>
-        </div>
-      )}
-
-      {!loading && !err && project && run && (
-        <div style={{ marginTop: 18 }}>
+      {!loading && !err && run && project && (
+        <div style={{ marginTop: 20 }}>
           <div style={cardStyle}>
-            <div style={{ fontWeight: 800, fontSize: 16 }}>Project: {project.name}</div>
-            <div style={{ marginTop: 8, fontSize: 13, color: "#666" }}>
-              Project ID: <code>{project.id}</code>
-            </div>
+            <b>Project:</b> {project.name}
+            <br />
+            <b>Project ID:</b> <code>{project.id}</code>
           </div>
 
-          <div style={{ marginTop: 14, ...cardStyle }}>
-            <div style={{ fontWeight: 800, fontSize: 16 }}>Run</div>
-            <div style={{ marginTop: 8, fontSize: 13, color: "#666" }}>
-              Run ID: <code>{run.id}</code>
-            </div>
-            <div style={{ marginTop: 6, fontSize: 13 }}>
-              Status: <b>{run.status}</b>
+          <div style={{ marginTop: 12, ...cardStyle }}>
+            <b>Status:</b> {run.status}
+            <br />
+            <b>Run ID:</b> <code>{run.id}</code>
+            <br />
+            <b>Created:</b> {new Date(run.createdAt).toLocaleString()}
+
+            <div style={{ marginTop: 12 }}>
+              <b>Prompt</b>
+              <pre style={preStyle}>{run.prompt}</pre>
             </div>
 
-            <div style={{ marginTop: 14, fontWeight: 700 }}>Prompt</div>
-            <pre style={preStyle}>{run.prompt}</pre>
-
-            <div style={{ marginTop: 14, fontWeight: 700 }}>Output</div>
-            <pre style={preStyle}>{run.output || "(No output yet)"}</pre>
+            <div style={{ marginTop: 12 }}>
+              <b>Output</b>
+              <pre style={preStyle}>{run.output}</pre>
+            </div>
           </div>
         </div>
       )}
@@ -141,36 +116,30 @@ export default function LatestRunPage() {
   );
 }
 
-const linkStyle: React.CSSProperties = {
-  color: "#111",
-  textDecoration: "underline",
-  fontSize: 14,
-};
-
 const buttonStyle: React.CSSProperties = {
+  marginTop: 12,
   padding: "0.6rem 1rem",
-  borderRadius: 10,
+  borderRadius: 8,
   border: "1px solid #ddd",
   background: "#fff",
   cursor: "pointer",
-  fontSize: 14,
 };
 
 const cardStyle: React.CSSProperties = {
+  marginTop: 12,
   border: "1px solid #ddd",
-  borderRadius: 12,
+  borderRadius: 10,
   padding: "1rem",
   background: "#fff",
 };
 
 const errorStyle: React.CSSProperties = {
-  marginTop: 18,
+  marginTop: 12,
   padding: 12,
   border: "1px solid #ffb4b4",
   background: "#ffecec",
   borderRadius: 10,
   color: "#6b0000",
-  fontSize: 14,
 };
 
 const preStyle: React.CSSProperties = {
@@ -180,6 +149,4 @@ const preStyle: React.CSSProperties = {
   borderRadius: 10,
   whiteSpace: "pre-wrap",
   fontSize: 13,
-  lineHeight: 1.4,
 };
-
