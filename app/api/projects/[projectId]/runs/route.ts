@@ -12,16 +12,14 @@ type Run = {
 };
 
 function makeRunId() {
-  // Your UI already uses ids like run_...
   return `run_${crypto.randomUUID().replace(/-/g, "")}`;
 }
 
-function safeString(v: unknown) {
+function safeString(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
 async function getProject(projectId: string) {
-  // Common project key format used in your app
   const project = await kv.get(`project:${projectId}`);
   return project;
 }
@@ -42,7 +40,6 @@ export async function GET(
 ) {
   try {
     const projectId = params.projectId;
-
     const runs = await getProjectRuns(projectId);
     return NextResponse.json({ ok: true, runs });
   } catch (e: any) {
@@ -60,7 +57,6 @@ export async function POST(
   try {
     const projectId = params.projectId;
 
-    // Ensure project exists (so we don't create orphan runs)
     const project = await getProject(projectId);
     if (!project) {
       return NextResponse.json(
@@ -70,7 +66,9 @@ export async function POST(
     }
 
     const body = await req.json().catch(() => ({}));
-    const prompt = safeString(body?.prompt) || "Build a modern landing page. Clean minimal styling.";
+    const prompt =
+      safeString(body?.prompt) ||
+      "Build a modern landing page. Clean minimal styling.";
 
     const run: Run = {
       id: makeRunId(),
@@ -80,13 +78,14 @@ export async function POST(
       createdAt: new Date().toISOString(),
     };
 
-    // Save run by id (global)
     await kv.set(`run:${run.id}`, run);
 
-    // Add run to project run list
     const runs = await getProjectRuns(projectId);
     const updated = [run, ...runs];
     await setProjectRuns(projectId, updated);
+
+    // ✅ Track latest run pointer (global)
+    await kv.set("runs:latest", run.id);
 
     return NextResponse.json({ ok: true, run });
   } catch (e: any) {
