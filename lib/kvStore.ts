@@ -15,26 +15,45 @@ function hasKV() {
   return !!process.env.KV_REST_API_URL && !!process.env.KV_REST_API_TOKEN;
 }
 
+function toProject(raw: unknown): Project | null {
+  if (!raw) return null;
+
+  // If KV returns an object already
+  if (typeof raw === "object") {
+    const p = raw as any;
+    if (p?.id && p?.name) return p as Project;
+    return null;
+  }
+
+  // If KV returns a JSON string
+  if (typeof raw === "string") {
+    try {
+      const p = JSON.parse(raw);
+      if (p?.id && p?.name) return p as Project;
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 export async function kvListProjects(): Promise<Project[] | null> {
   if (!hasKV()) return null;
 
-  // IMPORTANT: generic must be an array type
   const ids = (await kv.smembers<string[]>(INDEX_KEY)) || [];
   if (!ids.length) return [];
 
   const keys = ids.map((id) => `project:${id}`);
 
-  // mget returns array aligned with keys (some can be null)
-  const values = await kv.mget<(string | null)[]>(...keys);
+  // Values might be strings OR objects depending on KV client behavior
+  const values = await kv.mget<any[]>(...keys);
 
   const projects: Project[] = [];
-  for (const raw of values) {
-    if (!raw) continue;
-    try {
-      projects.push(JSON.parse(raw) as Project);
-    } catch {
-      // ignore bad entries
-    }
+  for (const v of values) {
+    const p = toProject(v);
+    if (p) projects.push(p);
   }
 
   projects.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
@@ -45,7 +64,7 @@ export async function kvListProjects(): Promise<Project[] | null> {
 export async function kvSaveProject(p: Project): Promise<Project | null> {
   if (!hasKV()) return null;
 
-  await kv.set(`project:${p.id}`, JSON.stringify(p));
+  await kv.set(`project:${p.id}`, p);
   await kv.sadd(INDEX_KEY, p.id);
 
   return p;
