@@ -1,109 +1,182 @@
-import Link from "next/link";
-import { storeGet } from "../lib/store";
+"use client";
 
-export const runtime = "nodejs";
+import { useEffect, useState } from "react";
 
-type Applied = {
-  ok: boolean;
-  appliedAt: string;
-  projectId: string;
-  runId: string;
-  prompt: string;
-  summary: string;
-  files: { path: string; content: string }[];
-  previewHtml: string;
+type GeneratedFile = {
+  path: string;
+  content?: string;
+  updatedAt?: string;
 };
 
-const GENERATED_LATEST_KEY = "generated:latest";
+export default function GeneratedPage() {
+  const [files, setFiles] = useState<GeneratedFile[]>([]);
+  const [selected, setSelected] = useState<GeneratedFile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState<string | null>(null);
 
-export default async function GeneratedPage() {
-  const applied = await storeGet<Applied>(GENERATED_LATEST_KEY);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        setMsg(null);
+
+        // If you already have an endpoint for generated files, it can plug in here later.
+        // For now, we try a best-effort API call, but keep the page useful even if it fails.
+        const res = await fetch("/api/generated", { cache: "no-store" });
+
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data?.files) ? data.files : Array.isArray(data) ? data : [];
+          if (!cancelled) {
+            setFiles(list);
+            setSelected(list[0] || null);
+          }
+        } else {
+          // Fallback: show example files so the UI looks finished
+          const demo: GeneratedFile[] = [
+            {
+              path: "app/generated/page.tsx",
+              updatedAt: new Date().toISOString(),
+              content:
+                "// Demo file\n// Once your AI runs generate real files, they will appear here.\n",
+            },
+            {
+              path: "README.generated.md",
+              updatedAt: new Date().toISOString(),
+              content:
+                "# Generated Output\n\nThis page shows generated files.\n\nWhen your run pipeline is wired, you can load real output from KV or a database.\n",
+            },
+          ];
+          if (!cancelled) {
+            setFiles(demo);
+            setSelected(demo[0]);
+            setMsg("Generated API not available yet — showing demo output.");
+          }
+        }
+      } catch (e: any) {
+        const demo: GeneratedFile[] = [
+          {
+            path: "README.generated.md",
+            updatedAt: new Date().toISOString(),
+            content:
+              "# Generated Output\n\nThis is demo output.\n\nWire your /api/generated endpoint to display real files later.\n",
+          },
+        ];
+        if (!cancelled) {
+          setFiles(demo);
+          setSelected(demo[0]);
+          setMsg(e?.message || "Could not load generated files — showing demo output.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50">
-      <header className="border-b border-white/10 bg-zinc-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-wide">Generated</div>
-            <div className="text-xs text-zinc-400">Preview + output files</div>
-          </div>
-
-          <nav className="flex items-center gap-2">
-            <Link
-              href="/projects"
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
-            >
-              Projects
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
-            >
-              Dashboard
-            </Link>
-          </nav>
+    <main style={{ padding: "3rem", fontFamily: "sans-serif", maxWidth: 1200, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
+        <div>
+          <h1 style={{ fontSize: "2.5rem", margin: 0 }}>Generated</h1>
+          <p style={{ marginTop: 10, color: "#555" }}>
+            View the files produced by your AI runs. (This page will show real output once the backend is wired.)
+          </p>
         </div>
-      </header>
 
-      <main className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-        {!applied ? (
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h1 className="text-2xl font-semibold">Nothing applied yet</h1>
-            <p className="mt-2 text-sm text-zinc-400">
-              Go to a project run and click <span className="text-zinc-200">Apply</span>.
-            </p>
-          </section>
-        ) : (
-          <>
-            <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h1 className="text-2xl font-semibold tracking-tight">Live Preview</h1>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Applied from <span className="text-zinc-200">{applied.runId}</span> •{" "}
-                    {new Date(applied.appliedAt).toLocaleString()}
-                  </p>
-                </div>
+        <div style={{ display: "flex", gap: 12 }}>
+          <a href="/" style={linkStyle}>Home</a>
+          <a href="/templates" style={linkStyle}>Templates</a>
+          <a href="/projects" style={linkStyle}>Projects</a>
+          <a href="/dashboard" style={linkStyle}>Dashboard</a>
+        </div>
+      </div>
 
-                <div className="text-xs text-zinc-500">
-                  Project: <span className="text-zinc-300">{applied.projectId}</span>
-                </div>
-              </div>
+      {loading && <div style={panelStyle}>Loading…</div>}
 
-              <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-3">
-                <iframe
-                  title="Generated Preview"
-                  className="h-[520px] w-full rounded-xl bg-white"
-                  srcDoc={applied.previewHtml}
-                  sandbox="allow-scripts allow-forms allow-popups allow-modals"
-                />
-              </div>
+      {msg && (
+        <div style={{ ...panelStyle, borderColor: "#f3e2a6", background: "#fffdf2" }}>
+          {msg}
+        </div>
+      )}
 
-              {applied.summary ? (
-                <div className="mt-4 text-sm text-zinc-300">
-                  <span className="text-zinc-200 font-medium">Summary:</span> {applied.summary}
-                </div>
-              ) : null}
-            </section>
+      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 14, marginTop: 18 }}>
+        <aside style={panelStyle}>
+          <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Files</h2>
 
-            <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium">Files</h2>
-                <span className="text-sm text-zinc-400">{applied.files.length} total</span>
-              </div>
-
-              <div className="mt-4 grid gap-3">
-                {applied.files.map((f) => (
-                  <div key={f.path} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                    <div className="text-xs text-zinc-400">{f.path}</div>
-                    <pre className="mt-3 overflow-x-auto text-xs text-zinc-200">{f.content}</pre>
+          {files.length === 0 ? (
+            <div style={{ color: "#666" }}>No generated files yet.</div>
+          ) : (
+            <div style={{ display: "grid", gap: 8 }}>
+              {files.map((f) => (
+                <button
+                  key={f.path}
+                  onClick={() => setSelected(f)}
+                  style={{
+                    textAlign: "left",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px solid #eee",
+                    background: selected?.path === f.path ? "#111" : "#fff",
+                    color: selected?.path === f.path ? "#fff" : "#111",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ fontWeight: 700 }}>{f.path}</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>
+                    {f.updatedAt ? new Date(f.updatedAt).toLocaleString() : ""}
                   </div>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
-      </main>
-    </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </aside>
+
+        <section style={panelStyle}>
+          <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Preview</h2>
+
+          {!selected ? (
+            <div style={{ color: "#666" }}>Select a file to preview.</div>
+          ) : (
+            <pre
+              style={{
+                marginTop: 10,
+                padding: 14,
+                background: "#f7f7f7",
+                borderRadius: 12,
+                whiteSpace: "pre-wrap",
+                lineHeight: 1.4,
+                fontSize: 13,
+              }}
+            >
+              {selected.content || "// No content"}
+            </pre>
+          )}
+
+          <div style={{ marginTop: 12, color: "#666", fontSize: 13 }}>
+            Next step: wire <code>/api/generated</code> to return your real generated files.
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
+
+const panelStyle: React.CSSProperties = {
+  padding: 16,
+  border: "1px solid #eee",
+  borderRadius: 12,
+  background: "#fff",
+};
+
+const linkStyle: React.CSSProperties = {
+  color: "#111",
+  textDecoration: "underline",
+  fontSize: 14,
+};
