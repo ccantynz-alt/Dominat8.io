@@ -1,40 +1,59 @@
-import Link from "next/link";
-
 export default function AdminHomePage() {
   return (
-    <main className="p-8 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-
-      <p className="text-muted-foreground">
-        System administration and internal tools.
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link
-          href="/admin/program-pages"
-          className="block rounded-lg border p-4 hover:bg-muted transition"
-        >
-          <h2 className="text-xl font-semibold">Programmatic SEO Pages</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Generate and manage KV-based SEO intent pages per project.
+    <main style={{ padding: "3rem", fontFamily: "sans-serif", maxWidth: 1000, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
+        <div>
+          <h1 style={{ fontSize: "2.5rem", margin: 0 }}>Admin</h1>
+          <p style={{ marginTop: 10, color: "#555" }}>
+            Manage templates and platform settings.
           </p>
-        </Link>
+        </div>
 
-        <Link
-          href="/admin/support"
-          className="block rounded-lg border p-4 hover:bg-muted transition"
-        >
-          <h2 className="text-xl font-semibold">Support Inbox</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            View and respond to customer support tickets.
-          </p>
-        </Link>
+        <div style={{ display: "flex", gap: 12 }}>
+          <a href="/" style={linkStyle}>Home</a>
+          <a href="/dashboard" style={linkStyle}>Dashboard</a>
+          <a href="/templates" style={linkStyle}>Templates</a>
+          <a href="/projects" style={linkStyle}>Projects</a>
+        </div>
       </div>
 
-      <div className="rounded-lg border p-4 text-sm text-muted-foreground">
-        Next up: real domain verification + SSL status via Vercel API/webhooks, plus
-        AI-assisted replies from your support agent.
+      <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14 }}>
+        <a href="/admin/templates" style={cardStyle}>
+          <h2 style={{ marginTop: 0 }}>Templates</h2>
+          <p style={{ color: "#555" }}>
+            Create and publish templates that users can use from <code>/templates</code>.
+          </p>
+          <div style={{ marginTop: 10, fontWeight: 700 }}>Go to Templates →</div>
+        </a>
+
+        <div style={cardStyle}>
+          <h2 style={{ marginTop: 0 }}>Status</h2>
+          <p style={{ color: "#555" }}>
+            If your backend endpoints aren’t wired yet, admin pages still load and you can add them next.
+          </p>
+          <ul style={{ color: "#555", lineHeight: 1.6, marginBottom: 0 }}>
+            <li>Templates UI: <code>/admin/templates</code></li>
+            <li>Public templates: <code>/templates</code></li>
+            <li>Projects: <code>/projects</code></li>
+          </ul>
+        </div>
       </div>
     </main>
   );
 }
+
+const linkStyle: React.CSSProperties = {
+  color: "#111",
+  textDecoration: "underline",
+  fontSize: 14,
+};
+
+const cardStyle: React.CSSProperties = {
+  display: "block",
+  padding: 16,
+  border: "1px solid #eee",
+  borderRadius: 12,
+  background: "#fff",
+  textDecoration: "none",
+  color: "#111",
+};
