@@ -37,7 +37,6 @@ export default function GeneratedRunPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId]);
 
   return (
@@ -51,8 +50,8 @@ export default function GeneratedRunPage() {
         </div>
 
         <div style={{ display: "flex", gap: 12 }}>
-          <a href="/runs/latest" style={linkStyle}>Latest Run</a>
           <a href="/generated" style={linkStyle}>Latest Generated</a>
+          <a href="/runs/latest" style={linkStyle}>Latest Run</a>
           <a href="/projects" style={linkStyle}>Projects</a>
         </div>
       </div>
