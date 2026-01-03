@@ -106,4 +106,128 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 10 }
+        <div style={{ display: "flex", gap: 10 }}>
+          <a href="/templates" style={linkStyle}>Templates</a>
+          <a href="/projects" style={linkStyle}>Projects</a>
+          <button
+            onClick={() => router.push("/dashboard")}
+            style={{ ...btnStyle, background: "#fff", color: "#111", border: "1px solid #111" }}
+          >
+            Dashboard
+          </button>
+        </div>
+      </div>
+
+      {loading && (
+        <div style={panelStyle}>Loading project…</div>
+      )}
+
+      {err && (
+        <div style={{ ...panelStyle, borderColor: "#f3c2c2", background: "#fff7f7", color: "#8a1f1f" }}>
+          {err}
+        </div>
+      )}
+
+      <section style={{ marginTop: 22 }}>
+        <h2 style={{ fontSize: "1.2rem" }}>Create a Run</h2>
+
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          rows={6}
+          style={{
+            width: "100%",
+            padding: 12,
+            borderRadius: 10,
+            border: "1px solid #ddd",
+            fontSize: 14,
+            lineHeight: 1.4,
+          }}
+        />
+
+        <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
+          <button
+            onClick={createRun}
+            disabled={running || !prompt.trim()}
+            style={{
+              ...btnStyle,
+              opacity: running || !prompt.trim() ? 0.6 : 1,
+              cursor: running || !prompt.trim() ? "not-allowed" : "pointer",
+            }}
+          >
+            {running ? "Creating…" : "Create Run"}
+          </button>
+
+          <button
+            onClick={() => setPrompt("")}
+            style={{ ...btnStyle, background: "#fff", color: "#111", border: "1px solid #ddd" }}
+          >
+            Clear
+          </button>
+        </div>
+
+        <div style={{ marginTop: 10, color: "#666", fontSize: 13 }}>
+          If the runs API isn’t ready yet, you’ll still have a working page — we’ll wire the backend next.
+        </div>
+      </section>
+
+      <section style={{ marginTop: 26 }}>
+        <h2 style={{ fontSize: "1.2rem" }}>Runs</h2>
+
+        {runs.length === 0 ? (
+          <div style={panelStyle}>No runs yet.</div>
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            {runs.map((r) => (
+              <div key={r.id} style={panelStyle}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>
+                      Run: <code>{r.id}</code>
+                    </div>
+                    <div style={{ color: "#666", fontSize: 13 }}>
+                      Status: <b>{r.status}</b>
+                      {r.createdAt ? ` • ${new Date(r.createdAt).toLocaleString()}` : ""}
+                    </div>
+                  </div>
+                </div>
+
+                {r.prompt && (
+                  <details style={{ marginTop: 8 }}>
+                    <summary style={{ cursor: "pointer" }}>View prompt</summary>
+                    <pre style={{ marginTop: 8, whiteSpace: "pre-wrap", background: "#f7f7f7", padding: 10, borderRadius: 8 }}>
+                      {r.prompt}
+                    </pre>
+                  </details>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
+
+const panelStyle: React.CSSProperties = {
+  marginTop: 14,
+  padding: 14,
+  border: "1px solid #eee",
+  borderRadius: 12,
+  background: "#fff",
+};
+
+const btnStyle: React.CSSProperties = {
+  padding: "10px 14px",
+  borderRadius: 10,
+  border: "1px solid #111",
+  background: "#111",
+  color: "#fff",
+  fontSize: 14,
+};
+
+const linkStyle: React.CSSProperties = {
+  color: "#111",
+  textDecoration: "underline",
+  fontSize: 14,
+};
