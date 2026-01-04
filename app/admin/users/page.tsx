@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { isAdminUserId } from "@/lib/admin";
+import { isAdminUserId } from "../../../lib/admin";
 
 type AdminUser = {
   id: string;
@@ -16,29 +16,11 @@ type AdminUser = {
 
 async function fetchUsers(): Promise<AdminUser[]> {
   try {
-    // Server Component fetch to our own API route
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ""}/api/admin/users?limit=50&offset=0`, {
-      cache: "no-store",
-    });
-
-    // If NEXT_PUBLIC_APP_URL isn't set, try relative fetch
-    if (!res.ok) {
-      const res2 = await fetch(`/api/admin/users?limit=50&offset=0`, { cache: "no-store" });
-      const data2 = await res2.json().catch(() => null);
-      return data2?.ok ? (data2.users as AdminUser[]) : [];
-    }
-
+    const res = await fetch(`/api/admin/users?limit=50&offset=0`, { cache: "no-store" });
     const data = await res.json().catch(() => null);
     return data?.ok ? (data.users as AdminUser[]) : [];
   } catch {
-    // Final fallback: relative fetch only
-    try {
-      const res = await fetch(`/api/admin/users?limit=50&offset=0`, { cache: "no-store" });
-      const data = await res.json().catch(() => null);
-      return data?.ok ? (data.users as AdminUser[]) : [];
-    } catch {
-      return [];
-    }
+    return [];
   }
 }
 
@@ -71,7 +53,7 @@ export default async function AdminUsersPage() {
         <div style={{ opacity: 0.85 }}>
           No users returned.
           <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>
-            If this is unexpected, make sure you are signed in as an admin and that <code>ADMIN_USER_IDS</code> is set in Vercel.
+            Make sure you are signed in as an admin and that <code>ADMIN_USER_IDS</code> is set in Vercel.
           </div>
         </div>
       ) : (
@@ -113,12 +95,6 @@ export default async function AdminUsersPage() {
           </table>
         </div>
       )}
-
-      <hr style={{ margin: "18px 0" }} />
-
-      <div style={{ fontSize: 12, opacity: 0.75 }}>
-        <b>Tip:</b> You can increase paging by changing <code>limit</code> in the URL query.
-      </div>
     </div>
   );
 }
