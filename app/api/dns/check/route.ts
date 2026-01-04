@@ -1,26 +1,25 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { runDnsCheck } from "@/app/lib/dnsCheck";
 
-const BodySchema = z.object({
-  domain: z.string().min(1),
-});
+/**
+ * TEMP STUB:
+ * This endpoint previously depended on missing internal libs and alias imports.
+ * We keep it compiling now. We will implement real DNS checking later.
+ */
+export async function GET() {
+  return NextResponse.json({
+    ok: false,
+    status: "not_implemented",
+    message: "DNS check is not implemented yet.",
+  });
+}
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json().catch(() => ({}));
-    const parsed = BodySchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ ok: false, error: "Invalid payload. Expected { domain }" }, { status: 400 });
-    }
-
-    const result = await runDnsCheck({ domain: parsed.data.domain });
-
-    return NextResponse.json({ ok: true, result });
-  } catch (e: any) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "DNS check failed" },
-      { status: 500 }
-    );
-  }
+export async function POST() {
+  return NextResponse.json(
+    {
+      ok: false,
+      status: "not_implemented",
+      message: "DNS check is not implemented yet.",
+    },
+    { status: 501 }
+  );
 }
