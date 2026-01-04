@@ -1,51 +1,25 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { getSeoPageBySlug, upsertSeoPages } from "../../../../../../../lib/seoPagesKV";
-import { generateOneSeoPage } from "../../../../../../../lib/seoAiOnePage";
-import { rateLimitOrThrow } from "../../../../../../../lib/rateLimitKV";
-import { getCurrentUserId } from "../../../../../../../lib/demoAuth";
+import { auth } from "@clerk/nextjs/server";
 
-const BodySchema = z.object({
-  intent: z.string().min(2).max(80).optional(),
-});
-
+/**
+ * TEMP STUB:
+ * Original depended on seoAiOnePage/openaiResponses alias chain.
+ */
 export async function POST(
-  req: Request,
+  _req: Request,
   { params }: { params: { projectId: string; slug: string } }
 ) {
-  const userId = getCurrentUserId();
+  const { userId } = auth();
+  if (!userId) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
-  await rateLimitOrThrow({
-    key: `rl:seo:regen:${userId}:${params.projectId}`,
-    limit: 10,
-    windowSec: 60,
-    message: "Too many regenerations. Try again in a minute.",
-  });
-
-  const body = await req.json().catch(() => ({}));
-  const parsed = BodySchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ ok: false, error: "Invalid body" }, { status: 400 });
-  }
-
-  const existing = await getSeoPageBySlug(params.projectId, params.slug);
-  if (!existing) {
-    return NextResponse.json({ ok: false, error: "Page not found" }, { status: 404 });
-  }
-
-  const intent = parsed.data.intent || "improve";
-
-  const regenerated = await generateOneSeoPage({
-    keyword: existing.keyword,
-    intent,
-    forceSlug: existing.slug,
-  });
-
-  const merged = await upsertSeoPages(params.projectId, [regenerated]);
-
-  return NextResponse.json({
-    ok: true,
-    slug: regenerated.slug,
-    total: merged.length,
-  });
+  return NextResponse.json(
+    {
+      ok: false,
+      status: "not_implemented",
+      projectId: params.projectId,
+      slug: params.slug,
+      message: "SEO page regenerate not implemented yet.",
+    },
+    { status: 501 }
+  );
 }
