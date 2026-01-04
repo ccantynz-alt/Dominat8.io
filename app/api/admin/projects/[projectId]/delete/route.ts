@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { auth } from "@clerk/nextjs/server";
-import { isAdminUserId } from "@/lib/admin";
+import { isAdminUserId } from "../../../../../lib/admin";
 
 export async function POST(
   _req: Request,
@@ -14,13 +14,13 @@ export async function POST(
   }
 
   const projectKey = `project:${params.projectId}`;
-
   const project = await kv.hgetall<any>(projectKey);
+
   if (!project) {
     return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
   }
 
-  // 1️⃣ Delete all runs
+  // Delete runs + generated HTML
   const runIds = await kv.lrange<string[]>(`project:${params.projectId}:runs`, 0, -1);
 
   for (const runId of runIds) {
@@ -28,12 +28,12 @@ export async function POST(
     await kv.del(`generated:run:${runId}`);
   }
 
-  // 2️⃣ Remove project lists
+  // Remove project lists + runs list
   await kv.del(`project:${params.projectId}:runs`);
   await kv.lrem(`projects:user:${project.userId}`, 0, params.projectId);
   await kv.lrem(`projects:all`, 0, params.projectId);
 
-  // 3️⃣ Delete project
+  // Delete project hash
   await kv.del(projectKey);
 
   return NextResponse.json({ ok: true });
