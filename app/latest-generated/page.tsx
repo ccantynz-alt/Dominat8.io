@@ -62,6 +62,22 @@ export default function LatestGeneratedPage() {
           Refresh
         </button>
 
+        <a
+          href="/api/generated/latest/download"
+          style={{
+            padding: "10px 12px",
+            borderRadius: 10,
+            border: "1px solid #111",
+            background: "#fff",
+            color: "#000",
+            textDecoration: "none",
+            fontWeight: 700,
+            display: "inline-block",
+          }}
+        >
+          Download HTML
+        </a>
+
         {runId ? (
           <Link
             href={`/generated/${runId}`}
@@ -107,11 +123,7 @@ export default function LatestGeneratedPage() {
         </div>
       ) : (
         <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, overflow: "hidden" }}>
-          <iframe
-            title="latest-generated"
-            srcDoc={html}
-            style={{ width: "100%", height: "75vh", border: 0 }}
-          />
+          <iframe title="latest-generated" srcDoc={html} style={{ width: "100%", height: "75vh", border: 0 }} />
         </div>
       )}
     </div>
