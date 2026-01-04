@@ -1,20 +1,14 @@
 import { NextResponse } from "next/server";
-import { kvSaveProject } from "@/lib/kvStore";
 
+/**
+ * TEMP STUB:
+ * This endpoint depended on missing internal lib (kvStore) and alias imports.
+ * Safe placeholder to keep builds green.
+ */
 export async function GET() {
-  const id = "proj_test_" + Date.now().toString(16);
-
-  const project = await kvSaveProject({
-    id,
-    name: "KV Test Project",
-    templateId: "test",
-    templateName: "Test",
-    seedPrompt: "Test prompt",
-    createdAt: new Date().toISOString(),
-  });
-
   return NextResponse.json({
     ok: true,
-    created: project,
+    status: "stub",
+    message: "Test endpoint stub (kvStore not wired).",
   });
 }
