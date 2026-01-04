@@ -1,27 +1,18 @@
 import { NextResponse } from "next/server";
-import { deleteTemplate, getTemplate, upsertTemplate } from "@/app/lib/templatesKV";
 
+/**
+ * TEMP STUB:
+ * This endpoint depended on missing internal lib (templatesKV) and alias imports.
+ * We'll implement real template lookup later.
+ */
 export async function GET(
-  _: Request,
+  _req: Request,
   { params }: { params: { templateId: string } }
 ) {
-  const t = await getTemplate(params.templateId);
-  return NextResponse.json({ ok: true, template: t });
-}
-
-export async function POST(
-  req: Request,
-  { params }: { params: { templateId: string } }
-) {
-  const body = await req.json().catch(() => ({}));
-  const tpl = await upsertTemplate({ ...body, id: params.templateId });
-  return NextResponse.json({ ok: true, template: tpl });
-}
-
-export async function DELETE(
-  _: Request,
-  { params }: { params: { templateId: string } }
-) {
-  const r = await deleteTemplate(params.templateId);
-  return NextResponse.json({ ok: true, ...r });
+  return NextResponse.json({
+    ok: true,
+    status: "stub",
+    templateId: params.templateId,
+    template: null,
+  });
 }
