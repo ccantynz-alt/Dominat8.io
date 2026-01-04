@@ -1,38 +1,32 @@
 import { NextResponse } from "next/server";
-import { getTicket, addMessage } from "@/app/lib/supportKV";
-import { randomUUID } from "crypto";
+import { auth } from "@clerk/nextjs/server";
 
-export async function GET(
-  _: Request,
-  { params }: { params: { ticketId: string } }
-) {
-  const ticket = await getTicket(params.ticketId);
-  if (!ticket) {
-    return NextResponse.json({ ok: false }, { status: 404 });
-  }
-  return NextResponse.json({ ok: true, ticket });
+/**
+ * TEMP STUB:
+ * This endpoint depended on missing internal lib (supportKV) and alias imports.
+ * We'll implement ticket storage later.
+ */
+export async function GET() {
+  const { userId } = auth();
+  if (!userId) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+
+  return NextResponse.json({
+    ok: true,
+    status: "stub",
+    tickets: [],
+  });
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { ticketId: string } }
-) {
-  const body = await req.json();
-  const { author, message } = body;
+export async function POST() {
+  const { userId } = auth();
+  if (!userId) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
-  if (!author || !message) {
-    return NextResponse.json({ ok: false }, { status: 400 });
-  }
-
-  const newStatus =
-    author === "user" ? "open" : "waiting_on_customer";
-
-  await addMessage(params.ticketId, {
-    id: randomUUID(),
-    author,
-    body: message,
-    createdAt: new Date().toISOString(),
-  }, newStatus);
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json(
+    {
+      ok: false,
+      status: "not_implemented",
+      message: "Support ticket creation not implemented yet.",
+    },
+    { status: 501 }
+  );
 }
