@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { stripe } from "../../../../lib/stripe";
-import { setUserSubscriptionActive } from "../../../../lib/billingKV";
+import { setUserSubscriptionActive } from "../../../lib/billingKV";
 
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
