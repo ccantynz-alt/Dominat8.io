@@ -1,32 +1,27 @@
 import { NextResponse } from "next/server";
-import { addDomainToProject, checkDomain } from "@/app/lib/vercelDomains";
-import { saveDomainStatus } from "@/app/lib/domainAttachKV";
+import { auth } from "@clerk/nextjs/server";
 
+/**
+ * TEMP STUB:
+ * This endpoint previously depended on missing internal libs and alias imports.
+ * We keep it compiling now. We will implement real domain attach later.
+ */
 export async function POST(
-  _: Request,
+  _req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  try {
-    const body = await _.json();
-    const { domain } = body;
-
-    if (!domain) {
-      return NextResponse.json(
-        { ok: false, error: "Missing domain" },
-        { status: 400 }
-      );
-    }
-
-    await addDomainToProject(domain);
-    const status = await checkDomain(domain);
-
-    await saveDomainStatus(params.projectId, domain, status);
-
-    return NextResponse.json({ ok: true, status });
-  } catch (err: any) {
-    return NextResponse.json(
-      { ok: false, error: err.message },
-      { status: 500 }
-    );
+  const { userId } = auth();
+  if (!userId) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
+
+  return NextResponse.json(
+    {
+      ok: false,
+      status: "not_implemented",
+      projectId: params.projectId,
+      message: "Domain attach is not implemented yet.",
+    },
+    { status: 501 }
+  );
 }
