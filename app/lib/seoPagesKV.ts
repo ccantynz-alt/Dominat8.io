@@ -22,3 +22,4 @@ export async function saveSeoPage(_projectId: string, _slug: string, _data: any)
 export async function deleteSeoPage(_projectId: string, _slug: string) {
   return { ok: false, status: "not_implemented" };
 }
+
