@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { auth } from "@clerk/nextjs/server";
-import { isAdminUserId } from "@/lib/admin";
+import { isAdminUserId } from "../../../../lib/admin";
 
 type Project = {
   id: string;
@@ -18,8 +18,6 @@ export async function GET() {
   }
 
   const ids = await kv.lrange<string[]>(`projects:all`, 0, -1);
-
-  // Remove duplicates (safe if older data inserted twice)
   const uniqueIds = Array.from(new Set(ids));
 
   const projects = await Promise.all(
@@ -29,7 +27,6 @@ export async function GET() {
     })
   );
 
-  // newest first (createdAt desc) if available
   const clean = projects
     .filter(Boolean)
     .sort((a, b) => (b!.createdAt || 0) - (a!.createdAt || 0));
