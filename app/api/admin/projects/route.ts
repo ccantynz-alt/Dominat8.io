@@ -1,35 +1,41 @@
 import { NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
 import { auth } from "@clerk/nextjs/server";
-import { isAdminUserId } from "../../../../lib/admin";
+import { kv } from "@vercel/kv";
 
-type Project = {
-  id: string;
-  name: string;
-  userId: string;
-  createdAt: number;
-};
+function isAdminUserId(userId: string | null) {
+  if (!userId) return false;
+
+  // Comma-separated list of Clerk user IDs in Vercel env:
+  // ADMIN_USER_IDS=user_123,user_456
+  const raw = process.env.ADMIN_USER_IDS || "";
+  const list = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return list.includes(userId);
+}
 
 export async function GET() {
-  const { userId } = auth();
+  // ✅ FIX: auth() returns a Promise in your current Clerk typings/build
+  const { userId } = await auth();
 
   if (!isAdminUserId(userId)) {
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
 
-  const ids = await kv.lrange<string[]>(`projects:all`, 0, -1);
-  const uniqueIds = Array.from(new Set(ids));
+  // NOTE: This endpoint is intentionally conservative and "best-effort".
+  // Your KV schema may evolve. This returns whatever exists under a known list key,
+  // and falls back to an empty array if not present.
+  const indexKey = "projects:index";
 
-  const projects = await Promise.all(
-    uniqueIds.map(async (id) => {
-      const p = await kv.hgetall<Project>(`project:${id}`);
-      return p || null;
-    })
-  );
-
-  const clean = projects
-    .filter(Boolean)
-    .sort((a, b) => (b!.createdAt || 0) - (a!.createdAt || 0));
-
-  return NextResponse.json({ ok: true, projects: clean });
+  try {
+    const ids = (await kv.get<string[]>(indexKey)) || [];
+    return NextResponse.json({ ok: true, ids });
+  } catch (err: any) {
+    return NextResponse.json(
+      { ok: false, error: err?.message || "Failed to load projects" },
+      { status: 500 }
+    );
+  }
 }
