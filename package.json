@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "stripe": "^17.0.0"
     "@clerk/nextjs": "^5.0.0",
     "@vercel/kv": "^3.0.0",
     "next": "14.2.5",
