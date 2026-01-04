@@ -13,7 +13,7 @@ function isAdminUserId(userId: string) {
   return list.includes(userId);
 }
 
-export default async function AdminPage() {
+export default async function AdminUsersPage() {
   // ✅ FIX: auth() returns a Promise in your current Clerk typings/build
   const { userId } = await auth();
 
@@ -22,9 +22,12 @@ export default async function AdminPage() {
 
   return (
     <main style={{ padding: 24, maxWidth: 960, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Admin</h1>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
+        Admin — Users
+      </h1>
       <p style={{ opacity: 0.8, marginBottom: 24 }}>
-        You are signed in as an admin. (User ID: <code>{userId}</code>)
+        This page is currently stubbed (safe placeholder). You are signed in as:{" "}
+        <code>{userId}</code>
       </p>
 
       <div
@@ -35,12 +38,13 @@ export default async function AdminPage() {
         }}
       >
         <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
-          Next Steps
+          Planned Features
         </h2>
         <ul style={{ lineHeight: 1.8, margin: 0, paddingLeft: 18 }}>
-          <li>Connect real admin controls (users, plans, billing, logs)</li>
-          <li>Add an admin navigation sidebar</li>
-          <li>Gate routes by role/permission (Clerk + metadata)</li>
+          <li>List users (Clerk API)</li>
+          <li>Search/filter</li>
+          <li>Assign roles (admin/user)</li>
+          <li>Disable/ban users</li>
         </ul>
       </div>
     </main>
