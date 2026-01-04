@@ -10,44 +10,31 @@ type Project = {
   createdAt: number;
 };
 
-async function getAdminProjects(): Promise<Project[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ""}/api/admin/projects`, {
-    // Ensure server fetch isn't cached
-    cache: "no-store",
-  }).catch(() => null);
-
-  if (!res) return [];
-  const data = await res.json().catch(() => null);
-  if (!data?.ok || !Array.isArray(data.projects)) return [];
-  return data.projects as Project[];
-}
-
 export default async function AdminPage() {
   const { userId } = auth();
 
   if (!userId) redirect("/sign-in");
   if (!isAdminUserId(userId)) redirect("/projects");
 
-  // ✅ IMPORTANT:
-  // If NEXT_PUBLIC_APP_URL is not set, we’ll call the API relative instead.
-  // (Works on Vercel runtime)
   let projects: Project[] = [];
   try {
     const res = await fetch(`/api/admin/projects`, { cache: "no-store" });
-    const data = await res.json();
-    projects = data?.ok ? data.projects : [];
+    const data = await res.json().catch(() => null);
+    projects = data?.ok && Array.isArray(data.projects) ? data.projects : [];
   } catch {
     projects = [];
   }
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 28 }}>Admin</h1>
-          <div style={{ opacity: 0.75, marginTop: 6 }}>All projects across all users</div>
+          <div style={{ opacity: 0.75, marginTop: 6 }}>Admin tools</div>
         </div>
+
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Link href="/admin/users" style={{ textDecoration: "underline" }}>Users</Link>
           <Link href="/projects" style={{ textDecoration: "underline" }}>Projects</Link>
           <Link href="/templates" style={{ textDecoration: "underline" }}>Templates</Link>
           <Link href="/latest-run" style={{ textDecoration: "underline" }}>Latest Run</Link>
@@ -55,6 +42,8 @@ export default async function AdminPage() {
       </div>
 
       <hr style={{ margin: "18px 0" }} />
+
+      <h2 style={{ margin: "0 0 10px 0" }}>All Projects</h2>
 
       {projects.length === 0 ? (
         <div style={{ opacity: 0.8 }}>No projects found yet (or no admin access).</div>
@@ -77,9 +66,6 @@ export default async function AdminPage() {
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                   <Link href={`/projects/${p.id}`} style={{ textDecoration: "underline" }}>
                     Open Project
-                  </Link>
-                  <Link href={`/projects/${p.id}`} style={{ textDecoration: "underline" }}>
-                    Runs
                   </Link>
                 </div>
               </div>
