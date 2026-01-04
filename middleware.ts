@@ -1,21 +1,29 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
+/**
+ * Public routes = anyone can view, even signed out
+ * Everything else = requires login
+ */
 const isPublicRoute = createRouteMatcher([
-  '/sign-in(.*)',
-  '/sign-up(.*)'
-])
+  "/",
+  "/templates",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/health(.*)",
+]);
 
-export default clerkMiddleware(async (auth, req) => {
+export default clerkMiddleware((auth, req) => {
+  // ✅ Protect everything except public routes
   if (!isPublicRoute(req)) {
-    await auth.protect()
+    auth().protect();
   }
-})
+});
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
+    // Run middleware on all routes except Next.js internals + static files
+    "/((?!_next|.*\\.(?:css|js|json|png|jpg|jpeg|gif|svg|ico|webp|txt|map)).*)",
+    // Always run middleware for API routes
+    "/(api|trpc)(.*)",
   ],
-}
+};
