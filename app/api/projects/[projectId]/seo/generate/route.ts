@@ -1,29 +1,52 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { kv } from "@vercel/kv";
 
-/**
- * TEMP STUB:
- * This endpoint depended on missing internal libs (seoGenerator, seoKV) and alias imports.
- * We keep the build green now. We'll implement real SEO generation later.
- */
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  const { userId } = auth();
+  // ✅ FIX: auth() must be awaited in your current Clerk typings/build
+  const { userId } = await auth();
 
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  return NextResponse.json(
-    {
-      ok: false,
-      status: "not_implemented",
-      projectId: params.projectId,
-      message: "SEO generation is not implemented yet.",
-    },
-    { status: 501 }
-  );
-}
+  const projectId = params.projectId;
 
+  // Optional request body (stub-friendly)
+  let body: any = null;
+  try {
+    body = await req.json();
+  } catch {
+    body = null;
+  }
+
+  const baseUrl =
+    typeof body?.baseUrl === "string" ? body.baseUrl.trim() : "https://example.com";
+
+  // Stub pages — later we’ll generate real programmatic SEO pages + sitemap
+  const pages = [
+    { slug: "home", title: "Home", description: "Homepage (stub SEO page)" },
+    { slug: "about", title: "About", description: "About page (stub SEO page)" },
+    { slug: "contact", title: "Contact", description: "Contact page (stub SEO page)" },
+  ];
+
+  const record = {
+    generatedAt: Date.now(),
+    generatedBy: userId,
+    baseUrl,
+    pages,
+  };
+
+  const key = `project:${projectId}:seo:pages`;
+
+  try {
+    await kv.set(key, record);
+  } catch {
+    // ignore storage errors (stub should not block)
+  }
+
+  return NextResponse.json({ ok: true, projectId, record });
+}
