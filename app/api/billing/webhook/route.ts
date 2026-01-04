@@ -7,7 +7,10 @@ export async function POST(req: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!sig || !webhookSecret) {
-    return NextResponse.json({ ok: false, error: "Missing Stripe signature or webhook secret" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "Missing Stripe signature or STRIPE_WEBHOOK_SECRET" },
+      { status: 400 }
+    );
   }
 
   const rawBody = await req.text();
@@ -25,6 +28,7 @@ export async function POST(req: Request) {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as any;
+
       const clerkUserId = session?.metadata?.clerkUserId || null;
       const customerId = session?.customer || null;
       const subscriptionId = session?.subscription || null;
@@ -36,6 +40,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message || "Webhook handler error" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: e?.message || "Webhook handler error" },
+      { status: 500 }
+    );
   }
 }
