@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { getDailySeries, getTopPages, getRecentEvents } from "@/lib/analyticsKV";
+import {
+  getDailySeries,
+  getTopPages,
+  getRecentEvents,
+} from "../../../../../lib/analyticsKV";
 
 export async function GET(
   _req: Request,
