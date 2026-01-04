@@ -1,54 +1,30 @@
 import { NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
-import { isAdminUserId } from "../../../../lib/admin";
+import { auth } from "@clerk/nextjs/server";
 
-export async function GET(req: Request) {
-  const { userId } = auth();
+function isAdminUserId(userId: string | null) {
+  if (!userId) return false;
+
+  const raw = process.env.ADMIN_USER_IDS || "";
+  const list = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return list.includes(userId);
+}
+
+export async function GET(_req: Request) {
+  // ✅ IMPORTANT: auth() must be awaited
+  const { userId } = await auth();
 
   if (!isAdminUserId(userId)) {
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
 
-  const url = new URL(req.url);
-  const limit = Math.min(Number(url.searchParams.get("limit") || "50"), 100);
-  const offset = Math.max(Number(url.searchParams.get("offset") || "0"), 0);
-
-  try {
-    const client = await clerkClient();
-
-    const resp = await client.users.getUserList({
-      limit,
-      offset,
-      orderBy: "-created_at",
-    });
-
-    const shaped = resp.data.map((u) => {
-      const primaryEmail =
-        u.emailAddresses?.find((e) => e.id === u.primaryEmailAddressId)?.emailAddress ||
-        u.emailAddresses?.[0]?.emailAddress ||
-        "";
-
-      return {
-        id: u.id,
-        email: primaryEmail,
-        firstName: u.firstName || "",
-        lastName: u.lastName || "",
-        createdAt: u.createdAt ?? null,
-        lastSignInAt: u.lastSignInAt ?? null,
-        banned: !!u.banned,
-        locked: !!u.locked,
-      };
-    });
-
-    return NextResponse.json({
-      ok: true,
-      users: shaped,
-      paging: { limit, offset, returned: shaped.length },
-    });
-  } catch (e: any) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Failed to list users" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({
+    ok: true,
+    users: [],
+    note: "Stubbed admin users endpoint. Connect Clerk user listing later.",
+  });
 }
+
