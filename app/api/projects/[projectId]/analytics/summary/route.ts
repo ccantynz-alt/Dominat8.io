@@ -11,11 +11,10 @@ export async function GET(
 ) {
   const projectId = params.projectId;
 
-  // ✅ FIX: getDailySeries now takes 1 argument
+  // ✅ Stubs have simplified signatures in this codebase
   const series = await getDailySeries(projectId);
-
-  const topPages = await getTopPages(projectId, 7, 10);
-  const recent = await getRecentEvents(projectId, 30);
+  const topPages = await getTopPages(projectId);
+  const recent = await getRecentEvents(projectId);
 
   return NextResponse.json({
     ok: true,
