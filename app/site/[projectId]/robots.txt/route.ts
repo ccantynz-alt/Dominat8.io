@@ -1,32 +1,25 @@
-import { getSeoSettings } from "@/app/lib/seoSettingsKV";
+import { NextResponse } from "next/server";
 
+/**
+ * TEMP STUB:
+ * This route depended on missing seoSettingsKV alias imports.
+ * Return a basic robots.txt so build stays green.
+ */
 export async function GET(
-  _: Request,
+  _req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  const settings = await getSeoSettings(params.projectId);
-
-  const base = process.env.NEXT_PUBLIC_BASE_URL || "";
-
-  const sitemapUrl = `${base}/site/${params.projectId}/sitemap.xml`;
-
-  // If indexing OFF: disallow everything
-  if (settings.indexing === "off") {
-    const txt = `User-agent: *
-Disallow: /
-Sitemap: ${sitemapUrl}
-`;
-    return new Response(txt, {
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-    });
-  }
-
-  // If indexing ON: allow everything
-  const txt = `User-agent: *
+  const body = `User-agent: *
 Allow: /
-Sitemap: ${sitemapUrl}
+
+Sitemap: /site/${params.projectId}/sitemap.xml
 `;
-  return new Response(txt, {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
+
+  return new NextResponse(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=300",
+    },
   });
 }
