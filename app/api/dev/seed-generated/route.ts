@@ -15,18 +15,19 @@ export async function POST() {
       h1{margin:0 0 10px 0;}
       p{opacity:.85;line-height:1.5}
       code{background:#f6f6f6;padding:2px 6px;border-radius:6px}
+      a{display:inline-block;margin-top:12px}
     </style>
   </head>
   <body>
     <div class="card">
       <h1>✅ Generated HTML Seeded</h1>
-      <p>This is a demo page stored into <code>generated:latest</code>.</p>
-      <p>Now your Publish flow should work and show something at <code>/p/&lt;projectId&gt;</code>.</p>
+      <p>This demo page was stored into <code>generated:latest</code>.</p>
+      <p>Now your Publish flow should work and show a page at <code>/p/&lt;projectId&gt;</code>.</p>
     </div>
   </body>
 </html>`;
 
   await kv.set("generated:latest", demoHtml);
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, key: "generated:latest" });
 }
