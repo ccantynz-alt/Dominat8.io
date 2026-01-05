@@ -12,8 +12,7 @@ async function requireProjectOwner(userId: string, projectId: string) {
 
 function normalizeDomain(input: string) {
   const d = input.trim().toLowerCase();
-  const noProto = d.replace(/^https?:\/\//, "").split("/")[0];
-  return noProto;
+  return d.replace(/^https?:\/\//, "").split("/")[0];
 }
 
 function isValidDomain(domain: string) {
@@ -24,6 +23,9 @@ function isValidDomain(domain: string) {
   if (domain.includes("..")) return false;
   return true;
 }
+
+// 👇 This makes the route "dynamic" so it won't be treated weirdly by caching/static behavior
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request, ctx: { params: { projectId: string } }) {
   try {
@@ -45,9 +47,7 @@ export async function POST(req: Request, ctx: { params: { projectId: string } })
       body = null;
     }
 
-    const raw = String(body?.domain || "");
-    const domain = normalizeDomain(raw);
-
+    const domain = normalizeDomain(String(body?.domain || ""));
     if (!domain || !isValidDomain(domain)) {
       return NextResponse.json({ ok: false, error: "INVALID_DOMAIN" }, { status: 400 });
     }
