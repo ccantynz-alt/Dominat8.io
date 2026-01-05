@@ -1,3 +1,4 @@
+// app/api/projects/[projectId]/runs/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
@@ -5,104 +6,114 @@ import { kv } from "@vercel/kv";
 type Run = {
   id: string;
   projectId: string;
+  userId: string;
   status: "queued" | "running" | "complete" | "failed";
   prompt: string;
-  createdAt: number;
+  createdAt: string;
+  completedAt?: string;
+  outputKey?: string; // KV key where generated HTML is stored
 };
 
-function runKey(projectId: string, runId: string) {
-  return `run:${projectId}:${runId}`;
+async function requireProjectOwnership(userId: string, projectId: string) {
+  const project = await kv.hgetall<Record<string, any>>(`project:${projectId}`);
+  if (!project || project.userId !== userId) return null;
+  return project;
 }
 
-function runsIndexKey(projectId: string) {
-  return `runs:${projectId}:index`;
-}
-
-export async function GET(
-  _req: Request,
-  { params }: { params: { projectId: string } }
-) {
-  // ✅ FIX: auth() must be awaited in your current Clerk typings/build
+export async function GET(_: Request, ctx: { params: { projectId: string } }) {
   const { userId } = await auth();
+  if (!userId) return NextResponse.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
 
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  const { projectId } = ctx.params;
+
+  const project = await requireProjectOwnership(userId, projectId);
+  if (!project) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
+
+  const runIds = (await kv.lrange(`project:${projectId}:runs`, 0, 50)) as string[];
+
+  const runs: Run[] = [];
+  for (const runId of runIds) {
+    const run = await kv.hgetall<Run>(`run:${runId}`);
+    if (run) runs.push(run);
   }
 
-  const projectId = params.projectId;
-
-  try {
-    const ids = (await kv.get<string[]>(runsIndexKey(projectId))) || [];
-    const runs = await Promise.all(
-      ids.map(async (id) => {
-        const r = await kv.get<Run>(runKey(projectId, id));
-        return r;
-      })
-    );
-
-    return NextResponse.json({
-      ok: true,
-      projectId,
-      runs: runs.filter(Boolean),
-    });
-  } catch (err: any) {
-    return NextResponse.json(
-      { ok: false, error: err?.message || "Failed to load runs" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ ok: true, runs });
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { projectId: string } }
-) {
-  // ✅ FIX: auth() must be awaited in your current Clerk typings/build
+export async function POST(req: Request, ctx: { params: { projectId: string } }) {
   const { userId } = await auth();
+  if (!userId) return NextResponse.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
 
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-  }
+  const { projectId } = ctx.params;
 
-  const projectId = params.projectId;
+  const project = await requireProjectOwnership(userId, projectId);
+  if (!project) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
 
-  let body: any = null;
-  try {
-    body = await req.json();
-  } catch {
-    body = null;
-  }
+  const body = (await req.json().catch(() => null)) as { prompt?: string } | null;
+  const prompt = (body?.prompt || "Generate a modern website.").toString().slice(0, 2000);
 
-  const prompt =
-    typeof body?.prompt === "string"
-      ? body.prompt.trim()
-      : "Build a modern landing page with pricing, FAQ, and a contact form.";
-
-  const runId = `run_${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
+  const runId = `run_${crypto.randomUUID().replaceAll("-", "")}`;
+  const now = new Date().toISOString();
+  const outputKey = `generated:${projectId}:${runId}`;
 
   const run: Run = {
     id: runId,
     projectId,
-    status: "queued",
+    userId,
+    status: "complete",
     prompt,
-    createdAt: Date.now(),
+    createdAt: now,
+    completedAt: now,
+    outputKey,
   };
 
-  try {
-    // store run
-    await kv.set(runKey(projectId, runId), run);
+  // ✅ Stub “generation”: store a basic HTML page now (we’ll replace with real agent later)
+  const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${escapeHtml(project.name || "My Site")}</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:40px;background:#fafafa}
+    .card{max-width:900px;margin:0 auto;background:#fff;border:1px solid #eee;border-radius:16px;padding:24px}
+    h1{margin:0 0 12px;font-size:34px}
+    p{opacity:.85;line-height:1.5}
+    code{background:#f3f3f3;padding:2px 6px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>${escapeHtml(project.name || "New Project")}</h1>
+    <p><b>Generated from prompt:</b></p>
+    <p>${escapeHtml(prompt)}</p>
+    <p><b>Project:</b> <code>${escapeHtml(projectId)}</code></p>
+    <p><b>Run:</b> <code>${escapeHtml(runId)}</code></p>
+    <p>This is a safe stub. Next step: replace generation with your real agent output.</p>
+  </div>
+</body>
+</html>`;
 
-    // add to index (prepend newest)
-    const indexKey = runsIndexKey(projectId);
-    const ids = (await kv.get<string[]>(indexKey)) || [];
-    const next = [runId, ...ids.filter((x) => x !== runId)].slice(0, 200);
-    await kv.set(indexKey, next);
+  await kv.set(outputKey, html);
 
-    return NextResponse.json({ ok: true, run });
-  } catch (err: any) {
-    return NextResponse.json(
-      { ok: false, error: err?.message || "Failed to create run" },
-      { status: 500 }
-    );
-  }
+  // Store run
+  await kv.hset(`run:${runId}`, run);
+
+  // Index by project
+  await kv.lpush(`project:${projectId}:runs`, runId);
+
+  // Touch project updatedAt
+  await kv.hset(`project:${projectId}`, { updatedAt: now });
+
+  return NextResponse.json({ ok: true, run });
+}
+
+// very small safe escape for HTML
+function escapeHtml(input: string) {
+  return input
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
