@@ -2,6 +2,7 @@
 import { kv } from "@vercel/kv";
 import PublishPanel from "./PublishPanel";
 import RunDemoPanel from "./RunDemoPanel";
+import DomainPanel from "./DomainPanel";
 
 export default async function ProjectPage({
   params,
@@ -32,10 +33,13 @@ export default async function ProjectPage({
         ) : null}
       </div>
 
-      {/* ✅ Demo run generator (creates a run and writes outputKey) */}
+      {/* ✅ Domain onboarding (Phase 1: store + instructions) */}
+      <DomainPanel projectId={projectId} />
+
+      {/* ✅ Demo run generator */}
       <RunDemoPanel projectId={projectId} />
 
-      {/* ✅ Publish button uses latest run output */}
+      {/* ✅ Publish latest run */}
       <PublishPanel projectId={projectId} />
 
       <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #eee" }}>
