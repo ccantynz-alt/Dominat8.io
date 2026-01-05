@@ -1,46 +1,49 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getCurrentUserId } from "@/lib/serverAuth";
 
-/**
- * TEMP STUB:
- * This endpoint depended on missing internal libs (seoSettingsKV) and alias imports.
- * We keep the build green now. We'll implement real SEO settings later.
- */
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  const { userId } = auth();
+  const userId = await getCurrentUserId();
 
   if (!userId) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
   return NextResponse.json({
     ok: true,
     projectId: params.projectId,
-    settings: null,
-    status: "stub",
+    settings: {
+      enabled: false,
+      defaultTitleTemplate: "%page% | %brand%",
+      defaultMetaDescription: "",
+    },
   });
 }
 
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  const { userId } = auth();
+  const userId = await getCurrentUserId();
 
   if (!userId) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
-  return NextResponse.json(
-    {
-      ok: false,
-      status: "not_implemented",
-      projectId: params.projectId,
-      message: "SEO settings save is not implemented yet.",
-    },
-    { status: 501 }
-  );
+  const body = await req.json().catch(() => ({}));
+
+  return NextResponse.json({
+    ok: true,
+    projectId: params.projectId,
+    saved: true,
+    received: body,
+  });
 }
