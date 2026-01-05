@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
 
+export const dynamic = "force-dynamic";
+
 async function requireProjectOwner(userId: string, projectId: string) {
   const project = (await kv.hgetall(`project:${projectId}`)) as any;
   if (!project?.id) return { ok: false as const, error: "PROJECT_NOT_FOUND" as const };
@@ -24,9 +26,16 @@ function isValidDomain(domain: string) {
   return true;
 }
 
-// 👇 This makes the route "dynamic" so it won't be treated weirdly by caching/static behavior
-export const dynamic = "force-dynamic";
+// ✅ Browser test endpoint (GET)
+export async function GET(_req: Request, ctx: { params: { projectId: string } }) {
+  return NextResponse.json({
+    ok: true,
+    route: "domain/attach",
+    projectId: ctx.params.projectId,
+  });
+}
 
+// ✅ Real attach (POST)
 export async function POST(req: Request, ctx: { params: { projectId: string } }) {
   try {
     const { userId } = await auth();
