@@ -34,19 +34,18 @@ export default function DomainPanel({ projectId }: { projectId: string }) {
 
     setSavedDomain(parsed.data.domain || null);
   }
-  
 
   useEffect(() => {
     refresh().catch((e) => setMsg(`❌ Refresh failed: ${String(e?.message || e)}`));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function saveDomain() {
+  async function attachDomain() {
     setBusy(true);
     setMsg(null);
 
     try {
-      const res = await fetch(`/api/projects/${projectId}/domain`, {
+      const res = await fetch(`/api/projects/${projectId}/domain/attach`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ domain }),
@@ -54,13 +53,8 @@ export default function DomainPanel({ projectId }: { projectId: string }) {
 
       const parsed = await safeJson(res);
 
-      if (!parsed.ok) {
-        throw new Error(`Non-JSON response. Status ${res.status}. Body: ${parsed.text.slice(0, 300)}`);
-      }
-
-      if (!res.ok || !parsed.data?.ok) {
-        throw new Error(parsed.data?.error || `Attach failed (status ${res.status})`);
-      }
+      if (!parsed.ok) throw new Error(`Non-JSON response. Status ${res.status}. Body: ${parsed.text.slice(0, 300)}`);
+      if (!res.ok || !parsed.data?.ok) throw new Error(parsed.data?.error || `Attach failed (status ${res.status})`);
 
       setSavedDomain(parsed.data.domain);
       setMsg("✅ Domain attached. Now add the DNS records below.");
@@ -76,16 +70,11 @@ export default function DomainPanel({ projectId }: { projectId: string }) {
     setMsg(null);
 
     try {
-      const res = await fetch(`/api/projects/${projectId}/domain`, { method: "DELETE" });
+      const res = await fetch(`/api/projects/${projectId}/domain/remove`, { method: "POST" });
       const parsed = await safeJson(res);
 
-      if (!parsed.ok) {
-        throw new Error(`Non-JSON response. Status ${res.status}. Body: ${parsed.text.slice(0, 300)}`);
-      }
-
-      if (!res.ok || !parsed.data?.ok) {
-        throw new Error(parsed.data?.error || `Remove failed (status ${res.status})`);
-      }
+      if (!parsed.ok) throw new Error(`Non-JSON response. Status ${res.status}. Body: ${parsed.text.slice(0, 300)}`);
+      if (!res.ok || !parsed.data?.ok) throw new Error(parsed.data?.error || `Remove failed (status ${res.status})`);
 
       setSavedDomain(null);
       setDomain("");
@@ -115,7 +104,7 @@ export default function DomainPanel({ projectId }: { projectId: string }) {
         />
 
         <button
-          onClick={saveDomain}
+          onClick={attachDomain}
           disabled={busy}
           style={{
             padding: "10px 12px",
