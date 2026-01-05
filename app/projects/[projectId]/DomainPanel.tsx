@@ -34,6 +34,7 @@ export default function DomainPanel({ projectId }: { projectId: string }) {
 
     setSavedDomain(parsed.data.domain || null);
   }
+  
 
   useEffect(() => {
     refresh().catch((e) => setMsg(`❌ Refresh failed: ${String(e?.message || e)}`));
