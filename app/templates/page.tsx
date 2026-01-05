@@ -1,106 +1,87 @@
+// app/templates/page.tsx
 "use client";
 
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 type Template = {
   id: string;
   name: string;
   description: string;
-  seedPrompt: string;
+  prompt: string;
 };
-
-const TEMPLATES: Template[] = [
-  {
-    id: "landing",
-    name: "Landing Page",
-    description: "A clean landing page with hero, pricing, FAQ, and contact form.",
-    seedPrompt: "Build a modern landing page with pricing, FAQ, and a contact form. Clean minimal styling.",
-  },
-  {
-    id: "business",
-    name: "Business Website",
-    description: "Professional business site with services, testimonials, and contact.",
-    seedPrompt: "Create a professional business website with hero, services, testimonials, about, and contact. Clean modern styling.",
-  },
-  {
-    id: "portfolio",
-    name: "Portfolio",
-    description: "Portfolio for creators with projects, about section, and contact.",
-    seedPrompt: "Create a modern portfolio website with a hero, projects section, about, and contact. Clean styling.",
-  },
-];
 
 export default function TemplatesPage() {
   const router = useRouter();
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        setError(null);
+        const res = await fetch("/api/templates", { cache: "no-store" });
+        const data = await res.json();
+        if (!data?.ok) throw new Error("Failed to load templates");
+        setTemplates(data.templates || []);
+      } catch (e: any) {
+        setError(e?.message || "Failed to load templates");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
-  async function createProjectFromTemplate(t: Template) {
+  async function useTemplate(t: Template) {
+    setBusyId(t.id);
+    setError(null);
     try {
-      setErr(null);
-      setLoadingId(t.id);
-
-      const res = await fetch("/api/projects", {
+      const res = await fetch("/api/projects/from-template", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // ✅ IMPORTANT: Always include "name"
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          name: `${t.name} Project`,
           templateId: t.id,
-          templateName: t.name,
-          seedPrompt: t.seedPrompt,
+          name: `${t.name} Project`,
         }),
       });
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || !data?.ok || !data?.project?.id) {
-        const msg = data?.error || data?.message || "Failed to create project";
-        throw new Error(msg);
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Failed to create project");
       }
 
-      // ✅ Go to the new project page
-      router.push(`/projects/${data.project.id}`);
+      const projectId = data.project?.id;
+      if (!projectId) throw new Error("Project created but no id returned");
+
+      // ✅ Go to the project page (adjust path if your app uses a different route)
+      router.push(`/projects/${projectId}`);
     } catch (e: any) {
-      setErr(e?.message || "Something went wrong");
+      setError(e?.message || "Failed to create project");
     } finally {
-      setLoadingId(null);
+      setBusyId(null);
     }
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 16px" }}>
-      <h1 style={{ fontSize: 40, fontWeight: 700, marginBottom: 10 }}>Templates</h1>
-      <p style={{ marginBottom: 18 }}>Choose a template to start a new project.</p>
+    <div style={{ padding: 24, maxWidth: 1000, margin: "0 auto" }}>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Templates</h1>
+      <p style={{ marginBottom: 18 }}>
+        Pick a template and click <b>Use Template</b> to generate a new project.
+      </p>
 
-      {err ? (
-        <div
-          style={{
-            background: "#ffe5e5",
-            border: "1px solid #ffb3b3",
-            color: "#7a0000",
-            padding: 12,
-            borderRadius: 8,
-            marginBottom: 16,
-          }}
-        >
-          Error: {err}
+      {error ? (
+        <div style={{ padding: 12, border: "1px solid #f99", background: "#fff5f5", marginBottom: 16 }}>
+          <b>Error:</b> {error}
         </div>
       ) : null}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: 16,
-        }}
-      >
-        {TEMPLATES.map((t) => {
-          const isLoading = loadingId === t.id;
-
-          return (
+      {loading ? (
+        <p>Loading templates…</p>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+          {templates.map((t) => (
             <div
               key={t.id}
               style={{
@@ -110,45 +91,27 @@ export default function TemplatesPage() {
                 background: "white",
               }}
             >
-              <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>{t.name}</h2>
-              <p style={{ marginBottom: 14 }}>{t.description}</p>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>{t.name}</div>
+              <div style={{ opacity: 0.8, marginBottom: 12 }}>{t.description}</div>
 
               <button
-                onClick={() => createProjectFromTemplate(t)}
-                disabled={!!loadingId}
+                onClick={() => useTemplate(t)}
+                disabled={busyId === t.id}
                 style={{
                   padding: "10px 12px",
                   borderRadius: 10,
-                  border: "1px solid #111",
-                  background: isLoading ? "#f3f3f3" : "#111",
-                  color: isLoading ? "#111" : "#fff",
-                  cursor: loadingId ? "not-allowed" : "pointer",
+                  border: "1px solid #ddd",
+                  cursor: busyId === t.id ? "not-allowed" : "pointer",
                   width: "100%",
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
-                {isLoading ? "Creating..." : "Use Template"}
+                {busyId === t.id ? "Creating…" : "Use Template"}
               </button>
-
-              <details style={{ marginTop: 12 }}>
-                <summary style={{ cursor: "pointer" }}>View seed prompt</summary>
-                <pre
-                  style={{
-                    whiteSpace: "pre-wrap",
-                    background: "#f7f7f7",
-                    padding: 12,
-                    borderRadius: 10,
-                    marginTop: 10,
-                    fontSize: 13,
-                  }}
-                >
-                  {t.seedPrompt}
-                </pre>
-              </details>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
