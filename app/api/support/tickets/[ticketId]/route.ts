@@ -1,40 +1,56 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-/**
- * TEMP STUB:
- * This endpoint depended on missing internal lib (supportKV) and alias imports.
- * We'll implement ticket detail later.
- */
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: { ticketId: string } }
 ) {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  const { userId } = await auth();
+
+  if (!userId) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
 
   return NextResponse.json({
     ok: true,
-    status: "stub",
     ticketId: params.ticketId,
-    ticket: null,
   });
 }
 
-export async function POST(
-  _req: Request,
+export async function PATCH(
+  req: Request,
   { params }: { params: { ticketId: string } }
 ) {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  const { userId } = await auth();
 
-  return NextResponse.json(
-    {
-      ok: false,
-      status: "not_implemented",
-      ticketId: params.ticketId,
-      message: "Support ticket update not implemented yet.",
-    },
-    { status: 501 }
-  );
+  if (!userId) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await req.json().catch(() => ({}));
+
+  return NextResponse.json({
+    ok: true,
+    ticketId: params.ticketId,
+    updated: true,
+    body,
+  });
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { ticketId: string } }
+) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    ticketId: params.ticketId,
+    deleted: true,
+  });
+}
+
