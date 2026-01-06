@@ -36,7 +36,7 @@ export default function GeneratePanel({ projectId }: GeneratePanelProps) {
     setPublicUrl(null);
 
     try {
-      // 1) Generate
+      // 1) Generate (this creates a version + saves latest)
       const genRes = await fetch(`/api/projects/${projectId}/generate`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -75,6 +75,11 @@ export default function GeneratePanel({ projectId }: GeneratePanelProps) {
       setPublicUrl(url);
       setStage("done");
       setMessage("Published successfully.");
+
+      // ✅ Tell the Versions panel to refresh NOW
+      window.dispatchEvent(
+        new CustomEvent("rovez:versions:update", { detail: { projectId } })
+      );
     } catch (e: any) {
       setStage("error");
       setMessage(e?.message || "Something went wrong");
@@ -90,10 +95,24 @@ export default function GeneratePanel({ projectId }: GeneratePanelProps) {
         background: "white",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
           <div style={{ fontSize: 16, fontWeight: 900 }}>Generate & Publish</div>
-          <div style={{ marginTop: 6, fontSize: 13, fontWeight: 800, color: "#6b7280" }}>
+          <div
+            style={{
+              marginTop: 6,
+              fontSize: 13,
+              fontWeight: 800,
+              color: "#6b7280",
+            }}
+          >
             Status: {stageLabel}
           </div>
         </div>
@@ -117,7 +136,9 @@ export default function GeneratePanel({ projectId }: GeneratePanelProps) {
       </div>
 
       <div style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 8 }}>Prompt</div>
+        <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 8 }}>
+          Prompt
+        </div>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -155,7 +176,9 @@ export default function GeneratePanel({ projectId }: GeneratePanelProps) {
 
       {publicUrl ? (
         <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 6 }}>Public page</div>
+          <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 6 }}>
+            Public page
+          </div>
           <a
             href={publicUrl}
             target="_blank"
@@ -164,7 +187,9 @@ export default function GeneratePanel({ projectId }: GeneratePanelProps) {
           >
             Open public page →
           </a>
-          <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>{publicUrl}</div>
+          <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>
+            {publicUrl}
+          </div>
         </div>
       ) : null}
     </div>
