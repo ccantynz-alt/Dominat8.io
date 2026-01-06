@@ -186,3 +186,4 @@ export default function GeneratePanel({ projectId }: { projectId: string }) {
     </section>
   );
 }
+
