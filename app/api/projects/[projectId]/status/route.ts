@@ -1,43 +1,64 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function json(data: any, status = 200) {
+  return NextResponse.json(data, { status });
+}
+
+async function readProject(projectId: string) {
+  const key = `project:${projectId}`;
+
+  // 1) Try HASH style first (hgetall)
+  try {
+    const hash = await kv.hgetall<any>(key);
+    if (hash && Object.keys(hash).length > 0) return hash;
+  } catch (e: any) {
+    // If WRONGTYPE, fall through to kv.get below
+  }
+
+  // 2) Fallback to JSON/string style (get)
+  try {
+    const obj = await kv.get<any>(key);
+    if (obj) return obj;
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
 
 export async function GET(
   _req: Request,
-  { params }: { params: { projectId: string } }
+  ctx: { params: { projectId: string } }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
+    const projectId = ctx.params.projectId;
 
-    const projectId = params.projectId;
-    const project = await kv.hgetall<any>(`project:${projectId}`);
-
+    const project = await readProject(projectId);
     if (!project) {
-      return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
+      return json({ ok: false, error: "Project not found" }, 404);
     }
 
-    if (project.userId !== userId) {
-      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
-    }
+    const published = project.published === true;
 
-    return NextResponse.json({
+    // HTML check (public page reads from this key)
+    const htmlKey = `generated:project:${projectId}:latest`;
+    const html = await kv.get<string>(htmlKey);
+    const hasHtml = typeof html === "string" && html.trim().length > 0;
+
+    return json({
       ok: true,
       projectId,
-      name: project.name || "",
-      publishedStatus: project.publishedStatus || "",
-      domain: project.domain || "",
-      domainStatus: project.domainStatus || "",
-      updatedAt: project.updatedAt || "",
+      publishedStatus: published ? "published" : "unpublished",
+      hasHtml,
+      domain: project.domain ?? null,
+      domainStatus: project.domainStatus ?? null,
     });
-  } catch (err: any) {
-    return NextResponse.json(
-      { ok: false, error: err?.message || "Failed to load status" },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error("GET /status error:", err);
+    return json({ ok: false, error: "Status failed" }, 500);
   }
 }
