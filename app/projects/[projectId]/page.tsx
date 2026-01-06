@@ -1,3 +1,4 @@
+import StatusBadge from "./StatusBadge";
 import GeneratePanel from "./GeneratePanel";
 import PublishButton from "./PublishButton";
 import VersionsPanel from "./VersionsPanel";
@@ -14,8 +15,16 @@ export default async function ProjectPage({
 
   return (
     <main style={{ padding: 24, fontFamily: "system-ui" }}>
-      <h1 style={{ margin: 0, marginBottom: 8 }}>Project</h1>
-      <div style={{ opacity: 0.75, marginBottom: 16 }}>{projectId}</div>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ margin: 0, marginBottom: 6 }}>Project</h1>
+          <div style={{ opacity: 0.75 }}>{projectId}</div>
+        </div>
+
+        <div style={{ alignSelf: "center" }}>
+          <StatusBadge projectId={projectId} />
+        </div>
+      </div>
 
       <GeneratePanel projectId={projectId} />
       <PublishButton projectId={projectId} />
@@ -29,7 +38,6 @@ export default async function ProjectPage({
         <RunDemoPanel projectId={projectId} />
       </div>
 
-      {/* ✅ NEW: Admin controls */}
       <AdminActionsPanel projectId={projectId} />
     </main>
   );
