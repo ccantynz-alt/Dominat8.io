@@ -11,10 +11,7 @@ export async function GET() {
       ok: true,
       exists: !!html,
       length: typeof html === "string" ? html.length : 0,
-      preview:
-        typeof html === "string"
-          ? html.slice(0, 1000)
-          : null,
+      preview: typeof html === "string" ? html.slice(0, 1000) : null,
     });
   } catch (err: any) {
     return NextResponse.json(
