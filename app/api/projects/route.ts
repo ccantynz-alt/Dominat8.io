@@ -1,19 +1,8 @@
 import { NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 
-// Force Node runtime (more reliable with KV)
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-/**
- * KV keys used:
- * - project:<id>                 -> project object
- * - projects:index               -> list of project ids (newest first)
- *
- * Optional fallback:
- * - If index is empty (older installs), we try kv.keys("project:*")
- *   and rebuild the index. If keys is blocked, we still return empty list.
- */
 
 function json(data: any, status = 200) {
   return NextResponse.json(data, { status });
@@ -32,75 +21,46 @@ async function safeReadIndexIds(): Promise<string[]> {
   }
 }
 
-async function safeRebuildIndexFromKeys(): Promise<string[]> {
-  // Some KV providers block KEYS; this is best-effort only.
+async function readProjectAny(projectId: string) {
+  const key = `project:${projectId}`;
+
+  // Prefer hash format
   try {
-    const keys = await kv.keys("project:*");
-    const ids = (keys || [])
-      .map((k) => (typeof k === "string" ? k.replace("project:", "") : ""))
-      .filter(Boolean);
-
-    // Rebuild index newest-first by createdAt where possible
-    const rows = await Promise.all(
-      ids.map(async (id) => {
-        const p = await kv.get<any>(`project:${id}`);
-        return p ? { id, createdAt: p.createdAt ?? null } : null;
-      })
-    );
-
-    const cleaned = rows.filter(Boolean) as { id: string; createdAt: string | null }[];
-
-    cleaned.sort((a, b) => {
-      const at = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return bt - at;
-    });
-
-    const sortedIds = cleaned.map((r) => r.id);
-
-    // Write back to index (best-effort)
-    try {
-      await kv.del("projects:index");
-      if (sortedIds.length > 0) {
-        // LPUSH expects values in order; we want newest first at index head.
-        // If sortedIds is already newest-first, LPUSH in reverse so it ends up correct.
-        await kv.lpush("projects:index", ...[...sortedIds].reverse());
-      }
-    } catch {
-      // ignore
-    }
-
-    return sortedIds;
+    const hash = await kv.hgetall<any>(key);
+    if (hash && Object.keys(hash).length > 0) return hash;
   } catch {
-    return [];
+    // ignore
   }
+
+  // Fallback older json format
+  try {
+    const obj = await kv.get<any>(key);
+    if (obj) return obj;
+  } catch {
+    // ignore
+  }
+
+  return null;
 }
 
 export async function GET() {
   try {
-    // 1) Prefer index list
-    let ids = await safeReadIndexIds();
-
-    // 2) If empty, try to rebuild from keys (older installs)
-    if (ids.length === 0) {
-      ids = await safeRebuildIndexFromKeys();
-    }
+    const ids = await safeReadIndexIds();
 
     if (ids.length === 0) {
+      // If no index exists, return empty (safe)
       return json({ ok: true, projects: [] });
     }
 
     const projects = await Promise.all(
       ids.map(async (id) => {
-        const project = await kv.get<any>(`project:${id}`);
+        const project = await readProjectAny(id);
         if (!project) return null;
 
         return {
           id: project.id ?? id,
           name: project.name ?? "Untitled",
           createdAt: project.createdAt ?? null,
-
-          // For badges
           published: project.published === true,
           domain: project.domain ?? null,
           domainStatus: project.domainStatus ?? null,
@@ -108,9 +68,7 @@ export async function GET() {
       })
     );
 
-    const cleaned = projects.filter(Boolean) as any[];
-
-    return json({ ok: true, projects: cleaned });
+    return json({ ok: true, projects: projects.filter(Boolean) });
   } catch (err) {
     console.error("GET /api/projects error:", err);
     return json({ ok: false, error: "Failed to load projects" }, 500);
@@ -131,21 +89,21 @@ export async function POST(req: Request) {
       id,
       name,
       createdAt: new Date().toISOString(),
-
-      // Defaults
       published: false,
       domain: null,
       domainStatus: null,
     };
 
-    // Save project
-    await kv.set(`project:${id}`, project);
+    const key = `project:${id}`;
 
-    // Add to index (newest first)
+    // IMPORTANT: store as HASH so hgetall works everywhere
+    await kv.hset(key, project as any);
+
+    // index (newest first)
     try {
       await kv.lpush("projects:index", id);
     } catch {
-      // ignore index write failure (still created)
+      // ignore
     }
 
     return json({ ok: true, project });
