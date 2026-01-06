@@ -14,10 +14,8 @@ export default async function ProjectPage({
       <h1 style={{ margin: 0, marginBottom: 8 }}>Project</h1>
       <div style={{ opacity: 0.75, marginBottom: 16 }}>{projectId}</div>
 
-      {/* ✅ Publish button */}
       <PublishButton projectId={projectId} />
 
-      {/* ✅ IMPORTANT: these TWO lines must pass projectId */}
       <div style={{ marginTop: 24 }}>
         <RunDemoPanel projectId={projectId} />
       </div>
