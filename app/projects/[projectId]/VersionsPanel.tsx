@@ -5,186 +5,133 @@ import { useEffect, useState } from "react";
 type Version = {
   versionId: string;
   createdAt: string;
-  htmlKey: string;
   prompt?: string;
-  length?: number;
 };
 
 export default function VersionsPanel({ projectId }: { projectId: string }) {
-  const [loading, setLoading] = useState(false);
   const [versions, setVersions] = useState<Version[]>([]);
-  const [status, setStatus] = useState<string>("");
-  const [body, setBody] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [rolling, setRolling] = useState<string | null>(null);
 
-  async function refresh() {
+  async function load() {
     setLoading(true);
-    setStatus("");
-    setBody("");
-    try {
-      const res = await fetch(`/api/projects/${projectId}/versions`, { cache: "no-store" });
-      const text = await res.text();
-      setStatus(String(res.status));
-      setBody(text);
+    setError(null);
 
-      if (res.ok) {
-        const json = JSON.parse(text);
-        setVersions(Array.isArray(json.versions) ? json.versions : []);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/versions`, {
+        cache: "no-store",
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data?.error || "Failed to load versions");
       }
+
+      setVersions(data.versions || []);
     } catch (e: any) {
-      setStatus("ERROR");
-      setBody(e?.message || "Unknown error");
+      setError(e?.message || "Failed to load versions");
     } finally {
       setLoading(false);
     }
   }
 
   async function rollback(versionId: string) {
-    if (!versionId) return;
-    setLoading(true);
-    setStatus("");
-    setBody("");
+    if (!confirm("Rollback to this version? This will update the public site.")) {
+      return;
+    }
+
+    setRolling(versionId);
 
     try {
       const res = await fetch(
         `/api/projects/${projectId}/versions/${versionId}/rollback`,
         { method: "POST" }
       );
-      const text = await res.text();
-      setStatus(String(res.status));
-      setBody(text);
+      const data = await res.json();
 
-      if (res.ok) {
-        window.open(`/p/${projectId}`, "_blank");
+      if (!res.ok || !data.ok) {
+        throw new Error(data?.error || "Rollback failed");
       }
+
+      alert("Rolled back successfully.");
     } catch (e: any) {
-      setStatus("ERROR");
-      setBody(e?.message || "Unknown error");
+      alert(e?.message || "Rollback failed");
     } finally {
-      setLoading(false);
+      setRolling(null);
     }
   }
 
   useEffect(() => {
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    load();
   }, [projectId]);
 
   return (
-    <section
+    <div
       style={{
-        border: "1px solid #e5e5e5",
+        border: "1px solid #e5e7eb",
         borderRadius: 12,
         padding: 16,
-        marginTop: 16,
-        maxWidth: 900,
+        background: "white",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-        <h2 style={{ margin: 0 }}>Versions</h2>
-        <button
-          onClick={refresh}
-          disabled={loading}
-          style={{
-            padding: "8px 12px",
-            borderRadius: 10,
-            border: "1px solid #ddd",
-            background: loading ? "#f3f3f3" : "white",
-            cursor: loading ? "not-allowed" : "pointer",
-            fontWeight: 600,
-          }}
-        >
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
+      <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 10 }}>
+        Versions
       </div>
 
-      <p style={{ marginTop: 8, opacity: 0.8 }}>
-        Newest versions appear first. Rollback sets that version as the current
-        live HTML (and opens the public page).
-      </p>
-
-      {versions.length === 0 ? (
-        <div style={{ padding: 12, borderRadius: 10, background: "#f6f6f6" }}>
-          No versions saved yet. Generate once to create the first version.
+      {loading ? (
+        <div>Loading…</div>
+      ) : error ? (
+        <div style={{ color: "#991b1b", fontWeight: 800 }}>{error}</div>
+      ) : versions.length === 0 ? (
+        <div style={{ color: "#6b7280", fontWeight: 800 }}>
+          No versions yet.
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 10 }}>
+        <div style={{ display: "grid", gap: 8 }}>
           {versions.map((v) => (
             <div
               key={v.versionId}
               style={{
-                border: "1px solid #eee",
-                borderRadius: 12,
-                padding: 12,
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                padding: 10,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 10,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>{v.versionId}</div>
-                  <div style={{ opacity: 0.8, fontSize: 13 }}>
-                    {new Date(v.createdAt).toLocaleString()}
-                    {typeof v.length === "number" ? ` • ${v.length} chars` : ""}
-                  </div>
+              <div>
+                <div style={{ fontWeight: 900, fontSize: 13 }}>
+                  {v.versionId}
                 </div>
-
-                <button
-                  onClick={() => rollback(v.versionId)}
-                  disabled={loading}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 10,
-                    border: "1px solid #ddd",
-                    background: loading ? "#f3f3f3" : "white",
-                    cursor: loading ? "not-allowed" : "pointer",
-                    fontWeight: 600,
-                    height: 36,
-                    alignSelf: "center",
-                  }}
-                >
-                  Rollback
-                </button>
+                <div style={{ fontSize: 12, color: "#6b7280" }}>
+                  {new Date(v.createdAt).toLocaleString()}
+                </div>
               </div>
 
-              {v.prompt ? (
-                <details style={{ marginTop: 10 }}>
-                  <summary style={{ cursor: "pointer" }}>Prompt</summary>
-                  <pre
-                    style={{
-                      marginTop: 8,
-                      padding: 10,
-                      borderRadius: 10,
-                      background: "#f6f6f6",
-                      overflowX: "auto",
-                      whiteSpace: "pre-wrap",
-                    }}
-                  >
-                    {v.prompt}
-                  </pre>
-                </details>
-              ) : null}
+              <button
+                onClick={() => rollback(v.versionId)}
+                disabled={rolling === v.versionId}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: "1px solid #111827",
+                  background:
+                    rolling === v.versionId ? "#9ca3af" : "#111827",
+                  color: "white",
+                  fontWeight: 900,
+                  cursor:
+                    rolling === v.versionId ? "not-allowed" : "pointer",
+                }}
+              >
+                {rolling === v.versionId ? "Rolling…" : "Rollback"}
+              </button>
             </div>
           ))}
         </div>
       )}
-
-      {status ? (
-        <div style={{ marginTop: 12 }}>
-          <b>Last API status:</b> {status}
-          {body ? (
-            <pre
-              style={{
-                marginTop: 8,
-                padding: 12,
-                borderRadius: 10,
-                background: "#f6f6f6",
-                overflowX: "auto",
-                maxWidth: 900,
-              }}
-            >
-              {body}
-            </pre>
-          ) : null}
-        </div>
-      ) : null}
-    </section>
+    </div>
   );
 }
