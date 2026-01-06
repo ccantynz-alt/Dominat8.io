@@ -3,6 +3,7 @@ import PublishButton from "./PublishButton";
 import VersionsPanel from "./VersionsPanel";
 import RunDemoPanel from "./RunDemoPanel";
 import DomainPanel from "./DomainPanel";
+import AdminActionsPanel from "./AdminActionsPanel";
 
 export default async function ProjectPage({
   params,
@@ -18,17 +19,18 @@ export default async function ProjectPage({
 
       <GeneratePanel projectId={projectId} />
       <PublishButton projectId={projectId} />
-
-      {/* ✅ NEW: Version history + rollback */}
       <VersionsPanel projectId={projectId} />
+
+      <div style={{ marginTop: 24 }}>
+        <DomainPanel projectId={projectId} />
+      </div>
 
       <div style={{ marginTop: 24 }}>
         <RunDemoPanel projectId={projectId} />
       </div>
 
-      <div style={{ marginTop: 24 }}>
-        <DomainPanel projectId={projectId} />
-      </div>
+      {/* ✅ NEW: Admin controls */}
+      <AdminActionsPanel projectId={projectId} />
     </main>
   );
 }
