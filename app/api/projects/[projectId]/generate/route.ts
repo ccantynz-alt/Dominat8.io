@@ -30,7 +30,7 @@ async function readProjectAny(projectId: string) {
   return null;
 }
 
-// Minimal OpenAI call using fetch (no SDK dependency)
+// Minimal OpenAI call using fetch
 async function generateHtmlWithOpenAI(prompt: string) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -67,7 +67,6 @@ async function generateHtmlWithOpenAI(prompt: string) {
         { role: "system", content: system },
         { role: "user", content: user },
       ],
-      // ask for text output
       text: { format: { type: "text" } },
     }),
   });
@@ -82,7 +81,6 @@ async function generateHtmlWithOpenAI(prompt: string) {
     throw new Error(msg);
   }
 
-  // Responses API returns output text in a few possible shapes; handle common ones
   const text =
     data?.output_text ||
     data?.output?.[0]?.content?.[0]?.text ||
@@ -123,25 +121,45 @@ export async function POST(
     // 1) Generate HTML
     const html = await generateHtmlWithOpenAI(prompt);
 
-    // 2) Save as latest HTML (public page reads this)
+    // 2) Save latest HTML (public page reads this)
     const latestKey = `generated:project:${projectId}:latest`;
     await kv.set(latestKey, html);
 
-    // 3) Also save a version entry (simple version id)
+    // 3) Save version HTML
     const versionId = `v_${crypto.randomUUID().replace(/-/g, "")}`;
     const versionKey = `generated:project:${projectId}:v:${versionId}`;
-
     await kv.set(versionKey, html);
 
-    // Store metadata for versions list (LPUSH newest first)
-    const versionsListKey = `generated:project:${projectId}:versions`;
+    // 4) Save metadata (ALWAYS) as JSON array
+    const versionsKey = `generated:project:${projectId}:versions`;
+
     const meta = {
       versionId,
       createdAt: new Date().toISOString(),
       key: versionKey,
       prompt,
     };
-    await kv.lpush(versionsListKey, JSON.stringify(meta));
+
+    // Read existing array (if any)
+    let arr: any[] = [];
+    try {
+      const existing = await kv.get<any>(versionsKey);
+      if (Array.isArray(existing)) arr = existing;
+    } catch {
+      // ignore
+    }
+
+    // Add newest first
+    arr = [meta, ...arr].slice(0, 100);
+    await kv.set(versionsKey, arr);
+
+    // 5) Optional: also try LIST format (nice-to-have)
+    // If list ops fail, it won’t break versions.
+    try {
+      await kv.lpush(versionsKey, JSON.stringify(meta));
+    } catch {
+      // ignore
+    }
 
     return json({
       ok: true,
@@ -149,6 +167,7 @@ export async function POST(
       versionId,
       htmlKey: latestKey,
       hasHtml: true,
+      versionsKey,
     });
   } catch (err: any) {
     console.error("POST /generate error:", err);
