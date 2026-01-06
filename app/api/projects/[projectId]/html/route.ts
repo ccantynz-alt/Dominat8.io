@@ -4,22 +4,17 @@ import { kv } from "@vercel/kv";
 
 export const dynamic = "force-dynamic";
 
+// Quick GET so you can open the URL and confirm it exists (prevents confusion)
 export async function GET(
   _req: Request,
-  ctx: { params: Promise<{ projectId: string }> }
+  { params }: { params: { projectId: string } }
 ) {
-  const { projectId } = await ctx.params;
-  return NextResponse.json({
-    ok: true,
-    route: "projects/[projectId]/html",
-    projectId,
-    methods: ["GET", "POST"],
-  });
+  return NextResponse.json({ ok: true, projectId: params.projectId, methods: ["GET", "POST"] });
 }
 
 export async function POST(
   req: Request,
-  ctx: { params: Promise<{ projectId: string }> }
+  { params }: { params: { projectId: string } }
 ) {
   try {
     const { userId } = await auth();
@@ -27,7 +22,7 @@ export async function POST(
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId } = await ctx.params;
+    const projectId = params.projectId;
     if (!projectId || !projectId.startsWith("proj_")) {
       return NextResponse.json({ ok: false, error: "Invalid projectId" }, { status: 400 });
     }
@@ -36,6 +31,7 @@ export async function POST(
     if (!project) {
       return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
     }
+
     if (project.userId !== userId) {
       return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
