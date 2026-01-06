@@ -1,79 +1,87 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function json(data: any, status = 200) {
+  return NextResponse.json(data, { status });
+}
+
+async function readProjectAny(projectId: string) {
+  const key = `project:${projectId}`;
+
+  // Prefer hash
+  try {
+    const hash = await kv.hgetall<any>(key);
+    if (hash && Object.keys(hash).length > 0) return { project: hash, type: "hash" as const };
+  } catch {
+    // ignore
+  }
+
+  // Fallback json/string
+  try {
+    const obj = await kv.get<any>(key);
+    if (obj) return { project: obj, type: "json" as const };
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
 export async function POST(
-  req: Request,
-  { params }: { params: { projectId: string } }
+  _req: Request,
+  ctx: { params: { projectId: string } }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json(
-        { ok: false, error: "Unauthorized" },
-        { status: 401 }
+    const projectId = ctx.params.projectId;
+
+    const found = await readProjectAny(projectId);
+    if (!found) {
+      return json({ ok: false, error: "Project not found" }, 404);
+    }
+
+    const latestKey = `generated:project:${projectId}:latest`;
+    const html = await kv.get<string>(latestKey);
+
+    const hasHtml = typeof html === "string" && html.trim().length > 0;
+    if (!hasHtml) {
+      return json(
+        {
+          ok: false,
+          error:
+            "No generated HTML found yet. Click Generate first, then Publish.",
+        },
+        400
       );
     }
 
-    const projectId = params.projectId;
-
-    // 1) Load project
+    // Mark project as published
     const projectKey = `project:${projectId}`;
-    const project = await kv.hgetall<any>(projectKey);
 
-    if (!project) {
-      return NextResponse.json(
-        { ok: false, error: "Project not found" },
-        { status: 404 }
-      );
+    if (found.type === "hash") {
+      await kv.hset(projectKey, { published: true } as any);
+    } else {
+      const updated = { ...found.project, published: true };
+      await kv.set(projectKey, updated);
     }
 
-    // 2) Ownership check
-    if (project.userId !== userId) {
-      return NextResponse.json(
-        { ok: false, error: "Forbidden" },
-        { status: 403 }
-      );
-    }
+    const publicUrl = `/p/${projectId}`;
 
-    // 3) Ensure generated HTML exists at the per-project key your public page reads
-    // Public page expects: generated:project:<projectId>:latest
-    const perProjectHtmlKey = `generated:project:${projectId}:latest`;
-    let html = await kv.get<string>(perProjectHtmlKey);
-
-    // Fallback (MVP): if project key not found, try the old global key
-    // NOTE: This is only a fallback to help you get live quickly.
-    if (!html) {
-      const globalHtml = await kv.get<string>("generated:latest");
-      if (globalHtml) {
-        await kv.set(perProjectHtmlKey, globalHtml);
-        html = globalHtml;
-      }
-    }
-
-    // 4) Mark project as published (even if html isn't ready, we still publish)
-    const now = new Date().toISOString();
-
-    await kv.hset(projectKey, {
-      publishedStatus: "published",
-      publishedAt: now,
-      updatedAt: now,
-    });
-
-    return NextResponse.json({
+    return json({
       ok: true,
       projectId,
       publishedStatus: "published",
-      hasHtml: !!html,
-      publicUrl: `/p/${projectId}`,
-      htmlKey: perProjectHtmlKey,
+      hasHtml: true,
+      publicUrl,
+      htmlKey: latestKey,
     });
   } catch (err: any) {
-    return NextResponse.json(
+    console.error("POST /publish error:", err);
+    return json(
       { ok: false, error: err?.message || "Publish failed" },
-      { status: 500 }
+      500
     );
   }
 }
