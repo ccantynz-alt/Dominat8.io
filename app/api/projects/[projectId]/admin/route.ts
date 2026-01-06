@@ -11,23 +11,32 @@ export async function POST(
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const projectId = params.projectId;
     const projectKey = `project:${projectId}`;
-    const project = await kv.hgetall<any>(projectKey);
 
+    const project = await kv.hgetall<any>(projectKey);
     if (!project) {
-      return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, error: "Project not found" },
+        { status: 404 }
+      );
     }
+
     if (project.userId !== userId) {
-      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { ok: false, error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "");
-
     const now = new Date().toISOString();
 
     if (action === "unpublish") {
@@ -40,10 +49,10 @@ export async function POST(
     }
 
     if (action === "delete") {
-      // Remove main project record
+      // Delete main project
       await kv.del(projectKey);
 
-      // Remove from both user index sets (safe even if key types differ; ignore errors)
+      // Remove from user indexes (ignore if wrong key type)
       try {
         await kv.srem(`user:${userId}:projects`, projectId);
       } catch {}
@@ -51,14 +60,9 @@ export async function POST(
         await kv.srem(`projects:user:${userId}`, projectId);
       } catch {}
 
-      // Remove latest HTML
+      // Delete latest HTML + version list metadata
       await kv.del(`generated:project:${projectId}:latest`);
-
-      // Remove version list (metadata list)
       await kv.del(`generated:project:${projectId}:versions`);
-
-      // NOTE: We are NOT deleting every version htmlKey here (since we don't list them all).
-      // That’s fine for now; later we can add a "purge versions" action if you want.
 
       return NextResponse.json({ ok: true, projectId, action: "delete" });
     }
@@ -72,7 +76,5 @@ export async function POST(
       { ok: false, error: err?.message || "Admin action failed" },
       { status: 500 }
     );
-    
   }
 }
-/.;
