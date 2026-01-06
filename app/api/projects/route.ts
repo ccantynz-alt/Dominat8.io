@@ -1,78 +1,112 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
-import { nanoid } from "nanoid";
 
-export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json(
-      { ok: false, error: "unauthorized" },
-      { status: 401 }
-    );
-  }
+export const dynamic = "force-dynamic";
 
-  const ids = await kv.smembers(`user:${userId}:projects`);
-  const projects: any[] = [];
+/**
+ * We store project IDs for a user in ONE of these indexes:
+ * - user:<userId>:projects (SET)
+ * - projects:user:<userId> (SET)
+ * This route tries both, so it works even if older code used a different key.
+ */
+async function getUserProjectIds(userId: string): Promise<string[]> {
+  const keyA = `user:${userId}:projects`;
+  const keyB = `projects:user:${userId}`;
 
-  for (const id of ids) {
-    const p = await kv.hgetall<any>(`project:${id}`);
-    if (!p) continue;
-
-    projects.push({
-      id,
-      name: p.name || "Untitled project",
-
-      // DOMAIN
-      domain: p.domain || "",
-      domainStatus: p.domainStatus || "",
-      domainUpdatedAt: p.domainUpdatedAt || "",
-
-      // PUBLISH
-      publishedUrl: p.publishedUrl || "",
-      publishedStatus: p.publishedStatus || "",
-      publishedAt: p.publishedAt || "",
-
-      // META
-      status: p.status || "",
-      createdAt: p.createdAt || "",
-      updatedAt: p.updatedAt || "",
-    });
-  }
-
-  return NextResponse.json({ ok: true, projects });
-}
-
-export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json(
-      { ok: false, error: "unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  let body: any = {};
+  // Try SET membership first
   try {
-    body = await req.json();
+    const idsA = (await kv.smembers(keyA)) as string[] | null;
+    if (idsA && idsA.length) return idsA;
   } catch {}
 
-  const projectId = `proj_${nanoid()}`;
-  const now = new Date().toISOString();
+  try {
+    const idsB = (await kv.smembers(keyB)) as string[] | null;
+    if (idsB && idsB.length) return idsB;
+  } catch {}
 
-  await kv.hset(`project:${projectId}`, {
-    id: projectId,
-    userId,
-    name: body?.name || "Untitled project",
-    status: "draft",
-    createdAt: now,
-    updatedAt: now,
-  });
+  // Fallback: nothing indexed yet
+  return [];
+}
 
-  await kv.sadd(`user:${userId}:projects`, projectId);
+export async function GET() {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized", projects: [] },
+        { status: 401 }
+      );
+    }
 
-  return NextResponse.json({
-    ok: true,
-    project: { id: projectId },
-  });
+    const projectIds = await getUserProjectIds(userId);
+
+    // Load projects (best effort)
+    const projects: any[] = [];
+    for (const projectId of projectIds) {
+      const p = await kv.hgetall<any>(`project:${projectId}`);
+      if (p) {
+        projects.push({
+          id: projectId,
+          ...p,
+        });
+      }
+    }
+
+    // Always return JSON, even if empty
+    return NextResponse.json({ ok: true, projects });
+  } catch (err: any) {
+    // Always return JSON on error (NEVER return empty body)
+    return NextResponse.json(
+      { ok: false, error: err?.message || "Failed to load projects", projects: [] },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Optional: keep POST here so existing project creation doesn't break.
+ * If your app already has a different POST implementation, this should still work.
+ */
+export async function POST(req: Request) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const name =
+      typeof body?.name === "string" && body.name.trim()
+        ? body.name.trim()
+        : "Untitled Project";
+
+    const projectId = `proj_${crypto.randomUUID().replace(/-/g, "")}`;
+    const now = new Date().toISOString();
+
+    await kv.hset(`project:${projectId}`, {
+      id: projectId,
+      userId,
+      name,
+      createdAt: now,
+      updatedAt: now,
+      publishedStatus: "",
+      domain: "",
+      domainStatus: "",
+    });
+
+    // Index it under BOTH keys so GET always works
+    await kv.sadd(`user:${userId}:projects`, projectId);
+    await kv.sadd(`projects:user:${userId}`, projectId);
+
+    return NextResponse.json({ ok: true, projectId });
+  } catch (err: any) {
+    return NextResponse.json(
+      { ok: false, error: err?.message || "Failed to create project" },
+      { status: 500 }
+    );
+  }
 }
