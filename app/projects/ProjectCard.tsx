@@ -5,20 +5,16 @@ type ProjectLike = {
   id: string;
   name?: string | null;
 
-  // Domain fields (optional)
   domain?: string | null;
   domainStatus?: string | null;
 
-  // Published fields (optional)
   publishedUrl?: string | null;
   publishedStatus?: string | null;
   publishedAt?: string | null;
 
-  // Common metadata (optional)
   updatedAt?: string | null;
   createdAt?: string | null;
 
-  // Some builds store status flags like these:
   status?: string | null;
   published?: string | boolean | null;
 };
@@ -102,6 +98,13 @@ export default function ProjectCard({ project }: { project: ProjectLike }) {
             className="inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50"
           >
             Open
+          </Link>
+
+          <Link
+            href={`/projects/${projectId}/publish`}
+            className="inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50"
+          >
+            Publish
           </Link>
 
           {publishedUrl ? (
