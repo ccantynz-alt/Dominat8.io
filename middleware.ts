@@ -1,33 +1,31 @@
 import { NextResponse } from "next/server";
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import type { NextRequest } from "next/server";
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/api/health(.*)",
-  "/api/public(.*)",
-]);
+export function middleware(req: NextRequest) {
+  const url = req.nextUrl.clone();
+  const host = req.headers.get("host") || "";
 
-export default clerkMiddleware(async (auth, req) => {
-  // Allow public routes
-  if (isPublicRoute(req)) return;
+  const isLocalhost =
+    host.includes("localhost") || host.includes("127.0.0.1");
 
-  // For everything else, require a signed-in user
-  const { userId } = await auth();
+  // 1️⃣ Enforce HTTPS (Vercel sets x-forwarded-proto)
+  const proto = req.headers.get("x-forwarded-proto");
 
-  if (!userId) {
-    const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("redirect_url", req.url);
-    return NextResponse.redirect(signInUrl);
+  if (!isLocalhost && proto !== "https") {
+    url.protocol = "https:";
+    return NextResponse.redirect(url, 308);
   }
-});
 
+  // 2️⃣ Redirect www → apex
+  if (host.startsWith("www.")) {
+    url.host = host.replace(/^www\./, "");
+    return NextResponse.redirect(url, 308);
+  }
+
+  return NextResponse.next();
+}
+
+// Apply to everything
 export const config = {
-  matcher: [
-    // Run middleware on all routes except Next.js internals and static files
-    "/((?!_next|.*\\..*).*)",
-    // Always run on API routes
-    "/api/(.*)",
-  ],
+  matcher: "/:path*",
 };
