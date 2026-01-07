@@ -1,31 +1,30 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+// /middleware.ts
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-export function middleware(req: NextRequest) {
-  const url = req.nextUrl.clone();
-  const host = req.headers.get("host") || "";
+// Public routes (no login required)
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/p/(.*)",            // published sites should stay public
+  "/generated(.*)",     // if you have a generated preview route
+  "/api/public(.*)",    // optional: keep if you ever add public APIs
+]);
 
-  const isLocalhost =
-    host.includes("localhost") || host.includes("127.0.0.1");
-
-  // 1️⃣ Enforce HTTPS (Vercel sets x-forwarded-proto)
-  const proto = req.headers.get("x-forwarded-proto");
-
-  if (!isLocalhost && proto !== "https") {
-    url.protocol = "https:";
-    return NextResponse.redirect(url, 308);
+export default clerkMiddleware((auth, req) => {
+  // Protect everything that is not public
+  if (!isPublicRoute(req)) {
+    auth().protect();
   }
+});
 
-  // 2️⃣ Redirect www → apex
-  if (host.startsWith("www.")) {
-    url.host = host.replace(/^www\./, "");
-    return NextResponse.redirect(url, 308);
-  }
-
-  return NextResponse.next();
-}
-
-// Apply to everything
 export const config = {
-  matcher: "/:path*",
+  // This matcher is Clerk’s recommended setup for Next.js App Router
+  matcher: [
+    // Match all routes except static files and Next.js internals
+    "/((?!.*\\..*|_next).*)",
+    "/",
+    // Match API routes
+    "/(api|trpc)(.*)",
+  ],
 };
