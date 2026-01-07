@@ -49,8 +49,11 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [recovering, setRecovering] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [name, setName] = useState("");
+  const [recoverId, setRecoverId] = useState("");
 
   async function loadProjects() {
     setLoading(true);
@@ -90,11 +93,44 @@ export default function ProjectsPage() {
         throw new Error(data?.error || "Project creation failed");
       }
 
-      // Go straight to the project page (best UX)
       window.location.href = `/projects/${data.project.id}`;
     } catch (e: any) {
       setError(e?.message || "Failed to create project");
       setCreating(false);
+    }
+  }
+
+  async function recoverProject() {
+    if (recovering) return;
+
+    const id = recoverId.trim();
+    if (!id.startsWith("proj_")) {
+      setError("Recover project: please paste a proj_… ID");
+      return;
+    }
+
+    setRecovering(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/projects/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ projectId: id }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Recover failed");
+      }
+
+      setRecoverId("");
+      await loadProjects();
+    } catch (e: any) {
+      setError(e?.message || "Recover failed");
+    } finally {
+      setRecovering(false);
     }
   }
 
@@ -139,7 +175,7 @@ export default function ProjectsPage() {
           borderRadius: 14,
           padding: 16,
           background: "white",
-          marginBottom: 16,
+          marginBottom: 12,
         }}
       >
         <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 8 }}>
@@ -176,6 +212,56 @@ export default function ProjectsPage() {
             {creating ? "Creating…" : "Create project"}
           </button>
         </div>
+      </div>
+
+      {/* Recover */}
+      <div
+        style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: 14,
+          padding: 16,
+          background: "white",
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 8 }}>
+          Recover an existing project (paste a proj_… id)
+        </div>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <input
+            value={recoverId}
+            onChange={(e) => setRecoverId(e.target.value)}
+            placeholder="proj_123…"
+            style={{
+              flex: "1 1 280px",
+              padding: "10px 12px",
+              borderRadius: 12,
+              border: "1px solid #d1d5db",
+              fontSize: 14,
+            }}
+          />
+
+          <button
+            onClick={recoverProject}
+            disabled={recovering}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 12,
+              border: "1px solid #111827",
+              background: recovering ? "#9ca3af" : "white",
+              color: "#111827",
+              fontWeight: 900,
+              cursor: recovering ? "not-allowed" : "pointer",
+            }}
+          >
+            {recovering ? "Recovering…" : "Recover project"}
+          </button>
+        </div>
+
+        <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280", fontWeight: 800 }}>
+          Tip: Open any project page once and it will auto-appear in this list.
+        </div>
 
         {error ? (
           <div style={{ marginTop: 10, color: "#991b1b", fontWeight: 900 }}>
@@ -189,7 +275,7 @@ export default function ProjectsPage() {
         <div style={{ fontWeight: 900, color: "#6b7280" }}>Loading…</div>
       ) : projects.length === 0 ? (
         <div style={{ fontWeight: 900, color: "#6b7280" }}>
-          No projects yet.
+          No projects yet. (Create one, or recover an existing proj_… id above.)
         </div>
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
@@ -220,36 +306,23 @@ export default function ProjectsPage() {
                 </div>
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {/* Published */}
                   {p.published ? (
                     <Badge text="Published" bg="#16a34a" color="white" />
                   ) : (
                     <Badge text="Unpublished" bg="#9ca3af" color="white" />
                   )}
 
-                  {/* HTML */}
                   {p.hasHtml ? (
                     <Badge text="Has HTML" bg="#111827" color="white" />
                   ) : (
                     <Badge text="No HTML" bg="#e5e7eb" color="#374151" />
                   )}
 
-                  {/* Domain */}
                   {p.domain ? (
                     p.domainStatus === "verified" ? (
-                      <Badge
-                        text={`Domain: ${p.domain}`}
-                        bg="#2563eb"
-                        color="white"
-                        title="Verified domain"
-                      />
+                      <Badge text={`Domain: ${p.domain}`} bg="#2563eb" color="white" />
                     ) : (
-                      <Badge
-                        text="Domain: Pending"
-                        bg="#f59e0b"
-                        color="white"
-                        title={p.domain}
-                      />
+                      <Badge text="Domain: Pending" bg="#f59e0b" color="white" title={p.domain} />
                     )
                   ) : (
                     <Badge text="No domain" bg="#e5e7eb" color="#374151" />
@@ -258,10 +331,7 @@ export default function ProjectsPage() {
               </div>
 
               <div style={{ marginTop: 14, display: "flex", gap: 12, flexWrap: "wrap" }}>
-                <a
-                  href={`/projects/${p.id}`}
-                  style={{ color: "#2563eb", fontWeight: 900 }}
-                >
+                <a href={`/projects/${p.id}`} style={{ color: "#2563eb", fontWeight: 900 }}>
                   Open project →
                 </a>
 
