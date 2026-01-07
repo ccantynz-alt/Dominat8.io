@@ -1,16 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ProjectBadges from "./ProjectBadges";
 
 type ProjectRow = {
   id: string;
   name: string;
   createdAt?: string | null;
+
   published: boolean;
+  hasHtml: boolean;
+
   domain?: string | null;
   domainStatus?: "pending" | "verified" | null;
 };
+
+function Badge({
+  text,
+  bg,
+  color,
+  title,
+}: {
+  text: string;
+  bg: string;
+  color: string;
+  title?: string;
+}) {
+  return (
+    <span
+      title={title}
+      style={{
+        padding: "6px 10px",
+        borderRadius: 999,
+        fontSize: 12,
+        fontWeight: 900,
+        background: bg,
+        color,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+      }}
+    >
+      {text}
+    </span>
+  );
+}
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectRow[]>([]);
@@ -41,7 +74,6 @@ export default function ProjectsPage() {
 
   async function createProject() {
     if (creating) return;
-
     setCreating(true);
     setError(null);
 
@@ -49,9 +81,7 @@ export default function ProjectsPage() {
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim() || "New project",
-        }),
+        body: JSON.stringify({ name: name.trim() || "New project" }),
       });
 
       const data = await res.json();
@@ -60,7 +90,7 @@ export default function ProjectsPage() {
         throw new Error(data?.error || "Project creation failed");
       }
 
-      // ✅ IMMEDIATELY GO TO THE PROJECT PAGE
+      // Go straight to the project page (best UX)
       window.location.href = `/projects/${data.project.id}`;
     } catch (e: any) {
       setError(e?.message || "Failed to create project");
@@ -73,22 +103,46 @@ export default function ProjectsPage() {
   }, []);
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16 }}>
-        Projects
-      </h1>
+    <div style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+          marginBottom: 14,
+        }}
+      >
+        <h1 style={{ fontSize: 28, fontWeight: 900, margin: 0 }}>Projects</h1>
 
-      {/* Create project */}
+        <button
+          onClick={loadProjects}
+          disabled={loading}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 12,
+            border: "1px solid #d1d5db",
+            background: loading ? "#f3f4f6" : "white",
+            fontWeight: 900,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+        >
+          {loading ? "Refreshing…" : "Refresh"}
+        </button>
+      </div>
+
+      {/* Create new */}
       <div
         style={{
           border: "1px solid #e5e7eb",
-          borderRadius: 12,
+          borderRadius: 14,
           padding: 16,
-          marginBottom: 20,
           background: "white",
+          marginBottom: 16,
         }}
       >
-        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 8 }}>
           Create a new project
         </div>
 
@@ -98,9 +152,9 @@ export default function ProjectsPage() {
             onChange={(e) => setName(e.target.value)}
             placeholder="Project name (optional)"
             style={{
-              flex: "1 1 260px",
+              flex: "1 1 280px",
               padding: "10px 12px",
-              borderRadius: 10,
+              borderRadius: 12,
               border: "1px solid #d1d5db",
               fontSize: 14,
             }}
@@ -111,54 +165,40 @@ export default function ProjectsPage() {
             disabled={creating}
             style={{
               padding: "10px 14px",
-              borderRadius: 10,
+              borderRadius: 12,
               border: "1px solid #111827",
               background: creating ? "#9ca3af" : "#111827",
               color: "white",
-              fontWeight: 800,
+              fontWeight: 900,
               cursor: creating ? "not-allowed" : "pointer",
             }}
           >
             {creating ? "Creating…" : "Create project"}
           </button>
-
-          <button
-            onClick={loadProjects}
-            disabled={loading}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 10,
-              border: "1px solid #d1d5db",
-              background: loading ? "#f3f4f6" : "white",
-              fontWeight: 800,
-            }}
-          >
-            Refresh
-          </button>
         </div>
 
-        {error && (
-          <div style={{ marginTop: 10, color: "#b91c1c", fontWeight: 700 }}>
+        {error ? (
+          <div style={{ marginTop: 10, color: "#991b1b", fontWeight: 900 }}>
             {error}
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* Projects list */}
+      {/* List */}
       {loading ? (
-        <div style={{ fontWeight: 700, color: "#6b7280" }}>Loading…</div>
+        <div style={{ fontWeight: 900, color: "#6b7280" }}>Loading…</div>
       ) : projects.length === 0 ? (
-        <div style={{ fontWeight: 700, color: "#6b7280" }}>
+        <div style={{ fontWeight: 900, color: "#6b7280" }}>
           No projects yet.
         </div>
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
-          {projects.map((project) => (
+          {projects.map((p) => (
             <div
-              key={project.id}
+              key={p.id}
               style={{
                 border: "1px solid #e5e7eb",
-                borderRadius: 12,
+                borderRadius: 14,
                 padding: 16,
                 background: "white",
               }}
@@ -167,45 +207,74 @@ export default function ProjectsPage() {
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "center",
+                  alignItems: "flex-start",
                   gap: 12,
                   flexWrap: "wrap",
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 900 }}>
-                    {project.name}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#6b7280" }}>
-                    {project.id}
+                  <div style={{ fontSize: 16, fontWeight: 900 }}>{p.name}</div>
+                  <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+                    {p.id}
                   </div>
                 </div>
 
-                <ProjectBadges
-                  published={project.published}
-                  domain={project.domain ?? null}
-                  domainStatus={project.domainStatus ?? null}
-                />
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {/* Published */}
+                  {p.published ? (
+                    <Badge text="Published" bg="#16a34a" color="white" />
+                  ) : (
+                    <Badge text="Unpublished" bg="#9ca3af" color="white" />
+                  )}
+
+                  {/* HTML */}
+                  {p.hasHtml ? (
+                    <Badge text="Has HTML" bg="#111827" color="white" />
+                  ) : (
+                    <Badge text="No HTML" bg="#e5e7eb" color="#374151" />
+                  )}
+
+                  {/* Domain */}
+                  {p.domain ? (
+                    p.domainStatus === "verified" ? (
+                      <Badge
+                        text={`Domain: ${p.domain}`}
+                        bg="#2563eb"
+                        color="white"
+                        title="Verified domain"
+                      />
+                    ) : (
+                      <Badge
+                        text="Domain: Pending"
+                        bg="#f59e0b"
+                        color="white"
+                        title={p.domain}
+                      />
+                    )
+                  ) : (
+                    <Badge text="No domain" bg="#e5e7eb" color="#374151" />
+                  )}
+                </div>
               </div>
 
-              <div style={{ marginTop: 12 }}>
+              <div style={{ marginTop: 14, display: "flex", gap: 12, flexWrap: "wrap" }}>
                 <a
-                  href={`/projects/${project.id}`}
-                  style={{ color: "#2563eb", fontWeight: 800 }}
+                  href={`/projects/${p.id}`}
+                  style={{ color: "#2563eb", fontWeight: 900 }}
                 >
                   Open project →
                 </a>
 
-                {project.published && (
-                  <span style={{ marginLeft: 12 }}>
-                    <a
-                      href={`/p/${project.id}`}
-                      style={{ color: "#16a34a", fontWeight: 800 }}
-                    >
-                      View public →
-                    </a>
-                  </span>
-                )}
+                {p.published ? (
+                  <a
+                    href={`/p/${p.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#16a34a", fontWeight: 900 }}
+                  >
+                    Open public →
+                  </a>
+                ) : null}
               </div>
             </div>
           ))}
