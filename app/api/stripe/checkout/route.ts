@@ -1,7 +1,7 @@
 // app/api/stripe/checkout/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { stripe } from "@/lib/stripe";
+import { stripe } from "../../../../lib/stripe";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -28,12 +28,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // ✅ KEY POINT:
-  // Put clerkUserId into BOTH:
-  // - session.metadata
-  // - customer.metadata (via customer_creation + customer_update)
-  //
-  // This guarantees we can always recover the user in webhooks.
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
@@ -41,20 +35,22 @@ export async function POST(req: Request) {
     cancel_url: `${appUrl}/billing/cancel`,
     allow_promotion_codes: true,
 
-    // Store on the session
+    // ✅ Put clerkUserId on session metadata
     metadata: {
       clerkUserId: userId,
       plan,
     },
 
-    // Ensure the created customer also gets metadata
-    customer_creation: "always",
+    // ✅ Also put clerkUserId on the subscription metadata
     subscription_data: {
       metadata: {
         clerkUserId: userId,
         plan,
       },
     },
+
+    // ✅ Ensure a customer is created (Stripe will create one for subscriptions anyway)
+    customer_creation: "always",
   });
 
   return NextResponse.json({ ok: true, url: session.url });
