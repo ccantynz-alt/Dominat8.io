@@ -1,23 +1,10 @@
 // app/api/stripe/webhook/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { stripe } from "../../../../lib/stripe";
 import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs"; // IMPORTANT for Stripe signature verification
-
-// Stripe needs the *raw* body for signature verification.
-// In Next.js App Router, Request gives you raw text via req.text().
-
-function getClerkUserIdFromEvent(event: Stripe.Event): string | null {
-  const obj: any = event.data.object;
-
-  // Try common places
-  if (obj?.metadata?.clerkUserId) return obj.metadata.clerkUserId;
-  if (obj?.subscription_details?.metadata?.clerkUserId) return obj.subscription_details.metadata.clerkUserId;
-
-  return null;
-}
 
 async function upsertSubscriptionForUser(params: {
   clerkUserId: string;
@@ -31,7 +18,6 @@ async function upsertSubscriptionForUser(params: {
 }) {
   const key = `sub:clerk:${params.clerkUserId}`;
 
-  // store a single JSON blob for the user
   await kv.set(key, {
     clerkUserId: params.clerkUserId,
     stripeCustomerId: params.stripeCustomerId ?? null,
@@ -44,7 +30,6 @@ async function upsertSubscriptionForUser(params: {
     updatedAt: new Date().toISOString(),
   });
 
-  // optional reverse index
   if (params.stripeCustomerId) {
     await kv.set(`sub:customer:${params.stripeCustomerId}`, params.clerkUserId);
   }
@@ -74,27 +59,16 @@ export async function POST(req: Request) {
   }
 
   try {
-    // We handle a few key events.
     switch (event.type) {
-      // ✅ Most important for linking:
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
         const stripeCustomerId =
           typeof session.customer === "string" ? session.customer : session.customer?.id ?? null;
 
-        // Prefer metadata on session; fallback to customer metadata if needed
-        let clerkUserId = (session.metadata?.clerkUserId as string) || null;
-
-        if (!clerkUserId && stripeCustomerId) {
-          const customer = await stripe.customers.retrieve(stripeCustomerId);
-          if (!("deleted" in customer) && customer.metadata?.clerkUserId) {
-            clerkUserId = customer.metadata.clerkUserId;
-          }
-        }
+        const clerkUserId = (session.metadata?.clerkUserId as string) || null;
 
         if (!clerkUserId) {
-          // Store something so we can debug later, but don't crash the webhook
           await kv.lpush("stripe:webhook:unlinked", {
             type: event.type,
             id: event.id,
@@ -104,15 +78,13 @@ export async function POST(req: Request) {
           break;
         }
 
-        // Make SURE customer metadata is set (belt + suspenders)
+        // ✅ Ensure customer also has clerkUserId for safety
         if (stripeCustomerId) {
           await stripe.customers.update(stripeCustomerId, {
             metadata: { clerkUserId },
           });
         }
 
-        // Save minimal "paid" info.
-        // Subscription id might not be on session in every case, so we store what we have now.
         const subId = typeof session.subscription === "string" ? session.subscription : null;
 
         await upsertSubscriptionForUser({
@@ -131,9 +103,10 @@ export async function POST(req: Request) {
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
 
-        const stripeCustomerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? null;
+        const stripeCustomerId =
+          typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? null;
 
-        // Get clerkUserId from subscription metadata, else from customer metadata
+        // Prefer subscription metadata, fallback to customer metadata
         let clerkUserId = (sub.metadata?.clerkUserId as string) || null;
 
         if (!clerkUserId && stripeCustomerId) {
@@ -154,8 +127,7 @@ export async function POST(req: Request) {
           break;
         }
 
-        const priceId =
-          sub.items.data?.[0]?.price?.id ?? null;
+        const priceId = sub.items.data?.[0]?.price?.id ?? null;
 
         await upsertSubscriptionForUser({
           clerkUserId,
@@ -171,18 +143,12 @@ export async function POST(req: Request) {
         break;
       }
 
-      default: {
-        // ignore other events
+      default:
         break;
-      }
     }
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    // Don't throw; respond 500 so Stripe retries
-    return NextResponse.json(
-      { ok: false, error: err?.message ?? "Webhook handler failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: err?.message ?? "Webhook handler failed" }, { status: 500 });
   }
 }
