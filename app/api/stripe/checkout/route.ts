@@ -12,7 +12,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
     }
 
-    // ✅ Hard checks for env vars (so we never crash silently)
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
       return NextResponse.json(
@@ -37,7 +36,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Initialize Stripe here (after checking env vars)
     const stripe = new Stripe(secretKey, {
       apiVersion: "2025-02-24.acacia",
     });
@@ -52,26 +50,23 @@ export async function POST(req: Request) {
       cancel_url: `${appUrl}/billing/cancel`,
       allow_promotion_codes: true,
 
-      // ✅ Put clerkUserId on session metadata
+      // ✅ Put clerkUserId on the session
       metadata: {
         clerkUserId: userId,
         plan,
       },
 
-      // ✅ Put clerkUserId on subscription metadata
+      // ✅ Put clerkUserId on the subscription
       subscription_data: {
         metadata: {
           clerkUserId: userId,
           plan,
         },
       },
-
-      customer_creation: "always",
     });
 
     return NextResponse.json({ ok: true, url: session.url });
   } catch (err: any) {
-    // ✅ Always return JSON so the browser doesn't get an empty body
     console.error("Stripe checkout error:", err);
     return NextResponse.json(
       { ok: false, error: err?.message ?? "Stripe checkout failed" },
