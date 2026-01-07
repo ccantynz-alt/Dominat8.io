@@ -3,9 +3,6 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { kv } from "@vercel/kv";
 
-// IMPORTANT: we do NOT use body.json() for webhooks.
-// We must verify Stripe signature using the raw body.
-
 export const runtime = "nodejs";
 
 function getStripe() {
@@ -30,25 +27,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Missing stripe-signature" }, { status: 400 });
   }
 
+  const rawBody = await req.text();
+
   let event: Stripe.Event;
 
   try {
-    const rawBody = await req.text();
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
   } catch (err: any) {
     console.error("Webhook signature verification failed:", err?.message);
     return NextResponse.json({ ok: false, error: "Invalid signature" }, { status: 400 });
   }
 
+  // ✅ Always store last webhook received (for debugging)
   try {
-    // We set this during checkout:
-    // client_reference_id = clerk userId
-    const setPro = async (clerkUserId: string, stripeCustomerId?: string | null, subId?: string | null) => {
-       try {
-    const rawBody = await req.text();
-    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
-
-    // ✅ Save last received event for debugging
     await kv.set("billing:webhook:last", {
       type: event.type,
       id: event.id,
@@ -56,22 +47,35 @@ export async function POST(req: Request) {
       livemode: event.livemode,
       receivedAt: new Date().toISOString(),
     });
-  } catch (err: any) {
-    ...
+  } catch (e) {
+    // Don't fail the webhook if debug storage fails
+    console.warn("Failed to write billing:webhook:last");
   }
 
-    const setFree = async (clerkUserId: string) => {
-      await kv.hset(`billing:user:${clerkUserId}`, {
-        plan: "free",
-        stripeSubscriptionId: "",
-        updatedAt: new Date().toISOString(),
-      });
-    };
+  // Helpers to update KV
+  const setPro = async (clerkUserId: string, stripeCustomerId?: string | null, subId?: string | null) => {
+    await kv.hset(`billing:user:${clerkUserId}`, {
+      plan: "pro",
+      stripeCustomerId: stripeCustomerId ?? "",
+      stripeSubscriptionId: subId ?? "",
+      updatedAt: new Date().toISOString(),
+    });
+  };
 
+  const setFree = async (clerkUserId: string) => {
+    await kv.hset(`billing:user:${clerkUserId}`, {
+      plan: "free",
+      stripeSubscriptionId: "",
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
+  try {
     switch (event.type) {
-      // ✅ When Checkout completes, we can mark Pro immediately
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        // We set this in checkout: client_reference_id = Clerk userId
         const clerkUserId = session.client_reference_id;
 
         if (clerkUserId) {
@@ -86,11 +90,32 @@ export async function POST(req: Request) {
         break;
       }
 
-      // ✅ Subscription cancelled or ended -> back to free
-      case "customer.subscription.deleted": {
+      case "customer.subscription.created":
+      case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
 
-        // We stored clerkUserId in metadata at checkout
+        // We set this in checkout via subscription_data.metadata
+        const clerkUserId = (sub.metadata?.clerkUserId || "") as string;
+
+        if (clerkUserId) {
+          const isActive = sub.status === "active" || sub.status === "trialing";
+          if (isActive) {
+            await setPro(
+              clerkUserId,
+              typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? null,
+              sub.id
+            );
+          } else {
+            await setFree(clerkUserId);
+          }
+        } else {
+          console.warn("subscription event missing metadata.clerkUserId");
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription;
         const clerkUserId = (sub.metadata?.clerkUserId || "") as string;
 
         if (clerkUserId) {
@@ -101,29 +126,12 @@ export async function POST(req: Request) {
         break;
       }
 
-      // Optional: keep Pro status synced when Stripe updates subscription
-      case "customer.subscription.updated":
-      case "customer.subscription.created": {
-        const sub = event.data.object as Stripe.Subscription;
-        const clerkUserId = (sub.metadata?.clerkUserId || "") as string;
-
-        if (clerkUserId) {
-          const isActive = sub.status === "active" || sub.status === "trialing";
-          if (isActive) {
-            await setPro(clerkUserId, typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? null, sub.id);
-          } else {
-            await setFree(clerkUserId);
-          }
-        }
-        break;
-      }
-
       default:
-        // ignore other events
+        // ignore
         break;
     }
 
-    return NextResponse.json({ ok: true, received: true });
+    return NextResponse.json({ ok: true });
   } catch (err: any) {
     console.error("Webhook handler error:", err);
     return NextResponse.json({ ok: false, error: "Webhook handler failed" }, { status: 500 });
