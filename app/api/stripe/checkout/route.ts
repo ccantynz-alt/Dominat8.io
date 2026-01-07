@@ -1,57 +1,81 @@
 // app/api/stripe/checkout/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { stripe } from "../../../lib/stripe";
+import Stripe from "stripe";
+
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
-  }
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
+    }
 
-  const body = await req.json().catch(() => ({}));
-  const plan = body?.plan === "pro" ? "pro" : "pro"; // keep simple for now
+    // ✅ Hard checks for env vars (so we never crash silently)
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      return NextResponse.json(
+        { ok: false, error: "Missing STRIPE_SECRET_KEY env var" },
+        { status: 500 }
+      );
+    }
 
-  const priceId = process.env.STRIPE_PRICE_PRO_MONTHLY;
-  if (!priceId) {
-    return NextResponse.json(
-      { ok: false, error: "Missing STRIPE_PRICE_PRO_MONTHLY env var" },
-      { status: 500 }
-    );
-  }
+    const priceId = process.env.STRIPE_PRICE_PRO_MONTHLY;
+    if (!priceId) {
+      return NextResponse.json(
+        { ok: false, error: "Missing STRIPE_PRICE_PRO_MONTHLY env var" },
+        { status: 500 }
+      );
+    }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) {
-    return NextResponse.json(
-      { ok: false, error: "Missing NEXT_PUBLIC_APP_URL env var" },
-      { status: 500 }
-    );
-  }
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      return NextResponse.json(
+        { ok: false, error: "Missing NEXT_PUBLIC_APP_URL env var" },
+        { status: 500 }
+      );
+    }
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/billing/cancel`,
-    allow_promotion_codes: true,
+    // ✅ Initialize Stripe here (after checking env vars)
+    const stripe = new Stripe(secretKey, {
+      apiVersion: "2025-02-24.acacia",
+    });
 
-    // ✅ Put clerkUserId on session metadata
-    metadata: {
-      clerkUserId: userId,
-      plan,
-    },
+    const body = await req.json().catch(() => ({}));
+    const plan = body?.plan === "pro" ? "pro" : "pro";
 
-    // ✅ Put clerkUserId on subscription metadata
-    subscription_data: {
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/billing/cancel`,
+      allow_promotion_codes: true,
+
+      // ✅ Put clerkUserId on session metadata
       metadata: {
         clerkUserId: userId,
         plan,
       },
-    },
 
-    // ✅ Make sure customer exists
-    customer_creation: "always",
-  });
+      // ✅ Put clerkUserId on subscription metadata
+      subscription_data: {
+        metadata: {
+          clerkUserId: userId,
+          plan,
+        },
+      },
 
-  return NextResponse.json({ ok: true, url: session.url });
+      customer_creation: "always",
+    });
+
+    return NextResponse.json({ ok: true, url: session.url });
+  } catch (err: any) {
+    // ✅ Always return JSON so the browser doesn't get an empty body
+    console.error("Stripe checkout error:", err);
+    return NextResponse.json(
+      { ok: false, error: err?.message ?? "Stripe checkout failed" },
+      { status: 500 }
+    );
+  }
 }
