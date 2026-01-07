@@ -1,4 +1,3 @@
-// /app/api/billing/webhook-health/route.ts
 import { NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 
