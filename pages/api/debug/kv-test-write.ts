@@ -5,11 +5,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const item = {
     at: new Date().toISOString(),
     note: "manual kv test write",
-    ua: req.headers["user-agent"] ?? null,
+    method: req.method,
   };
 
   await kv.lpush("stripe:webhook:received", item);
 
   return res.status(200).json({ ok: true, wroteTo: "stripe:webhook:received", item });
 }
-
