@@ -1,57 +1,42 @@
-// /app/api/billing/checkout/route.ts
+import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { stripe } from "@/app/lib/stripe";
 
 export const runtime = "nodejs";
 
-export async function POST(req: Request) {
-  try {
-    // ✅ Only await inside the handler (NOT top-level)
-    const { userId } = await auth();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+  apiVersion: "2024-06-20",
+});
 
-    if (!userId) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
+export async function POST() {
+  const { userId } = auth();
 
-    const proPriceId = process.env.STRIPE_PRO_PRICE_ID;
-    if (!proPriceId) {
-      return NextResponse.json(
-        { ok: false, error: "Missing STRIPE_PRO_PRICE_ID env var" },
-        { status: 500 }
-      );
-    }
-
-    const origin = req.headers.get("origin") ?? "http://localhost:3000";
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: proPriceId, quantity: 1 }],
-      success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/billing/cancel`,
-
-      // ✅ map Stripe -> Clerk user
-      client_reference_id: userId,
-
-      // ✅ store on subscription for later webhook events
-      subscription_data: {
-        metadata: {
-          clerkUserId: userId,
-        },
-      },
-
-      metadata: {
-        clerkUserId: userId,
-      },
-    });
-
-    return NextResponse.json({ ok: true, url: session.url });
-  } catch (err: any) {
-    console.error("Stripe checkout error:", err);
+  if (!userId) {
     return NextResponse.json(
-      { ok: false, error: err?.message ?? "Checkout failed" },
-      { status: 500 }
+      { ok: false, error: "Not authenticated" },
+      { status: 401 }
     );
   }
-}
 
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    payment_method_types: ["card"],
+
+    // 🔑 THIS IS THE KEY LINE
+    metadata: {
+      clerkUserId: userId,
+    },
+
+    line_items: [
+      {
+        price: process.env.STRIPE_PRO_PRICE_ID!,
+        quantity: 1,
+      },
+    ],
+
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?upgraded=1`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+  });
+
+  return NextResponse.json({ url: session.url });
+}
