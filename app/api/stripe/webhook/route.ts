@@ -1,7 +1,7 @@
 // app/api/stripe/webhook/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe } from "../../../../lib/stripe";
+import { stripe } from "../_lib/stripe";
 import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs"; // IMPORTANT for Stripe signature verification
