@@ -1,7 +1,7 @@
 // app/api/stripe/webhook/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe } from "../_lib/stripe";
+import { stripe } from "../../../lib/stripe";
 import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs"; // IMPORTANT for Stripe signature verification
@@ -149,6 +149,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err?.message ?? "Webhook handler failed" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: err?.message ?? "Webhook handler failed" },
+      { status: 500 }
+    );
   }
 }
