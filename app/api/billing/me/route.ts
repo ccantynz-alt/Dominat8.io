@@ -5,9 +5,14 @@ import { auth } from "@clerk/nextjs/server";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const { userId } = auth();
+  // IMPORTANT: in your Clerk version, auth() is async
+  const { userId } = await auth();
+
   if (!userId) {
-    return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "Not signed in" },
+      { status: 401 }
+    );
   }
 
   const billing = await kv.get<any>(`billing:user:${userId}`);
