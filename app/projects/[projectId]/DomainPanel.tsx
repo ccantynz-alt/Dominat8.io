@@ -1,86 +1,79 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function DomainPanel({ projectId }: { projectId: string }) {
   const [domain, setDomain] = useState("");
-  const [status, setStatus] = useState("");
-  const [message, setMessage] = useState("");
+  const [record, setRecord] = useState<any>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
-  async function load() {
-    const res = await fetch(`/api/projects/${projectId}/domain`);
-    const json = await res.json();
-    if (json.ok) {
-      setDomain(json.domain || "");
-      setStatus(json.domainStatus || "none");
-    }
-  }
+  async function startVerification() {
+    setStatus("Starting verification…");
 
-  async function save() {
-    setMessage("");
-    const res = await fetch(`/api/projects/${projectId}/domain`, {
+    const res = await fetch(`/api/projects/${projectId}/domain/verify`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ domain }),
     });
 
-    const json = await res.json();
-    if (json.ok) {
-      setStatus(json.domainStatus);
-      setMessage("Domain saved. DNS setup required.");
+    const data = await res.json();
+
+    if (!data.ok) {
+      setStatus("Failed to start verification");
+      return;
+    }
+
+    setRecord(data.record);
+    setStatus("Add the DNS record, then click Verify");
+  }
+
+  async function checkVerification() {
+    setStatus("Checking DNS…");
+
+    const res = await fetch(
+      `/api/projects/${projectId}/domain/check`,
+      { method: "POST" }
+    );
+
+    const data = await res.json();
+
+    if (data.verified) {
+      setStatus("✅ Domain verified!");
     } else {
-      setMessage(json.error || "Failed");
+      setStatus("❌ Not verified yet. Try again in 1–2 minutes.");
     }
   }
 
-  useEffect(() => {
-    load();
-  }, [projectId]);
-
   return (
-    <section
-      style={{
-        border: "1px solid #e5e5e5",
-        borderRadius: 12,
-        padding: 16,
-        marginTop: 16,
-        maxWidth: 900,
-      }}
-    >
-      <h2 style={{ margin: 0, marginBottom: 10 }}>Custom Domain</h2>
+    <section style={{ marginTop: 32 }}>
+      <h3>Domain verification</h3>
 
       <input
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
         placeholder="example.com"
-        style={{
-          padding: 10,
-          borderRadius: 10,
-          border: "1px solid #ddd",
-          width: 300,
-          marginRight: 10,
-        }}
+        style={{ width: 300, marginRight: 8 }}
       />
 
-      <button
-        onClick={save}
-        style={{
-          padding: "10px 14px",
-          borderRadius: 10,
-          border: "1px solid #ddd",
-          fontWeight: 600,
-        }}
-      >
-        Save Domain
-      </button>
+      <button onClick={startVerification}>Start</button>
 
-      <div style={{ marginTop: 10, opacity: 0.8 }}>
-        Status: <b>{status}</b>
-      </div>
+      {record && (
+        <pre style={{ marginTop: 16 }}>
+{`DNS RECORD TO ADD:
 
-      {message && (
-        <div style={{ marginTop: 8, fontSize: 14 }}>{message}</div>
+Type: ${record.type}
+Host: ${record.host}
+Value: ${record.value}`}
+        </pre>
       )}
+
+      {record && (
+        <button onClick={checkVerification} style={{ marginTop: 8 }}>
+          Verify
+        </button>
+      )}
+
+      {status && <p style={{ marginTop: 8 }}>{status}</p>}
     </section>
   );
 }
