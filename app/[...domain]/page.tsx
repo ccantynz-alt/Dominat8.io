@@ -1,4 +1,5 @@
 import { kv } from "@vercel/kv";
+import { headers } from "next/headers";
 
 export const runtime = "nodejs";
 
@@ -18,8 +19,9 @@ export default async function DomainCatchAllPage({
   // Strip port if present
   const domain = host.split(":")[0];
 
-  // Find matching project by domain
-  const index = (await kv.get<string[]>("projects:index:v2")) || [];
+  // Read the stable index
+  const index =
+    (await kv.get<string[]>("projects:index:v2")) || [];
 
   let projectId: string | null = null;
 
@@ -38,23 +40,21 @@ export default async function DomainCatchAllPage({
     return (
       <main style={{ padding: 32 }}>
         <h1>Domain not connected</h1>
-        <p>
-          This domain is not connected to any project.
-        </p>
+        <p>This domain is not connected to any project.</p>
       </main>
     );
   }
 
   const html =
-    await kv.get<string>(`generated:project:${projectId}:latest`);
+    await kv.get<string>(
+      `generated:project:${projectId}:latest`
+    );
 
   if (!html) {
     return (
       <main style={{ padding: 32 }}>
         <h1>Site not published</h1>
-        <p>
-          This project has no published site yet.
-        </p>
+        <p>This project has no published site yet.</p>
       </main>
     );
   }
