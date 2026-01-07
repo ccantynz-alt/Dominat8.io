@@ -1,7 +1,7 @@
 // app/api/stripe/checkout/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { stripe } from "../../../../lib/stripe";
+import { stripe } from "../_lib/stripe";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       plan,
     },
 
-    // ✅ Also put clerkUserId on the subscription metadata
+    // ✅ Put clerkUserId on subscription metadata
     subscription_data: {
       metadata: {
         clerkUserId: userId,
@@ -49,7 +49,6 @@ export async function POST(req: Request) {
       },
     },
 
-    // ✅ Ensure a customer is created (Stripe will create one for subscriptions anyway)
     customer_creation: "always",
   });
 
