@@ -1,197 +1,140 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-type Project = { id?: string; projectId?: string; name?: string; createdAt?: string };
+type Project = {
+  id: string;
+  name?: string | null;
+  createdAt?: string | null;
+};
 
 export default function DashboardClient() {
   const router = useRouter();
   const sp = useSearchParams();
 
-  const emptyMode = useMemo(() => sp.get("empty") === "1", [sp]);
+  // ✅ Fix: treat sp as possibly null (some typings / build modes)
+  const emptyMode = useMemo(() => {
+    const val = sp?.get("empty");
+    return val === "1";
+  }, [sp]);
 
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [name, setName] = useState("My Project");
-  const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function load() {
-    setLoading(true);
-    setErr(null);
-    try {
-      const res = await fetch("/api/projects", { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || !json?.ok) throw new Error(json?.error || "Failed to load projects");
-
-      const list: Project[] = Array.isArray(json.projects) ? json.projects : [];
-      setProjects(list);
-    } catch (e: any) {
-      setErr(e?.message || "Unknown error");
-      setProjects([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // If you already have an API route for projects, keep it.
+        // This is a safe default.
+        const res = await fetch("/api/projects", { method: "GET" });
+        const text = await res.text();
+
+        if (!res.ok) {
+          throw new Error(text || `Failed to load projects (HTTP ${res.status})`);
+        }
+
+        let data: any = null;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = null;
+        }
+
+        const list: Project[] =
+          (data?.projects as Project[]) ||
+          (Array.isArray(data) ? (data as Project[]) : []) ||
+          [];
+
+        if (!cancelled) {
+          setProjects(list);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message ?? "Failed to load");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
     load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  async function createProject() {
-    setBusy(true);
-    setErr(null);
-    try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.ok) throw new Error(json?.error || "Create failed");
-
-      const pid =
-        json?.project?.id ||
-        json?.project?.projectId ||
-        json?.projectId ||
-        json?.id;
-
-      if (!pid) throw new Error("Created project but no id returned");
-
-      router.replace(`/dashboard/projects/${pid}`);
-    } catch (e: any) {
-      setErr(e?.message || "Unknown error");
-    } finally {
-      setBusy(false);
-    }
+  if (loading) {
+    return (
+      <div style={{ padding: 24 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700 }}>Dashboard</h1>
+        <p style={{ marginTop: 8 }}>Loading…</p>
+      </div>
+    );
   }
 
-  // If NOT in empty mode and we already have projects, go to first project automatically.
-  useEffect(() => {
-    if (!emptyMode && !loading && projects.length > 0) {
-      const pid = projects[0].id || projects[0].projectId;
-      if (pid) router.replace(`/dashboard/projects/${pid}`);
-      else router.replace("/dashboard?empty=1");
-    }
-
-    if (!emptyMode && !loading && projects.length === 0) {
-      router.replace("/dashboard?empty=1");
-    }
-  }, [emptyMode, loading, projects, router]);
-
-  if (!emptyMode) {
+  if (error) {
     return (
-      <div style={{ padding: 32 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
-          Redirecting to your project…
+      <div style={{ padding: 24 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700 }}>Dashboard</h1>
+        <p style={{ marginTop: 8, color: "crimson" }}>Error: {error}</p>
+      </div>
+    );
+  }
+
+  if (emptyMode || projects.length === 0) {
+    return (
+      <div style={{ padding: 24 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700 }}>Dashboard</h1>
+        <p style={{ marginTop: 8 }}>No projects yet.</p>
+
+        <div style={{ marginTop: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <button
+            onClick={() => router.push("/projects")}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              background: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            Go to Projects
+          </button>
+
+          <button
+            onClick={() => router.push("/")}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              background: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            Back to Home
+          </button>
         </div>
-
-        {loading ? (
-          <div style={{ opacity: 0.7 }}>Loading projects…</div>
-        ) : projects.length === 0 ? (
-          <div style={{ opacity: 0.7 }}>No projects found → going to create screen.</div>
-        ) : (
-          <div style={{ opacity: 0.7 }}>Found projects → opening…</div>
-        )}
-
-        {!loading && projects.length === 0 && (
-          <div style={{ marginTop: 16 }}>
-            <button
-              onClick={() => router.replace("/dashboard?empty=1")}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                border: "1px solid #444",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Create a project
-            </button>
-          </div>
-        )}
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 32, maxWidth: 720 }}>
-      <h1 style={{ marginTop: 0 }}>Dashboard</h1>
-      <div style={{ opacity: 0.75, marginBottom: 18 }}>
-        Create your first project to start generating pages.
-      </div>
+    <div style={{ padding: 24 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 700 }}>Dashboard</h1>
+      <p style={{ marginTop: 8 }}>Your projects:</p>
 
-      <div
-        style={{
-          border: "1px solid #ddd",
-          borderRadius: 12,
-          padding: 16,
-          background: "#fff",
-        }}
-      >
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>New Project</div>
-
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={busy}
-          style={{
-            width: "100%",
-            padding: 12,
-            borderRadius: 10,
-            border: "1px solid #ccc",
-            marginBottom: 12,
-          }}
-        />
-
-        <button
-          onClick={createProject}
-          disabled={busy || !name.trim()}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "1px solid #444",
-            cursor: busy ? "not-allowed" : "pointer",
-            fontWeight: 700,
-            background: "#111",
-            color: "#fff",
-          }}
-        >
-          {busy ? "Creating…" : "Create Project"}
-        </button>
-
-        <button
-          onClick={load}
-          disabled={busy}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "1px solid #444",
-            cursor: busy ? "not-allowed" : "pointer",
-            fontWeight: 600,
-            marginLeft: 12,
-            background: "#f4f4f4",
-          }}
-        >
-          Refresh
-        </button>
-
-        {err && (
-          <pre
-            style={{
-              marginTop: 12,
-              padding: 12,
-              background: "#111",
-              color: "#fff",
-              borderRadius: 10,
-              overflow: "auto",
-            }}
-          >
-            {err}
-          </pre>
-        )}
-      </div>
+      <ul style={{ marginTop: 12, paddingLeft: 18 }}>
+        {projects.map((p) => (
+          <li key={p.id} style={{ marginBottom: 8 }}>
+            <span style={{ fontWeight: 600 }}>{p.name || p.id}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
