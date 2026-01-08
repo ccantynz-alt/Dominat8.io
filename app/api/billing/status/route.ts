@@ -4,7 +4,8 @@ import { kv } from "@vercel/kv";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const { userId } = auth();
+  // ✅ Clerk auth() is async in your version
+  const { userId } = await auth();
 
   if (!userId) {
     return Response.json({ ok: true, signedIn: false, plan: "free" });
