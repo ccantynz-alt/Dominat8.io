@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { auth } from "@clerk/nextjs/server";
 
 export const runtime = "nodejs";
 
@@ -13,31 +14,18 @@ function json(data: any, status = 200) {
 
 export async function POST(req: Request) {
   try {
-    const price = process.env.STRIPE_PRICE_PRO || "";
-    const key = process.env.STRIPE_SECRET_KEY || "";
+    const { userId } = auth();
 
-    if (!key) {
-      return json(
-        {
-          ok: false,
-          error: "Missing STRIPE_SECRET_KEY",
-          vercel_env: process.env.VERCEL_ENV || null,
-        },
-        500
-      );
+    if (!userId) {
+      return json({ ok: false, error: "Not signed in" }, 401);
     }
 
-    if (!price) {
-      return json(
-        {
-          ok: false,
-          error: "Missing STRIPE_PRICE_PRO",
-          vercel_env: process.env.VERCEL_ENV || null,
-          hint:
-            "This means the running deployment does not have STRIPE_PRICE_PRO in its environment (Production vs Preview mismatch, wrong project, or not redeployed).",
-        },
-        500
-      );
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return json({ ok: false, error: "Missing STRIPE_SECRET_KEY" }, 500);
+    }
+
+    if (!process.env.STRIPE_PRICE_PRO) {
+      return json({ ok: false, error: "Missing STRIPE_PRICE_PRO" }, 500);
     }
 
     const host = req.headers.get("host");
@@ -50,10 +38,13 @@ export async function POST(req: Request) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: [{ price, quantity: 1 }],
+      line_items: [{ price: process.env.STRIPE_PRICE_PRO, quantity: 1 }],
       success_url: `${origin}/billing?success=1`,
       cancel_url: `${origin}/billing?canceled=1`,
-      metadata: {},
+      // ✅ This is the key: link Checkout to the logged-in Clerk user
+      metadata: {
+        clerkUserId: userId,
+      },
     });
 
     return json({ ok: true, url: session.url }, 200);
@@ -62,9 +53,6 @@ export async function POST(req: Request) {
       {
         ok: false,
         error: err?.message || String(err),
-        type: err?.type,
-        code: err?.code,
-        statusCode: err?.statusCode,
       },
       500
     );
