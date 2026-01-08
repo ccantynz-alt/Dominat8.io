@@ -12,3 +12,4 @@ export const stripe = new Stripe(secretKey, {
   // Using a newer string (like "2025-02-24.acacia") will fail TypeScript at build time.
   apiVersion: "2024-06-20",
 });
+
