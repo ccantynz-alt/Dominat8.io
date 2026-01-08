@@ -37,13 +37,11 @@ async function tryMany<T>(
     try {
       const { res, text, json } = await fetchJson(t.url, t.init);
 
-      // If a mapOk is provided, allow flexible success criteria
       if (t.mapOk) {
         const mapped = t.mapOk(json);
         if (mapped) return mapped;
       }
 
-      // Otherwise, assume { ok: true } JSON
       if (json && typeof json === "object" && json.ok === true) return json as T;
 
       lastErr = `Tried ${t.url} → HTTP ${res.status} → ${json?.error || text || "Unknown error"}`;
@@ -52,21 +50,19 @@ async function tryMany<T>(
     }
   }
 
-  // Return a consistent "ok:false" shape if possible
   const fallback: any = { ok: false, error: lastErr };
   return fallback as T;
 }
 
 /**
  * CREATE PROJECT
- * We try common patterns. You can delete the ones you don't use later.
  */
 export async function apiCreateProject(): Promise<CreateProjectResponse> {
   const tries = [
     {
       url: "/api/projects",
       init: { method: "POST" },
-      mapOk: (json) => {
+      mapOk: (json: any) => {
         const projectId = json?.projectId || json?.id || json?.project?.id;
         return json?.ok === true && projectId ? { ok: true, projectId } : null;
       },
@@ -74,7 +70,7 @@ export async function apiCreateProject(): Promise<CreateProjectResponse> {
     {
       url: "/api/project",
       init: { method: "POST" },
-      mapOk: (json) => {
+      mapOk: (json: any) => {
         const projectId = json?.projectId || json?.id || json?.project?.id;
         return json?.ok === true && projectId ? { ok: true, projectId } : null;
       },
@@ -82,7 +78,7 @@ export async function apiCreateProject(): Promise<CreateProjectResponse> {
     {
       url: "/api/createProject",
       init: { method: "POST" },
-      mapOk: (json) => {
+      mapOk: (json: any) => {
         const projectId = json?.projectId || json?.id || json?.project?.id;
         return json?.ok === true && projectId ? { ok: true, projectId } : null;
       },
@@ -102,7 +98,7 @@ export async function apiGenerate(projectId: string, prompt: string): Promise<Ge
     {
       url: `/api/projects/${projectId}/generate`,
       init: { method: "POST", headers: { "content-type": "application/json" }, body },
-      mapOk: (json) => {
+      mapOk: (json: any) => {
         const runId = json?.runId || json?.id || json?.run?.id;
         return json?.ok === true && runId ? { ok: true, runId } : null;
       },
@@ -110,15 +106,19 @@ export async function apiGenerate(projectId: string, prompt: string): Promise<Ge
     {
       url: `/api/projects/${projectId}/runs`,
       init: { method: "POST", headers: { "content-type": "application/json" }, body },
-      mapOk: (json) => {
+      mapOk: (json: any) => {
         const runId = json?.runId || json?.id || json?.run?.id;
         return json?.ok === true && runId ? { ok: true, runId } : null;
       },
     },
     {
       url: `/api/generate`,
-      init: { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ projectId, prompt }) },
-      mapOk: (json) => {
+      init: {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ projectId, prompt }),
+      },
+      mapOk: (json: any) => {
         const runId = json?.runId || json?.id || json?.run?.id;
         return json?.ok === true && runId ? { ok: true, runId } : null;
       },
@@ -136,12 +136,12 @@ export async function apiRunStatus(projectId: string, runId: string): Promise<Ru
     {
       url: `/api/projects/${projectId}/runs/${runId}`,
       init: { method: "GET" },
-      mapOk: (json) => (json?.ok === true && json?.run ? (json as RunStatusResponse) : null),
+      mapOk: (json: any) => (json?.ok === true && json?.run ? (json as RunStatusResponse) : null),
     },
     {
       url: `/api/runs/${runId}`,
       init: { method: "GET" },
-      mapOk: (json) => {
+      mapOk: (json: any) => {
         if (json?.ok !== true) return null;
         const run = json?.run || json;
         if (!run?.id || !run?.status) return null;
@@ -161,20 +161,22 @@ export async function apiGetLatestHtml(projectId: string): Promise<HtmlResponse>
     {
       url: `/api/projects/${projectId}/html`,
       init: { method: "GET" },
-      mapOk: (json) => (json?.ok === true && typeof json?.html === "string" ? (json as HtmlResponse) : null),
+      mapOk: (json: any) =>
+        json?.ok === true && typeof json?.html === "string" ? (json as HtmlResponse) : null,
     },
     {
       url: `/api/projects/${projectId}`,
       init: { method: "GET" },
-      mapOk: (json) => {
+      mapOk: (json: any) => {
         const html = json?.html || json?.generatedHtml || json?.project?.html;
-        return html ? { ok: true, html } : null;
+        return typeof html === "string" && html.length > 0 ? { ok: true, html } : null;
       },
     },
     {
       url: `/api/html?projectId=${encodeURIComponent(projectId)}`,
       init: { method: "GET" },
-      mapOk: (json) => (json?.ok === true && typeof json?.html === "string" ? (json as HtmlResponse) : null),
+      mapOk: (json: any) =>
+        json?.ok === true && typeof json?.html === "string" ? (json as HtmlResponse) : null,
     },
   ];
 
@@ -183,14 +185,13 @@ export async function apiGetLatestHtml(projectId: string): Promise<HtmlResponse>
 
 /**
  * PUBLISH
- * You said you already have /api/projects/:projectId/publish, so we try that first.
  */
 export async function apiPublish(projectId: string): Promise<PublishResponse> {
   const tries = [
     {
       url: `/api/projects/${projectId}/publish`,
       init: { method: "POST" },
-      mapOk: (json) => {
+      mapOk: (json: any) => {
         if (json?.ok !== true) return null;
         const url = json?.url || json?.publicUrl || json?.liveUrl;
         return { ok: true, url };
@@ -198,8 +199,12 @@ export async function apiPublish(projectId: string): Promise<PublishResponse> {
     },
     {
       url: `/api/publish`,
-      init: { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ projectId }) },
-      mapOk: (json) => {
+      init: {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ projectId }),
+      },
+      mapOk: (json: any) => {
         if (json?.ok !== true) return null;
         const url = json?.url || json?.publicUrl || json?.liveUrl;
         return { ok: true, url };
@@ -209,4 +214,3 @@ export async function apiPublish(projectId: string): Promise<PublishResponse> {
 
   return tryMany<PublishResponse>(tries);
 }
-
