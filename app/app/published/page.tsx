@@ -1,25 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 export default function PublishedPage() {
   const sp = useSearchParams();
 
-  // ✅ Fix: sp can be typed as possibly null in some build setups
+  // ✅ build-safe: sp can be typed as null in your environment
   const projectId = sp?.get("projectId") ?? "";
   const urlFromApi = sp?.get("url") ?? "";
 
-  // ✅ IMPORTANT: avoid using window.location directly during render (can bite builds)
-  // Instead, create a relative fallback URL that always works.
-  const livePath = projectId ? `/p/${projectId}` : "";
-
-  const liveUrl = useMemo(() => {
-    // Prefer URL returned by API if present
-    if (urlFromApi) return urlFromApi;
-    // Otherwise use relative path (safe)
-    return livePath;
-  }, [urlFromApi, livePath]);
+  // ✅ build-safe fallback: always works even without origin
+  const liveUrl = urlFromApi || (projectId ? `/p/${projectId}` : "");
 
   const [copied, setCopied] = useState(false);
 
@@ -37,7 +29,14 @@ export default function PublishedPage() {
         Your website has been successfully published and is now accessible online.
       </p>
 
-      <div style={{ marginTop: 18, padding: 14, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 12 }}>
+      <div
+        style={{
+          marginTop: 18,
+          padding: 14,
+          border: "1px solid rgba(0,0,0,0.12)",
+          borderRadius: 12,
+        }}
+      >
         <div style={{ fontSize: 14, opacity: 0.7 }}>Your live website:</div>
         <div style={{ marginTop: 6, fontSize: 16, wordBreak: "break-all" }}>
           {liveUrl || "Missing projectId. Please go back and publish again."}
@@ -79,7 +78,14 @@ export default function PublishedPage() {
       </div>
 
       <div style={{ marginTop: 18, opacity: 0.75 }}>
-        <button disabled style={{ padding: "10px 14px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)" }}>
+        <button
+          disabled
+          style={{
+            padding: "10px 14px",
+            borderRadius: 12,
+            border: "1px solid rgba(0,0,0,0.15)",
+          }}
+        >
           Connect Custom Domain (Pro)
         </button>
       </div>
