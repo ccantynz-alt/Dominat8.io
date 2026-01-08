@@ -14,9 +14,8 @@ export async function GET() {
     );
   }
 
-  // Get project IDs for this user
-  const ids =
-    (await kv.smembers<string>(`projects:ids:${userId}`)) ?? [];
+  // Get project IDs for this user (KV set members)
+  const ids = (await kv.smembers<string[]>(`projects:ids:${userId}`)) ?? [];
 
   if (ids.length === 0) {
     return NextResponse.json({
@@ -33,7 +32,7 @@ export async function GET() {
   // Filter nulls and sort newest first
   const clean = projects
     .filter(Boolean)
-    .sort((a: any, b: any) => b.createdAt - a.createdAt);
+    .sort((a: any, b: any) => (b?.createdAt ?? 0) - (a?.createdAt ?? 0));
 
   return NextResponse.json({
     ok: true,
