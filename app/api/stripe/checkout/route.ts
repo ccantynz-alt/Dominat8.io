@@ -1,75 +1,63 @@
-// app/api/stripe/checkout/route.ts
-import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import Stripe from "stripe";
+import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
+import { auth } from '@clerk/nextjs/server';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
+
+function getBaseUrl(req: Request) {
+  // Works on Vercel + local
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+  const proto = req.headers.get('x-forwarded-proto') || 'https';
+  if (!host) return 'http://localhost:3000';
+  return `${proto}://${host}`;
+}
 
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
+
     if (!userId) {
-      return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: 'Not signed in' }, { status: 401 });
     }
 
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-    if (!secretKey) {
-      return NextResponse.json(
-        { ok: false, error: "Missing STRIPE_SECRET_KEY env var" },
-        { status: 500 }
-      );
-    }
+    const priceId = process.env.STRIPE_PRICE_PRO;
+    const stripeSecret = process.env.STRIPE_SECRET_KEY;
 
-    const priceId = process.env.STRIPE_PRICE_PRO_MONTHLY;
+    if (!stripeSecret) {
+      return NextResponse.json({ ok: false, error: 'Missing STRIPE_SECRET_KEY' }, { status: 500 });
+    }
     if (!priceId) {
-      return NextResponse.json(
-        { ok: false, error: "Missing STRIPE_PRICE_PRO_MONTHLY env var" },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: 'Missing STRIPE_PRICE_PRO' }, { status: 500 });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (!appUrl) {
-      return NextResponse.json(
-        { ok: false, error: "Missing NEXT_PUBLIC_APP_URL env var" },
-        { status: 500 }
-      );
-    }
-
-    const stripe = new Stripe(secretKey, {
-      apiVersion: "2025-02-24.acacia",
+    const stripe = new Stripe(stripeSecret, {
+      apiVersion: '2024-06-20',
     });
 
-    const body = await req.json().catch(() => ({}));
-    const plan = body?.plan === "pro" ? "pro" : "pro";
+    const baseUrl = getBaseUrl(req);
 
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+      mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/billing/cancel`,
-      allow_promotion_codes: true,
 
-      // ✅ Put clerkUserId on the session
+      // IMPORTANT: tie Stripe activity to the Clerk user
+      client_reference_id: userId,
       metadata: {
         clerkUserId: userId,
-        plan,
       },
 
-      // ✅ Put clerkUserId on the subscription
-      subscription_data: {
-        metadata: {
-          clerkUserId: userId,
-          plan,
-        },
-      },
+      success_url: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/pricing?canceled=1`,
     });
+
+    if (!session.url) {
+      return NextResponse.json({ ok: false, error: 'Stripe did not return a checkout URL' }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true, url: session.url });
   } catch (err: any) {
-    console.error("Stripe checkout error:", err);
     return NextResponse.json(
-      { ok: false, error: err?.message ?? "Stripe checkout failed" },
+      { ok: false, error: err?.message || 'Checkout error' },
       { status: 500 }
     );
   }
