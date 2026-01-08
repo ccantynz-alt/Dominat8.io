@@ -1,12 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+import "./globals.css";
+import React from "react";
 
-/* Optional: a couple of safe defaults */
-html, body {
-  height: 100%;
-}
+export const metadata = {
+  title: "my-saas-app",
+  description: "AI Website Builder",
+};
 
-body {
-  margin: 0;
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
 }
