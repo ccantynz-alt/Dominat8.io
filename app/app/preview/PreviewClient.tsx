@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiGetLatestHtml, apiPublish, apiGenerate } from "@/lib/customerFlowApi";
+import { apiPublish, apiGenerate } from "@/lib/customerFlowApi";
+
+function keyPrompt(projectId: string) {
+  return `prompt:${projectId}`;
+}
+function keyHtml(projectId: string) {
+  return `html:${projectId}`;
+}
 
 export default function PreviewClient() {
   const router = useRouter();
@@ -16,28 +23,21 @@ export default function PreviewClient() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    async function load() {
-      if (!projectId) {
-        setErr("Missing projectId. Go back and try again.");
-        setLoading(false);
-        return;
-      }
-
-      setErr(null);
-      setLoading(true);
-
-      try {
-        const data = await apiGetLatestHtml(projectId);
-        if (!data.ok || !data.html) throw new Error(data.error || "No generated website HTML found");
-        setHtml(data.html);
-      } catch (e: any) {
-        setErr(e?.message || "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
+    if (!projectId) {
+      setErr("Missing projectId. Go back and try again.");
+      setLoading(false);
+      return;
     }
 
-    load();
+    const stored = sessionStorage.getItem(keyHtml(projectId)) || "";
+    if (!stored) {
+      setErr("No generated HTML found in this session. Please regenerate.");
+      setLoading(false);
+      return;
+    }
+
+    setHtml(stored);
+    setLoading(false);
   }, [projectId]);
 
   async function onPublish() {
@@ -68,16 +68,15 @@ export default function PreviewClient() {
     setLoading(true);
 
     try {
-      const prompt =
-        "Create a professional business website with a hero section, services, testimonials, about, and contact page. Clean, modern design.";
-      const data = await apiGenerate(projectId, prompt);
-      if (!data.ok || !data.runId) throw new Error(data.error || "Failed to start regeneration");
+      const prompt = sessionStorage.getItem(keyPrompt(projectId)) || "";
+      if (!prompt) throw new Error("Missing prompt. Go back and try again.");
 
-      router.push(
-        `/app/generate?projectId=${encodeURIComponent(projectId)}&runId=${encodeURIComponent(
-          data.runId
-        )}`
-      );
+      const data = await apiGenerate(projectId, prompt);
+      if (!data.ok || !data.html) throw new Error(data.error || "Regenerate failed");
+
+      sessionStorage.setItem(keyHtml(projectId), data.html);
+      setHtml(data.html);
+      setLoading(false);
     } catch (e: any) {
       setErr(e?.message || "Something went wrong");
       setLoading(false);
@@ -88,7 +87,7 @@ export default function PreviewClient() {
     <div style={{ maxWidth: 1100, margin: "40px auto", padding: 24 }}>
       <h1 style={{ fontSize: 34, margin: 0 }}>Here’s your website</h1>
       <p style={{ fontSize: 16, opacity: 0.75, marginTop: 10 }}>
-        You can publish this instantly or regenerate if you want changes.
+        Preview it below. Publish when you’re ready.
       </p>
 
       <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
