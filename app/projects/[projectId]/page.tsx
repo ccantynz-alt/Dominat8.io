@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { fetchProject, Project } from "../../../lib/project-client";
+import { fetchProject, Project } from "../../lib/project-client";
 
 export default function ProjectDetailsPage() {
   const params = useParams();
@@ -133,7 +133,6 @@ export default function ProjectDetailsPage() {
         </div>
       </div>
 
-      {/* Placeholder */}
       <div className="mt-10 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
         <p className="text-sm text-gray-600">
           Website versions, generation history, and publishing controls will appear here.
