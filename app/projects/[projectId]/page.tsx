@@ -63,7 +63,9 @@ export default function ProjectDetailsPage() {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {project.name}
+          </h1>
           <p className="mt-2 text-sm text-gray-600">
             Project ID: <span className="font-mono">{project.id}</span>
           </p>
@@ -86,15 +88,19 @@ export default function ProjectDetailsPage() {
         </div>
       </div>
 
-      {/* Project info */}
+      {/* Project overview */}
       <div className="mt-8 grid gap-6 sm:grid-cols-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:col-span-2">
-          <h2 className="text-lg font-semibold text-gray-900">Project overview</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Project overview
+          </h2>
 
           <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <dt className="text-sm text-gray-500">Name</dt>
-              <dd className="text-sm font-medium text-gray-900">{project.name}</dd>
+              <dd className="text-sm font-medium text-gray-900">
+                {project.name}
+              </dd>
             </div>
 
             <div>
@@ -108,7 +114,9 @@ export default function ProjectDetailsPage() {
 
         {/* Next steps */}
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
-          <h3 className="text-sm font-semibold text-gray-900">Next steps</h3>
+          <h3 className="text-sm font-semibold text-gray-900">
+            Next steps
+          </h3>
 
           <ol className="mt-3 list-decimal pl-5 text-sm text-gray-700">
             <li>Generate a website using AI</li>
@@ -125,6 +133,7 @@ export default function ProjectDetailsPage() {
         </div>
       </div>
 
+      {/* Placeholder */}
       <div className="mt-10 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
         <p className="text-sm text-gray-600">
           Website versions, generation history, and publishing controls will appear here.
