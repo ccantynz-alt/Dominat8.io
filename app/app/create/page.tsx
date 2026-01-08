@@ -1,13 +1,15 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { apiGenerate } from "@/lib/customerFlowApi";
 
 export default function CreateWebsitePage() {
   const router = useRouter();
   const sp = useSearchParams();
-  const projectId = useMemo(() => sp.get("projectId") || "", [sp]);
+
+  // ✅ Fix: sp can be typed as possibly null in some build setups
+  const projectId = sp?.get("projectId") ?? "";
 
   const [prompt, setPrompt] = useState(
     "Create a professional business website with a hero section, services, testimonials, about, and contact page. Clean, modern design."
@@ -28,7 +30,9 @@ export default function CreateWebsitePage() {
       if (!data.ok || !data.runId) throw new Error(data.error || "Failed to start generation");
 
       router.push(
-        `/app/generate?projectId=${encodeURIComponent(projectId)}&runId=${encodeURIComponent(data.runId)}`
+        `/app/generate?projectId=${encodeURIComponent(projectId)}&runId=${encodeURIComponent(
+          data.runId
+        )}`
       );
     } catch (e: any) {
       setErr(e?.message || "Something went wrong");
