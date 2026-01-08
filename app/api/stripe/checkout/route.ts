@@ -1,63 +1,64 @@
-import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { auth } from '@clerk/nextjs/server';
-
-export const runtime = 'nodejs';
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { stripe } from "../_lib/stripe";
 
 function getBaseUrl(req: Request) {
-  // Works on Vercel + local
-  const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-  const proto = req.headers.get('x-forwarded-proto') || 'https';
-  if (!host) return 'http://localhost:3000';
-  return `${proto}://${host}`;
+  const url = new URL(req.url);
+
+  // If you have a custom domain, Vercel may pass x-forwarded-host.
+  // Otherwise, fall back to the request URL host.
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const forwardedProto = req.headers.get("x-forwarded-proto") || "https";
+
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  return `${url.protocol}//${url.host}`;
 }
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await auth();
-
+    const { userId } = auth();
     if (!userId) {
-      return NextResponse.json({ ok: false, error: 'Not signed in' }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const priceId = process.env.STRIPE_PRICE_PRO;
-    const stripeSecret = process.env.STRIPE_SECRET_KEY;
+    // Optional body fields (safe defaults)
+    const body = await req.json().catch(() => ({} as any));
+    const priceId = body?.priceId as string | undefined;
 
-    if (!stripeSecret) {
-      return NextResponse.json({ ok: false, error: 'Missing STRIPE_SECRET_KEY' }, { status: 500 });
-    }
-    if (!priceId) {
-      return NextResponse.json({ ok: false, error: 'Missing STRIPE_PRICE_PRO' }, { status: 500 });
-    }
+    // You should set STRIPE_PRICE_ID_PRO in Vercel env.
+    const envPriceId = process.env.STRIPE_PRICE_ID_PRO;
 
-    const stripe = new Stripe(stripeSecret, {
-      // IMPORTANT: this must match the Stripe package types installed in your repo
-      // Your build error showed it expects: "2025-02-24.acacia"
-      apiVersion: '2025-02-24.acacia',
-    });
+    const finalPriceId = priceId || envPriceId;
+    if (!finalPriceId) {
+      return NextResponse.json(
+        { ok: false, error: "Missing Stripe price id. Set STRIPE_PRICE_ID_PRO in env or pass { priceId }." },
+        { status: 400 }
+      );
+    }
 
     const baseUrl = getBaseUrl(req);
 
+    // Create a Stripe Checkout Session for a subscription.
+    // Clerk userId is stored in metadata so the webhook can map Stripe -> Clerk.
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      line_items: [{ price: priceId, quantity: 1 }],
-
-      // Tie Stripe activity to Clerk user
-      client_reference_id: userId,
+      mode: "subscription",
+      line_items: [{ price: finalPriceId, quantity: 1 }],
+      success_url: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/pricing?canceled=1`,
       metadata: {
         clerkUserId: userId,
       },
-
-      success_url: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/pricing?canceled=1`,
     });
 
-    if (!session.url) {
-      return NextResponse.json({ ok: false, error: 'Stripe did not return a checkout URL' }, { status: 500 });
-    }
-
-    return NextResponse.json({ ok: true, url: session.url });
+    return NextResponse.json({ ok: true, url: session.url }, { status: 200 });
   } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err?.message || 'Checkout error' }, { status: 500 });
+    console.error("Stripe checkout error:", err);
+    return NextResponse.json(
+      { ok: false, error: err?.message || "Stripe checkout failed" },
+      { status: 500 }
+    );
   }
 }
