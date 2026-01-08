@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { fetchProject, Project } from "../../lib/project-client";
+import { fetchProject, Project } from "./project-client";
 
 export default function ProjectDetailsPage() {
   const params = useParams();
