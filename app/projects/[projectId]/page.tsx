@@ -4,7 +4,20 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { fetchProject, Project } from "./project-client";
+
+type Project = {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: number;
+};
+
+async function fetchProject(projectId: string): Promise<Project | null> {
+  const res = await fetch(`/api/projects/${projectId}`);
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json?.project ?? null;
+}
 
 export default function ProjectDetailsPage() {
   const params = useParams();
@@ -63,9 +76,7 @@ export default function ProjectDetailsPage() {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {project.name}
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
           <p className="mt-2 text-sm text-gray-600">
             Project ID: <span className="font-mono">{project.id}</span>
           </p>
@@ -114,9 +125,7 @@ export default function ProjectDetailsPage() {
 
         {/* Next steps */}
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
-          <h3 className="text-sm font-semibold text-gray-900">
-            Next steps
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-900">Next steps</h3>
 
           <ol className="mt-3 list-decimal pl-5 text-sm text-gray-700">
             <li>Generate a website using AI</li>
@@ -135,7 +144,8 @@ export default function ProjectDetailsPage() {
 
       <div className="mt-10 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
         <p className="text-sm text-gray-600">
-          Website versions, generation history, and publishing controls will appear here.
+          Website versions, generation history, and publishing controls will
+          appear here.
         </p>
       </div>
     </div>
