@@ -1,22 +1,25 @@
-// /middleware.ts
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isPublicRoute = createRouteMatcher([
-  "/",
+  "/",                // landing
+  "/pricing(.*)",     // pricing page + subroutes
+  "/api/stripe/webhook", // Stripe webhook must be public
+  "/p(.*)",           // public published sites (future)
   "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/p/(.*)",
-  "/billing/success",
-  "/billing/cancel",
-  "/api/billing/webhook(.*)",
+  "/sign-up(.*)"
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
+export default clerkMiddleware((auth, req) => {
+  // If the request is NOT public, enforce authentication.
   if (!isPublicRoute(req)) {
-    await auth.protect();
+    auth().protect();
   }
 });
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    // Run middleware on all routes except Next.js internals and static files.
+    "/((?!_next|.*\\.(?:css|js|json|png|jpg|jpeg|gif|svg|ico|webp|txt|map)$).*)",
+    "/(api|trpc)(.*)"
+  ]
 };
