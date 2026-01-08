@@ -17,9 +17,9 @@ export async function GET(
     );
   }
 
-  const projectId = ctx.params.projectId;
+  const projectId = ctx.params?.projectId;
 
-  if (!projectId || typeof projectId !== "string") {
+  if (!projectId) {
     return NextResponse.json(
       { ok: false, error: "Missing projectId" },
       { status: 400 }
@@ -30,4 +30,19 @@ export async function GET(
 
   if (!project) {
     return NextResponse.json(
-      { ok: false, error
+      { ok: false, error: "Project not found" },
+      { status: 404 }
+    );
+  }
+
+  // Security: only owner can read it
+  if (project.userId !== userId) {
+    return NextResponse.json(
+      { ok: false, error: "Forbidden" },
+      { status: 403 }
+    );
+  }
+
+  return NextResponse.json({ ok: true, project });
+}
+
