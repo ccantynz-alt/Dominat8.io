@@ -1,10 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+type Status = {
+  ok: boolean;
+  signedIn: boolean;
+  plan: "free" | "pro" | string;
+};
 
 export default function BillingPage() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string>("");
+  const [status, setStatus] = useState<Status | null>(null);
+
+  async function refreshStatus() {
+    const res = await fetch("/api/billing/status", { method: "GET" });
+    const data = await res.json();
+    setStatus(data);
+  }
+
+  useEffect(() => {
+    refreshStatus().catch(() => {});
+  }, []);
 
   async function handleUpgrade() {
     setLoading(true);
@@ -17,10 +34,8 @@ export default function BillingPage() {
         body: JSON.stringify({}),
       });
 
-      // Always read text first (prevents "Unexpected end of JSON input")
       const text = await res.text();
 
-      // Try to parse JSON, but don’t crash if it isn’t JSON
       let data: any = null;
       try {
         data = text ? JSON.parse(text) : null;
@@ -29,21 +44,14 @@ export default function BillingPage() {
       }
 
       if (!res.ok) {
-        const errMsg =
-          (data && (data.error || data.message)) ||
-          text ||
-          `Request failed (${res.status})`;
-        setMsg(errMsg);
+        setMsg((data && (data.error || data.message)) || text || `Request failed (${res.status})`);
         setLoading(false);
         return;
       }
 
-      // Expected JSON shape: { ok: true, url: "https://checkout.stripe.com/..." }
       const url = data?.url;
-      if (!url || typeof url !== "string") {
-        setMsg(
-          "Checkout API did not return a redirect URL. Open DevTools → Network and check /api/billing/checkout response."
-        );
+      if (!url) {
+        setMsg("Checkout API did not return a URL.");
         setLoading(false);
         return;
       }
@@ -56,37 +64,62 @@ export default function BillingPage() {
     }
   }
 
+  const planLabel = status?.plan === "pro" ? "Pro ✅" : "Free";
+
   return (
     <div style={{ padding: 24, maxWidth: 720 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
-        Billing
-      </h1>
-      <p style={{ marginBottom: 16 }}>
-        Upgrade to Pro to unlock higher limits.
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Billing</h1>
+
+      <p style={{ marginBottom: 12 }}>
+        Current plan: <b>{planLabel}</b>
       </p>
 
-      <button
-        onClick={handleUpgrade}
-        disabled={loading}
-        style={{
-          width: "100%",
-          padding: "12px 16px",
-          borderRadius: 10,
-          border: "1px solid #ddd",
-          background: loading ? "#f5f5f5" : "white",
-          cursor: loading ? "not-allowed" : "pointer",
-          fontWeight: 600,
-        }}
-      >
-        {loading ? "Opening Stripe Checkout..." : "Upgrade to Pro"}
-      </button>
+      <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+        <button
+          onClick={() => refreshStatus()}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1px solid #ddd",
+            background: "white",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          Refresh status
+        </button>
+
+        {status?.plan !== "pro" ? (
+          <button
+            onClick={handleUpgrade}
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              background: loading ? "#f5f5f5" : "white",
+              cursor: loading ? "not-allowed" : "pointer",
+              fontWeight: 700,
+            }}
+          >
+            {loading ? "Opening Stripe Checkout..." : "Upgrade to Pro"}
+          </button>
+        ) : (
+          <div style={{ flex: 1, padding: "10px 14px" }}>
+            You’re already Pro.
+          </div>
+        )}
+      </div>
 
       {msg ? (
-        <div style={{ marginTop: 12, color: "crimson", whiteSpace: "pre-wrap" }}>
-          {msg}
-        </div>
+        <div style={{ marginTop: 12, color: "crimson", whiteSpace: "pre-wrap" }}>{msg}</div>
       ) : null}
+
+      <div style={{ marginTop: 18, fontSize: 13, color: "#666" }}>
+        Tip: After you complete Checkout, Stripe must deliver <code>checkout.session.completed</code> to your webhook.
+        Then click “Refresh status” to see Pro.
+      </div>
     </div>
   );
 }
-
