@@ -1,17 +1,33 @@
-import { NextResponse } from "next/server";
-import { kvNowISO } from "../../../lib/kv";
-import { getCurrentUserId } from "../../../lib/demoAuth";
+// app/api/projects/[projectId]/route.ts
 
-export const runtime = "nodejs";
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { kv } from "@vercel/kv";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { projectId: string } }
+  ctx: { params: { projectId: string } }
 ) {
-  return NextResponse.json({
-    ok: true,
-    userId: await getCurrentUserId(),
-    projectId: params.projectId,
-    ts: kvNowISO()
-  });
-}
+  const { userId } = await auth();
+
+  if (!userId) {
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  const projectId = ctx.params.projectId;
+
+  if (!projectId || typeof projectId !== "string") {
+    return NextResponse.json(
+      { ok: false, error: "Missing projectId" },
+      { status: 400 }
+    );
+  }
+
+  const project = await kv.get<any>(`project:${projectId}`);
+
+  if (!project) {
+    return NextResponse.json(
+      { ok: false, error
