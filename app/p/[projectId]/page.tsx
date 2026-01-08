@@ -1,11 +1,13 @@
-import { getPublishedHtml } from "@/lib/publishedStore";
+import { kv } from "@vercel/kv";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export default async function PublicPage({ params }: { params: { projectId: string } }) {
-  const record = getPublishedHtml(params.projectId);
+  const key = `published:${params.projectId}`;
+  const html = (await kv.get<string>(key)) || "";
 
-  if (!record?.html) {
+  if (!html) {
     return (
       <main style={{ padding: 32, fontFamily: "system-ui" }}>
         <h1>Not published</h1>
@@ -16,11 +18,7 @@ export default async function PublicPage({ params }: { params: { projectId: stri
 
   return (
     <main style={{ margin: 0, padding: 0 }}>
-      <iframe
-        title="site"
-        srcDoc={record.html}
-        style={{ width: "100%", height: "100vh", border: 0 }}
-      />
+      <iframe title="site" srcDoc={html} style={{ width: "100%", height: "100vh", border: 0 }} />
     </main>
   );
 }
