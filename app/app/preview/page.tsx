@@ -7,7 +7,7 @@ import { apiGetLatestHtml, apiPublish, apiGenerate } from "@/lib/customerFlowApi
 export default function PreviewPage() {
   const router = useRouter();
   const sp = useSearchParams();
-  const projectId = useMemo(() => sp.get("projectId") || "", [sp]);
+  const projectId = sp?.get("projectId") ?? "";
 
   const [html, setHtml] = useState<string>("");
   const [loading, setLoading] = useState(true);
