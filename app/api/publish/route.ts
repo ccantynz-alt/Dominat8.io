@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { savePublishedHtml } from "@/lib/publishedStore";
+import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs";
 
@@ -21,7 +21,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Missing html" }, { status: 400 });
   }
 
-  savePublishedHtml(projectId, html);
+  // Persist publish data in KV so it works across serverless instances
+  const key = `published:${projectId}`;
+  await kv.set(key, html);
+
+  // optional: keep an index pointer
+  await kv.set(`published:latest:${projectId}`, Date.now());
 
   return NextResponse.json({ ok: true, url: `/p/${projectId}` });
 }
