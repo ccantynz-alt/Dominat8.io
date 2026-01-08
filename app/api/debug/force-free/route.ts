@@ -1,4 +1,4 @@
-// app/api/debug/force-free/route.ts
+// app/api/debug/force-pro/route.ts
 
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
@@ -6,7 +6,6 @@ import { kv } from "@vercel/kv";
 import { isAdminUser } from "@/app/lib/admin";
 
 export async function GET() {
-  // Still useful for checking it's deployed, but now admin-only.
   const { userId } = await auth();
 
   if (!userId) {
@@ -26,9 +25,9 @@ export async function GET() {
 
   return NextResponse.json({
     ok: true,
-    route: "/api/debug/force-free",
+    route: "/api/debug/force-pro",
     methods: ["GET", "POST"],
-    note: "POST will set your plan to free in KV (admin-only).",
+    note: "POST will set your plan to pro in KV (admin-only).",
   });
 }
 
@@ -51,12 +50,12 @@ export async function POST() {
   }
 
   const key = `plan:clerk:${userId}`;
-  await kv.set(key, "free");
+  await kv.set(key, "pro");
 
   return NextResponse.json({
     ok: true,
     userId,
     set: key,
-    value: "free",
+    value: "pro",
   });
 }
