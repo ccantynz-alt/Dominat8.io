@@ -14,7 +14,8 @@ function json(data: any, status = 200) {
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
+    // ✅ Clerk auth() is async in your version, so we MUST await it
+    const { userId } = await auth();
 
     if (!userId) {
       return json({ ok: false, error: "Not signed in" }, 401);
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       line_items: [{ price: process.env.STRIPE_PRICE_PRO, quantity: 1 }],
       success_url: `${origin}/billing?success=1`,
       cancel_url: `${origin}/billing?canceled=1`,
-      // ✅ This is the key: link Checkout to the logged-in Clerk user
+      // ✅ Link this checkout to the logged-in Clerk user
       metadata: {
         clerkUserId: userId,
       },
