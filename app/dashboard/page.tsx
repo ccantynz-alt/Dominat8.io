@@ -3,7 +3,7 @@ import UpgradeBanner from "@/app/components/UpgradeBanner";
 export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6">
-      <UpgradeBanner isPro={false} />
+      <UpgradeBanner />
 
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
