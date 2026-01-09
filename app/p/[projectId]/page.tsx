@@ -1,25 +1,36 @@
+// app/p/[projectId]/page.tsx
+import { notFound } from "next/navigation";
 import { kv } from "@vercel/kv";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
-export default async function PublicPage({ params }: { params: { projectId: string } }) {
-  const key = `published:${params.projectId}`;
-  const html = (await kv.get<string>(key)) || "";
+export default async function PublicProjectPage({
+  params,
+}: {
+  params: { projectId: string };
+}) {
+  const projectId = params.projectId;
 
-  if (!html) {
-    return (
-      <main style={{ padding: 32, fontFamily: "system-ui" }}>
-        <h1>Not published</h1>
-        <p>This project isn’t published yet (or no HTML exists).</p>
-      </main>
-    );
+  // This is where your generator has been saving HTML in previous builds.
+  // If you used a different key, we can adjust it later.
+  const html =
+    (await kv.get<string>(`generated:project:${projectId}:latest`)) ??
+    (await kv.get<string>(`generated:${projectId}:latest`)) ??
+    null;
+
+  if (!html || typeof html !== "string") {
+    // Show a helpful 404 instead of a blank page
+    notFound();
   }
 
   return (
-    <main style={{ margin: 0, padding: 0 }}>
-      <iframe title="site" srcDoc={html} style={{ width: "100%", height: "100vh", border: 0 }} />
-    </main>
+    <html lang="en">
+      <head />
+      <body
+        // We intentionally render the generated HTML directly.
+        // Later we can sanitize / add CSP if needed.
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </html>
   );
 }
-
