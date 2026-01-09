@@ -3,18 +3,24 @@ import { auth } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
 import { requirePro, toJsonError } from "@/app/lib/limits";
 
+type Project = {
+  id: string;
+  name: string;
+  ownerId: string;
+  createdAt: string;
+};
+
 export async function POST(
   req: Request,
   { params }: { params: { projectId: string } }
 ) {
-  // ✅ FIX: auth() must be awaited in your current Clerk typings/build
   const { userId } = await auth();
 
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  // ✅ Enforce Pro plan (backend)
+  // ✅ Pro only
   try {
     await requirePro(userId);
   } catch (err) {
@@ -22,7 +28,26 @@ export async function POST(
     return NextResponse.json(body, { status });
   }
 
-  const projectId = params.projectId;
+  const projectId = (params?.projectId || "").toString().trim();
+
+  // ✅ Block placeholder / missing IDs
+  if (!projectId || projectId.includes("REPLACE_WITH")) {
+    return NextResponse.json(
+      { ok: false, error: "Invalid projectId" },
+      { status: 400 }
+    );
+  }
+
+  // ✅ Validate project exists and is owned by this user
+  const project = (await kv.get(`project:${projectId}`)) as Project | null;
+
+  if (!project) {
+    return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
+  }
+
+  if (project.ownerId !== userId) {
+    return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+  }
 
   // Expecting JSON like: { "domain": "example.com" }
   let body: any = null;
@@ -36,15 +61,9 @@ export async function POST(
     typeof body?.domain === "string" ? body.domain.trim().toLowerCase() : "";
 
   if (!domain) {
-    return NextResponse.json(
-      { ok: false, error: "Missing domain" },
-      { status: 400 }
-    );
+    return NextResponse.json({ ok: false, error: "Missing domain" }, { status: 400 });
   }
 
-  // Stub-friendly storage:
-  // Store the requested domain on the project.
-  // Later we can add real DNS verification + Vercel Domains API integration.
   const key = `project:${projectId}:domain`;
 
   try {
