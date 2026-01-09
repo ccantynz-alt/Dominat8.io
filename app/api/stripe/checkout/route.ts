@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/app/lib/stripe";
+import { auth } from "@clerk/nextjs/server";
 
 export async function POST() {
   try {
+    const { userId } = auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { ok: false, error: "Not signed in." },
+        { status: 401 }
+      );
+    }
+
     const priceId = process.env.STRIPE_PRICE_PRO;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -24,6 +34,13 @@ export async function POST() {
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
+
+      // This is the key part: we attach the Clerk userId to the Checkout Session
+      client_reference_id: userId,
+      metadata: {
+        clerkUserId: userId,
+      },
+
       success_url: `${appUrl}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/pricing`,
     });
