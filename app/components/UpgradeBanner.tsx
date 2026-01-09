@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 
-export default function UpgradeBanner({ isPro }: { isPro: boolean }) {
+type UpgradeBannerProps = {
+  isPro: boolean;
+};
+
+export default function UpgradeBanner({ isPro }: UpgradeBannerProps) {
   if (isPro) return null;
 
   return (
