@@ -4,6 +4,25 @@ import { kv } from "@vercel/kv";
 
 export const dynamic = "force-dynamic";
 
+async function getGeneratedHtml(projectId: string): Promise<{ html: string | null; keyTried: string[]; keyUsed: string | null }> {
+  const keys = [
+    `generated:project:${projectId}:latest`,
+    `generated:project:${projectId}`,
+    `generated:${projectId}:latest`,
+    `generated:${projectId}`,
+    `generated:latest`, // <-- common in your earlier logs
+  ];
+
+  for (const key of keys) {
+    const v = await kv.get<any>(key);
+    if (typeof v === "string" && v.trim().length > 0) {
+      return { html: v, keyTried: keys, keyUsed: key };
+    }
+  }
+
+  return { html: null, keyTried: keys, keyUsed: null };
+}
+
 export default async function PublicProjectPage({
   params,
 }: {
@@ -11,26 +30,14 @@ export default async function PublicProjectPage({
 }) {
   const projectId = params.projectId;
 
-  // This is where your generator has been saving HTML in previous builds.
-  // If you used a different key, we can adjust it later.
-  const html =
-    (await kv.get<string>(`generated:project:${projectId}:latest`)) ??
-    (await kv.get<string>(`generated:${projectId}:latest`)) ??
-    null;
+  const { html } = await getGeneratedHtml(projectId);
 
-  if (!html || typeof html !== "string") {
-    // Show a helpful 404 instead of a blank page
-    notFound();
-  }
+  if (!html) notFound();
 
   return (
     <html lang="en">
       <head />
-      <body
-        // We intentionally render the generated HTML directly.
-        // Later we can sanitize / add CSP if needed.
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      <body dangerouslySetInnerHTML={{ __html: html }} />
     </html>
   );
 }
