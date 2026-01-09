@@ -1,9 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
-export default function UpgradeBanner({ isPro }: { isPro: boolean }) {
-  if (isPro) return null;
+type Plan = "free" | "pro";
+
+export default function UpgradeBanner() {
+  const [plan, setPlan] = useState<Plan>("free");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/me/plan", { method: "GET" });
+        const data = await res.json();
+        if (mounted && data?.plan) setPlan(data.plan);
+      } catch {
+        // ignore
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (loading) return null;
+  if (plan === "pro") return null;
 
   return (
     <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-4 flex flex-col gap-3">
