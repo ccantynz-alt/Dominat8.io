@@ -1,12 +1,12 @@
 import Stripe from "stripe";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { kv } from "@vercel/kv";
 import { stripe } from "@/app/lib/stripe";
 import { setUserPlan } from "@/app/lib/plan";
 
 export const runtime = "nodejs";
 
-// Stripe needs the RAW body for signature verification
 export async function POST(req: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -38,8 +38,18 @@ export async function POST(req: Request) {
     );
   }
 
+  // Record last webhook event for debugging
   try {
-    // When checkout completes successfully, mark that user as pro
+    await kv.set("debug:lastStripeWebhook", {
+      receivedAt: new Date().toISOString(),
+      type: event.type,
+      id: event.id,
+    });
+  } catch {
+    // ignore debug write failures
+  }
+
+  try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
@@ -47,28 +57,32 @@ export async function POST(req: Request) {
         (session.metadata?.clerkUserId as string | undefined) ||
         (session.client_reference_id as string | undefined);
 
+      // Record what we saw
+      try {
+        await kv.set("debug:lastStripeCheckoutSession", {
+          receivedAt: new Date().toISOString(),
+          sessionId: session.id,
+          clerkUserId: clerkUserId ?? null,
+          metadata: session.metadata ?? null,
+          client_reference_id: session.client_reference_id ?? null,
+        });
+      } catch {
+        // ignore debug write failures
+      }
+
       if (!clerkUserId) {
         return NextResponse.json(
           { ok: false, error: "No clerkUserId found on session." },
-          { status: 400 }
+          { status: 200 }
         );
       }
 
       await setUserPlan(clerkUserId, "pro");
 
-      return NextResponse.json({ ok: true, event: event.type, clerkUserId });
+      return NextResponse.json({ ok: true, event: event.type, clerkUserId }, { status: 200 });
     }
 
-    // (Optional) If subscription is canceled, set back to free
-    if (event.type === "customer.subscription.deleted") {
-      const sub = event.data.object as Stripe.Subscription;
-
-      // If you later store clerkUserId on the customer/subscription metadata, you can downgrade here.
-      // For now we just acknowledge the event.
-      return NextResponse.json({ ok: true, event: event.type, subscriptionId: sub.id });
-    }
-
-    return NextResponse.json({ ok: true, event: event.type });
+    return NextResponse.json({ ok: true, event: event.type }, { status: 200 });
   } catch (err: any) {
     return NextResponse.json(
       { ok: false, error: err?.message ?? "Webhook handler error" },
