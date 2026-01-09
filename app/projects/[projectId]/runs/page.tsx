@@ -13,11 +13,9 @@ export default async function RunsPage({
 
   const { projectId } = params;
 
-  // Load project
   const project = await kv.get<any>(`project:${projectId}`);
   if (!project || project.ownerId !== userId) return notFound();
 
-  // Load runs (if any)
   const runsKey = `project:${projectId}:runs`;
   const runIds = (await kv.lrange<string>(runsKey, 0, -1)) || [];
 
@@ -30,49 +28,4 @@ export default async function RunsPage({
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="mx-auto max-w-4xl space-y-6">
-        <div className="rounded border bg-white p-6">
-          <Link
-            href={`/projects/${projectId}`}
-            className="text-sm text-blue-600"
-          >
-            ← Back to Project
-          </Link>
-
-          <h1 className="mt-2 text-2xl font-semibold">Runs</h1>
-          <p className="text-sm text-gray-500">
-            Project: {projectId}
-          </p>
-        </div>
-
-        <div className="rounded border bg-white p-6">
-          <h2 className="mb-2 text-lg font-medium">Run history</h2>
-
-          {runs.length === 0 && (
-            <p className="text-sm text-gray-600">
-              No runs yet — generate a site to create one.
-            </p>
-          )}
-
-          {runs.length > 0 && (
-            <ul className="space-y-2">
-              {runs.map((r) => (
-                <li
-                  key={r.id}
-                  className="rounded border p-3 text-sm"
-                >
-                  <div className="font-medium">
-                    Run ID: {r.id}
-                  </div>
-                  <div className="text-gray-500">
-                    Status: {r.data?.status ?? "unknown"}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+      <div
