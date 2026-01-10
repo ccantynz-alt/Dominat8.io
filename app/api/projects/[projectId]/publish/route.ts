@@ -24,20 +24,25 @@ function publishedKey(projectId: string) {
   return `published:project:${projectId}`;
 }
 
+function planKey(userId: string) {
+  return `plan:clerk:${userId}`;
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
 
 /**
- * Publish rules (website-only):
+ * Publish rules:
  * - Must be signed in
  * - Must own the project
+ * - Must be Pro
  * - Must have generated HTML
- * - Stores "published" metadata and returns public path
+ * - Publishes to /p/<projectId>
  *
- * NOTE: This does not connect custom domains. It publishes to /p/<projectId>.
+ * If not Pro: returns 402 + upgradeUrl from /api/billing/checkout
  */
-export async function POST(_req: Request, ctx: { params: { projectId: string } }) {
+export async function POST(req: Request, ctx: { params: { projectId: string } }) {
   const session = await auth();
   const userId = session.userId;
 
@@ -59,6 +64,45 @@ export async function POST(_req: Request, ctx: { params: { projectId: string } }
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
 
+  // ✅ Paywall: must be Pro to publish
+  const plan = await kv.get<string>(planKey(userId));
+  const isPro = plan === "pro";
+
+  if (!isPro) {
+    // Create an upgrade URL via our own checkout endpoint
+    // (call it internally so UI gets a link)
+    const origin =
+      req.headers.get("x-forwarded-proto") && req.headers.get("x-forwarded-host")
+        ? `${req.headers.get("x-forwarded-proto")}://${req.headers.get("x-forwarded-host")}`
+        : process.env.NEXT_PUBLIC_APP_URL || "";
+
+    let upgradeUrl = "";
+    try {
+      const r = await fetch(`${origin}/api/billing/checkout`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ returnTo: `/projects/${projectId}` }),
+      });
+      const text = await r.text();
+      if (r.ok) {
+        const data = JSON.parse(text);
+        if (typeof data?.url === "string") upgradeUrl = data.url;
+      }
+    } catch {
+      // ignore; we still return 402
+    }
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Upgrade required",
+        code: "UPGRADE_REQUIRED",
+        upgradeUrl,
+      },
+      { status: 402 }
+    );
+  }
+
   const html = await kv.get<string>(generatedProjectLatestKey(projectId));
   if (!html) {
     return NextResponse.json(
@@ -75,7 +119,6 @@ export async function POST(_req: Request, ctx: { params: { projectId: string } }
     published: true,
   });
 
-  // Return the public path
   const path = `/p/${projectId}`;
 
   return NextResponse.json(
