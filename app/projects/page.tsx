@@ -1,44 +1,49 @@
-"use client";
+import Link from "next/link";
+import { kv } from "@vercel/kv";
+import { auth } from "@clerk/nextjs/server";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+export const runtime = "nodejs";
 
-export default function ProjectsPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
+type Project = {
+  id: string;
+  name: string;
+};
 
-  useEffect(() => {
-    async function onboard() {
-      try {
-        const res = await fetch("/api/onboarding", { method: "POST" });
-        const text = await res.text();
+function projectKey(projectId: string) {
+  return `project:${projectId}`;
+}
 
-        if (res.ok) {
-          try {
-            const data = JSON.parse(text);
-            if (data?.projectId) {
-              router.replace(`/projects/${data.projectId}`);
-              return;
-            }
-          } catch {}
-        }
+function userProjectsKey(userId: string) {
+  return `projects:user:${userId}`;
+}
 
-        // Fallback: go to normal list if already onboarded
-        router.replace("/projects/list");
-      } catch {
-        router.replace("/projects/list");
-      }
-    }
+export default async function ProjectsListPage() {
+  const session = await auth();
+  const userId = session.userId;
 
-    onboard();
-  }, [router]);
+  if (!userId) {
+    return <div>Please sign in.</div>;
+  }
+
+  const ids = (await kv.lrange(userProjectsKey(userId), 0, 50)) as string[];
+  const projects: Project[] = [];
+
+  for (const id of ids) {
+    const p = await kv.get<Project>(projectKey(id));
+    if (p) projects.push(p);
+  }
 
   return (
     <div style={{ fontFamily: "system-ui", padding: 32 }}>
-      <h1>Preparing your website…</h1>
-      <p style={{ opacity: 0.8 }}>
-        We’re setting everything up automatically. This takes just a moment.
-      </p>
+      <h1>Your projects</h1>
+
+      <ul>
+        {projects.map((p) => (
+          <li key={p.id}>
+            <Link href={`/projects/${p.id}`}>{p.name}</Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
