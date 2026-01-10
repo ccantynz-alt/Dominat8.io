@@ -86,6 +86,84 @@ export default function ProjectPage({
     }
   }
 
+  async function runAuditOnly() {
+    if (!projectId) return;
+
+    setAudit({ state: "checking" });
+
+    try {
+      const auditRes = await fetch(`/api/projects/${projectId}/audit`, {
+        method: "POST",
+      });
+      const auditText = await auditRes.text();
+      setLastAuditRaw(auditText);
+
+      if (!auditRes.ok) {
+        setAudit({ state: "error", message: `(${auditRes.status}) ${auditText}` });
+        setToast({
+          tone: "danger",
+          title: "Quality check failed",
+          message: `(${auditRes.status}) ${auditText}`,
+        });
+        return;
+      }
+
+      let auditData: any = null;
+      try {
+        auditData = JSON.parse(auditText);
+      } catch {
+        setAudit({ state: "error", message: `Unexpected response: ${auditText}` });
+        setToast({
+          tone: "danger",
+          title: "Quality check error",
+          message: `Unexpected response: ${auditText}`,
+        });
+        return;
+      }
+
+      if (!auditData?.ok) {
+        setAudit({ state: "error", message: `Audit error: ${auditText}` });
+        setToast({
+          tone: "danger",
+          title: "Quality check error",
+          message: `Audit error: ${auditText}`,
+        });
+        return;
+      }
+
+      const readyToPublish = Boolean(auditData.readyToPublish);
+      const missing = Array.isArray(auditData.missing) ? auditData.missing : [];
+      const warnings = Array.isArray(auditData.warnings) ? auditData.warnings : [];
+      const notes = Array.isArray(auditData.notes) ? auditData.notes : [];
+
+      setAudit({
+        state: "ready",
+        ok: readyToPublish,
+        missing,
+        warnings,
+        notes,
+      });
+
+      setToast({
+        tone: readyToPublish ? "success" : "danger",
+        title: readyToPublish ? "Quality check passed" : "Not ready to publish",
+        message: readyToPublish
+          ? "Your site meets the minimum publish requirements."
+          : "Quality check found issues. Fix missing items, then click Publish.",
+      });
+    } catch (err: any) {
+      setAudit({
+        state: "error",
+        message: err?.message ? String(err.message) : "Unknown audit error.",
+      });
+      setToast({
+        tone: "danger",
+        title: "Quality check error",
+        message: err?.message ? String(err.message) : "Unknown audit error.",
+      });
+    }
+  }
+
   async function publishNow() {
     if (!projectId) return;
 
@@ -183,9 +261,12 @@ export default function ProjectPage({
       setToast({
         tone: "success",
         title: "Conversion agent ran",
-        message:
-          "Agent request completed. If this agent updates HTML, reload preview to see changes.",
+        message: "Reloading preview and rerunning quality check…",
       });
+
+      // Auto: reload preview then re-audit
+      await loadPreview();
+      await runAuditOnly();
     } catch (err: any) {
       setToast({
         tone: "danger",
@@ -247,7 +328,7 @@ export default function ProjectPage({
         return;
       }
 
-      // 2) Load preview (best-effort)
+      // 2) Load preview
       setToast({
         tone: "success",
         title: "Site generated",
@@ -256,82 +337,18 @@ export default function ProjectPage({
 
       await loadPreview();
 
-      // 3) Run audit and capture result
-      setAudit({ state: "checking" });
-
-      const auditRes = await fetch(`/api/projects/${projectId}/audit`, {
-        method: "POST",
-      });
-      const auditText = await auditRes.text();
-      setLastAuditRaw(auditText);
-
-      if (!auditRes.ok) {
-        setAudit({
-          state: "error",
-          message: `(${auditRes.status}) ${auditText}`,
-        });
-        setToast({
-          tone: "danger",
-          title: "Quality check failed",
-          message: `(${auditRes.status}) ${auditText}`,
-        });
-        return;
-      }
-
-      let auditData: any = null;
-      try {
-        auditData = JSON.parse(auditText);
-      } catch {
-        setAudit({ state: "error", message: `Unexpected response: ${auditText}` });
-        setToast({
-          tone: "danger",
-          title: "Quality check error",
-          message: `Unexpected response: ${auditText}`,
-        });
-        return;
-      }
-
-      if (!auditData?.ok) {
-        setAudit({ state: "error", message: `Audit error: ${auditText}` });
-        setToast({
-          tone: "danger",
-          title: "Quality check error",
-          message: `Audit error: ${auditText}`,
-        });
-        return;
-      }
-
-      const readyToPublish = Boolean(auditData.readyToPublish);
-      const missing = Array.isArray(auditData.missing) ? auditData.missing : [];
-      const warnings = Array.isArray(auditData.warnings) ? auditData.warnings : [];
-      const notes = Array.isArray(auditData.notes) ? auditData.notes : [];
-
-      setAudit({
-        state: "ready",
-        ok: readyToPublish,
-        missing,
-        warnings,
-        notes,
-      });
+      // 3) Run audit
+      await runAuditOnly();
 
       // 4) Publish only if audit passes
-      if (!readyToPublish) {
+      if (audit.state === "ready" && audit.ok) {
         setToast({
-          tone: "danger",
-          title: "Not published",
-          message:
-            "Your site generated successfully, but the quality check found issues.\n\nFix the missing items, then click Publish.",
+          tone: "success",
+          title: "Quality check passed",
+          message: "Publishing now…",
         });
-        return;
+        await publishNow();
       }
-
-      setToast({
-        tone: "success",
-        title: "Quality check passed",
-        message: "Publishing now…",
-      });
-
-      await publishNow();
     } catch (err: any) {
       setToast({
         tone: "danger",
@@ -554,6 +571,20 @@ export default function ProjectPage({
           >
             Reload preview
           </button>
+
+          <button
+            onClick={runAuditOnly}
+            disabled={busy || !projectId}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 12,
+              border: "1px solid #ddd",
+              background: "#fff",
+              cursor: busy ? "not-allowed" : "pointer",
+            }}
+          >
+            Run quality check
+          </button>
         </div>
 
         <div style={{ marginTop: 14 }}>
@@ -634,7 +665,7 @@ export default function ProjectPage({
         <h2 style={{ marginTop: 0 }}>Conversion Agent (website-only)</h2>
 
         <div style={{ opacity: 0.75, marginBottom: 10 }}>
-          This button is server-driven (no chat UI needed). It should always be clickable unless it’s actively running.
+          Runs server-side, updates generated HTML, then reloads preview and reruns quality check.
         </div>
 
         <label style={{ display: "block" }}>
@@ -669,7 +700,7 @@ export default function ProjectPage({
               fontWeight: 700,
             }}
           >
-            {agentBusy ? "Running…" : "Run Conversion Agent"}
+            {agentBusy ? "Running…" : "Run Agent → Reload → Re-check"}
           </button>
 
           <button
