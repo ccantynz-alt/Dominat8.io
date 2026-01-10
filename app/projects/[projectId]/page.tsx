@@ -1,69 +1,78 @@
-async function publishNow() {
-  if (!projectId) return false;
+async function finishForMe() {
+  if (!projectId) return;
 
-  setToast(null);
-  setPublish({ state: "publishing" });
+  const businessName = bizName.trim();
+  const niche = bizNiche.trim();
+  const location = bizLocation.trim();
+  const phone = bizPhone.trim();
+  const email = bizEmail.trim();
+  const tagline = bizTagline.trim();
 
-  try {
-    const res = await fetch(`/api/projects/${projectId}/publish`, { method: "POST" });
-    const text = await res.text();
-
-    // ✅ Paywall: show upgrade link
-    if (res.status === 402) {
-      let upgradeUrl = "";
-      try {
-        const data = JSON.parse(text);
-        if (typeof data?.upgradeUrl === "string") upgradeUrl = data.upgradeUrl;
-      } catch {}
-
-      setPublish({ state: "error", message: "Upgrade to Pro required to publish." });
-
-      setToast({
-        tone: "danger",
-        title: "Upgrade required",
-        message:
-          upgradeUrl
-            ? `Publishing is a Pro feature.\n\nOpen this link to upgrade:\n${upgradeUrl}`
-            : "Publishing is a Pro feature. (No upgrade link returned — check billing route/env vars.)",
-      });
-
-      return false;
-    }
-
-    if (!res.ok) {
-      setPublish({ state: "error", message: `(${res.status}) ${text}` });
-      setToast({ tone: "danger", title: "Publish failed", message: `(${res.status}) ${text}` });
-      return false;
-    }
-
-    let urlFromApi = "";
-    try {
-      const data = JSON.parse(text);
-      urlFromApi =
-        (typeof data?.url === "string" && data.url) ||
-        (typeof data?.path === "string" && data.path) ||
-        (typeof data?.publicUrl === "string" && data.publicUrl) ||
-        "";
-    } catch {
-      urlFromApi = text.trim();
-    }
-
-    if (!urlFromApi) {
-      setPublish({ state: "error", message: `Unexpected publish response: ${text}` });
-      setToast({ tone: "danger", title: "Publish error", message: `Unexpected publish response: ${text}` });
-      return false;
-    }
-
-    setPublish({ state: "published", url: urlFromApi });
-    setToast({ tone: "success", title: "Published", message: normalizePublishedUrl(urlFromApi) });
-    return true;
-  } catch (err: any) {
-    setPublish({ state: "error", message: err?.message ? String(err.message) : "Unknown error during publish." });
+  if (!businessName || !niche) {
     setToast({
       tone: "danger",
-      title: "Publish error",
-      message: err?.message ? String(err.message) : "Unknown error during publish.",
+      title: "Finish for me",
+      message: "Please fill Business name and Niche (required).",
     });
-    return false;
+    return;
+  }
+
+  setBusy(true);
+  setToast(null);
+
+  try {
+    // 1) Call Level-2 finish endpoint (conversion-ready, automation-first)
+    const res = await fetch(`/api/projects/${projectId}/finish`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        businessName,
+        niche,
+        location,
+        phone,
+        email,
+        tagline,
+        tone: "premium",
+      }),
+    });
+
+    const text = await res.text();
+
+    if (!res.ok) {
+      setToast({
+        tone: "danger",
+        title: "Finish failed",
+        message: `(${res.status}) ${text}`,
+      });
+      return;
+    }
+
+    // 2) Close modal
+    setModal({ open: false });
+
+    // 3) Load preview immediately
+    setToast({
+      tone: "success",
+      title: "Site generated",
+      message: "Loading preview and running quality check…",
+    });
+
+    await loadPreview();
+
+    // 4) Run quality audit
+    setAudit({ state: "idle" });
+    await runAudit();
+
+    // 5) OPTIONAL: auto-publish if Pro
+    // publishNow() already handles 402 Upgrade Required and shows link
+    await publishNow();
+  } catch (err: any) {
+    setToast({
+      tone: "danger",
+      title: "Finish error",
+      message: err?.message ? String(err.message) : "Unknown error during Finish for me.",
+    });
+  } finally {
+    setBusy(false);
   }
 }
