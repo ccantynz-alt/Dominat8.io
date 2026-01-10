@@ -44,30 +44,26 @@ function clampInstruction(s: string) {
 
 /**
  * Conversion Agent: controlled transformation.
- * It is NOT freeform rewriting. It applies safe edits.
- *
- * We use the instruction only to pick among a few safe behaviors.
+ * This version is WEBSITE-FIRST:
+ * - Drives users to on-site contact/quote form
+ * - Avoids phone-specific CTAs
  */
 function applyConversionPass(html: string, instruction: string) {
   let out = html;
 
   const instr = instruction.toLowerCase();
 
-  // Always: strengthen common CTA wording a bit
-  out = out.replace(/(Get Started|Contact Us|Learn More|Request a Quote)/gi, "Get Started Today");
-
-  // If user wants "more urgent" / "more aggressive"
+  // Intent flags
   const wantsUrgency =
     instr.includes("urgent") ||
     instr.includes("aggressive") ||
     instr.includes("sales") ||
-    instr.includes("hard") ||
     instr.includes("stronger") ||
-    instr.includes("pushy") ||
+    instr.includes("more direct") ||
     instr.includes("book now") ||
-    instr.includes("call now");
+    instr.includes("limited") ||
+    instr.includes("today");
 
-  // If user wants "more premium" / "more professional"
   const wantsPremium =
     instr.includes("premium") ||
     instr.includes("luxury") ||
@@ -75,45 +71,62 @@ function applyConversionPass(html: string, instruction: string) {
     instr.includes("professional") ||
     instr.includes("corporate");
 
-  // 1) Improve hero headline slightly (safe)
+  const wantsTrust =
+    instr.includes("trust") ||
+    instr.includes("reviews") ||
+    instr.includes("proof") ||
+    instr.includes("guarantee") ||
+    instr.includes("reliable") ||
+    instr.includes("safe");
+
+  // 1) Normalize common CTAs to website actions
+  out = out.replace(/(Get Started|Contact Us|Learn More|Request a Quote|Book Now)/gi, "Get a Quote");
+
+  // 2) Improve hero headline slightly (safe)
   out = out.replace(/<h1[^>]*>([^<]{0,140})<\/h1>/i, (_m, text) => {
     const base = String(text || "").trim() || "Get the results you want";
     if (wantsPremium) return `<h1>${base} — premium, reliable, and on time</h1>`;
-    if (wantsUrgency) return `<h1>${base} — book now and secure your spot</h1>`;
-    return `<h1>${base} — start today</h1>`;
+    if (wantsUrgency) return `<h1>${base} — book online in minutes</h1>`;
+    return `<h1>${base} — get a quote fast</h1>`;
   });
 
-  // 2) Add a short urgency/trust line near top if missing
-  if (wantsUrgency && !/limited availability|secure your spot|book today/i.test(out)) {
+  // 3) Add a strong supporting line near the top (safe append)
+  const supportLine =
+    wantsUrgency
+      ? "Fast online booking — secure your time slot today."
+      : wantsPremium
+        ? "Professional service with clear pricing and on-time delivery."
+        : "Get a fast quote and book online in minutes.";
+
+  if (!/fast online booking|book online in minutes|get a fast quote/i.test(out)) {
+    out = out.replace(/<\/header>|<\/section>/i, `<p style="font-weight:800;color:#111;margin:10px 0 0">${supportLine}</p>$&`);
+  }
+
+  // 4) Add trust line if requested (safe)
+  if (wantsTrust && !/trusted|reliable|review|rated/i.test(out)) {
     out = out.replace(
       /<\/header>|<\/section>/i,
-      `<p style="font-weight:800;color:#111;margin:10px 0 0">Limited availability — secure your spot today.</p>$&`
+      `<p style="font-weight:700;color:#111;margin:10px 0 0">Trusted, reliable service — built for busy customers.</p>$&`
     );
   }
 
-  if (wantsPremium && !/trusted|reliable|professional/i.test(out)) {
-    out = out.replace(
-      /<\/header>|<\/section>/i,
-      `<p style="font-weight:700;color:#111;margin:10px 0 0">Trusted, professional service — no surprises.</p>$&`
-    );
-  }
-
-  // 3) Ensure there is at least one strong CTA to #contact
+  // 5) Ensure there is at least one strong CTA to #contact (website-only)
+  // If there is no #contact anchor button/link, add one at the bottom.
   if (!/<a[^>]+href="#contact"[^>]*>/i.test(out)) {
     out = out.replace(
       /<\/body>/i,
-      `<a href="#contact" style="display:inline-block;padding:14px 18px;border-radius:12px;background:#0b5fff;color:#fff;font-weight:900;text-decoration:none">Book Now</a></body>`
+      `<div style="margin:18px 0;text-align:center">
+         <a href="#contact" style="display:inline-block;padding:14px 18px;border-radius:12px;background:#0b5fff;color:#fff;font-weight:900;text-decoration:none">
+           Get a Quote
+         </a>
+       </div></body>`
     );
   }
 
-  // 4) If user explicitly mentions "phone" or "call", try to add a "Call now" CTA (safe append)
-  const wantsPhone = instr.includes("phone") || instr.includes("call") || instr.includes("ring");
-  if (wantsPhone && !/Call now/i.test(out)) {
-    out = out.replace(
-      /<\/body>/i,
-      `<div style="margin:16px 0;text-align:center"><a href="#contact" style="display:inline-block;padding:12px 16px;border-radius:12px;border:1px solid #111;color:#111;font-weight:900;text-decoration:none">Call now</a></div></body>`
-    );
-  }
+  // 6) If the page has a contact form, make the submit button wording stronger (safe)
+  out = out.replace(/(type="submit"[^>]*>)([^<]{0,40})(<\/button>)/gi, (_m, a, _b, c) => {
+    return `${a}Get My Quote${c}`;
+  });
 
   return out;
 }
@@ -174,6 +187,6 @@ export async function POST(req: Request, ctx: { params: { projectId: string } })
     ok: true,
     agent: "conversion",
     instruction,
-    message: "Conversion Agent applied (you can Undo if needed).",
+    message: "Conversion Agent applied (website-only). Undo is available.",
   });
 }
