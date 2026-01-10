@@ -1,15 +1,13 @@
 import Stripe from "stripe";
 
-const secretKey = process.env.STRIPE_SECRET_KEY;
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
-if (!secretKey) {
-  throw new Error("Missing STRIPE_SECRET_KEY environment variable.");
+if (!stripeSecretKey) {
+  throw new Error("Missing STRIPE_SECRET_KEY environment variable");
 }
 
-export const stripe = new Stripe(secretKey, {
-  // IMPORTANT:
+export const stripe = new Stripe(stripeSecretKey, {
   // Your installed Stripe SDK expects this literal API version type.
-  // Using a newer string (like "2025-02-24.acacia") will fail TypeScript at build time.
-  apiVersion: "2024-06-20",
+  // Keep this in sync with the Stripe SDK type union to avoid build failures.
+  apiVersion: "2023-10-16",
 });
-
