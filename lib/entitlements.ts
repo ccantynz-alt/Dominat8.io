@@ -2,16 +2,10 @@
 import { kv } from "@vercel/kv";
 
 export type Plan = "free" | "pro";
-
 export const MAX_FREE_PROJECTS = 3;
 
-function planKey(clerkUserId: string) {
-  return `plan:clerk:${clerkUserId}`;
-}
-
-function projectCountKey(clerkUserId: string) {
-  return `projects:count:${clerkUserId}`;
-}
+const planKey = (clerkUserId: string) => `plan:clerk:${clerkUserId}`;
+const projectCountKey = (clerkUserId: string) => `projects:count:${clerkUserId}`;
 
 export async function getUserPlan(clerkUserId: string): Promise<Plan> {
   const raw = await kv.get(planKey(clerkUserId));
@@ -20,11 +14,11 @@ export async function getUserPlan(clerkUserId: string): Promise<Plan> {
 }
 
 export async function getProjectCount(clerkUserId: string): Promise<number> {
-  const n = await kv.get(projectCountKey(clerkUserId));
-  if (typeof n === "number") return n;
-  if (typeof n === "string") {
-    const parsed = Number(n);
-    return Number.isFinite(parsed) ? parsed : 0;
+  const v = await kv.get(projectCountKey(clerkUserId));
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
   }
   return 0;
 }
@@ -38,7 +32,8 @@ export async function assertCanCreateProject(clerkUserId: string) {
     const err = new Error(
       `Free plan limit reached. Max ${MAX_FREE_PROJECTS} projects. Upgrade to Pro to create more.`
     );
-    // @ts-ignore - attach a status code for our route handler to use
+    // attach status for route handler
+    // @ts-ignore
     err.status = 402;
     throw err;
   }
