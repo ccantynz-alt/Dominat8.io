@@ -7,25 +7,30 @@ type PageProps = {
 export default async function PublicProjectPage({ params }: PageProps) {
   const { projectId } = params;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/projects/${projectId}/public`,
-    { cache: "no-store" }
-  );
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.VERCEL_URL?.startsWith("http")
+      ? process.env.VERCEL_URL
+      : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "";
 
-  if (!res.ok) {
-    notFound();
-  }
+  const url = base
+    ? `${base}/api/projects/${projectId}/public`
+    : `/api/projects/${projectId}/public`;
+
+  const res = await fetch(url, { cache: "no-store" });
+
+  if (!res.ok) notFound();
 
   const data = await res.json();
 
-  if (!data?.html) {
-    notFound();
-  }
+  if (!data?.html) notFound();
 
   return (
     <div
-      dangerouslySetInnerHTML={{ __html: data.html }}
       style={{ minHeight: "100vh" }}
+      dangerouslySetInnerHTML={{ __html: data.html }}
     />
   );
 }
