@@ -19,6 +19,11 @@ type Toast = {
   message: string;
 };
 
+type Modal =
+  | { open: false }
+  | { open: true; kind: "importHtml" }
+  | { open: true; kind: "importZip" };
+
 export default function ProjectBuilderPage() {
   const router = useRouter();
   const params = useParams();
@@ -39,6 +44,11 @@ export default function ProjectBuilderPage() {
   });
 
   const [toast, setToast] = useState<Toast | null>(null);
+
+  const [modal, setModal] = useState<Modal>({ open: false });
+
+  const [htmlToImport, setHtmlToImport] = useState<string>("");
+  const [zipFile, setZipFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!projectId) {
@@ -126,11 +136,6 @@ export default function ProjectBuilderPage() {
     setToast(null);
 
     try {
-      // This should already exist in your app (used earlier in your build flow):
-      // POST /api/projects/:projectId/generate
-      // It should write HTML into KV keys:
-      // - generated:project:<projectId>:latest (primary)
-      // - generated:latest (fallback)
       const res = await fetch(`/api/projects/${projectId}/generate`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -167,6 +172,122 @@ export default function ProjectBuilderPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function importHtmlNow() {
+    if (!projectId) return;
+
+    const html = htmlToImport.trim();
+    if (!html) {
+      setToast({
+        tone: "danger",
+        title: "Import HTML",
+        message: "Paste some HTML first.",
+      });
+      return;
+    }
+
+    setBusy(true);
+    setToast(null);
+
+    try {
+      // Expected route (already in your repo):
+      // POST /api/projects/:projectId/import/html
+      const res = await fetch(`/api/projects/${projectId}/import/html`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ html }),
+      });
+
+      const text = await res.text();
+
+      if (!res.ok) {
+        setToast({
+          tone: "danger",
+          title: "HTML import failed",
+          message: `(${res.status}) ${text}`,
+        });
+        return;
+      }
+
+      setToast({
+        tone: "success",
+        title: "HTML imported",
+        message: "Import completed. Loading preview…",
+      });
+
+      setModal({ open: false });
+      await loadPreview();
+    } catch (err: any) {
+      setToast({
+        tone: "danger",
+        title: "HTML import error",
+        message: err?.message ? String(err.message) : "Unknown error importing HTML.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function importZipNow() {
+    if (!projectId) return;
+
+    if (!zipFile) {
+      setToast({
+        tone: "danger",
+        title: "Import ZIP",
+        message: "Choose a .zip file first.",
+      });
+      return;
+    }
+
+    setBusy(true);
+    setToast(null);
+
+    try {
+      // Expected route (already in your repo):
+      // POST /api/projects/:projectId/import/zip
+      // We send FormData so the server can read the uploaded zip.
+      const form = new FormData();
+      form.append("file", zipFile);
+
+      const res = await fetch(`/api/projects/${projectId}/import/zip`, {
+        method: "POST",
+        body: form,
+      });
+
+      const text = await res.text();
+
+      if (!res.ok) {
+        setToast({
+          tone: "danger",
+          title: "ZIP import failed",
+          message: `(${res.status}) ${text}`,
+        });
+        return;
+      }
+
+      setToast({
+        tone: "success",
+        title: "ZIP imported",
+        message: "Import completed. Loading preview…",
+      });
+
+      setModal({ open: false });
+      await loadPreview();
+    } catch (err: any) {
+      setToast({
+        tone: "danger",
+        title: "ZIP import error",
+        message: err?.message ? String(err.message) : "Unknown error importing ZIP.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function closeModal() {
+    setModal({ open: false });
   }
 
   if (status === "loading") {
@@ -250,35 +371,180 @@ export default function ProjectBuilderPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#fafafa", fontFamily: "system-ui" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
-        {/* Toast */}
-        {toast ? (
+      {/* Toast */}
+      {toast ? (
+        <div
+          style={{
+            position: "fixed",
+            top: 18,
+            right: 18,
+            zIndex: 60,
+            width: 380,
+            borderRadius: 16,
+            border: "1px solid #eee",
+            background:
+              toast.tone === "success"
+                ? "#f0fff4"
+                : toast.tone === "danger"
+                  ? "#fff5f5"
+                  : "white",
+            padding: 14,
+            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+          }}
+        >
+          <div style={{ fontWeight: 800, color: "#111" }}>{toast.title}</div>
+          <div style={{ marginTop: 6, fontSize: 13, color: "#333", whiteSpace: "pre-wrap" }}>
+            {toast.message}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Modal overlay */}
+      {modal.open ? (
+        <div
+          onClick={() => closeModal()}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.35)",
+            zIndex: 55,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
           <div
+            onClick={(e) => e.stopPropagation()}
             style={{
-              position: "fixed",
-              top: 18,
-              right: 18,
-              zIndex: 50,
-              width: 360,
+              width: "min(920px, 100%)",
+              background: "white",
               borderRadius: 16,
               border: "1px solid #eee",
-              background:
-                toast.tone === "success"
-                  ? "#f0fff4"
-                  : toast.tone === "danger"
-                    ? "#fff5f5"
-                    : "white",
-              padding: 14,
-              boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+              overflow: "hidden",
             }}
           >
-            <div style={{ fontWeight: 800, color: "#111" }}>{toast.title}</div>
-            <div style={{ marginTop: 6, fontSize: 13, color: "#333", whiteSpace: "pre-wrap" }}>
-              {toast.message}
+            <div
+              style={{
+                padding: 14,
+                borderBottom: "1px solid #eee",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <div style={{ fontWeight: 900, color: "#111" }}>
+                {modal.kind === "importHtml" ? "Import HTML" : "Import ZIP"}
+              </div>
+              <button
+                onClick={() => closeModal()}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 12,
+                  border: "1px solid #ddd",
+                  background: "white",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            <div style={{ padding: 14 }}>
+              {modal.kind === "importHtml" ? (
+                <>
+                  <div style={{ fontSize: 13, color: "#555", lineHeight: 1.4 }}>
+                    Paste a full HTML document. Then click <b>Import HTML</b>.
+                  </div>
+                  <textarea
+                    value={htmlToImport}
+                    onChange={(e) => setHtmlToImport(e.target.value)}
+                    placeholder="Paste HTML here…"
+                    style={{
+                      marginTop: 12,
+                      width: "100%",
+                      height: 380,
+                      resize: "vertical",
+                      borderRadius: 14,
+                      border: "1px solid #ddd",
+                      padding: 12,
+                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                    }}
+                  />
+                  <div style={{ marginTop: 12, display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                    <button
+                      disabled={busy}
+                      onClick={() => importHtmlNow()}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: 14,
+                        border: "1px solid #ddd",
+                        background: busy ? "#f3f4f6" : "#111",
+                        color: busy ? "#777" : "white",
+                        cursor: busy ? "not-allowed" : "pointer",
+                        fontWeight: 800,
+                      }}
+                    >
+                      {busy ? "Working…" : "Import HTML"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 13, color: "#555", lineHeight: 1.4 }}>
+                    Choose a <b>.zip</b> file, then click <b>Import ZIP</b>.
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 12,
+                      border: "1px solid #eee",
+                      borderRadius: 14,
+                      background: "#fafafa",
+                      padding: 12,
+                    }}
+                  >
+                    <input
+                      type="file"
+                      accept=".zip,application/zip"
+                      onChange={(e) => setZipFile(e.target.files?.[0] ?? null)}
+                    />
+                    <div style={{ marginTop: 10, fontSize: 12, color: "#444" }}>
+                      Selected:{" "}
+                      <b>{zipFile ? `${zipFile.name} (${Math.round(zipFile.size / 1024)} KB)` : "none"}</b>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 12, display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                    <button
+                      disabled={busy}
+                      onClick={() => importZipNow()}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: 14,
+                        border: "1px solid #ddd",
+                        background: busy ? "#f3f4f6" : "#111",
+                        color: busy ? "#777" : "white",
+                        cursor: busy ? "not-allowed" : "pointer",
+                        fontWeight: 800,
+                      }}
+                    >
+                      {busy ? "Working…" : "Import ZIP"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        ) : null}
+        </div>
+      ) : null}
 
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
         {/* Top bar */}
         <div
           style={{
@@ -361,8 +627,12 @@ export default function ProjectBuilderPage() {
           >
             <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>Actions</div>
             <div style={{ marginTop: 10, fontSize: 13, color: "#555", lineHeight: 1.4 }}>
-              Generate now calls <b>POST /api/projects/&lt;projectId&gt;/generate</b>, then loads
-              preview from <b>GET /api/projects/&lt;projectId&gt;/preview</b>.
+              Generate → writes HTML → Preview reads KV via <b>/api/projects/&lt;projectId&gt;/preview</b>.
+              Imports call:
+              <br />
+              <b>POST /api/projects/&lt;projectId&gt;/import/html</b>
+              <br />
+              <b>POST /api/projects/&lt;projectId&gt;/import/zip</b>
             </div>
 
             <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
@@ -380,6 +650,36 @@ export default function ProjectBuilderPage() {
                 }}
               >
                 {busy ? "Working…" : "Generate"}
+              </button>
+
+              <button
+                disabled={busy}
+                onClick={() => setModal({ open: true, kind: "importHtml" })}
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 14,
+                  border: "1px solid #ddd",
+                  background: "white",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  fontWeight: 700,
+                }}
+              >
+                Import HTML
+              </button>
+
+              <button
+                disabled={busy}
+                onClick={() => setModal({ open: true, kind: "importZip" })}
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 14,
+                  border: "1px solid #ddd",
+                  background: "white",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  fontWeight: 700,
+                }}
+              >
+                Import ZIP
               </button>
 
               <button
@@ -517,10 +817,9 @@ export default function ProjectBuilderPage() {
         </div>
 
         <div style={{ marginTop: 14, fontSize: 12, color: "#666" }}>
-          Next: wire Import HTML and Import ZIP buttons to their API routes.
+          Next: wire <b>Publish</b> to your publish API route and show the public URL.
         </div>
       </div>
     </div>
   );
 }
-
