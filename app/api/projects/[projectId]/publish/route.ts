@@ -19,7 +19,11 @@ export async function POST(
 
   if (!project.html) {
     return NextResponse.json(
-      { ok: false, error: "Nothing to publish" },
+      {
+        ok: false,
+        error:
+          "Nothing to publish (no HTML). Generate the site first, then publish.",
+      },
       { status: 400 }
     );
   }
