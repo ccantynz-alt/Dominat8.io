@@ -24,6 +24,12 @@ type Modal =
   | { open: true; kind: "importHtml" }
   | { open: true; kind: "importZip" };
 
+type PublishState =
+  | { state: "idle" }
+  | { state: "publishing" }
+  | { state: "published"; url: string }
+  | { state: "error"; message: string };
+
 export default function ProjectBuilderPage() {
   const router = useRouter();
   const params = useParams();
@@ -49,6 +55,8 @@ export default function ProjectBuilderPage() {
 
   const [htmlToImport, setHtmlToImport] = useState<string>("");
   const [zipFile, setZipFile] = useState<File | null>(null);
+
+  const [publish, setPublish] = useState<PublishState>({ state: "idle" });
 
   useEffect(() => {
     if (!projectId) {
@@ -191,8 +199,6 @@ export default function ProjectBuilderPage() {
     setToast(null);
 
     try {
-      // Expected route (already in your repo):
-      // POST /api/projects/:projectId/import/html
       const res = await fetch(`/api/projects/${projectId}/import/html`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -245,9 +251,6 @@ export default function ProjectBuilderPage() {
     setToast(null);
 
     try {
-      // Expected route (already in your repo):
-      // POST /api/projects/:projectId/import/zip
-      // We send FormData so the server can read the uploaded zip.
       const form = new FormData();
       form.append("file", zipFile);
 
@@ -286,8 +289,94 @@ export default function ProjectBuilderPage() {
     }
   }
 
+  async function publishNow() {
+    if (!projectId) return;
+
+    setBusy(true);
+    setToast(null);
+    setPublish({ state: "publishing" });
+
+    try {
+      // Expected route (already in your repo):
+      // POST /api/projects/:projectId/publish
+      // This should return JSON with either:
+      // - { ok: true, url: "/p/<projectId>" }  (or full URL)
+      // or it may return { ok: true, path: "/p/<projectId>" }
+      const res = await fetch(`/api/projects/${projectId}/publish`, {
+        method: "POST",
+      });
+
+      const text = await res.text();
+
+      if (!res.ok) {
+        setPublish({ state: "error", message: `(${res.status}) ${text}` });
+        setToast({
+          tone: "danger",
+          title: "Publish failed",
+          message: `(${res.status}) ${text}`,
+        });
+        return;
+      }
+
+      let data: any = null;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // If the endpoint ever returns plain text, handle it.
+        const maybeUrl = text.trim();
+        if (maybeUrl) {
+          setPublish({ state: "published", url: maybeUrl });
+          setToast({ tone: "success", title: "Published", message: maybeUrl });
+          return;
+        }
+        setPublish({ state: "error", message: `Unexpected publish response: ${text}` });
+        return;
+      }
+
+      const urlFromApi =
+        (typeof data?.url === "string" && data.url) ||
+        (typeof data?.path === "string" && data.path) ||
+        (typeof data?.publicUrl === "string" && data.publicUrl) ||
+        "";
+
+      if (!urlFromApi) {
+        setPublish({ state: "error", message: `Unexpected publish response: ${text}` });
+        setToast({
+          tone: "danger",
+          title: "Publish error",
+          message: `Unexpected publish response: ${text}`,
+        });
+        return;
+      }
+
+      setPublish({ state: "published", url: urlFromApi });
+      setToast({ tone: "success", title: "Published", message: urlFromApi });
+    } catch (err: any) {
+      setPublish({
+        state: "error",
+        message: err?.message ? String(err.message) : "Unknown error during publish.",
+      });
+      setToast({
+        tone: "danger",
+        title: "Publish error",
+        message: err?.message ? String(err.message) : "Unknown error during publish.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function closeModal() {
     setModal({ open: false });
+  }
+
+  function normalizePublishedUrl(url: string) {
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+    // If API returns a path like /p/<projectId>, turn it into a full URL using current origin.
+    if (trimmed.startsWith("/")) return `${window.location.origin}${trimmed}`;
+    return `${window.location.origin}/${trimmed}`;
   }
 
   if (status === "loading") {
@@ -368,6 +457,9 @@ export default function ProjectBuilderPage() {
       </div>
     );
   }
+
+  const publishedUrl =
+    publish.state === "published" ? normalizePublishedUrl(publish.url) : "";
 
   return (
     <div style={{ minHeight: "100vh", background: "#fafafa", fontFamily: "system-ui" }}>
@@ -628,11 +720,8 @@ export default function ProjectBuilderPage() {
             <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>Actions</div>
             <div style={{ marginTop: 10, fontSize: 13, color: "#555", lineHeight: 1.4 }}>
               Generate → writes HTML → Preview reads KV via <b>/api/projects/&lt;projectId&gt;/preview</b>.
-              Imports call:
               <br />
-              <b>POST /api/projects/&lt;projectId&gt;/import/html</b>
-              <br />
-              <b>POST /api/projects/&lt;projectId&gt;/import/zip</b>
+              Publish calls <b>POST /api/projects/&lt;projectId&gt;/publish</b>.
             </div>
 
             <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
@@ -699,21 +788,57 @@ export default function ProjectBuilderPage() {
 
               <button
                 disabled={busy}
-                onClick={() =>
-                  setPreview({ state: "idle", message: "Preview cleared. Click Load Preview." })
-                }
+                onClick={() => publishNow()}
                 style={{
                   padding: "12px 14px",
                   borderRadius: 14,
                   border: "1px solid #ddd",
-                  background: "white",
-                  cursor: "pointer",
-                  fontWeight: 700,
+                  background: busy ? "#f3f4f6" : "#0b5fff",
+                  color: busy ? "#777" : "white",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  fontWeight: 900,
                 }}
               >
-                Clear Preview
+                {publish.state === "publishing" ? "Publishing…" : "Publish"}
               </button>
             </div>
+
+            {publish.state === "published" ? (
+              <div
+                style={{
+                  marginTop: 14,
+                  border: "1px solid #b7ebc6",
+                  background: "#f0fff4",
+                  borderRadius: 14,
+                  padding: 12,
+                  fontSize: 13,
+                  color: "#111",
+                }}
+              >
+                <div style={{ fontWeight: 900 }}>Published</div>
+                <div style={{ marginTop: 8, wordBreak: "break-all" }}>
+                  <a href={publishedUrl} target="_blank" rel="noreferrer">
+                    {publishedUrl}
+                  </a>
+                </div>
+              </div>
+            ) : publish.state === "error" ? (
+              <div
+                style={{
+                  marginTop: 14,
+                  border: "1px solid #ffd1d1",
+                  background: "#fff5f5",
+                  borderRadius: 14,
+                  padding: 12,
+                  fontSize: 13,
+                  color: "#111",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                <div style={{ fontWeight: 900 }}>Publish error</div>
+                <div style={{ marginTop: 8 }}>{publish.message}</div>
+              </div>
+            ) : null}
 
             <div style={{ marginTop: 16 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>Status</div>
@@ -742,6 +867,17 @@ export default function ProjectBuilderPage() {
                 >
                   <span>Preview</span>
                   <span style={{ fontWeight: 700 }}>{preview.state}</span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    marginTop: 6,
+                  }}
+                >
+                  <span>Publish</span>
+                  <span style={{ fontWeight: 700 }}>{publish.state}</span>
                 </div>
               </div>
             </div>
@@ -817,7 +953,7 @@ export default function ProjectBuilderPage() {
         </div>
 
         <div style={{ marginTop: 14, fontSize: 12, color: "#666" }}>
-          Next: wire <b>Publish</b> to your publish API route and show the public URL.
+          Next: show the published page inline and add a “Copy link” button.
         </div>
       </div>
     </div>
