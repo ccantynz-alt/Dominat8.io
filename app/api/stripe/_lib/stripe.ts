@@ -11,3 +11,4 @@ export const stripe = new Stripe(stripeSecretKey, {
   // Keep this in sync with the Stripe SDK type union to avoid build failures.
   apiVersion: "2023-10-16",
 });
+
