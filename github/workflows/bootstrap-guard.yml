@@ -1,0 +1,67 @@
+name: Bootstrap Guard (keep BOOTSTRAP in sync)
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compare BOOTSTRAP vs live files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Bootstrap Guard: comparing BOOTSTRAP files to live files..."
+          echo ""
+
+          # Pairs: "BOOTSTRAP_PATH|LIVE_PATH"
+          PAIRS=(
+            "BOOTSTRAP/app/api/projects/[projectId]/publish/route.ts|app/api/projects/[projectId]/publish/route.ts"
+            "BOOTSTRAP/app/p/[projectId]/page.tsx|app/p/[projectId]/page.tsx"
+            "BOOTSTRAP/app/projects/[projectId]/page.tsx|app/projects/[projectId]/page.tsx"
+            "BOOTSTRAP/app/api/projects/[projectId]/preview/route.ts|app/api/projects/[projectId]/preview/route.ts"
+            "BOOTSTRAP/app/api/projects/[projectId]/audit/route.ts|app/api/projects/[projectId]/audit/route.ts"
+            "BOOTSTRAP/app/api/projects/[projectId]/agents/conversion/route.ts|app/api/projects/[projectId]/agents/conversion/route.ts"
+            "BOOTSTRAP/lib/stripe.ts|lib/stripe.ts"
+          )
+
+          mismatches=0
+
+          for pair in "${PAIRS[@]}"; do
+            BOOT="${pair%%|*}"
+            LIVE="${pair##*|}"
+
+            if [ ! -f "$BOOT" ]; then
+              echo "❌ Missing BOOTSTRAP file: $BOOT"
+              mismatches=$((mismatches+1))
+              continue
+            fi
+
+            if [ ! -f "$LIVE" ]; then
+              echo "❌ Missing live file: $LIVE"
+              mismatches=$((mismatches+1))
+              continue
+            fi
+
+            if diff -q "$BOOT" "$LIVE" >/dev/null 2>&1; then
+              echo "✅ OK: $LIVE matches $BOOT"
+            else
+              echo "❌ MISMATCH: $LIVE does NOT match $BOOT"
+              echo "   Fix: copy/paste BOOTSTRAP → live (or update both together)."
+              mismatches=$((mismatches+1))
+            fi
+          done
+
+          echo ""
+          if [ "$mismatches" -gt 0 ]; then
+            echo "Bootstrap Guard FAILED: $mismatches mismatch(es) found."
+            exit 1
+          fi
+
+          echo "Bootstrap Guard PASSED: all files match."
