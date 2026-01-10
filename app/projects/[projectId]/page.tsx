@@ -21,7 +21,7 @@ async function finishForMe() {
   setToast(null);
 
   try {
-    // 1) Call Level-2 finish endpoint (conversion-ready, automation-first)
+    // 1) Generate conversion-ready HTML via Level-2 finish endpoint
     const res = await fetch(`/api/projects/${projectId}/finish`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -50,7 +50,7 @@ async function finishForMe() {
     // 2) Close modal
     setModal({ open: false });
 
-    // 3) Load preview immediately
+    // 3) Load preview
     setToast({
       tone: "success",
       title: "Site generated",
@@ -59,12 +59,76 @@ async function finishForMe() {
 
     await loadPreview();
 
-    // 4) Run quality audit
-    setAudit({ state: "idle" });
-    await runAudit();
+    // 4) Run audit and capture result
+    setAudit({ state: "checking" });
 
-    // 5) OPTIONAL: auto-publish if Pro
-    // publishNow() already handles 402 Upgrade Required and shows link
+    const auditRes = await fetch(`/api/projects/${projectId}/audit`, { method: "POST" });
+    const auditText = await auditRes.text();
+
+    if (!auditRes.ok) {
+      setAudit({ state: "error", message: `(${auditRes.status}) ${auditText}` });
+      setToast({
+        tone: "danger",
+        title: "Quality check failed",
+        message: `(${auditRes.status}) ${auditText}`,
+      });
+      return;
+    }
+
+    let auditData: any = null;
+    try {
+      auditData = JSON.parse(auditText);
+    } catch {
+      setAudit({ state: "error", message: `Unexpected response: ${auditText}` });
+      setToast({
+        tone: "danger",
+        title: "Quality check error",
+        message: `Unexpected response: ${auditText}`,
+      });
+      return;
+    }
+
+    if (!auditData?.ok) {
+      setAudit({ state: "error", message: `Audit error: ${auditText}` });
+      setToast({
+        tone: "danger",
+        title: "Quality check error",
+        message: `Audit error: ${auditText}`,
+      });
+      return;
+    }
+
+    const readyToPublish = Boolean(auditData.readyToPublish);
+    const missing = Array.isArray(auditData.missing) ? auditData.missing : [];
+    const warnings = Array.isArray(auditData.warnings) ? auditData.warnings : [];
+    const notes = Array.isArray(auditData.notes) ? auditData.notes : [];
+
+    setAudit({
+      state: "ready",
+      ok: readyToPublish,
+      missing,
+      warnings,
+      notes,
+    });
+
+    // 5) Publish only if audit passes
+    if (!readyToPublish) {
+      setToast({
+        tone: "danger",
+        title: "Not published",
+        message:
+          "Your site generated successfully, but the quality check found issues.\n\nFix the missing items, then click Publish.",
+      });
+      return;
+    }
+
+    setToast({
+      tone: "success",
+      title: "Quality check passed",
+      message: "Publishing now…",
+    });
+
+    // publishNow handles 402 upgrade requirement itself
     await publishNow();
   } catch (err: any) {
     setToast({
