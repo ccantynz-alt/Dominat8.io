@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
-import { getProjectById, saveProject } from "@/lib/projects";
+import { requireUser } from "../../../../../lib/auth";
+import { getProjectById, saveProject } from "../../../../../lib/projects";
 
 export async function POST(
   _req: Request,
