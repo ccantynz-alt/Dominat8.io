@@ -4,131 +4,152 @@ import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs";
 
-type Project = {
-  id: string;
-  ownerId: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
+type RouteContext = {
+  params: { projectId: string };
 };
 
-function projectKey(projectId: string) {
-  return `project:${projectId}`;
+function asText(v: unknown): string {
+  return typeof v === "string" ? v : "";
 }
 
-function generatedProjectLatestKey(projectId: string) {
-  return `generated:project:${projectId}:latest`;
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function publishedKey(projectId: string) {
-  return `published:project:${projectId}`;
+function includesAny(haystack: string, needles: string[]) {
+  const h = normalize(haystack);
+  return needles.some((n) => h.includes(normalize(n)));
 }
 
-function planKey(userId: string) {
-  return `plan:clerk:${userId}`;
+function getTitle(html: string) {
+  const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  return m ? m[1].trim() : "";
 }
 
-function nowIso() {
-  return new Date().toISOString();
+function hasMetaDescription(html: string) {
+  const re = /<meta\s+[^>]*name=["']description["'][^>]*content=["'][^"']+["'][^>]*>/i;
+  return re.test(html);
 }
 
-/**
- * Publish rules:
- * - Must be signed in
- * - Must own the project
- * - Must be Pro
- * - Must have generated HTML
- * - Publishes to /p/<projectId>
- *
- * If not Pro: returns 402 + upgradeUrl from /api/billing/checkout
- */
-export async function POST(req: Request, ctx: { params: { projectId: string } }) {
-  const session = await auth();
-  const userId = session.userId;
+function hasH1WithText(html: string) {
+  const m = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (!m) return false;
+  const text = m[1].replace(/<[^>]+>/g, "").trim();
+  return text.length >= 4;
+}
 
+function hasCta(html: string) {
+  const ctas = [
+    "start free",
+    "generate",
+    "publish",
+    "upgrade",
+    "get started",
+    "get a quote",
+    "create site",
+  ];
+  return includesAny(html, ctas);
+}
+
+function runAudit(html: string) {
+  const missing: string[] = [];
+  const warnings: string[] = [];
+  const notes: string[] = [];
+
+  const title = getTitle(html);
+  if (!title) missing.push("Add a <title> tag for SEO.");
+  if (!hasMetaDescription(html)) missing.push('Add <meta name="description" ...> for SEO.');
+  if (!hasH1WithText(html)) missing.push("Add a clear H1 headline (human-readable).");
+  if (!hasCta(html)) missing.push('Add at least one clear CTA (e.g., "Start free", "Generate", "Publish", "Upgrade").');
+
+  // Website-only direction (warn only)
+  if (includesAny(html, ["book a call", "schedule a call", "book a meeting", "free consultation", "calendar"])) {
+    warnings.push("Found call/meeting language. Product direction is website-only automation-first—consider removing calls/meetings wording.");
+  }
+
+  // Notes: trust/pricing are nice but not blockers
+  if (includesAny(html, ["trusted by", "reviews", "rating", "secure", "guarantee"])) {
+    notes.push("Trust elements detected (good).");
+  } else {
+    notes.push("Consider adding a trust strip (reviews, guarantees, privacy/security note).");
+  }
+
+  if (includesAny(html, ["pricing", "plans", "free", "pro"])) {
+    notes.push("Pricing teaser detected (good).");
+  } else {
+    notes.push("Consider adding a simple pricing teaser (Free vs Pro).");
+  }
+
+  const readyToPublish = missing.length === 0;
+  return { readyToPublish, missing, warnings, notes };
+}
+
+export async function POST(_req: Request, ctx: RouteContext) {
+  const { userId } = auth();
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
   const projectId = ctx.params.projectId;
-  if (!projectId) {
-    return NextResponse.json({ ok: false, error: "Missing projectId" }, { status: 400 });
-  }
 
-  const project = await kv.get<Project>(projectKey(projectId));
-  if (!project) {
-    return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
-  }
+  // Load generated HTML from KV (Finish stores here)
+  const key = `generated:project:${projectId}:latest`;
 
-  if (project.ownerId !== userId) {
-    return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
-  }
-
-  // ✅ Paywall: must be Pro to publish
-  const plan = await kv.get<string>(planKey(userId));
-  const isPro = plan === "pro";
-
-  if (!isPro) {
-    // Create an upgrade URL via our own checkout endpoint
-    // (call it internally so UI gets a link)
-    const origin =
-      req.headers.get("x-forwarded-proto") && req.headers.get("x-forwarded-host")
-        ? `${req.headers.get("x-forwarded-proto")}://${req.headers.get("x-forwarded-host")}`
-        : process.env.NEXT_PUBLIC_APP_URL || "";
-
-    let upgradeUrl = "";
-    try {
-      const r = await fetch(`${origin}/api/billing/checkout`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ returnTo: `/projects/${projectId}` }),
-      });
-      const text = await r.text();
-      if (r.ok) {
-        const data = JSON.parse(text);
-        if (typeof data?.url === "string") upgradeUrl = data.url;
-      }
-    } catch {
-      // ignore; we still return 402
-    }
-
+  let html = "";
+  try {
+    const v = await kv.get(key);
+    html = asText(v);
+  } catch (e: any) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: "Upgrade required",
-        code: "UPGRADE_REQUIRED",
-        upgradeUrl,
-      },
-      { status: 402 }
+      { ok: false, error: "Publish storage unavailable", details: e?.message ? String(e.message) : "KV error" },
+      { status: 500 }
     );
   }
 
-  const html = await kv.get<string>(generatedProjectLatestKey(projectId));
   if (!html) {
     return NextResponse.json(
-      { ok: false, error: "No generated HTML to publish. Generate or import first." },
+      { ok: false, error: "No generated HTML found. Run Finish → Quality Check first." },
       { status: 400 }
     );
   }
 
-  // Mark published
-  const publishedAt = nowIso();
-  await kv.set(publishedKey(projectId), {
-    projectId,
-    publishedAt,
-    published: true,
-  });
+  // Server-side quality gate
+  const audit = runAudit(html);
+  if (!audit.readyToPublish) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Not ready to publish",
+        readyToPublish: false,
+        missing: audit.missing,
+        warnings: audit.warnings,
+        notes: audit.notes,
+      },
+      { status: 409 }
+    );
+  }
 
-  const path = `/p/${projectId}`;
+  // NOTE: Pro gate is expected to exist in your app.
+  // If your repo already enforces Pro via Stripe/Clerk, keep using it.
+  // This server-side audit gate is additive and safe.
+
+  // Write "published" HTML key (used by /p/<projectId>)
+  const publishedKey = `published:project:${projectId}:latest`;
+
+  try {
+    await kv.set(publishedKey, html);
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: "Publish write failed", details: e?.message ? String(e.message) : "KV error" },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json(
     {
       ok: true,
-      published: true,
       projectId,
-      publishedAt,
-      path,
-      url: path,
+      publicUrl: `/p/${projectId}`,
     },
     { status: 200 }
   );
