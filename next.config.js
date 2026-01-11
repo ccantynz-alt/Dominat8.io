@@ -1,19 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-
-  async rewrites() {
-    return {
-      beforeFiles: [
-        // ✅ HARD BYPASS: never rewrite API routes
-        { source: "/api/:path*", destination: "/api/:path*" },
-
-        // ✅ also bypass Next internals
-        { source: "/_next/:path*", destination: "/_next/:path*" },
+  webpack: (config) => {
+    // Windows/OneDrive fix: avoid watchpack lstat EINVAL on protected system files
+    config.watchOptions = {
+      ...config.watchOptions,
+      poll: 1000,
+      aggregateTimeout: 300,
+      ignored: [
+        "**/.git/**",
+        "**/.next/**",
+        "**/node_modules/**",
+        "C:\\\\hiberfil.sys",
+        "C:\\\\pagefile.sys",
+        "C:\\\\swapfile.sys",
+        "C:\\\\DumpStack.log.tmp",
       ],
-      afterFiles: [],
-      fallback: [],
     };
+    return config;
   },
 };
 
