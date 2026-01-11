@@ -1,6 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
+﻿import "server-only";
 
-export async function getCurrentUserId(): Promise<string> {
-  const session = await auth();
-  return session.userId ?? "demo";
+/**
+ * DEMO AUTH (SAFE STUB)
+ * Always returns a deterministic user id for now.
+ */
+
+export async function getCurrentUserId(): Promise<string | null> {
+  return "demo-user";
 }
