@@ -1,63 +1,70 @@
 import { NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
 import { auth } from "@clerk/nextjs/server";
-import crypto from "crypto";
+import { kv } from "@vercel/kv";
 
-export const runtime = "nodejs";
-
-type Project = {
-  id: string;
-  ownerId: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-function nowIso() {
-  return new Date().toISOString();
-}
-
-function newProjectId() {
-  return `proj_${crypto.randomUUID().replace(/-/g, "")}`;
-}
-
+// ----------------------------
+// KV keys
+// ----------------------------
 function projectKey(projectId: string) {
   return `project:${projectId}`;
 }
 
-function userProjectsKey(userId: string) {
-  return `projects:user:${userId}`;
+function projectsIndexKey(clerkUserId: string) {
+  return `projects:index:${clerkUserId}`;
 }
 
-// ✅ GET /api/projects  -> list projects for signed-in user
-export async function GET() {
-  const session = await auth();
-  const userId = session.userId;
+function projectCountKey(clerkUserId: string) {
+  return `projects:count:${clerkUserId}`;
+}
 
+// ----------------------------
+// Helpers
+// ----------------------------
+function newProjectId() {
+  // Node 18+ supports crypto.randomUUID()
+  return `proj_${crypto.randomUUID().replace(/-/g, "")}`;
+}
+
+async function incrementProjectCount(clerkUserId: string) {
+  await kv.incr(projectCountKey(clerkUserId));
+}
+
+// ----------------------------
+// GET /api/projects
+// Returns a list of user's projects
+// ----------------------------
+export async function GET() {
+  const { userId } = auth();
   if (!userId) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "Unauthenticated" }, { status: 401 });
   }
 
-  const ids = (await kv.lrange<string>(userProjectsKey(userId), 0, 50)) ?? [];
+  const ids = (await kv.lrange(projectsIndexKey(userId), 0, -1)) as string[];
+  const projects: Array<{ id: string; name?: string; createdAt?: string }> = [];
 
-  const projects: Project[] = [];
   for (const id of ids) {
-    const p = await kv.get<Project>(projectKey(id));
-    if (p && p.ownerId === userId) {
-      projects.push(p);
+    const data = (await kv.hgetall(projectKey(id))) as any;
+    if (data && data.id) {
+      projects.push({
+        id: data.id,
+        name: data.name,
+        createdAt: data.createdAt,
+      });
     }
   }
 
-  return NextResponse.json({ ok: true, projects }, { status: 200 });
+  return NextResponse.json({ ok: true, projects });
 }
 
-// ✅ POST /api/projects -> create project (simple)
+// ----------------------------
+// POST /api/projects
+// Creates a project for the signed-in user
+// Body: { name?: string }
+// ----------------------------
 export async function POST(req: Request) {
-  const session = await auth();
-  const userId = session.userId;
-
+  const { userId } = auth();
   if (!userId) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "Unauthenticated" }, { status: 401 });
   }
 
   let body: any = {};
@@ -67,24 +74,26 @@ export async function POST(req: Request) {
     body = {};
   }
 
-  const name =
-    typeof body?.name === "string" && body.name.trim().length > 0
-      ? body.name.trim()
-      : "Untitled Project";
+  const projectId = newProjectId();
+  const now = new Date().toISOString();
 
-  const id = newProjectId();
-  const createdAt = nowIso();
-
-  const project: Project = {
-    id,
-    ownerId: userId,
-    name,
-    createdAt,
-    updatedAt: createdAt,
+  const project = {
+    id: projectId,
+    clerkUserId: userId,
+    name: typeof body?.name === "string" && body.name.trim() ? body.name.trim() : "Untitled Project",
+    createdAt: now,
+    updatedAt: now,
+    status: "draft",
   };
 
-  await kv.set(projectKey(id), project);
-  await kv.lpush(userProjectsKey(userId), id);
+  // Save project
+  await kv.hset(projectKey(projectId), project as any);
 
-  return NextResponse.json({ ok: true, project }, { status: 200 });
+  // Index project for listing
+  await kv.lpush(projectsIndexKey(userId), projectId);
+
+  // Count projects (optional, but useful)
+  await incrementProjectCount(userId);
+
+  return NextResponse.json({ ok: true, project });
 }
