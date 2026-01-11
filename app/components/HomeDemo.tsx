@@ -32,16 +32,15 @@ export default function HomeDemo() {
               </Link>
 
               <Link
-                href="#features"
+                href="#demo"
                 className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
               >
-                See features
+                You are here
               </Link>
             </div>
 
             <div className="mt-6 text-xs text-zinc-500">
-              No signup required to explore. Real publishing happens inside the
-              app.
+              Real publishing happens inside the app.
             </div>
           </div>
 
@@ -61,8 +60,8 @@ export default function HomeDemo() {
               <div className="rounded-2xl bg-zinc-50 p-5">
                 <div className="text-xs font-semibold text-zinc-500">Prompt</div>
                 <div className="mt-2 text-sm font-semibold text-zinc-800">
-                  “Create a premium SaaS website with a hero, features, pricing,
-                  FAQ, and a strong CTA. Clean, modern design.”
+                  “Create a premium SaaS website with hero, features, pricing,
+                  FAQ, and a CTA. Clean, modern design.”
                 </div>
               </div>
 
@@ -72,10 +71,10 @@ export default function HomeDemo() {
                     Output
                   </div>
                   <div className="mt-2 text-sm font-extrabold text-zinc-900">
-                    Conversion-ready site
+                    Conversion-ready
                   </div>
                   <div className="mt-1 text-xs text-zinc-600">
-                    Hero, sections, CTA
+                    Sections + CTA
                   </div>
                 </div>
 
@@ -92,10 +91,10 @@ export default function HomeDemo() {
 
               <div className="mt-5 rounded-2xl border border-zinc-200 bg-white p-4">
                 <div className="text-sm font-extrabold text-zinc-900">
-                  Designed for speed
+                  Built for momentum
                 </div>
                 <div className="mt-1 text-xs text-zinc-600">
-                  Build → preview → publish without meetings or setup.
+                  Create → preview → publish, then share the link.
                 </div>
               </div>
             </div>
