@@ -1,58 +1,77 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { apiCreateProject } from "@/lib/customerFlowApi";
+import Link from "next/link";
+import HomeDemo from "./components/HomeDemo";
 
-export default function AppDashboardPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+function Container({ children }: { children: React.ReactNode }) {
+  return <div className="mx-auto w-full max-w-6xl px-6">{children}</div>;
+}
 
-  async function onCreate() {
-    setErr(null);
-    setLoading(true);
-
-    try {
-      const data = await apiCreateProject();
-      if (!data.ok || !data.projectId) throw new Error(data.error || "Failed to create project");
-
-      router.push(`/app/create?projectId=${encodeURIComponent(data.projectId)}`);
-    } catch (e: any) {
-      setErr(e?.message || "Something went wrong");
-      setLoading(false);
-    }
-  }
-
+export default function HomePage() {
   return (
-    <div style={{ maxWidth: 820, margin: "40px auto", padding: 24 }}>
-      <h1 style={{ fontSize: 40, margin: 0 }}>Create your website with AI</h1>
-      <p style={{ fontSize: 18, opacity: 0.75, marginTop: 12 }}>
-        Describe your business and we’ll build a complete website for you in under a minute.
-      </p>
+    <div className="min-h-screen bg-white text-zinc-900">
+      <div className="sticky top-0 z-50 border-b border-zinc-200/60 bg-white/70 backdrop-blur">
+        <Container>
+          <div className="flex h-16 items-center justify-between">
+            <Link href="/" className="text-sm font-extrabold text-zinc-900">
+              MySaaS Builder
+            </Link>
 
-      <button
-        onClick={onCreate}
-        disabled={loading}
-        style={{
-          marginTop: 24,
-          padding: "14px 18px",
-          fontSize: 18,
-          borderRadius: 12,
-          border: "1px solid rgba(0,0,0,0.15)",
-          cursor: loading ? "not-allowed" : "pointer",
-        }}
-      >
-        {loading ? "Creating…" : "Create Website"}
-      </button>
+            <div className="flex items-center gap-4">
+              <Link
+                href="#demo"
+                className="text-sm font-semibold text-zinc-700 hover:text-zinc-900"
+              >
+                Demo
+              </Link>
+              <Link
+                href="/projects"
+                className="inline-flex items-center justify-center rounded-xl bg-black px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-900"
+              >
+                Open Builder
+              </Link>
+            </div>
+          </div>
+        </Container>
+      </div>
 
-      <p style={{ marginTop: 12, opacity: 0.7 }}>No design or technical skills required.</p>
+      <main>
+        <section className="bg-white py-16 md:py-24">
+          <Container>
+            <h1 className="text-4xl font-extrabold tracking-tight md:text-6xl">
+              Premium AI website building that actually ships.
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 md:text-lg">
+              Generate a conversion-ready site, preview it instantly, and publish
+              to a shareable URL. Built to move fast.
+            </p>
+            <div className="mt-8 flex gap-3">
+              <Link
+                href="/projects"
+                className="inline-flex items-center justify-center rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-zinc-900"
+              >
+                Start building
+              </Link>
+              <Link
+                href="#demo"
+                className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
+              >
+                View demo
+              </Link>
+            </div>
+          </Container>
+        </section>
 
-      {err && (
-        <div style={{ marginTop: 16, padding: 12, border: "1px solid #f99", borderRadius: 10 }}>
-          {err}
-        </div>
-      )}
+        <HomeDemo />
+
+        <footer className="border-t border-zinc-200 bg-white">
+          <Container>
+            <div className="py-10 text-sm font-semibold text-zinc-600">
+              © {new Date().getFullYear()} MySaaS Builder. All rights reserved.
+            </div>
+          </Container>
+        </footer>
+      </main>
     </div>
   );
 }
