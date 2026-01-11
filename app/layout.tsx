@@ -1,9 +1,10 @@
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "My SaaS App",
-  description: "AI website builder",
+  description: "AI-powered website builder",
 };
 
 export default function RootLayout({
