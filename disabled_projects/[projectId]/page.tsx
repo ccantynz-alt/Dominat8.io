@@ -57,12 +57,7 @@ export default async function ProjectDetailPage({
           ) : null}
           <div className="mt-2 text-xs text-neutral-500">{project.id}</div>
         </div>
-
-        <form
-          action={async () => {
-            "use server";
-            // server action kept minimal; you can switch to a client button later
-          }}
+        
         >
           <Link className="rounded-xl border px-3 py-2 text-sm" href="/runs">
             All runs →
