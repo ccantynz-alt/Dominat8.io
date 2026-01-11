@@ -1,10 +1,6 @@
-import { doThing } from "@/app/actions";
+import { publishProject } from "@/app/actions";
+import PublishButton from "./PublishButton";
 
 export default function Page() {
-  return (
-    <form action={doThing}>
-      <input name="projectId" defaultValue="proj_123" />
-      <button type="submit">Run</button>
-    </form>
-  );
+  return <PublishButton action={publishProject} projectId="proj_123" />;
 }
