@@ -5,7 +5,12 @@ import { useMemo, useState } from "react";
 
 type AnyJson = Record<string, any>;
 
-async function readAsJsonOrText(res: Response): Promise<{ ok: boolean; status: number; json?: AnyJson; text?: string }> {
+async function readAsJsonOrText(res: Response): Promise<{
+  ok: boolean;
+  status: number;
+  json?: AnyJson;
+  text?: string;
+}> {
   const status = res.status;
   const ok = res.ok;
 
@@ -28,8 +33,7 @@ async function readAsJsonOrText(res: Response): Promise<{ ok: boolean; status: n
 }
 
 async function createProject(): Promise<string> {
-  // Your app already has a working "create project" flow somewhere.
-  // We try common variants safely.
+  // Try common variants safely. One of these should match your current API.
   const attempts: Array<() => Promise<Response>> = [
     () => fetch("/api/projects", { method: "POST" }),
     () =>
@@ -52,26 +56,24 @@ async function createProject(): Promise<string> {
     const parsed = await readAsJsonOrText(res);
 
     if (parsed.ok && parsed.json?.projectId) return String(parsed.json.projectId);
-
-    // Some implementations return { ok: true, id: "..."}
     if (parsed.ok && parsed.json?.id) return String(parsed.json.id);
 
-    lastErr =
-      parsed.json
-        ? JSON.stringify(parsed.json, null, 2)
-        : parsed.text || `HTTP ${parsed.status}`;
+    lastErr = parsed.json
+      ? JSON.stringify(parsed.json, null, 2)
+      : parsed.text || `HTTP ${parsed.status}`;
   }
 
   throw new Error(`Could not create project. Last response:\n${lastErr}`);
 }
 
 async function tryGenerateOrPreview(projectId: string, prompt: string) {
-  // Try both in case your repo uses one or the other
+  // Auto-try both in case your repo uses one or the other
   const endpoints = [
     `/api/projects/${projectId}/generate`,
     `/api/projects/${projectId}/preview`,
   ];
 
+  // Auto-try multiple request shapes
   const bodyVariants = [
     { prompt },
     { instruction: prompt },
@@ -92,16 +94,14 @@ async function tryGenerateOrPreview(projectId: string, prompt: string) {
       const parsed = await readAsJsonOrText(res);
 
       if (parsed.ok) {
-        // Typical shapes we’ve seen:
-        // - { ok:true, html:"..." }
-        // - { ok:true, publicUrl:"/p/..." }
-        // - { ok:true, versionId:"...", hasHtml:true }
         return { url, parsed, body };
       }
 
       lastDetail =
         `[${url}] body=${JSON.stringify(body)}\n` +
-        (parsed.json ? JSON.stringify(parsed.json, null, 2) : parsed.text || `HTTP ${parsed.status}`);
+        (parsed.json
+          ? JSON.stringify(parsed.json, null, 2)
+          : parsed.text || `HTTP ${parsed.status}`);
     }
   }
 
@@ -109,16 +109,22 @@ async function tryGenerateOrPreview(projectId: string, prompt: string) {
 }
 
 async function publishViaPublish2(projectId: string) {
-  const res = await fetch(`/api/projects/${projectId}/publish2`, { method: "POST" });
+  const res = await fetch(`/api/projects/${projectId}/publish2`, {
+    method: "POST",
+  });
   const parsed = await readAsJsonOrText(res);
+
   if (!parsed.ok) {
-    const detail = parsed.json ? JSON.stringify(parsed.json, null, 2) : (parsed.text || `HTTP ${parsed.status}`);
+    const detail = parsed.json
+      ? JSON.stringify(parsed.json, null, 2)
+      : parsed.text || `HTTP ${parsed.status}`;
     throw new Error(`Publish2 failed:\n${detail}`);
   }
+
   return parsed;
 }
 
-function classNames(...xs: Array<string | false | null | undefined>) {
+function cx(...xs: Array<string | false | null | undefined>) {
   return xs.filter(Boolean).join(" ");
 }
 
@@ -129,10 +135,15 @@ export default function HomeDemo() {
 
   const [projectId, setProjectId] = useState<string>("");
   const [previewHtml, setPreviewHtml] = useState<string>("");
-  const [busy, setBusy] = useState<"idle" | "creating" | "generating" | "publishing">("idle");
+  const [busy, setBusy] = useState<
+    "idle" | "creating" | "generating" | "publishing"
+  >("idle");
   const [log, setLog] = useState<string>("");
 
-  const publishedUrl = useMemo(() => (projectId ? `/p/${projectId}` : ""), [projectId]);
+  const publishedUrl = useMemo(
+    () => (projectId ? `/p/${projectId}` : ""),
+    [projectId]
+  );
 
   async function onCreate() {
     setBusy("creating");
@@ -178,7 +189,7 @@ export default function HomeDemo() {
         return;
       }
 
-      // Otherwise we at least show the response:
+      // Otherwise show the response so you can see what it returns:
       setLog(
         `✅ Request succeeded via ${result.url}\n\n` +
           (json ? JSON.stringify(json, null, 2) : text || "")
@@ -201,7 +212,11 @@ export default function HomeDemo() {
 
     try {
       const parsed = await publishViaPublish2(projectId);
-      setLog(`✅ Published via publish2\n\n${parsed.json ? JSON.stringify(parsed.json, null, 2) : parsed.text || ""}`);
+      setLog(
+        `✅ Published via publish2\n\n${
+          parsed.json ? JSON.stringify(parsed.json, null, 2) : parsed.text || ""
+        }`
+      );
 
       // Open the published page
       window.open(publishedUrl, "_blank");
@@ -213,7 +228,7 @@ export default function HomeDemo() {
   }
 
   return (
-    <section className="bg-white py-16 md:py-24" id="demo">
+    <section id="demo" className="bg-white py-16 md:py-24">
       <div className="mx-auto w-full max-w-6xl px-6">
         <div className="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
           <div className="max-w-2xl">
@@ -227,8 +242,11 @@ export default function HomeDemo() {
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-zinc-600 md:text-base">
-              This uses your real backend routes:
-              <span className="font-semibold text-zinc-800"> create project → generate/preview → publish2 → /p/[projectId]</span>.
+              This uses your real backend routes:{" "}
+              <span className="font-semibold text-zinc-800">
+                create project → generate/preview → publish2 → /p/[projectId]
+              </span>
+              .
             </p>
 
             <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
@@ -244,20 +262,24 @@ export default function HomeDemo() {
                 <button
                   onClick={onCreate}
                   disabled={busy !== "idle"}
-                  className={classNames(
+                  className={cx(
                     "inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold shadow-sm transition",
                     busy !== "idle"
                       ? "cursor-not-allowed bg-zinc-200 text-zinc-500"
                       : "bg-white text-zinc-900 hover:bg-zinc-100 border border-zinc-200"
                   )}
                 >
-                  {busy === "creating" ? "Creating…" : projectId ? "Recreate project" : "Create project"}
+                  {busy === "creating"
+                    ? "Creating…"
+                    : projectId
+                    ? "Recreate project"
+                    : "Create project"}
                 </button>
 
                 <button
                   onClick={onGeneratePreview}
                   disabled={busy !== "idle" || !projectId}
-                  className={classNames(
+                  className={cx(
                     "inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold shadow-sm transition",
                     busy !== "idle" || !projectId
                       ? "cursor-not-allowed bg-zinc-200 text-zinc-500"
@@ -270,7 +292,7 @@ export default function HomeDemo() {
                 <button
                   onClick={onPublish}
                   disabled={busy !== "idle" || !projectId}
-                  className={classNames(
+                  className={cx(
                     "inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold shadow-sm transition",
                     busy !== "idle" || !projectId
                       ? "cursor-not-allowed bg-zinc-200 text-zinc-500"
@@ -344,11 +366,13 @@ export default function HomeDemo() {
                         No preview yet
                       </div>
                       <div className="mt-2 text-sm text-zinc-600">
-                        Click <span className="font-semibold">Create project</span>, then{" "}
-                        <span className="font-semibold">Generate preview</span>.
+                        Click{" "}
+                        <span className="font-semibold">Create project</span>,
+                        then <span className="font-semibold">Generate preview</span>.
                       </div>
                       <div className="mt-4 text-xs text-zinc-500">
-                        (If your generate route returns JSON only, the log will show the exact response.)
+                        If your generate route returns JSON only (not HTML), the
+                        log will show the exact response — and publish will still work.
                       </div>
                     </div>
                   </div>
@@ -357,7 +381,8 @@ export default function HomeDemo() {
             </div>
 
             <div className="mt-4 text-xs text-zinc-500">
-              Note: publish uses <span className="font-mono">/publish2</span> (your working MVP path).
+              Publish uses <span className="font-mono">/publish2</span> (your
+              working MVP path).
             </div>
           </div>
         </div>
