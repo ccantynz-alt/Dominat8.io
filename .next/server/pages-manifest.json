@@ -1,8 +1,1 @@
-{
-  "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/api/debug/kv-test-write": "pages/api/debug/kv-test-write.js",
-  "/api/debug/stripe-webhooks": "pages/api/debug/stripe-webhooks.js",
-  "/api/stripe/ping": "pages/api/stripe/ping.js",
-  "/_document": "pages/_document.js"
-}
+{}
