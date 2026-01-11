@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional: better default rendering */
-html,
-body {
+/* Optional: a tiny baseline so it never looks "broken" */
+html, body {
   height: 100%;
 }
