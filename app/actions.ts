@@ -1,6 +1,5 @@
 "use server";
 
-export async function doThing(formData: FormData) {
-  const projectId = String(formData.get("projectId") || "");
-  // server-side work here
+export async function publishProject(projectId: string) {
+  // server-side work
 }
