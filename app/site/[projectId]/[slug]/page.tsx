@@ -1,26 +1,34 @@
-import { getSeoPageBySlug } from "../../../lib/seoPagesKV";
+import React from "react";
 
-export default async function SeoPage({
-  params,
-}: {
-  params: { projectId: string; slug: string };
-}) {
-  const page = await getSeoPageBySlug(params.projectId, params.slug);
+type SiteSection = {
+  heading: string;
+  content: string;
+};
 
-  if (!page) {
-    return (
-      <main style={{ padding: 16 }}>
-        <h1>Not found</h1>
-      </main>
-    );
-  }
+type SitePage = {
+  title: string;
+  description: string;
+  sections: SiteSection[];
+};
+
+export default async function SitePageBySlug() {
+  // This is a placeholder example page.
+  // Replace with real data loading if/when you wire up site pages.
+  const page: SitePage = {
+    title: "Page",
+    description: "This is a placeholder page.",
+    sections: [
+      { heading: "Section 1", content: "Content for section 1." },
+      { heading: "Section 2", content: "Content for section 2." },
+    ],
+  };
 
   return (
-    <main style={{ padding: 16, maxWidth: 900 }}>
-      <h1>{page.h1}</h1>
+    <main style={{ padding: 24 }}>
+      <h1>{page.title}</h1>
       <p style={{ opacity: 0.8 }}>{page.description}</p>
 
-      {page.sections.map((s, i) => (
+      {page.sections.map((s: SiteSection, i: number) => (
         <section key={i} style={{ marginTop: 18 }}>
           <h2>{s.heading}</h2>
           <p>{s.content}</p>
