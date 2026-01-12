@@ -1,7 +1,1 @@
-{
-  "/[...domain]/page": "app/[...domain]/page.js",
-  "/page": "app/page.js",
-  "/api/projects/list/route": "app/api/projects/list/route.js",
-  "/api/projects/register/route": "app/api/projects/register/route.js",
-  "/api/projects/[projectId]/status/route": "app/api/projects/[projectId]/status/route.js"
-}
+{}
