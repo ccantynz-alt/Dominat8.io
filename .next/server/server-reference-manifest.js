@@ -1,1 +1,1 @@
-self.__RSC_SERVER_MANIFEST="{\n  \"node\": {},\n  \"edge\": {},\n  \"encryptionKey\": \"YoVNSe88V8avgl5fu1RUzCUDw02NvFKNipYe5SBq2Kw=\"\n}"
+self.__RSC_SERVER_MANIFEST="{\"node\":{\"7a2f9132148860c258f3817980e6e7f142b5bd22\":{\"workers\":{\"app/app/sign-in/[[...sign-in]]/page\":\"2086\"},\"layer\":{\"app/app/sign-in/[[...sign-in]]/page\":\"action-browser\"}}},\"edge\":{},\"encryptionKey\":\"qv8yly5yaQPF9ogJcUdLON2Gf4lZaCnjW4fn8p5rfUI=\"}"
