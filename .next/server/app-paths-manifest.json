@@ -2,8 +2,8 @@
   "/_not-found/page": "app/_not-found/page.js",
   "/admin/page": "app/admin/page.js",
   "/api/projects/[projectId]/generate/route": "app/api/projects/[projectId]/generate/route.js",
-  "/api/projects/[projectId]/status/route": "app/api/projects/[projectId]/status/route.js",
   "/api/projects/list/route": "app/api/projects/list/route.js",
+  "/api/projects/[projectId]/status/route": "app/api/projects/[projectId]/status/route.js",
   "/api/projects/register/route": "app/api/projects/register/route.js",
   "/app/sign-in/[[...sign-in]]/page": "app/app/sign-in/[[...sign-in]]/page.js",
   "/dashboard/page": "app/dashboard/page.js",
@@ -19,6 +19,6 @@
   "/sign-in/page": "app/sign-in/page.js",
   "/upgrade/page": "app/upgrade/page.js",
   "/sitemap.xml/route": "app/sitemap.xml/route.js",
-  "/templates/page": "app/templates/page.js",
-  "/use-cases/page": "app/use-cases/page.js"
+  "/use-cases/page": "app/use-cases/page.js",
+  "/templates/page": "app/templates/page.js"
 }
