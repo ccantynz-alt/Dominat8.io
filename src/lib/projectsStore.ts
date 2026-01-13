@@ -10,14 +10,36 @@ export type ProjectRecord = {
   userId?: string | null;
   ownerId?: string | null;
 
-  createdAt: string;
-  updatedAt: string;
+  // Accept both string and number because some routes write timestamps as numbers.
+  // We normalize to ISO strings before saving.
+  createdAt: string | number;
+  updatedAt: string | number;
+
   status?: "draft" | "generating" | "ready" | "error" | string;
+
+  // Optional fields that some generator routes may attach
+  prompt?: string;
+  generatedHtml?: string;
+  lastGeneratedAt?: number;
+
   data?: any;
 };
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function toIsoString(value: string | number | undefined | null): string {
+  if (typeof value === "string" && value.trim().length > 0) return value;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    // value might be ms since epoch
+    try {
+      return new Date(value).toISOString();
+    } catch {
+      return nowIso();
+    }
+  }
+  return nowIso();
 }
 
 function hasKvEnv() {
@@ -105,10 +127,14 @@ export async function getProject(projectId: string): Promise<ProjectRecord | nul
 }
 
 export async function upsertProject(project: ProjectRecord): Promise<ProjectRecord> {
+  // Normalize timestamps to ISO strings for storage consistency
+  const normalizedCreatedAt = toIsoString(project.createdAt);
+  const normalizedUpdatedAt = nowIso();
+
   const p: ProjectRecord = {
     ...project,
-    createdAt: project.createdAt || nowIso(),
-    updatedAt: nowIso(),
+    createdAt: normalizedCreatedAt,
+    updatedAt: normalizedUpdatedAt,
   };
 
   // Keep userId/ownerId in sync so older/newer code paths both work
@@ -173,7 +199,7 @@ export async function listProjects(ownerId?: string | null): Promise<ProjectReco
         const p = await kvSafeGet<ProjectRecord>(projectKey(id));
         if (p) out.push(p);
       }
-      out.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+      out.sort((a, b) => (String(a.updatedAt) < String(b.updatedAt) ? 1 : -1));
       return out;
     }
   }
@@ -189,7 +215,7 @@ export async function listProjects(ownerId?: string | null): Promise<ProjectReco
     .map((id) => memProjects.get(id))
     .filter(Boolean) as ProjectRecord[];
 
-  out.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+  out.sort((a, b) => (String(a.updatedAt) < String(b.updatedAt) ? 1 : -1));
   return out;
 }
 
@@ -205,12 +231,16 @@ export async function patchProject(
     ...patch,
     id: existing.id,
     createdAt: existing.createdAt,
-    updatedAt: nowIso(),
+    updatedAt: existing.updatedAt,
   };
 
   // Keep userId/ownerId aligned on patches too
   if (next.ownerId && !next.userId) next.userId = next.ownerId;
   if (next.userId && !next.ownerId) next.ownerId = next.userId;
+
+  // Normalize timestamps on save
+  next.createdAt = toIsoString(next.createdAt);
+  next.updatedAt = nowIso();
 
   await upsertProject(next);
   return next;
