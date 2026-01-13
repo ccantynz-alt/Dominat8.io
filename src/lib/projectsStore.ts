@@ -23,6 +23,9 @@ export type ProjectRecord = {
   lastGeneratedAt?: number;
 
   data?: any;
+
+  // Some routes expect saveProject() to return { mode: "kv" | "memory" }
+  mode?: "kv" | "memory";
 };
 
 function nowIso() {
@@ -32,7 +35,6 @@ function nowIso() {
 function toIsoString(value: string | number | undefined | null): string {
   if (typeof value === "string" && value.trim().length > 0) return value;
   if (typeof value === "number" && Number.isFinite(value)) {
-    // value might be ms since epoch
     try {
       return new Date(value).toISOString();
     } catch {
@@ -145,10 +147,9 @@ export async function upsertProject(project: ProjectRecord): Promise<ProjectReco
   if (wroteKv) {
     await kvSafeSAdd(projectsIndexKey(), p.id);
 
-    // Prefer ownerId for indexing, but it will be in sync with userId anyway
     if (p.ownerId) await kvSafeSAdd(userProjectsIndexKey(p.ownerId), p.id);
 
-    return p;
+    return { ...p, mode: "kv" };
   }
 
   memProjects.set(p.id, p);
@@ -159,7 +160,7 @@ export async function upsertProject(project: ProjectRecord): Promise<ProjectReco
     memUserIndex.get(p.ownerId)!.add(p.id);
   }
 
-  return p;
+  return { ...p, mode: "memory" };
 }
 
 export async function registerProject(params: {
@@ -234,16 +235,14 @@ export async function patchProject(
     updatedAt: existing.updatedAt,
   };
 
-  // Keep userId/ownerId aligned on patches too
   if (next.ownerId && !next.userId) next.userId = next.ownerId;
   if (next.userId && !next.ownerId) next.ownerId = next.userId;
 
-  // Normalize timestamps on save
   next.createdAt = toIsoString(next.createdAt);
   next.updatedAt = nowIso();
 
-  await upsertProject(next);
-  return next;
+  const saved = await upsertProject(next);
+  return saved;
 }
 
 export async function setProjectStatus(
