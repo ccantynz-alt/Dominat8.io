@@ -13,12 +13,12 @@
   "/dashboard_unused/projects/page": "app/dashboard_unused/projects/page.js",
   "/home/page": "app/home/page.js",
   "/page": "app/page.js",
-  "/projects/[projectId]/page": "app/projects/[projectId]/page.js",
   "/projects/page": "app/projects/page.js",
-  "/robots.txt/route": "app/robots.txt/route.js",
+  "/projects/[projectId]/page": "app/projects/[projectId]/page.js",
   "/sign-in/page": "app/sign-in/page.js",
   "/upgrade/page": "app/upgrade/page.js",
   "/sitemap.xml/route": "app/sitemap.xml/route.js",
-  "/use-cases/page": "app/use-cases/page.js",
-  "/templates/page": "app/templates/page.js"
+  "/robots.txt/route": "app/robots.txt/route.js",
+  "/templates/page": "app/templates/page.js",
+  "/use-cases/page": "app/use-cases/page.js"
 }
