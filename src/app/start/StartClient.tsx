@@ -49,13 +49,26 @@ export default function StartClient({ useCases, templates }: Props) {
     router.replace(qs ? `/start?${qs}` : "/start");
   }
 
+  async function persistTemplateId(projectId: string, templateId: string | null) {
+    // Always try, but never block the redirect if this fails.
+    try {
+      await fetch(`/api/projects/${projectId}/template`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ templateId }),
+      });
+    } catch {
+      // ignore
+    }
+  }
+
   async function onStart() {
     setError(null);
     setLoading(true);
     try {
       const payload = {
         name: name || "New Project",
-        templateId: computedTemplateId, // V1 mapping (slug or explicit templateId)
+        templateId: computedTemplateId, // still sent to register (nice if backend stores it)
       };
 
       const res = await fetch("/api/projects/register", {
@@ -73,7 +86,12 @@ export default function StartClient({ useCases, templates }: Props) {
         throw new Error(msg);
       }
 
-      router.push(`/projects/${data.projectId}`);
+      // ✅ NEW: store templateId in KV mapping (projectId -> templateId)
+      await persistTemplateId(data.projectId, computedTemplateId);
+
+      // ✅ NEW: include templateId as query param too (belt-and-braces)
+      const qp = computedTemplateId ? `?templateId=${encodeURIComponent(computedTemplateId)}` : "";
+      router.push(`/projects/${data.projectId}${qp}`);
     } catch (e: any) {
       setError(e?.message || "Something went wrong.");
     } finally {
@@ -91,7 +109,6 @@ export default function StartClient({ useCases, templates }: Props) {
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18 }}>
-        {/* Project name */}
         <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 12, padding: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 8 }}>Project name</div>
           <input
@@ -108,7 +125,6 @@ export default function StartClient({ useCases, templates }: Props) {
           />
         </div>
 
-        {/* Use cases */}
         <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 12, padding: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>Choose a use case</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
@@ -139,7 +155,6 @@ export default function StartClient({ useCases, templates }: Props) {
           </div>
         </div>
 
-        {/* Templates */}
         <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 12, padding: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>Choose a template</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
@@ -180,7 +195,6 @@ export default function StartClient({ useCases, templates }: Props) {
           </div>
         </div>
 
-        {/* CTA */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <div style={{ color: "rgba(0,0,0,0.75)", fontSize: 14 }}>
             {selectedUseCase ? `Use case: ${selectedUseCase}` : "Pick a use case (optional)."}{" "}
