@@ -15,9 +15,9 @@ export default function SeoLinks({
   if (!links || links.length === 0) return null;
 
   return (
-    <section className="mt-10 rounded-2xl border border-gray-200 p-6">
+    <section className="mt-12 rounded-2xl border border-gray-200 p-6">
       <h3 className="text-lg font-semibold">{title}</h3>
-      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {links.map((l) => (
           <li key={l.href}>
             <Link
