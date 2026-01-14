@@ -1,23 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config) => {
-    // Windows/OneDrive fix: avoid watchpack lstat EINVAL on protected system files
-    config.watchOptions = {
-      ...config.watchOptions,
-      poll: 1000,
-      aggregateTimeout: 300,
-      ignored: [
-        "**/.git/**",
-        "**/.next/**",
-        "**/node_modules/**",
-        "C:\\\\hiberfil.sys",
-        "C:\\\\pagefile.sys",
-        "C:\\\\swapfile.sys",
-        "C:\\\\DumpStack.log.tmp",
-      ],
-    };
-    return config;
-  },
+  reactStrictMode: true,
+
+  // IMPORTANT:
+  // Do NOT use `output: "export"` for this project.
+  // Static export breaks/limits dynamic App Router routes and causes build-time export failures (like /start).
+  // We want standard Vercel Next.js routing (pages + API) to work normally.
 };
 
 module.exports = nextConfig;
