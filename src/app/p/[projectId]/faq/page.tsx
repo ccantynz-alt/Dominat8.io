@@ -1,14 +1,14 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import CatchAllPublishedPage from "../[...path]/page";
+import { getPublishedMetadata } from "../publishedSeo";
 
 type Props = {
   params: { projectId: string };
 };
 
-export const metadata: Metadata = {
-  title: "FAQ",
-  description: "Frequently asked questions",
-};
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  return await getPublishedMetadata({ projectId: params.projectId, pageSlug: "faq" });
+}
 
 export default function PublishedFaqPage({ params }: Props) {
   return (
