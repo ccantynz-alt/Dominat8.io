@@ -2,6 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { getProjectDomain, markDomainVerified } from "@/app/lib/projectDomainStore";
+import { setDomainProjectMapping } from "@/app/lib/domainRoutingStore";
 
 type DnsJsonAnswer = { data?: string };
 type DnsJsonResponse = { Answer?: DnsJsonAnswer[] };
@@ -15,11 +16,9 @@ function expectedValue(token: string) {
 }
 
 async function lookupTxt(hostname: string): Promise<string[]> {
-  // Cloudflare DNS-over-HTTPS JSON endpoint
   const url = `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=TXT`;
   const res = await fetch(url, {
     headers: { accept: "application/dns-json" },
-    // avoid caching weirdness
     cache: "no-store",
   });
 
@@ -30,7 +29,6 @@ async function lookupTxt(hostname: string): Promise<string[]> {
   return answers
     .map((a) => (typeof a.data === "string" ? a.data : ""))
     .filter(Boolean)
-    // TXT values often come quoted
     .map((s) => s.replace(/^"+|"+$/g, ""));
 }
 
@@ -62,13 +60,17 @@ export async function POST(
       });
     }
 
+    // ✅ Mark verified
     const updated = await markDomainVerified(params.projectId);
+
+    // ✅ Activate routing: domain -> projectId mapping
+    await setDomainProjectMapping(updated.domain, updated.projectId);
 
     return NextResponse.json({
       ok: true,
       verified: true,
       record: updated,
-      message: "Domain verified ✅",
+      message: "Domain verified ✅ Routing activated.",
     });
   } catch (e: any) {
     return NextResponse.json(
