@@ -32,3 +32,4 @@ export default function PublishedCatchAllPage({ params }: PageProps) {
 
   return <PublicRenderer projectId={params.projectId} pathSlug={slug} />;
 }
+
