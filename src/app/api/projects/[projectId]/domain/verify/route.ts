@@ -2,7 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { getProjectDomain, markDomainVerified } from "@/app/lib/projectDomainStore";
-import { setDomainProjectMapping } from "@/app/lib/domainRoutingStore";
+import { claimDomain } from "@/app/lib/domainRoutingStore";
 
 type DnsJsonAnswer = { data?: string };
 type DnsJsonResponse = { Answer?: DnsJsonAnswer[] };
@@ -13,6 +13,11 @@ function verificationHost(domain: string) {
 
 function expectedValue(token: string) {
   return `rovez=${token}`;
+}
+
+function isProduction() {
+  // Vercel sets VERCEL_ENV=production on prod deploys
+  return process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
 }
 
 async function lookupTxt(hostname: string): Promise<string[]> {
@@ -42,22 +47,20 @@ export async function POST(
       return NextResponse.json({ ok: false, error: "No domain saved for this project." }, { status: 400 });
     }
 
-    const devBypass = process.env.DOMAIN_DEV_BYPASS === "1";
+    // ✅ DEV BYPASS is NEVER allowed in production
+    const devBypass = process.env.DOMAIN_DEV_BYPASS === "1" && !isProduction();
 
-    // ✅ DEV BYPASS: instantly verify without DNS
     if (devBypass) {
       const updated = await markDomainVerified(params.projectId);
-      await setDomainProjectMapping(updated.domain, updated.projectId);
-
+      await claimDomain(updated.domain, updated.projectId);
       return NextResponse.json({
         ok: true,
         verified: true,
         record: updated,
-        message: "Domain verified ✅ (DEV BYPASS) Routing activated.",
+        message: "Domain verified ✅ (DEV BYPASS). Routing activated.",
       });
     }
 
-    // ✅ Real DNS verification
     const host = verificationHost(record.domain);
     const expected = expectedValue(record.token);
 
@@ -76,8 +79,11 @@ export async function POST(
       });
     }
 
+    // ✅ Mark verified
     const updated = await markDomainVerified(params.projectId);
-    await setDomainProjectMapping(updated.domain, updated.projectId);
+
+    // ✅ Claim domain (conflict-safe)
+    await claimDomain(updated.domain, updated.projectId);
 
     return NextResponse.json({
       ok: true,
@@ -86,6 +92,7 @@ export async function POST(
       message: "Domain verified ✅ Routing activated.",
     });
   } catch (e: any) {
+    // Conflict errors should be clear to user
     return NextResponse.json(
       { ok: false, error: e?.message || "Verify failed" },
       { status: 500 }
