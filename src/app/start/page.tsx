@@ -1,19 +1,19 @@
-// src/app/start/page.tsx
-
 import type { Metadata } from "next";
+import * as React from "react";
 import StartClient from "./StartClient";
-import { USE_CASES, TEMPLATES } from "../lib/marketingCatalog";
 
 export const metadata: Metadata = {
-  title: "Start | Build your site",
-  description: "Choose a use case and template, then create your project.",
+  title: "Start",
+  description: "Start a new project",
 };
 
-export default function Page() {
+// ✅ Prevent prerender/export issues caused by useSearchParams in StartClient
+export const dynamic = "force-dynamic";
+
+export default function StartPage() {
   return (
-    <StartClient
-      useCases={USE_CASES}
-      templates={TEMPLATES}
-    />
+    <React.Suspense fallback={<div style={{ padding: 24 }}>Loading…</div>}>
+      <StartClient />
+    </React.Suspense>
   );
 }
