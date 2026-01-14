@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 
 export type PublishedSeoInput = {
   projectId: string;
-  pageSlug?: string; // "", "about", "pricing", "faq", "contact"
+  pageSlug?: string; // "", "about", "pricing", "faq", "contact", etc.
 };
 
 function prettySlug(slug?: string) {
@@ -30,22 +31,72 @@ function descriptionFor(slug?: string) {
   }
 }
 
+function normalizeHost(host: string) {
+  return String(host || "").trim().toLowerCase().split(":")[0];
+}
+
+function isPlatformHost(host: string) {
+  const h = normalizeHost(host);
+
+  if (!h) return true;
+
+  // Local/dev
+  if (h === "localhost" || h.endsWith(".localhost")) return true;
+  if (h.endsWith(".app.github.dev")) return true;
+
+  // Vercel
+  if (h.endsWith(".vercel.app")) return true;
+
+  // Add anything else you treat as platform domains here (optional)
+  return false;
+}
+
+function getBaseFromHeaders() {
+  const h = headers();
+  const host = h.get("x-forwarded-host") || h.get("host") || "localhost:3000";
+  const proto = h.get("x-forwarded-proto") || "https";
+  return { host, proto };
+}
+
+function canonicalPathFor(input: PublishedSeoInput, host: string) {
+  const slug = String(input.pageSlug || "").trim().toLowerCase();
+
+  // Custom domain canonical: / or /pricing (NO /p/[projectId])
+  if (!isPlatformHost(host)) {
+    if (!slug) return "/";
+    return `/${slug}`;
+  }
+
+  // Platform canonical: /p/[projectId] or /p/[projectId]/pricing
+  if (!slug) return `/p/${input.projectId}`;
+  return `/p/${input.projectId}/${slug}`;
+}
+
 /**
- * Safe, deterministic metadata for published pages.
- * No KV reads, no external imports. Always builds.
+ * Safe, deterministic metadata for published pages WITH canonical URLs.
+ * - Detects platform vs custom domain by host header
+ * - Emits alternates.canonical accordingly
  */
-export function getPublishedMetadata(input: PublishedSeoInput): Metadata {
+export async function getPublishedMetadata(input: PublishedSeoInput): Promise<Metadata> {
+  const { host, proto } = getBaseFromHeaders();
+
   const page = prettySlug(input.pageSlug);
   const desc = descriptionFor(input.pageSlug);
+
+  const canonicalPath = canonicalPathFor(input, host);
+  const canonical = `${proto}://${host}${canonicalPath}`;
 
   return {
     title: `${page} · ${input.projectId}`,
     description: desc,
-    // Optional: you can expand OpenGraph/Twitter later once content is wired back in
+    alternates: {
+      canonical,
+    },
     openGraph: {
       title: `${page} · ${input.projectId}`,
       description: desc,
       type: "website",
+      url: canonical,
     },
   };
 }
