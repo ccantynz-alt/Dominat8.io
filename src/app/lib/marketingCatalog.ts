@@ -6,7 +6,7 @@ export type MarketingItem = {
   description: string;
   kind: "template" | "use-case";
 
-  // ✅ Compatibility fields expected by some UI components
+  // ✅ Compatibility fields expected by some UI/components
   templateId?: string;
   useCaseId?: string;
 };
@@ -57,17 +57,35 @@ export function listUseCases(): MarketingUseCase[] {
   return USE_CASES;
 }
 
-/**
- * Find any marketing item by slug.
- * (Returns MarketingItem to match mixed use-cases.)
- */
-export function findBySlug(slug: string): MarketingItem | null {
-  const s = String(slug || "").trim().toLowerCase();
-  if (!s) return null;
+function normalizeSlug(slug: string) {
+  return String(slug || "").trim().toLowerCase();
+}
 
-  return (
-    TEMPLATES.find((t) => t.slug === s) ||
-    USE_CASES.find((u) => u.slug === s) ||
-    null
-  );
+/**
+ * ✅ Compatibility helper:
+ * Supports BOTH call styles:
+ *   findBySlug("startup")
+ *   findBySlug(TEMPLATES, "startup")
+ */
+export function findBySlug(slug: string): MarketingItem | null;
+export function findBySlug(list: MarketingItem[], slug: string): MarketingItem | null;
+export function findBySlug(a: string | MarketingItem[], b?: string): MarketingItem | null {
+  // Signature 1: findBySlug("startup")
+  if (typeof a === "string") {
+    const s = normalizeSlug(a);
+    if (!s) return null;
+
+    return (
+      TEMPLATES.find((t) => t.slug === s) ||
+      USE_CASES.find((u) => u.slug === s) ||
+      null
+    );
+  }
+
+  // Signature 2: findBySlug(TEMPLATES, "startup")
+  const list = a;
+  const slug = normalizeSlug(b || "");
+  if (!slug) return null;
+
+  return list.find((x) => x.slug === slug) || null;
 }
