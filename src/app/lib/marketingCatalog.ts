@@ -5,7 +5,7 @@ export type MarketingItem = {
   kind: "template" | "use-case";
 };
 
-const templates: MarketingItem[] = [
+export const TEMPLATES: MarketingItem[] = [
   {
     slug: "startup",
     title: "Startup Template",
@@ -20,7 +20,7 @@ const templates: MarketingItem[] = [
   },
 ];
 
-const useCases: MarketingItem[] = [
+export const USE_CASES: MarketingItem[] = [
   {
     slug: "ai-website-builder",
     title: "AI Website Builder",
@@ -36,24 +36,23 @@ const useCases: MarketingItem[] = [
 ];
 
 export function listTemplates() {
-  return templates;
+  return TEMPLATES;
 }
 
 export function listUseCases() {
-  return useCases;
+  return USE_CASES;
 }
 
 /**
  * Find any marketing item by slug.
- * This is the export your pages are expecting.
  */
 export function findBySlug(slug: string): MarketingItem | null {
   const s = String(slug || "").trim().toLowerCase();
   if (!s) return null;
 
   return (
-    templates.find((t) => t.slug === s) ||
-    useCases.find((u) => u.slug === s) ||
+    TEMPLATES.find((t) => t.slug === s) ||
+    USE_CASES.find((u) => u.slug === s) ||
     null
   );
 }
