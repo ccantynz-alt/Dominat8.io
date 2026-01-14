@@ -1,9 +1,12 @@
+cat > src/app/p/[projectId]/PublicRenderer.tsx <<'EOF'
 // src/app/p/[projectId]/PublicRenderer.tsx
 
 import type { TemplateScaffoldSection } from "@/app/lib/templateScaffolds";
+import AutoScroll from "./AutoScroll";
 
 type Props = {
   sections: TemplateScaffoldSection[];
+  initialSectionId?: string | null;
 };
 
 function Card({ children }: { children: React.ReactNode }) {
@@ -21,9 +24,23 @@ function Card({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function PublicRenderer({ sections }: Props) {
+function sectionAnchorId(type: string): string {
+  const t = (type || "").toLowerCase();
+  if (t === "hero") return "hero";
+  if (t === "features") return "features";
+  if (t === "pricing") return "pricing";
+  if (t === "testimonials") return "testimonials";
+  if (t === "faq") return "faq";
+  if (t === "contact") return "contact";
+  if (t === "cta") return "cta";
+  return "about";
+}
+
+export default function PublicRenderer({ sections, initialSectionId }: Props) {
   return (
     <div style={{ background: "linear-gradient(180deg, #fafafa, #ffffff)" }}>
+      <AutoScroll targetId={initialSectionId || null} />
+
       <div style={{ maxWidth: 1020, margin: "0 auto", padding: 24 }}>
         {/* Top bar */}
         <div
@@ -34,26 +51,31 @@ export default function PublicRenderer({ sections }: Props) {
             padding: "10px 0 22px",
           }}
         >
-          <div style={{ fontWeight: 900, letterSpacing: -0.2 }}>YourSite</div>
+          <a href="/" style={{ fontWeight: 900, letterSpacing: -0.2, color: "inherit", textDecoration: "none" }}>
+            YourSite
+          </a>
           <div style={{ display: "flex", gap: 14, opacity: 0.8, fontSize: 14 }}>
-            <a href="#features" style={{ color: "inherit", textDecoration: "none" }}>Features</a>
-            <a href="#pricing" style={{ color: "inherit", textDecoration: "none" }}>Pricing</a>
-            <a href="#faq" style={{ color: "inherit", textDecoration: "none" }}>FAQ</a>
-            <a href="#contact" style={{ color: "inherit", textDecoration: "none" }}>Contact</a>
+            <a href="/features" style={{ color: "inherit", textDecoration: "none" }}>Features</a>
+            <a href="/pricing" style={{ color: "inherit", textDecoration: "none" }}>Pricing</a>
+            <a href="/faq" style={{ color: "inherit", textDecoration: "none" }}>FAQ</a>
+            <a href="/contact" style={{ color: "inherit", textDecoration: "none" }}>Contact</a>
           </div>
         </div>
 
         {/* Render sections */}
         <div style={{ display: "grid", gap: 16 }}>
           {sections.map((sec) => {
-            const id = sec.id || sec.type;
+            const anchorId = sectionAnchorId(sec.type);
+            const key = sec.id || `${sec.type}:${anchorId}`;
 
             switch (sec.type) {
               case "hero":
                 return (
                   <section
-                    key={id}
+                    key={key}
+                    id={anchorId}
                     style={{
+                      scrollMarginTop: 90,
                       borderRadius: 22,
                       padding: 22,
                       border: "1px solid rgba(0,0,0,0.10)",
@@ -72,7 +94,7 @@ export default function PublicRenderer({ sections }: Props) {
 
                       <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
                         <a
-                          href="#contact"
+                          href="/contact"
                           style={{
                             display: "inline-block",
                             padding: "12px 16px",
@@ -86,7 +108,7 @@ export default function PublicRenderer({ sections }: Props) {
                           Get Started
                         </a>
                         <a
-                          href="#features"
+                          href="/features"
                           style={{
                             display: "inline-block",
                             padding: "12px 16px",
@@ -107,7 +129,7 @@ export default function PublicRenderer({ sections }: Props) {
 
               case "features":
                 return (
-                  <section key={id} id="features" style={{ scrollMarginTop: 90 }}>
+                  <section key={key} id={anchorId} style={{ scrollMarginTop: 90 }}>
                     <Card>
                       <h2 style={{ margin: 0, fontSize: 26, fontWeight: 950, letterSpacing: -0.4 }}>
                         {sec.heading || "Features"}
@@ -140,7 +162,7 @@ export default function PublicRenderer({ sections }: Props) {
 
               case "pricing":
                 return (
-                  <section key={id} id="pricing" style={{ scrollMarginTop: 90 }}>
+                  <section key={key} id={anchorId} style={{ scrollMarginTop: 90 }}>
                     <Card>
                       <h2 style={{ margin: 0, fontSize: 26, fontWeight: 950, letterSpacing: -0.4 }}>
                         {sec.heading || "Pricing"}
@@ -175,7 +197,7 @@ export default function PublicRenderer({ sections }: Props) {
 
               case "testimonials":
                 return (
-                  <section key={id}>
+                  <section key={key} id={anchorId} style={{ scrollMarginTop: 90 }}>
                     <Card>
                       <h2 style={{ margin: 0, fontSize: 26, fontWeight: 950, letterSpacing: -0.4 }}>
                         {sec.heading || "Testimonials"}
@@ -205,7 +227,7 @@ export default function PublicRenderer({ sections }: Props) {
 
               case "faq":
                 return (
-                  <section key={id} id="faq" style={{ scrollMarginTop: 90 }}>
+                  <section key={key} id={anchorId} style={{ scrollMarginTop: 90 }}>
                     <Card>
                       <h2 style={{ margin: 0, fontSize: 26, fontWeight: 950, letterSpacing: -0.4 }}>
                         {sec.heading || "FAQ"}
@@ -237,7 +259,7 @@ export default function PublicRenderer({ sections }: Props) {
 
               case "cta":
                 return (
-                  <section key={id}>
+                  <section key={key} id={anchorId} style={{ scrollMarginTop: 90 }}>
                     <div
                       style={{
                         borderRadius: 22,
@@ -257,7 +279,7 @@ export default function PublicRenderer({ sections }: Props) {
                       ) : null}
                       <div style={{ marginTop: 14 }}>
                         <a
-                          href="#contact"
+                          href="/contact"
                           style={{
                             display: "inline-block",
                             padding: "12px 16px",
@@ -277,7 +299,7 @@ export default function PublicRenderer({ sections }: Props) {
 
               case "contact":
                 return (
-                  <section key={id} id="contact" style={{ scrollMarginTop: 90 }}>
+                  <section key={key} id={anchorId} style={{ scrollMarginTop: 90 }}>
                     <Card>
                       <h2 style={{ margin: 0, fontSize: 26, fontWeight: 950, letterSpacing: -0.4 }}>
                         {sec.heading || "Contact"}
@@ -334,7 +356,7 @@ export default function PublicRenderer({ sections }: Props) {
               case "about":
               default:
                 return (
-                  <section key={id}>
+                  <section key={key} id={anchorId} style={{ scrollMarginTop: 90 }}>
                     <Card>
                       <h2 style={{ margin: 0, fontSize: 26, fontWeight: 950, letterSpacing: -0.4 }}>
                         {sec.heading || "About"}
@@ -368,3 +390,4 @@ export default function PublicRenderer({ sections }: Props) {
     </div>
   );
 }
+EOF
