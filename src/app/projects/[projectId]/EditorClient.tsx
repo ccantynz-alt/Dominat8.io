@@ -22,6 +22,8 @@ export default function EditorClient({
   const [sections, setSections] = React.useState<TemplateScaffoldSection[]>(initialSections);
 
   const [saving, setSaving] = React.useState(false);
+  const [publishing, setPublishing] = React.useState(false);
+
   const [status, setStatus] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -98,6 +100,29 @@ export default function EditorClient({
     }
   }
 
+  async function onPublish() {
+    setPublishing(true);
+    setError(null);
+    setStatus(null);
+    try {
+      // Publish uses saved content if present; otherwise scaffold fallback
+      const res = await fetch(`/api/projects/${projectId}/publish`, { method: "POST" });
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error || `Publish failed (HTTP ${res.status})`);
+      }
+
+      const url = json?.publicUrl || `/p/${projectId}`;
+      setStatus(`Published ✅  ${url}`);
+      window.open(url, "_blank");
+    } catch (e: any) {
+      setError(e?.message || "Publish failed.");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   async function onResetToScaffold() {
     setSaving(true);
     setError(null);
@@ -130,19 +155,19 @@ export default function EditorClient({
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
           <button
             type="button"
             onClick={onResetToScaffold}
-            disabled={saving}
+            disabled={saving || publishing}
             style={{
               padding: "10px 12px",
               borderRadius: 12,
               border: "1px solid rgba(0,0,0,0.22)",
               background: "white",
               fontWeight: 800,
-              cursor: saving ? "not-allowed" : "pointer",
-              opacity: saving ? 0.7 : 1,
+              cursor: (saving || publishing) ? "not-allowed" : "pointer",
+              opacity: (saving || publishing) ? 0.7 : 1,
             }}
           >
             Reset to scaffold
@@ -151,7 +176,7 @@ export default function EditorClient({
           <button
             type="button"
             onClick={onSave}
-            disabled={saving}
+            disabled={saving || publishing}
             style={{
               padding: "10px 14px",
               borderRadius: 12,
@@ -159,12 +184,31 @@ export default function EditorClient({
               background: "black",
               color: "white",
               fontWeight: 900,
-              cursor: saving ? "not-allowed" : "pointer",
-              opacity: saving ? 0.7 : 1,
-              minWidth: 120,
+              cursor: (saving || publishing) ? "not-allowed" : "pointer",
+              opacity: (saving || publishing) ? 0.7 : 1,
+              minWidth: 110,
             }}
           >
             {saving ? "Saving..." : "Save"}
+          </button>
+
+          <button
+            type="button"
+            onClick={onPublish}
+            disabled={publishing || saving}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.22)",
+              background: "#0b5",
+              color: "white",
+              fontWeight: 900,
+              cursor: (publishing || saving) ? "not-allowed" : "pointer",
+              opacity: (publishing || saving) ? 0.7 : 1,
+              minWidth: 120,
+            }}
+          >
+            {publishing ? "Publishing..." : "Publish"}
           </button>
         </div>
       </div>
@@ -270,7 +314,7 @@ export default function EditorClient({
                   </div>
                 ))}
 
-                {(!sec.items || sec.items.length === 0) ? (
+                {!sec.items || sec.items.length === 0 ? (
                   <div style={{ opacity: 0.65, fontSize: 13 }}>No items yet (optional).</div>
                 ) : null}
               </div>
@@ -280,7 +324,7 @@ export default function EditorClient({
       </div>
 
       <div style={{ marginTop: 18, opacity: 0.7, fontSize: 13 }}>
-        V1 note: this editor saves to KV only. Next build: render these sections as real blocks + publish pipeline.
+        Publish V1 stores a published snapshot in KV and serves it at /p/[projectId].
       </div>
     </div>
   );
