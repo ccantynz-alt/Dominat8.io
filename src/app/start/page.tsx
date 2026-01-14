@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import * as React from "react";
 import StartClient from "./StartClient";
+import { TEMPLATES, USE_CASES } from "../lib/marketingCatalog";
 
 export const metadata: Metadata = {
   title: "Start",
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 export default function StartPage() {
   return (
     <React.Suspense fallback={<div style={{ padding: 24 }}>Loading…</div>}>
-      <StartClient />
+      <StartClient templates={TEMPLATES} useCases={USE_CASES} />
     </React.Suspense>
   );
 }
