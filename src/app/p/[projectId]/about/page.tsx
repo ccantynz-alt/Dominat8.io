@@ -1,14 +1,14 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import CatchAllPublishedPage from "../[...path]/page";
+import { getPublishedMetadata } from "../publishedSeo";
 
 type Props = {
   params: { projectId: string };
 };
 
-export const metadata: Metadata = {
-  title: "About",
-  description: "About this website",
-};
+export function generateMetadata({ params }: Props): Metadata {
+  return getPublishedMetadata({ projectId: params.projectId, pageSlug: "about" });
+}
 
 export default function PublishedAboutPage({ params }: Props) {
   return (
