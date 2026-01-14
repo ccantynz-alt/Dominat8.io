@@ -1,0 +1,22 @@
+import type { Metadata } from "next";
+import PublicRenderer from "../PublicRenderer";
+import { getPublishedMetadata } from "../publishedSeo";
+
+type PageProps = {
+  params: { projectId: string; path?: string[] };
+};
+
+function normalizeSlug(path?: string[]) {
+  const slug = Array.isArray(path) && path.length > 0 ? String(path[0] || "") : "";
+  return slug.trim().toLowerCase();
+}
+
+export function generateMetadata({ params }: PageProps): Metadata {
+  const slug = normalizeSlug(params.path);
+  return getPublishedMetadata({ projectId: params.projectId, pageSlug: slug });
+}
+
+export default function PublishedCatchAllPage({ params }: PageProps) {
+  const slug = normalizeSlug(params.path);
+  return <PublicRenderer projectId={params.projectId} pathSlug={slug} />;
+}
