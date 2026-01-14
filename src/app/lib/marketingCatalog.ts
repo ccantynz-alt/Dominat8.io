@@ -5,6 +5,10 @@ export type MarketingItem = {
   title: string;
   description: string;
   kind: "template" | "use-case";
+
+  // ✅ Compatibility fields expected by some UI components
+  templateId?: string;
+  useCaseId?: string;
 };
 
 // ✅ Compatibility types expected by older UI code
@@ -13,12 +17,14 @@ export type MarketingUseCase = MarketingItem & { kind: "use-case" };
 
 export const TEMPLATES: MarketingTemplate[] = [
   {
+    templateId: "startup",
     slug: "startup",
     title: "Startup Template",
     description: "A clean startup landing page with sections for pricing, FAQ, and contact.",
     kind: "template",
   },
   {
+    templateId: "local-business",
     slug: "local-business",
     title: "Local Business Template",
     description: "A simple, conversion-focused site for local services.",
@@ -28,12 +34,14 @@ export const TEMPLATES: MarketingTemplate[] = [
 
 export const USE_CASES: MarketingUseCase[] = [
   {
+    useCaseId: "ai-website-builder",
     slug: "ai-website-builder",
     title: "AI Website Builder",
     description: "Generate a conversion-ready website in minutes with AI.",
     kind: "use-case",
   },
   {
+    useCaseId: "saas-landing-page",
     slug: "saas-landing-page",
     title: "SaaS Landing Page",
     description: "Launch faster with a modern SaaS landing page layout.",
