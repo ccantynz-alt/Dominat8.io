@@ -7,13 +7,13 @@ type Props = {
 };
 
 export function generateMetadata({ params }: Props): Metadata {
-  return getPublishedMetadata({ projectId: params.projectId, pageSlug: "pricing" });
+  return getPublishedMetadata({ projectId: params.projectId, pageSlug: "faq" });
 }
 
-export default function PublishedPricingPage({ params }: Props) {
+export default function PublishedFaqPage({ params }: Props) {
   return (
     <CatchAllPublishedPage
-      params={{ projectId: params.projectId, path: ["pricing"] }}
+      params={{ projectId: params.projectId, path: ["faq"] }}
     />
   );
 }
