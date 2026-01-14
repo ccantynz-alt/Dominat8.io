@@ -6,8 +6,8 @@ type Props = {
   params: { projectId: string };
 };
 
-export function generateMetadata({ params }: Props): Metadata {
-  return getPublishedMetadata({ projectId: params.projectId, pageSlug: "contact" });
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  return await getPublishedMetadata({ projectId: params.projectId, pageSlug: "contact" });
 }
 
 export default function PublishedContactPage({ params }: Props) {
