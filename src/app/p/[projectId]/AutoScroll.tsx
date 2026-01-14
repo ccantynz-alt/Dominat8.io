@@ -1,24 +1,31 @@
-cat > src/app/p/[projectId]/AutoScroll.tsx <<'EOF'
-// src/app/p/[projectId]/AutoScroll.tsx
 "use client";
 
 import * as React from "react";
 
-export default function AutoScroll({ targetId }: { targetId: string | null }) {
-  React.useEffect(() => {
-    if (!targetId) return;
+type Props = {
+  /** Page slug like "pricing", "faq", etc. If undefined, do nothing. */
+  slug?: string;
+};
 
-    // Give the page a moment to render
-    const t = setTimeout(() => {
-      const el = document.getElementById(targetId);
+/**
+ * AutoScroll
+ * - Scrolls to an element with id={slug} if it exists
+ * - Safe no-op if not found
+ */
+export default function AutoScroll({ slug }: Props) {
+  React.useEffect(() => {
+    if (!slug) return;
+
+    // Wait a tick for the DOM to paint
+    const t = window.setTimeout(() => {
+      const el = document.getElementById(slug);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 50);
 
-    return () => clearTimeout(t);
-  }, [targetId]);
+    return () => window.clearTimeout(t);
+  }, [slug]);
 
   return null;
 }
-EOF
