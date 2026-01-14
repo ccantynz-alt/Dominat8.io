@@ -9,6 +9,7 @@ export type MarketingItem = {
   // ✅ Compatibility fields expected by some UI/components
   templateId?: string;
   useCaseId?: string;
+  tag?: string;
 };
 
 // ✅ Compatibility types expected by older UI code
@@ -22,6 +23,7 @@ export const TEMPLATES: MarketingTemplate[] = [
     title: "Startup Template",
     description: "A clean startup landing page with sections for pricing, FAQ, and contact.",
     kind: "template",
+    tag: "Popular",
   },
   {
     templateId: "local-business",
@@ -29,6 +31,7 @@ export const TEMPLATES: MarketingTemplate[] = [
     title: "Local Business Template",
     description: "A simple, conversion-focused site for local services.",
     kind: "template",
+    tag: "Fast setup",
   },
 ];
 
@@ -89,4 +92,3 @@ export function findBySlug(a: string | MarketingItem[], b?: string): MarketingIt
 
   return list.find((x) => x.slug === slug) || null;
 }
-
