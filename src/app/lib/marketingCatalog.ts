@@ -1,3 +1,5 @@
+// src/app/lib/marketingCatalog.ts
+
 export type MarketingItem = {
   slug: string;
   title: string;
@@ -5,7 +7,11 @@ export type MarketingItem = {
   kind: "template" | "use-case";
 };
 
-export const TEMPLATES: MarketingItem[] = [
+// ✅ Compatibility types expected by older UI code
+export type MarketingTemplate = MarketingItem & { kind: "template" };
+export type MarketingUseCase = MarketingItem & { kind: "use-case" };
+
+export const TEMPLATES: MarketingTemplate[] = [
   {
     slug: "startup",
     title: "Startup Template",
@@ -20,7 +26,7 @@ export const TEMPLATES: MarketingItem[] = [
   },
 ];
 
-export const USE_CASES: MarketingItem[] = [
+export const USE_CASES: MarketingUseCase[] = [
   {
     slug: "ai-website-builder",
     title: "AI Website Builder",
@@ -35,16 +41,17 @@ export const USE_CASES: MarketingItem[] = [
   },
 ];
 
-export function listTemplates() {
+export function listTemplates(): MarketingTemplate[] {
   return TEMPLATES;
 }
 
-export function listUseCases() {
+export function listUseCases(): MarketingUseCase[] {
   return USE_CASES;
 }
 
 /**
  * Find any marketing item by slug.
+ * (Returns MarketingItem to match mixed use-cases.)
  */
 export function findBySlug(slug: string): MarketingItem | null {
   const s = String(slug || "").trim().toLowerCase();
