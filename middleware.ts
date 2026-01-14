@@ -1,74 +1,55 @@
-cat > middleware.ts <<'EOF'
-// middleware.ts
+import { NextRequest, NextResponse } from "next/server";
+import { getDomainProjectMapping, normalizeDomain } from "@/app/lib/domainRoutingStore";
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getProjectIdForHost, normalizeIncomingHost } from "@/app/lib/domainRoutingStore";
+const PLATFORM_HOST_SUFFIXES = [
+  ".vercel.app",
+  ".localhost",
+];
 
 function isPlatformHost(host: string) {
-  return (
-    host.includes("localhost") ||
-    host.includes("127.0.0.1") ||
-    host.endsWith(".vercel.app") ||
-    host.includes("githubpreview.dev") ||
-    host.includes("app.github.dev")
-  );
-}
-
-function isStaticOrInternalPath(pathname: string) {
-  return (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
-    pathname === "/favicon.ico" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml"
-  );
+  if (host === "localhost" || host.startsWith("localhost:")) return true;
+  return PLATFORM_HOST_SUFFIXES.some((s) => host.endsWith(s));
 }
 
 export async function middleware(req: NextRequest) {
-  const xfHost = req.headers.get("x-forwarded-host") || "";
-  const hostHeader = req.headers.get("host") || "";
-  const host = normalizeIncomingHost(xfHost || hostHeader);
+  const url = req.nextUrl.clone();
 
+  const hostHeader = req.headers.get("host") || "";
+  const host = normalizeDomain(hostHeader);
+
+  // If this is the platform host (localhost / vercel), do nothing.
   if (!host || isPlatformHost(host)) {
     return NextResponse.next();
   }
 
-  const { pathname } = req.nextUrl;
+  // Canonicalize www -> apex (but keep the request working)
+  const canonicalHost = host.startsWith("www.") ? host.slice(4) : host;
 
-  if (isStaticOrInternalPath(pathname)) {
-    return NextResponse.next();
+  // If www, redirect to apex
+  if (canonicalHost !== host) {
+    const redirectUrl = new URL(req.url);
+    redirectUrl.host = canonicalHost;
+    return NextResponse.redirect(redirectUrl, 308);
   }
 
-  // Canonicalize: www -> apex for custom domains
-  if (host.startsWith("www.")) {
-    const apex = host.replace(/^www\./, "");
-    const url = req.nextUrl.clone();
-    url.hostname = apex;
-    return NextResponse.redirect(url, 308);
-  }
-
-  const projectId = await getProjectIdForHost(host);
+  // Resolve domain → projectId
+  const projectId = await getDomainProjectMapping(canonicalHost);
 
   if (!projectId) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/domain-not-connected";
-    return NextResponse.rewrite(url);
+    // Domain not mapped: send user to a friendly page on the platform
+    const fallback = req.nextUrl.clone();
+    fallback.pathname = "/domain-not-connected";
+    fallback.searchParams.set("domain", canonicalHost);
+    return NextResponse.rewrite(fallback);
   }
 
-  // Avoid loops: let internal published routes render normally
-  if (pathname.startsWith("/p/")) {
-    return NextResponse.next();
-  }
+  // Preserve path: /pricing -> /p/[projectId]/pricing
+  const path = url.pathname || "/";
+  url.pathname = `/p/${projectId}${path === "/" ? "" : path}`;
 
-  // ✅ Preserve path:
-  // example.com/pricing -> /p/proj_xxx/pricing
-  const url = req.nextUrl.clone();
-  url.pathname = pathname === "/" ? `/p/${projectId}` : `/p/${projectId}${pathname}`;
   return NextResponse.rewrite(url);
 }
 
 export const config = {
   matcher: ["/((?!_next|api|favicon.ico|robots.txt|sitemap.xml).*)"],
 };
-EOF
