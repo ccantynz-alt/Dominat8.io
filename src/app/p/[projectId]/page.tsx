@@ -11,10 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function PublishedHomePage({ params }: PageProps) {
-  return (
-    <PublicRenderer
-      projectId={params.projectId}
-      page="home"
-    />
-  );
+  return <PublicRenderer projectId={params.projectId} />;
 }
