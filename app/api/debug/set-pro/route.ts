@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 
 export const dynamic = "force-dynamic";
 
-async function handle(req: Request) {
+export async function POST(req: Request) {
   const { userId } = auth();
 
   if (!userId) {
@@ -28,12 +28,7 @@ async function handle(req: Request) {
   });
 }
 
-// Allow POST (what the browser call uses)
-export async function POST(req: Request) {
-  return handle(req);
-}
-
-// Also allow GET so it can never 405 again (optional)
+// Optional: if someone visits it in a browser, return a helpful message
 export async function GET() {
   return NextResponse.json(
     { ok: false, error: "USE_POST", hint: "Send POST with JSON { token }" },
