@@ -3,15 +3,16 @@ import * as kvMod from "./kv";
 
 /**
  * Build-safe KV accessor:
- * - Supports kv exported as named export: export const kv = ...
- * - Supports kv exported as default export: export default kv
- * - Supports module exporting functions directly
+ * supports:
+ * - export const kv = ...
+ * - export default kv
+ * - module exporting kv-like object directly
  */
 function getKvAny(): any {
   return (kvMod as any).kv ?? (kvMod as any).default ?? (kvMod as any);
 }
 
-export function specKey(projectId: string) {
+function specKey(projectId: string) {
   return `project:${projectId}:siteSpec:v1`;
 }
 
