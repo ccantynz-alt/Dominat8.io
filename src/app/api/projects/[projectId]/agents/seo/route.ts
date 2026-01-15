@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-// ✅ In src tree, @/ points at src/, so this resolves to src/app/lib/*
-import { kv } from "@/app/lib/kv";
-import { getPlanForUserId } from "@/app/lib/plan";
+// ✅ RELATIVE imports (guaranteed to work)
+// from: src/app/api/projects/[projectId]/agents/seo/route.ts
+// to:   src/app/lib/kv.ts and src/app/lib/plan.ts
+import { kv } from "../../../../../../lib/kv";
+import { getPlanForUserId } from "../../../../../../lib/plan";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
