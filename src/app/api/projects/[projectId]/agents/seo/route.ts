@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { kv } from "@/app/lib/kv";
-import { getPlanForUserId } from "@/app/lib/plan";
+
+// IMPORTANT: in src tree, import from src/app/lib (NOT @/app/lib)
+import { kv } from "@/src/app/lib/kv";
+import { getPlanForUserId } from "@/src/app/lib/plan";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,7 +38,6 @@ export async function POST(req: Request, ctx: { params: { projectId: string } })
       return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
     }
 
-    // Pro gating (single source of truth)
     const plan = await getPlanForUserId(userId);
     if (plan !== "pro") {
       return NextResponse.json(
@@ -45,7 +46,7 @@ export async function POST(req: Request, ctx: { params: { projectId: string } })
       );
     }
 
-    // (Optional) confirm KV plan exists (NO GENERICS)
+    // IMPORTANT: never use kv.get<string>()
     const kvPlan = (await kv.get(`user:${userId}:plan`)) as string | null;
 
     const input = await req.json().catch(() => ({}));
