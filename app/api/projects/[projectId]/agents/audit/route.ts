@@ -9,7 +9,7 @@ export async function POST(
   const { projectId } = params;
 
   // TEMP: deterministic audit stub
-  // Later this will read real project data (KV / DB)
+  // Later: replace with real KV/DB reads + real checks
   const issues = [
     { code: "NO_PUBLISH", severity: "warning", message: "Project is not published" },
     { code: "NO_META", severity: "warning", message: "Missing meta title/description" },
@@ -22,7 +22,7 @@ export async function POST(
     projectId,
     summary: {
       totalIssues: issues.length,
-      blocking: issues.filter(i => i.severity === "error").length,
+      blocking: issues.filter((i) => i.severity === "error").length,
     },
     issues,
     auditedAt: new Date().toISOString(),
