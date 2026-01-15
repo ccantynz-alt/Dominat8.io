@@ -22,11 +22,6 @@ type StartClientProps = {
   useCases: MarketingUseCase[];
 };
 
-/**
- * StartClient (build-safe)
- * - Accepts templates/useCases props (so src/app/start/page.tsx type-checks)
- * - Guards useSearchParams() for nullability
- */
 export default function StartClient({ templates, useCases }: StartClientProps) {
   const searchParams = useSearchParams();
 
@@ -40,9 +35,7 @@ export default function StartClient({ templates, useCases }: StartClientProps) {
     <main className="min-h-[70vh] flex items-center justify-center px-6">
       <div className="w-full max-w-2xl">
         <h1 className="text-3xl font-bold mb-2">Start</h1>
-        <p className="text-gray-600 mb-6">
-          Choose a use-case and template to begin.
-        </p>
+        <p className="text-gray-600 mb-6">Choose a use-case and template to begin.</p>
 
         <div className="grid gap-4">
           <label className="grid gap-1">
