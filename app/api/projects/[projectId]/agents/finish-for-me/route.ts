@@ -9,6 +9,7 @@ async function getPlan(): Promise<"pro" | "free"> {
 
   if (!userId) return "free";
 
+  // Try Clerk claims first (optional)
   const claimPlan =
     (sessionClaims as any)?.publicMetadata?.plan ||
     (sessionClaims as any)?.metadata?.plan ||
@@ -16,45 +17,36 @@ async function getPlan(): Promise<"pro" | "free"> {
 
   if (claimPlan === "pro") return "pro";
 
-  const kvPlan = await kv.get<string>(`user:${userId}:plan`);
+  // KV fallback (kv.get is NOT generic in your project)
+  const kvPlan = (await kv.get(`user:${userId}:plan`)) as string | null;
   if (kvPlan === "pro") return "pro";
 
   return "free";
 }
 
-type Issue = { code: string; severity: "error" | "warning" | "info"; message: string };
+function payload(projectId: string) {
+  // Keep current finish-for-me behavior stable
+  const pages = ["", "about", "pricing", "faq", "contact"];
+  return {
+    ok: true,
+    projectId,
+    updatedAt: new Date().toISOString(),
+    pages,
+  };
+}
 
 export async function POST(
   _req: Request,
   { params }: { params: { projectId: string } }
 ) {
   const plan = await getPlan();
+
   if (plan !== "pro") {
     return NextResponse.json(
-      { ok: false, error: "PRO_REQUIRED", agent: "seo" },
+      { ok: false, error: "PRO_REQUIRED", agent: "finish-for-me" },
       { status: 402 }
     );
   }
 
-  const { projectId } = params;
-
-  const issues: Issue[] = [];
-  const pages = (await kv.get<string[]>(`project:${projectId}:pages`)) || [];
-
-  if (pages.length === 0) {
-    issues.push({ code: "NO_PAGES", severity: "error", message: "No pages exist for SEO analysis" });
-  }
-
-  return NextResponse.json({
-    ok: true,
-    agent: "seo",
-    projectId,
-    pages,
-    summary: {
-      totalIssues: issues.length,
-      blocking: issues.filter((i) => i.severity === "error").length,
-    },
-    issues,
-    analyzedAt: new Date().toISOString(),
-  });
+  return NextResponse.json(payload(params.projectId));
 }
