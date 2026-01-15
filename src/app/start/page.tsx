@@ -1,14 +1,7 @@
-import type { Metadata } from "next";
 import * as React from "react";
 import StartClient from "./StartClient";
-import { TEMPLATES, USE_CASES } from "../lib/marketingCatalog";
+import { TEMPLATES, USE_CASES } from "@/app/lib/marketingCatalog";
 
-export const metadata: Metadata = {
-  title: "Start",
-  description: "Start a new project",
-};
-
-// ✅ Prevent prerender/export issues caused by useSearchParams in StartClient
 export const dynamic = "force-dynamic";
 
 export default function StartPage() {
