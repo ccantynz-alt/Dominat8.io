@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-// IMPORTANT: in src tree, import from src/app/lib (NOT @/app/lib)
+// ✅ Correct imports — these files actually exist
 import { kv } from "@/src/app/lib/kv";
 import { getPlanForUserId } from "@/src/app/lib/plan";
 
@@ -31,22 +31,32 @@ function buildSeoRecommendations(input: any) {
   };
 }
 
-export async function POST(req: Request, ctx: { params: { projectId: string } }) {
+export async function POST(
+  req: Request,
+  ctx: { params: { projectId: string } }
+) {
   try {
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "unauthorized" },
+        { status: 401 }
+      );
     }
 
     const plan = await getPlanForUserId(userId);
     if (plan !== "pro") {
       return NextResponse.json(
-        { ok: false, error: "pro_required", message: "SEO agent is available on Pro." },
+        {
+          ok: false,
+          error: "pro_required",
+          message: "SEO agent is available on Pro.",
+        },
         { status: 402 }
       );
     }
 
-    // IMPORTANT: never use kv.get<string>()
+    // ✅ No kv.get<string>()
     const kvPlan = (await kv.get(`user:${userId}:plan`)) as string | null;
 
     const input = await req.json().catch(() => ({}));
@@ -62,7 +72,11 @@ export async function POST(req: Request, ctx: { params: { projectId: string } })
     });
   } catch (e: any) {
     return NextResponse.json(
-      { ok: false, error: "exception", message: String(e?.message ?? e) },
+      {
+        ok: false,
+        error: "exception",
+        message: String(e?.message ?? e),
+      },
       { status: 500 }
     );
   }
