@@ -1,4 +1,8 @@
 import { loadSiteSpec } from "@/app/lib/projectSpecStore";
+import {
+  loadPublishedSiteSpec,
+  isProjectPublished,
+} from "@/app/lib/publishedSpecStore";
 
 type PageProps = {
   params: {
@@ -10,8 +14,13 @@ export default async function PublicProjectPage({ params }: PageProps) {
   const { projectId } = params;
 
   let spec = null;
+  let published = false;
+
   try {
-    spec = await loadSiteSpec(projectId);
+    published = await isProjectPublished(projectId);
+    spec = published
+      ? await loadPublishedSiteSpec(projectId)
+      : await loadSiteSpec(projectId);
   } catch (e) {
     console.error("Failed to load site spec", e);
   }
@@ -21,12 +30,10 @@ export default async function PublicProjectPage({ params }: PageProps) {
       <main className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
         <div className="max-w-xl text-center">
           <h1 className="text-2xl font-semibold text-gray-900 mb-3">
-            This site isn’t ready yet
+            This site isn’t published yet
           </h1>
           <p className="text-gray-600">
-            The project exists, but a site hasn’t been generated or published yet.
-            <br />
-            Go back to the builder and run <strong>Finish-for-me</strong>.
+            Go back to the builder and click <strong>Publish</strong>.
           </p>
         </div>
       </main>
@@ -88,60 +95,6 @@ export default async function PublicProjectPage({ params }: PageProps) {
               </section>
             );
 
-          case "steps":
-            return (
-              <section key={idx} className="py-20 px-6 bg-gray-50">
-                <div className="max-w-4xl mx-auto">
-                  {section.title && (
-                    <h2 className="text-3xl font-bold mb-10 text-center">
-                      {section.title}
-                    </h2>
-                  )}
-                  <ol className="space-y-6">
-                    {section.steps.map((step: any, i: number) => (
-                      <li
-                        key={i}
-                        className="flex gap-4 items-start"
-                      >
-                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-black text-white font-semibold">
-                          {i + 1}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">
-                            {step.title}
-                          </h4>
-                          <p className="text-gray-600">
-                            {step.body}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </section>
-            );
-
-          case "socialProof":
-            return (
-              <section key={idx} className="py-20 px-6">
-                <div className="max-w-4xl mx-auto grid gap-6">
-                  {section.quotes.map((q: any, i: number) => (
-                    <blockquote
-                      key={i}
-                      className="border-l-4 pl-4 italic text-gray-700"
-                    >
-                      “{q.quote}”
-                      {q.name && (
-                        <footer className="mt-2 text-sm text-gray-500">
-                          — {q.name}
-                        </footer>
-                      )}
-                    </blockquote>
-                  ))}
-                </div>
-              </section>
-            );
-
           case "faq":
             return (
               <section key={idx} className="py-20 px-6 bg-gray-50">
@@ -153,9 +106,7 @@ export default async function PublicProjectPage({ params }: PageProps) {
                     {section.items.map((item: any, i: number) => (
                       <div key={i}>
                         <h4 className="font-semibold">{item.q}</h4>
-                        <p className="text-gray-600 mt-1">
-                          {item.a}
-                        </p>
+                        <p className="text-gray-600 mt-1">{item.a}</p>
                       </div>
                     ))}
                   </div>
