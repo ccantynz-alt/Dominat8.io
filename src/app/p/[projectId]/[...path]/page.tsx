@@ -1,35 +1,43 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import PublicRenderer from "../PublicRenderer";
-import { getPublishedMetadata } from "../publishedSeo";
-
-type PageProps = {
+export default function PublicProjectPage({
+  params,
+}: {
   params: { projectId: string; path?: string[] };
-};
+}) {
+  const slug = params.path?.join("/") ?? "";
+  const label = slug === "" ? "home" : slug;
 
-function normalizeSlug(path?: string[]) {
-  const slug =
-    Array.isArray(path) && path.length > 0 ? String(path[0] || "") : "";
-  return slug.trim().toLowerCase();
-}
+  return (
+    <main style={{ padding: 32, fontFamily: "system-ui, sans-serif" }}>
+      <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>
+        Public Project Page
+      </h1>
 
-function isAllowedPublishedSlug(slug: string) {
-  const allowed = new Set(["about", "pricing", "faq", "contact"]);
-  return allowed.has(slug);
-}
+      <p style={{ marginTop: 10, marginBottom: 0 }}>
+        Project ID: <code>{params.projectId}</code>
+      </p>
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const slug = normalizeSlug(params.path);
-  return await getPublishedMetadata({ projectId: params.projectId, pageSlug: slug });
-}
+      <p style={{ marginTop: 10, marginBottom: 0 }}>
+        Page: <code>{label}</code>
+      </p>
 
-export default function PublishedCatchAllPage({ params }: PageProps) {
-  const slug = normalizeSlug(params.path);
-
-  if (!isAllowedPublishedSlug(slug)) {
-    notFound();
-  }
-
-  return <PublicRenderer projectId={params.projectId} pathSlug={slug} />;
+      <div style={{ marginTop: 18, lineHeight: 1.8 }}>
+        <div>
+          <a href={`/p/${params.projectId}`}>Home</a>
+        </div>
+        <div>
+          <a href={`/p/${params.projectId}/about`}>About</a>
+        </div>
+        <div>
+          <a href={`/p/${params.projectId}/pricing`}>Pricing</a>
+        </div>
+        <div>
+          <a href={`/p/${params.projectId}/faq`}>FAQ</a>
+        </div>
+        <div>
+          <a href={`/p/${params.projectId}/contact`}>Contact</a>
+        </div>
+      </div>
+    </main>
+  );
 }
 
