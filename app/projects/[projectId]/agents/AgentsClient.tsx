@@ -146,3 +146,4 @@ export default function AgentsClient({ projectId }: { projectId: string }) {
     </main>
   );
 }
+
