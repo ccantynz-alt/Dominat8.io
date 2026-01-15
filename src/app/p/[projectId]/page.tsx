@@ -1,145 +1,110 @@
-import { loadSiteSpec } from "@/app/lib/projectSpecStore";
-import {
-  loadPublishedSiteSpec,
-  isProjectPublished,
-} from "@/app/lib/publishedSpecStore";
+import { loadPublishedSiteSpec } from "@/app/lib/publishedSpecStore";
+
+export const dynamic = "force-dynamic";
 
 type PageProps = {
-  params: {
-    projectId: string;
-  };
+  params: { projectId: string };
 };
 
 export default async function PublicProjectPage({ params }: PageProps) {
-  const { projectId } = params;
+  const projectId = params?.projectId;
 
-  let spec = null;
-  let published = false;
-
-  try {
-    published = await isProjectPublished(projectId);
-    spec = published
-      ? await loadPublishedSiteSpec(projectId)
-      : await loadSiteSpec(projectId);
-  } catch (e) {
-    console.error("Failed to load site spec", e);
-  }
-
-  if (!spec) {
+  if (!projectId) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
-        <div className="max-w-xl text-center">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-3">
-            This site isn’t published yet
-          </h1>
-          <p className="text-gray-600">
-            Go back to the builder and click <strong>Publish</strong>.
-          </p>
-        </div>
+      <main style={{ padding: 24, fontFamily: "ui-sans-serif, system-ui" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700 }}>Missing projectId</h1>
       </main>
     );
   }
 
-  const page =
-    spec.pages.find((p: any) => p.slug === "/") ?? spec.pages[0];
+  const spec: any = await loadPublishedSiteSpec(projectId);
+
+  if (!spec) {
+    return (
+      <main style={{ padding: 24, fontFamily: "ui-sans-serif, system-ui" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800 }}>This site isn’t published yet</h1>
+        <p style={{ marginTop: 12, color: "#555" }}>
+          The project exists, but it hasn’t been published. Go back to the builder and click Publish.
+        </p>
+      </main>
+    );
+  }
+
+  const brandName = spec?.brand?.name ?? "Your Site";
+  const tagline = spec?.brand?.tagline ?? "Published site";
+  const home = Array.isArray(spec?.pages) ? spec.pages.find((p: any) => p?.id === "home") : null;
+  const sections = Array.isArray(home?.sections) ? home.sections : [];
+
+  const hero = sections.find((s: any) => s?.type === "hero") ?? null;
+  const features = sections.find((s: any) => s?.type === "features") ?? null;
+
+  const headline = hero?.headline ?? `${brandName}`;
+  const subheadline = hero?.subheadline ?? tagline;
+  const ctaText = hero?.ctaText ?? "Get started";
+  const ctaHref = hero?.ctaHref ?? "/start";
+
+  const featureItems: Array<{ title: string; description: string }> =
+    Array.isArray(features?.items) ? features.items : [];
 
   return (
-    <main className="min-h-screen bg-white text-gray-900">
-      {page.sections.map((section: any, idx: number) => {
-        switch (section.type) {
-          case "hero":
-            return (
-              <section
-                key={idx}
-                className="py-24 px-6 text-center bg-gray-50"
-              >
-                <h1 className="text-4xl font-bold mb-4">
-                  {section.headline}
-                </h1>
-                {section.subheadline && (
-                  <p className="text-lg text-gray-600 mb-8">
-                    {section.subheadline}
-                  </p>
-                )}
-                <div className="flex justify-center gap-4">
-                  {section.primaryCta && (
-                    <button className="px-6 py-3 rounded-lg bg-black text-white">
-                      {section.primaryCta}
-                    </button>
-                  )}
-                  {section.secondaryCta && (
-                    <button className="px-6 py-3 rounded-lg border border-gray-300">
-                      {section.secondaryCta}
-                    </button>
-                  )}
-                </div>
-              </section>
-            );
+    <main style={{ minHeight: "100vh", background: "white", fontFamily: "ui-sans-serif, system-ui" }}>
+      <header style={{ padding: "28px 24px", borderBottom: "1px solid #eee" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", justifyContent: "space-between", gap: 16 }}>
+          <div style={{ fontWeight: 800 }}>{brandName}</div>
+          <nav style={{ display: "flex", gap: 14, fontSize: 14 }}>
+            <a href={ctaHref} style={{ textDecoration: "underline" }}>
+              Start
+            </a>
+          </nav>
+        </div>
+      </header>
 
-          case "features":
-            return (
-              <section key={idx} className="py-20 px-6">
-                <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8">
-                  {section.items.map((item: any, i: number) => (
-                    <div
-                      key={i}
-                      className="border rounded-xl p-6 bg-white shadow-sm"
-                    >
-                      <h3 className="text-lg font-semibold mb-2">
-                        {item.title}
-                      </h3>
-                      <p className="text-gray-600">{item.body}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            );
+      <section style={{ padding: "64px 24px" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto" }}>
+          <h1 style={{ fontSize: 46, lineHeight: 1.1, fontWeight: 900, margin: 0 }}>{headline}</h1>
+          <p style={{ marginTop: 16, fontSize: 18, color: "#444", maxWidth: 720 }}>{subheadline}</p>
 
-          case "faq":
-            return (
-              <section key={idx} className="py-20 px-6 bg-gray-50">
-                <div className="max-w-3xl mx-auto">
-                  <h2 className="text-3xl font-bold mb-8 text-center">
-                    Frequently Asked Questions
-                  </h2>
-                  <div className="space-y-6">
-                    {section.items.map((item: any, i: number) => (
-                      <div key={i}>
-                        <h4 className="font-semibold">{item.q}</h4>
-                        <p className="text-gray-600 mt-1">{item.a}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            );
+          <div style={{ marginTop: 26 }}>
+            <a
+              href={ctaHref}
+              style={{
+                display: "inline-block",
+                background: "#000",
+                color: "#fff",
+                padding: "12px 18px",
+                borderRadius: 12,
+                textDecoration: "none",
+                fontWeight: 700,
+              }}
+            >
+              {ctaText}
+            </a>
+          </div>
+        </div>
+      </section>
 
-          case "finalCta":
-            return (
-              <section
-                key={idx}
-                className="py-24 px-6 text-center bg-black text-white"
-              >
-                <h2 className="text-3xl font-bold mb-4">
-                  {section.headline}
-                </h2>
-                {section.body && (
-                  <p className="text-gray-300 mb-8">
-                    {section.body}
-                  </p>
-                )}
-                {section.primaryCta && (
-                  <button className="px-8 py-4 rounded-lg bg-white text-black font-semibold">
-                    {section.primaryCta}
-                  </button>
-                )}
-              </section>
-            );
+      <section style={{ padding: "0 24px 72px" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 14 }}>Features</h2>
 
-          default:
-            return null;
-        }
-      })}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+            {(featureItems.length ? featureItems : [
+              { title: "Fast setup", description: "Generate a complete site in minutes." },
+              { title: "Automation-first", description: "Reduce manual work with smart flows." },
+              { title: "Publish instantly", description: "Go live with one click." },
+            ]).map((f, idx) => (
+              <div key={idx} style={{ border: "1px solid #eee", borderRadius: 16, padding: 16 }}>
+                <div style={{ fontWeight: 800 }}>{f.title}</div>
+                <div style={{ marginTop: 6, color: "#555" }}>{f.description}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 36, fontSize: 12, color: "#777" }}>
+            Project: <span style={{ fontFamily: "monospace" }}>{projectId}</span>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
