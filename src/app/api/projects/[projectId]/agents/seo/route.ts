@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-// ✅ CORRECT relative imports (4 levels up → src/app/lib)
 import { kv } from "../../../../lib/kv";
 import { getPlanForUserId } from "../../../../lib/plan";
 
@@ -31,27 +30,17 @@ function buildSeoRecommendations(input: any) {
   };
 }
 
-export async function POST(
-  req: Request,
-  ctx: { params: { projectId: string } }
-) {
+export async function POST(req: Request, ctx: { params: { projectId: string } }) {
   try {
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json(
-        { ok: false, error: "unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
     }
 
     const plan = await getPlanForUserId(userId);
     if (plan !== "pro") {
       return NextResponse.json(
-        {
-          ok: false,
-          error: "pro_required",
-          message: "SEO agent is available on Pro.",
-        },
+        { ok: false, error: "pro_required", message: "SEO agent is available on Pro." },
         { status: 402 }
       );
     }
