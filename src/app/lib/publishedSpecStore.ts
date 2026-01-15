@@ -1,13 +1,6 @@
 import { SiteSpec } from "./siteSpec";
 import * as kvMod from "./kv";
 
-/**
- * Build-safe KV accessor:
- * supports:
- * - export const kv = ...
- * - export default kv
- * - module exporting kv-like object directly
- */
 function getKvAny(): any {
   return (kvMod as any).kv ?? (kvMod as any).default ?? (kvMod as any);
 }
