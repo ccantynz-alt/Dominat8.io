@@ -21,21 +21,11 @@ export default function PublicProjectPage({
       </p>
 
       <div style={{ marginTop: 18, lineHeight: 1.8 }}>
-        <div>
-          <a href={`/p/${params.projectId}`}>Home</a>
-        </div>
-        <div>
-          <a href={`/p/${params.projectId}/about`}>About</a>
-        </div>
-        <div>
-          <a href={`/p/${params.projectId}/pricing`}>Pricing</a>
-        </div>
-        <div>
-          <a href={`/p/${params.projectId}/faq`}>FAQ</a>
-        </div>
-        <div>
-          <a href={`/p/${params.projectId}/contact`}>Contact</a>
-        </div>
+        <div><a href={`/p/${params.projectId}`}>Home</a></div>
+        <div><a href={`/p/${params.projectId}/about`}>About</a></div>
+        <div><a href={`/p/${params.projectId}/pricing`}>Pricing</a></div>
+        <div><a href={`/p/${params.projectId}/faq`}>FAQ</a></div>
+        <div><a href={`/p/${params.projectId}/contact`}>Contact</a></div>
       </div>
     </main>
   );
