@@ -5,7 +5,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/version(.*)",     // version check
   "/p/(.*)",              // published sites
 
-  // 🚨 MUST be public or Clerk will protect-rewrite to /404
+  // MUST be public or Clerk can protect-rewrite to /404
   "/sign-in(.*)",
   "/sign-up(.*)",
 ]);
