@@ -12,3 +12,4 @@ export function middleware(_req: NextRequest) {
 export const config = {
   matcher: ["/:path*"],
 };
+
