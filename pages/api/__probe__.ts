@@ -11,3 +11,4 @@ export default function handler(
     time: new Date().toISOString(),
   });
 }
+
