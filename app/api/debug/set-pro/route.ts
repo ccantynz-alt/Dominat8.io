@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { kv } from "@/app/lib/kv";
+import { kv } from "@/src/app/lib/kv";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,7 +8,6 @@ export const dynamic = "force-dynamic";
 const DEV_TOKEN = "dev-pro-unlock";
 
 async function setPlanForUser(userId: string, plan: "free" | "pro") {
-  // IMPORTANT: never use kv.get<string>() generics
   await kv.set(`user:${userId}:plan`, plan);
 }
 
@@ -17,7 +16,6 @@ async function setGlobalPlan(plan: "free" | "pro") {
 }
 
 export async function GET() {
-  // Helpful debug readback (safe)
   const { userId } = auth();
   const globalPlan = (await kv.get("debug:global:plan")) as string | null;
   const userPlan = userId ? ((await kv.get(`user:${userId}:plan`)) as string | null) : null;
