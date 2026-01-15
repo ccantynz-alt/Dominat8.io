@@ -5,10 +5,14 @@ import { auth } from "@clerk/nextjs/server";
 export const dynamic = "force-dynamic";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export async function POST(req: Request) {
 =======
 async function handle(req: Request) {
 >>>>>>> 8149524 (fix: repair seo agent route syntax)
+=======
+export async function POST(req: Request) {
+>>>>>>> a51c1da (fix: ensure set-pro debug route supports POST)
   const { userId } = auth();
 
   if (!userId) {
@@ -24,6 +28,7 @@ async function handle(req: Request) {
 
   await kv.set(`user:${userId}:plan`, "pro");
 
+<<<<<<< HEAD
   return NextResponse.json({
     ok: true,
     userId,
@@ -37,6 +42,9 @@ async function handle(req: Request) {
 =======
 export async function POST(req: Request) {
   return handle(req);
+=======
+  return NextResponse.json({ ok: true, userId, plan: "pro" });
+>>>>>>> a51c1da (fix: ensure set-pro debug route supports POST)
 }
 
 >>>>>>> 8149524 (fix: repair seo agent route syntax)

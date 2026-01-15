@@ -2,9 +2,9 @@
   "/_not-found/page": "app/_not-found/page.js",
   "/p/[projectId]/[[...path]]/page": "app/p/[projectId]/[[...path]]/page.js",
   "/projects/page": "app/projects/page.js",
-  "/api/projects/[projectId]/agents/finish-for-me/route": "app/api/projects/[projectId]/agents/finish-for-me/route.js",
   "/projects/[projectId]/agents/page": "app/projects/[projectId]/agents/page.js",
+  "/api/debug/set-pro/route": "app/api/debug/set-pro/route.js",
   "/api/projects/[projectId]/agents/audit/route": "app/api/projects/[projectId]/agents/audit/route.js",
   "/api/version/route": "app/api/version/route.js",
-  "/api/debug/set-pro/route": "app/api/debug/set-pro/route.js"
+  "/api/projects/[projectId]/agents/finish-for-me/route": "app/api/projects/[projectId]/agents/finish-for-me/route.js"
 }
