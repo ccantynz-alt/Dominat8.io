@@ -1,10 +1,13 @@
-// src/app/p/[projectId]/[[...path]]/page.tsx
-import { redirect } from "next/navigation";
+import PublishedProjectPage from "../page";
 
-export default function PublicCatchAll({
-  params,
-}: {
+export const runtime = "nodejs";
+
+type Props = {
   params: { projectId: string; path?: string[] };
-}) {
-  redirect(`/p/${params.projectId}`);
+};
+
+export default function PublishedCatchAll({ params }: Props) {
+  // IMPORTANT:
+  // Do NOT redirect. Just render the main published page.
+  return <PublishedProjectPage params={{ projectId: params.projectId }} />;
 }
