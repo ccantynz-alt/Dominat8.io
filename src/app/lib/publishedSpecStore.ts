@@ -59,6 +59,9 @@ function normalizeMaybeJson(val: any): any {
   return val;
 }
 
+/**
+ * New canonical API
+ */
 export async function getPublishedSpec(projectId: string): Promise<PublishedSpec | null> {
   const kv = await getKv();
   const keys = publishedKeys(projectId);
@@ -87,19 +90,15 @@ export async function setPublishedSpec(projectId: string, spec: PublishedSpec): 
   const keys = publishedKeys(projectId);
 
   if (kv) {
-    // Write to FIRST key + a couple legacy keys for compatibility.
-    const primary = keys[0];
-    await kv.set(primary, spec as unknown as JsonValue);
-
-    // Compatibility writes (safe; prevents “can’t find published spec” issues)
+    // Write primary + a couple legacy keys for compatibility
+    await kv.set(keys[0], spec as unknown as JsonValue);
     await kv.set(keys[2], spec as unknown as JsonValue);
     await kv.set(keys[3], spec as unknown as JsonValue);
     return;
   }
 
   // Memory fallback
-  const primary = keys[0];
-  memory.set(primary, spec);
+  memory.set(keys[0], spec);
   memory.set(keys[2], spec);
   memory.set(keys[3], spec);
 }
@@ -120,4 +119,12 @@ export async function deletePublishedSpec(projectId: string): Promise<void> {
   }
 
   for (const key of keys) memory.delete(key);
+}
+
+/**
+ * ✅ Compatibility exports (so existing Pages API code keeps working)
+ * Old name used by publish endpoint.
+ */
+export async function publishSiteSpec(projectId: string, spec: PublishedSpec): Promise<void> {
+  return setPublishedSpec(projectId, spec);
 }
