@@ -9,6 +9,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ok: true,
     projectId,
     agents: [
+      { id: "auto", label: "Auto-Publish (1 click)", endpoint: `/api/projects/${projectId}/agents/auto-publish`, method: "POST" },
+
       { id: "seed", label: "Seed Draft", endpoint: `/api/projects/${projectId}/seed-spec`, method: "POST" },
       { id: "finish", label: "Finish-for-me", endpoint: `/api/projects/${projectId}/agents/finish-for-me`, method: "POST" },
       { id: "seo", label: "SEO Agent", endpoint: `/api/projects/${projectId}/agents/seo`, method: "POST" },
@@ -17,4 +19,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     publicUrl: `/p/${projectId}`,
   });
 }
-
