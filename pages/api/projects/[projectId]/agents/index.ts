@@ -1,4 +1,4 @@
-// pages/api/projects/[projectId]/agents/index.ts
+// src/pages/api/projects/[projectId]/agents/index.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -44,9 +44,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       publicUrl: `/p/${projectId}`,
     });
   } catch (e: any) {
-    return res.status(500).json({
-      ok: false,
-      error: e?.message ?? "Agents index failed",
-    });
+    return res.status(500).json({ ok: false, error: e?.message ?? "Agents index failed" });
   }
 }
