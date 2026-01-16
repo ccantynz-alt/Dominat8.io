@@ -1,41 +1,43 @@
-// middleware.ts
-import { NextResponse, type NextRequest } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 /**
- * CRITICAL:
- * - Pages API must own /api/*
- * - So middleware must NOT intercept /api routes
+ * Public routes:
+ * - Published sites: /p/*
+ * - Auth pages: /sign-in, /sign-up
+ * - Public homepage + marketing (adjust if you want)
+ * - Your Pages API endpoints used by publish flow (adjust if you want)
  */
 const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
+
+  // Published sites must be public or you get redirect loops
   "/p(.*)",
 
-  // allow probes to always work
-  "/api/__probe__",
+  // Optional: keep these public for debugging / publishing flows
+  "/api/__probe__(.*)",
+  "/api/projects/(.*)/publish(.*)",
+  "/api/projects/(.*)/seed-spec(.*)",
+  "/api/projects/(.*)/agents/auto-publish(.*)",
 ]);
 
-export default clerkMiddleware((auth, req: NextRequest) => {
-  const { pathname } = req.nextUrl;
+export default clerkMiddleware((auth, req) => {
+  // If you ever run a demo/no-auth mode, allow everything
+  if (process.env.NEXT_PUBLIC_DEMO_AUTH === "true") return;
 
-  // ✅ Let Pages API handle everything under /api
-  if (pathname.startsWith("/api")) {
-    return NextResponse.next();
-  }
+  // IMPORTANT: do not protect public routes
+  if (isPublicRoute(req)) return;
 
-  // Protect non-public pages
-  if (!isPublicRoute(req)) {
-    auth().protect();
-  }
-
-  return NextResponse.next();
+  // Everything else is protected
+  auth().protect();
 });
 
 export const config = {
   matcher: [
-    // run middleware on all routes except Next internals/static
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    // Run middleware on all routes except Next internals and static assets
+    "/((?!_next|.*\\.(?:css|js|json|png|jpg|jpeg|gif|svg|ico|webp|avif|txt|xml|map)).*)",
+    // Always run on API routes
+    "/api/(.*)",
   ],
 };
