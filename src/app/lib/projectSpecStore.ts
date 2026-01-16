@@ -57,6 +57,9 @@ function normalizeMaybeJson(val: any): any {
   return val;
 }
 
+/**
+ * New canonical API
+ */
 export async function getDraftSpec(projectId: string): Promise<SiteSpec | null> {
   const kv = await getKv();
   const keys = draftKeys(projectId);
@@ -85,21 +88,15 @@ export async function setDraftSpec(projectId: string, spec: SiteSpec): Promise<v
   const keys = draftKeys(projectId);
 
   if (kv) {
-    // Write to FIRST key only to minimize clutter,
-    // but it is still compatible with reads that check multiple keys.
-    const primary = keys[0];
-    await kv.set(primary, spec as unknown as JsonValue);
-
-    // Also write a couple of common legacy keys (safe compatibility):
-    // If you want less KV writes, you can delete these two lines later.
+    // Write primary + a couple legacy keys for compatibility
+    await kv.set(keys[0], spec as unknown as JsonValue);
     await kv.set(keys[1], spec as unknown as JsonValue);
     await kv.set(keys[2], spec as unknown as JsonValue);
     return;
   }
 
   // Memory fallback
-  const primary = keys[0];
-  memory.set(primary, spec);
+  memory.set(keys[0], spec);
   memory.set(keys[1], spec);
   memory.set(keys[2], spec);
 }
@@ -120,4 +117,16 @@ export async function deleteDraftSpec(projectId: string): Promise<void> {
   }
 
   for (const key of keys) memory.delete(key);
+}
+
+/**
+ * ✅ Compatibility exports (so existing Pages API code keeps working)
+ * Old names used by seed-spec/publish endpoints.
+ */
+export async function loadSiteSpec(projectId: string): Promise<SiteSpec | null> {
+  return getDraftSpec(projectId);
+}
+
+export async function saveSiteSpec(projectId: string, spec: SiteSpec): Promise<void> {
+  return setDraftSpec(projectId, spec);
 }
