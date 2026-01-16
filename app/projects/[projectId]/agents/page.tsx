@@ -1,9 +1,2 @@
-import AgentsClient from "./AgentsClient";
-
-export default function AgentsPage({
-  params,
-}: {
-  params: { projectId: string };
-}) {
-  return <AgentsClient projectId={params.projectId} />;
-}
+// app/projects/[projectId]/agents/page.tsx
+export { default } from "../../../../src/app/projects/[projectId]/agents/page";
