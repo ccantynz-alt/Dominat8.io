@@ -1,16 +1,11 @@
-// src/app/projects/[projectId]/ProjectPublishPanel.tsx
+// app/projects/[projectId]/ProjectPublishPanel.tsx
 "use client";
 
 import { useMemo, useState } from "react";
 
-type Props = {
-  projectId: string;
-};
+type Props = { projectId: string };
 
-type ApiResult = {
-  status: number;
-  text: string;
-};
+type ApiResult = { status: number; text: string };
 
 async function postText(path: string): Promise<ApiResult> {
   const r = await fetch(path, { method: "POST" });
@@ -39,20 +34,14 @@ export default function ProjectPublishPanel({ projectId }: Props) {
   }, [publishResult]);
 
   const publicUrlPath: string | null = useMemo(() => {
-    // Your publish response may include publicUrl, or only projectId (older versions).
-    // Prefer explicit publicUrl when present.
     const p = publishJson?.publicUrl;
     if (typeof p === "string" && p.startsWith("/")) return p;
-
-    // Fallback: standard public path
     if (projectId) return `/p/${projectId}`;
-
     return null;
   }, [publishJson, projectId]);
 
   const publicUrlAbsolute = useMemo(() => {
     if (!publicUrlPath) return null;
-    // Use current origin (works on -5eyw and later on real domain)
     return `${window.location.origin}${publicUrlPath}`;
   }, [publicUrlPath]);
 
@@ -60,15 +49,11 @@ export default function ProjectPublishPanel({ projectId }: Props) {
     setError(null);
     setSeedResult(null);
     setCopied(false);
-
     setBusy("seed");
     try {
       const res = await postText(`/api/projects/${projectId}/seed-spec`);
       setSeedResult(res);
-
-      if (res.status >= 400) {
-        setError(`seed-spec failed (${res.status}). See response below.`);
-      }
+      if (res.status >= 400) setError(`seed-spec failed (${res.status}). See response below.`);
     } catch (e: any) {
       setError(e?.message || "seed-spec failed (unknown error)");
     } finally {
@@ -80,15 +65,11 @@ export default function ProjectPublishPanel({ projectId }: Props) {
     setError(null);
     setPublishResult(null);
     setCopied(false);
-
     setBusy("publish");
     try {
       const res = await postText(`/api/projects/${projectId}/publish`);
       setPublishResult(res);
-
-      if (res.status >= 400) {
-        setError(`publish failed (${res.status}). See response below.`);
-      }
+      if (res.status >= 400) setError(`publish failed (${res.status}). See response below.`);
     } catch (e: any) {
       setError(e?.message || "publish failed (unknown error)");
     } finally {
@@ -199,4 +180,3 @@ export default function ProjectPublishPanel({ projectId }: Props) {
     </div>
   );
 }
-
