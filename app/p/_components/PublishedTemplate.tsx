@@ -170,3 +170,4 @@ export default function PublishedTemplate(props: PublishedTemplateProps) {
     </main>
   );
 }
+
