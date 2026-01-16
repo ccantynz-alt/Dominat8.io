@@ -1,14 +1,25 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-/**
- * MIDDLEWARE DISABLED (temporary, safe)
- * Prevents MIDDLEWARE_INVOCATION_FAILED by matching NOTHING.
- */
-export function middleware(_req: NextRequest) {
-  return NextResponse.next();
-}
+// Public paths (no auth, no redirects)
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/p(.*)",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/__probe__(.*)",
+]);
+
+export default clerkMiddleware((auth, req) => {
+  if (process.env.NEXT_PUBLIC_DEMO_AUTH === "true") return;
+  if (isPublicRoute(req)) return;
+  auth().protect();
+});
 
 export const config = {
-  matcher: [],
+  matcher: [
+    // IMPORTANT: exclude published sites so middleware NEVER runs on /p/*
+    "/((?!p/|_next|.*\\.(?:css|js|json|png|jpg|jpeg|gif|svg|ico|webp|avif|txt|xml|map)).*)",
+    "/api/(.*)",
+  ],
 };
+
