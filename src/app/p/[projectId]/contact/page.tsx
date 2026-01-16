@@ -8,3 +8,4 @@ export default function PublishedContactPage({
 }) {
   redirect(`/p/${params.projectId}`);
 }
+
