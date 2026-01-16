@@ -4,28 +4,26 @@ import Link from "next/link";
 
 /**
  * Minimal spec shape we can safely render.
- * (We only rely on a few fields to avoid breaking if your spec evolves.)
+ * Keep types simple to avoid TS indexed-type issues on optional fields.
  */
+type PageSpec = {
+  slug?: string;
+  title?: string;
+  hero?: {
+    headline?: string;
+    subheadline?: string;
+    primaryCta?: { label?: string; href?: string };
+    secondaryCta?: { label?: string; href?: string };
+  };
+  sections?: Array<any>;
+};
+
 type PublishedSpec = {
   projectId?: string;
   version?: string;
   brandName?: string;
   createdAtIso?: string;
-  pages?: Array<{
-    slug?: string;
-    title?: string;
-    hero?: {
-      headline?: string;
-      subheadline?: string;
-      primaryCta?: { label?: string; href?: string };
-      secondaryCta?: { label?: string; href?: string };
-    };
-    sections?: Array<
-      | { type: "features"; items?: Array<{ title?: string; body?: string }> }
-      | { type: "faq"; items?: Array<{ q?: string; a?: string }> }
-      | { type: string; [k: string]: any }
-    >;
-  }>;
+  pages?: PageSpec[];
   [k: string]: any;
 };
 
@@ -35,10 +33,8 @@ function isObj(v: unknown): v is Record<string, any> {
 
 /**
  * Tries to load a published spec from KV using a few common key patterns.
- * This avoids hard-coding your exact storage key while still being real + live.
  */
 async function loadPublishedSpec(projectId: string): Promise<PublishedSpec | null> {
-  // Try @vercel/kv first (most common in Vercel KV / Upstash setups)
   let kv: any = null;
   try {
     const mod: any = await import("@vercel/kv");
@@ -47,10 +43,7 @@ async function loadPublishedSpec(projectId: string): Promise<PublishedSpec | nul
     kv = null;
   }
 
-  if (!kv || typeof kv.get !== "function") {
-    // If KV is unavailable, return null (page will show an error block)
-    return null;
-  }
+  if (!kv || typeof kv.get !== "function") return null;
 
   const candidates = [
     `published:${projectId}`,
@@ -66,18 +59,18 @@ async function loadPublishedSpec(projectId: string): Promise<PublishedSpec | nul
   for (const key of candidates) {
     try {
       const val = await kv.get(key);
-      if (val) {
-        // Some KV stores return JSON string, some return object
-        if (typeof val === "string") {
-          try {
-            const parsed = JSON.parse(val);
-            if (isObj(parsed)) return parsed as PublishedSpec;
-          } catch {
-            // ignore parse error
-          }
+      if (!val) continue;
+
+      if (typeof val === "string") {
+        try {
+          const parsed = JSON.parse(val);
+          if (isObj(parsed)) return parsed as PublishedSpec;
+        } catch {
+          // ignore
         }
-        if (isObj(val)) return val as PublishedSpec;
       }
+
+      if (isObj(val)) return val as PublishedSpec;
     } catch {
       // ignore and continue
     }
@@ -97,10 +90,6 @@ function safeArray<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
 }
 
-function cx(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
-}
-
 export async function generateMetadata({
   params,
 }: {
@@ -115,11 +104,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      type: "website",
-    },
+    openGraph: { title, description, type: "website" },
     robots: { index: true, follow: true },
   };
 }
@@ -132,15 +117,10 @@ export default async function PublicProjectPage({
   const projectId = params.projectId;
   const spec = await loadPublishedSpec(projectId);
 
-  // Fallback content (still premium) if we can’t locate the KV key yet.
   const brandName = pick(spec?.brandName, "Your Brand");
-  const firstPage = safeArray<PublishedSpec["pages"][number]>(spec?.pages)[0];
+  const firstPage = safeArray<PageSpec>(spec?.pages)[0];
 
-  const heroHeadline = pick(
-    firstPage?.hero?.headline,
-    firstPage?.title,
-    `${brandName} that converts`
-  );
+  const heroHeadline = pick(firstPage?.hero?.headline, firstPage?.title, `${brandName} that converts`);
 
   const heroSub = pick(
     firstPage?.hero?.subheadline,
@@ -153,7 +133,6 @@ export default async function PublicProjectPage({
   const secondaryCtaLabel = pick(firstPage?.hero?.secondaryCta?.label, "See features");
   const secondaryCtaHref = pick(firstPage?.hero?.secondaryCta?.href, "#features");
 
-  // Pull features + FAQ from spec if present, else use premium defaults.
   const sections = safeArray<any>(firstPage?.sections);
   const featuresSection = sections.find((s) => s?.type === "features");
   const faqSection = sections.find((s) => s?.type === "faq");
@@ -162,53 +141,25 @@ export default async function PublicProjectPage({
     safeArray<{ title?: string; body?: string }>(featuresSection?.items).length > 0
       ? safeArray<{ title?: string; body?: string }>(featuresSection?.items)
       : [
-          {
-            title: "Premium structure, fast",
-            body: "A clean layout that looks like a real product — not a template dump.",
-          },
-          {
-            title: "Conversion-first sections",
-            body: "Hero → proof → benefits → FAQ → strong CTA, in the order that sells.",
-          },
-          {
-            title: "Built to scale",
-            body: "Designed for global visitors with clear hierarchy and readable spacing.",
-          },
-          {
-            title: "Trust baked in",
-            body: "Clear value prop, consistent typography, and a confident, modern aesthetic.",
-          },
-          {
-            title: "Mobile-ready by default",
-            body: "Responsive sections that hold up on phones, tablets, and desktop.",
-          },
-          {
-            title: "Spec-driven",
-            body: "When your spec updates, your public site updates too — no manual edits.",
-          },
+          { title: "Premium structure, fast", body: "A clean layout that looks like a real product — not a template dump." },
+          { title: "Conversion-first sections", body: "Hero → proof → benefits → FAQ → strong CTA, in the order that sells." },
+          { title: "Built to scale", body: "Designed for global visitors with clear hierarchy and readable spacing." },
+          { title: "Trust baked in", body: "Clear value prop, consistent typography, and a confident, modern aesthetic." },
+          { title: "Mobile-ready by default", body: "Responsive sections that hold up on phones, tablets, and desktop." },
+          { title: "Spec-driven", body: "When your spec updates, your public site updates too — no manual edits." },
         ];
 
   const faqItems =
     safeArray<{ q?: string; a?: string }>(faqSection?.items).length > 0
       ? safeArray<{ q?: string; a?: string }>(faqSection?.items)
       : [
-          {
-            q: "What is this site?",
-            a: "It’s a published marketing page generated from a saved spec — designed to look premium and convert.",
-          },
-          {
-            q: "Can the content change later?",
-            a: "Yes. When the published spec is updated, this page can render the latest version.",
-          },
-          {
-            q: "Is it mobile friendly?",
-            a: "Yes — the layout is responsive and uses modern spacing and typography.",
-          },
+          { q: "What is this site?", a: "It’s a published marketing page generated from a saved spec — designed to look premium and convert." },
+          { q: "Can the content change later?", a: "Yes. When the published spec is updated, this page can render the latest version." },
+          { q: "Is it mobile friendly?", a: "Yes — the layout is responsive and uses modern spacing and typography." },
         ];
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      {/* Top bar */}
       <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -224,15 +175,9 @@ export default async function PublicProjectPage({
           </div>
 
           <nav className="hidden items-center gap-6 md:flex">
-            <a className="text-sm text-slate-600 hover:text-slate-900" href="#features">
-              Features
-            </a>
-            <a className="text-sm text-slate-600 hover:text-slate-900" href="#proof">
-              Proof
-            </a>
-            <a className="text-sm text-slate-600 hover:text-slate-900" href="#faq">
-              FAQ
-            </a>
+            <a className="text-sm text-slate-600 hover:text-slate-900" href="#features">Features</a>
+            <a className="text-sm text-slate-600 hover:text-slate-900" href="#proof">Proof</a>
+            <a className="text-sm text-slate-600 hover:text-slate-900" href="#faq">FAQ</a>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -252,7 +197,6 @@ export default async function PublicProjectPage({
         </div>
       </header>
 
-      {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-slate-100 blur-3xl" />
@@ -274,9 +218,7 @@ export default async function PublicProjectPage({
                 {heroHeadline}
               </h1>
 
-              <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600">
-                {heroSub}
-              </p>
+              <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600">{heroSub}</p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <a
@@ -294,18 +236,16 @@ export default async function PublicProjectPage({
               </div>
 
               <div className="mt-6 grid max-w-xl grid-cols-3 gap-3 text-xs text-slate-600">
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
-                  <div className="font-semibold text-slate-900">Premium</div>
-                  <div className="mt-1">clean spacing</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
-                  <div className="font-semibold text-slate-900">Fast</div>
-                  <div className="mt-1">loads quickly</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
-                  <div className="font-semibold text-slate-900">Focused</div>
-                  <div className="mt-1">built to convert</div>
-                </div>
+                {[
+                  { t: "Premium", s: "clean spacing" },
+                  { t: "Fast", s: "loads quickly" },
+                  { t: "Focused", s: "built to convert" },
+                ].map((x) => (
+                  <div key={x.t} className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+                    <div className="font-semibold text-slate-900">{x.t}</div>
+                    <div className="mt-1">{x.s}</div>
+                  </div>
+                ))}
               </div>
 
               {!spec && (
@@ -319,7 +259,6 @@ export default async function PublicProjectPage({
               )}
             </div>
 
-            {/* Hero card */}
             <div className="md:col-span-5">
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
@@ -352,24 +291,15 @@ export default async function PublicProjectPage({
                 <div className="mt-6 rounded-2xl bg-slate-50 p-4">
                   <div className="text-xs font-semibold text-slate-700">Generated from spec</div>
                   <div className="mt-1 text-xs text-slate-600">
-                    Version:{" "}
-                    <span className="font-mono text-slate-700">
-                      {pick(spec?.version, "unknown")}
-                    </span>
+                    Version: <span className="font-mono text-slate-700">{pick(spec?.version, "unknown")}</span>
                   </div>
                   <div className="mt-1 text-xs text-slate-600">
-                    Created:{" "}
-                    <span className="font-mono text-slate-700">
-                      {pick(spec?.createdAtIso, "unknown")}
-                    </span>
+                    Created: <span className="font-mono text-slate-700">{pick(spec?.createdAtIso, "unknown")}</span>
                   </div>
                 </div>
 
                 <div className="mt-5 flex items-center justify-between">
-                  <a
-                    href="#cta"
-                    className="text-sm font-semibold text-slate-900 hover:underline"
-                  >
+                  <a href="#cta" className="text-sm font-semibold text-slate-900 hover:underline">
                     Jump to CTA
                   </a>
                   <span className="text-xs text-slate-500">Scroll for details</span>
@@ -380,7 +310,6 @@ export default async function PublicProjectPage({
         </div>
       </section>
 
-      {/* Proof */}
       <section id="proof" className="border-y border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-6xl px-4 py-12">
           <div className="grid gap-6 md:grid-cols-12 md:items-center">
@@ -399,10 +328,7 @@ export default async function PublicProjectPage({
                   { k: "Confidence", v: "Premium spacing" },
                   { k: "Conversion", v: "CTA-first structure" },
                 ].map((x) => (
-                  <div
-                    key={x.k}
-                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                  >
+                  <div key={x.k} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="text-sm font-semibold text-slate-900">{x.k}</div>
                     <div className="mt-1 text-sm text-slate-600">{x.v}</div>
                   </div>
@@ -413,7 +339,6 @@ export default async function PublicProjectPage({
         </div>
       </section>
 
-      {/* Features */}
       <section id="features" className="bg-white">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <div className="max-w-2xl">
@@ -427,14 +352,9 @@ export default async function PublicProjectPage({
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featureItems.slice(0, 6).map((f, idx) => (
-              <div
-                key={idx}
-                className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-              >
+              <div key={idx} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="text-base font-semibold text-slate-900">
-                    {pick(f.title, `Feature ${idx + 1}`)}
-                  </div>
+                  <div className="text-base font-semibold text-slate-900">{pick(f.title, `Feature ${idx + 1}`)}</div>
                   <div className="rounded-2xl bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                     {String(idx + 1).padStart(2, "0")}
                   </div>
@@ -448,7 +368,6 @@ export default async function PublicProjectPage({
         </div>
       </section>
 
-      {/* How it works */}
       <section className="bg-slate-50">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <div className="grid gap-6 md:grid-cols-12 md:items-start">
@@ -463,31 +382,13 @@ export default async function PublicProjectPage({
             <div className="md:col-span-7">
               <ol className="space-y-3">
                 {[
-                  {
-                    t: "Lead with clarity",
-                    d: "One headline that tells people exactly what they get.",
-                  },
-                  {
-                    t: "Show proof",
-                    d: "Trust blocks that reduce skepticism and increase confidence.",
-                  },
-                  {
-                    t: "Deliver benefits",
-                    d: "A short set of strong features with real outcomes.",
-                  },
-                  {
-                    t: "Remove doubt",
-                    d: "FAQ that answers the questions people hesitate on.",
-                  },
-                  {
-                    t: "Close with a clear CTA",
-                    d: "A final call-to-action that’s easy to say yes to.",
-                  },
+                  { t: "Lead with clarity", d: "One headline that tells people exactly what they get." },
+                  { t: "Show proof", d: "Trust blocks that reduce skepticism and increase confidence." },
+                  { t: "Deliver benefits", d: "A short set of strong features with real outcomes." },
+                  { t: "Remove doubt", d: "FAQ that answers the questions people hesitate on." },
+                  { t: "Close with a clear CTA", d: "A final call-to-action that’s easy to say yes to." },
                 ].map((x, i) => (
-                  <li
-                    key={x.t}
-                    className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
-                  >
+                  <li key={x.t} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="flex items-start gap-4">
                       <div className="grid h-9 w-9 place-items-center rounded-xl bg-slate-900 text-sm font-semibold text-white">
                         {i + 1}
@@ -505,7 +406,6 @@ export default async function PublicProjectPage({
         </div>
       </section>
 
-      {/* FAQ */}
       <section id="faq" className="bg-white">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <div className="max-w-2xl">
@@ -517,23 +417,15 @@ export default async function PublicProjectPage({
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             {faqItems.slice(0, 6).map((x, idx) => (
-              <div
-                key={idx}
-                className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-              >
-                <div className="text-sm font-semibold text-slate-900">
-                  {pick(x.q, `Question ${idx + 1}`)}
-                </div>
-                <div className="mt-2 text-sm leading-relaxed text-slate-600">
-                  {pick(x.a, "Answer goes here.")}
-                </div>
+              <div key={idx} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="text-sm font-semibold text-slate-900">{pick(x.q, `Question ${idx + 1}`)}</div>
+                <div className="mt-2 text-sm leading-relaxed text-slate-600">{pick(x.a, "Answer goes here.")}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
       <section id="cta" className="bg-slate-900">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <div className="grid gap-8 rounded-3xl border border-white/10 bg-white/5 p-8 md:grid-cols-12 md:items-center">
@@ -556,17 +448,15 @@ export default async function PublicProjectPage({
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-4 text-xs text-white/60">
-            <div>
-              © {new Date().getFullYear()} {brandName}
-            </div>
+            <div>© {new Date().getFullYear()} {brandName}</div>
             <div className="flex items-center gap-4">
-              <a className="hover:text-white" href="#features">
-                Features
-              </a>
-              <a className="hover:text-white" href="#faq">
-                FAQ
-              </a>
-              <a className="hover:text-white" href="#top" onClick={(e) => e.preventDefault()}>
+              <a className="hover:text-white" href="#features">Features</a>
+              <a className="hover:text-white" href="#faq">FAQ</a>
+              <a
+                className="hover:text-white"
+                href="#top"
+                onClick={(e) => e.preventDefault()}
+              >
                 Top
               </a>
             </div>
