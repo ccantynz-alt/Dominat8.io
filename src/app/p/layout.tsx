@@ -10,8 +10,5 @@ export default function PublicPublishedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // IMPORTANT:
-  // This layout MUST NOT call auth(), currentUser(), protect(), or redirect().
-  // It keeps /p/* public and prevents redirect loops.
   return <>{children}</>;
 }
