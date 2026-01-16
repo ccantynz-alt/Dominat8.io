@@ -1,28 +1,123 @@
-import { SiteSpec } from "./siteSpec";
-import * as kvMod from "./kv";
+// src/app/lib/projectSpecStore.ts
 
-function getKvAny(): any {
-  return (kvMod as any).kv ?? (kvMod as any).default ?? (kvMod as any);
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [k: string]: JsonValue };
+
+type SiteSpec = Record<string, any>;
+
+type KvLike = {
+  get: (key: string) => Promise<any>;
+  set: (key: string, value: any) => Promise<any>;
+  del?: (key: string) => Promise<any>;
+};
+
+const memory = (() => {
+  const g = globalThis as any;
+  g.__SPEC_STORE__ = g.__SPEC_STORE__ ?? new Map<string, any>();
+  return g.__SPEC_STORE__ as Map<string, any>;
+})();
+
+async function getKv(): Promise<KvLike | null> {
+  try {
+    const mod: any = await import("@vercel/kv");
+    const kv = mod?.kv ?? mod?.default?.kv ?? mod?.default ?? null;
+    if (kv && typeof kv.get === "function" && typeof kv.set === "function") return kv as KvLike;
+  } catch {
+    // ignore
+  }
+  return null;
 }
 
-function specKey(projectId: string) {
-  return `project:${projectId}:siteSpec:v1`;
+// Draft spec keys (try multiple to stay compatible with older code)
+function draftKeys(projectId: string) {
+  return [
+    `draft:${projectId}`,
+    `spec:draft:${projectId}`,
+    `project:${projectId}:draft`,
+    `projects:${projectId}:draft`,
+    `site:draft:${projectId}`,
+    `site:${projectId}:draft`,
+  ];
 }
 
-export async function saveSiteSpec(projectId: string, spec: SiteSpec) {
-  const kv = getKvAny();
-  if (!kv?.set) throw new Error("KV store not available (kv.set missing)");
-  await kv.set(specKey(projectId), JSON.stringify(spec));
-  return true;
+function normalizeMaybeJson(val: any): any {
+  if (!val) return null;
+  if (typeof val === "string") {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return val;
+    }
+  }
+  return val;
 }
 
-export async function loadSiteSpec(projectId: string): Promise<SiteSpec | null> {
-  const kv = getKvAny();
-  if (!kv?.get) throw new Error("KV store not available (kv.get missing)");
+export async function getDraftSpec(projectId: string): Promise<SiteSpec | null> {
+  const kv = await getKv();
+  const keys = draftKeys(projectId);
 
-  const raw = await kv.get(specKey(projectId));
-  if (!raw) return null;
+  if (kv) {
+    for (const key of keys) {
+      try {
+        const v = normalizeMaybeJson(await kv.get(key));
+        if (v && typeof v === "object") return v as SiteSpec;
+      } catch {
+        // keep trying other keys
+      }
+    }
+    return null;
+  }
 
-  const text = typeof raw === "string" ? raw : JSON.stringify(raw);
-  return JSON.parse(text) as SiteSpec;
+  // Memory fallback
+  for (const key of keys) {
+    if (memory.has(key)) return memory.get(key) as SiteSpec;
+  }
+  return null;
+}
+
+export async function setDraftSpec(projectId: string, spec: SiteSpec): Promise<void> {
+  const kv = await getKv();
+  const keys = draftKeys(projectId);
+
+  if (kv) {
+    // Write to FIRST key only to minimize clutter,
+    // but it is still compatible with reads that check multiple keys.
+    const primary = keys[0];
+    await kv.set(primary, spec as unknown as JsonValue);
+
+    // Also write a couple of common legacy keys (safe compatibility):
+    // If you want less KV writes, you can delete these two lines later.
+    await kv.set(keys[1], spec as unknown as JsonValue);
+    await kv.set(keys[2], spec as unknown as JsonValue);
+    return;
+  }
+
+  // Memory fallback
+  const primary = keys[0];
+  memory.set(primary, spec);
+  memory.set(keys[1], spec);
+  memory.set(keys[2], spec);
+}
+
+export async function deleteDraftSpec(projectId: string): Promise<void> {
+  const kv = await getKv();
+  const keys = draftKeys(projectId);
+
+  if (kv && typeof kv.del === "function") {
+    for (const key of keys) {
+      try {
+        await kv.del(key);
+      } catch {
+        // ignore
+      }
+    }
+    return;
+  }
+
+  for (const key of keys) memory.delete(key);
 }
