@@ -1,207 +1,164 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { kv } from "@/lib/kv";
+import { kvJsonGet, kv } from "@/src/app/lib/kv";
 
-type SeoPlan = {
-  version: number;
-  generatedAtIso: string;
-  site?: {
-    brand?: string;
-    domain?: string | null;
-    language?: string;
-    country?: string;
-  };
-  pages?: Array<{
-    slug: string;
-    canonical?: string | null;
-  }>;
-  sitemap?: {
-    include: string[];
-    exclude: string[];
-  };
+type SeoPlanAny = {
+  version?: number;
+  site?: { domain?: string | null };
+  pages?: Array<{ slug?: string }>;
 };
 
-type SitemapArtifact = {
-  generatedAtIso: string;
-  urls: Array<{
-    loc: string;
-    lastmod: string;
-    changefreq: "daily" | "weekly" | "monthly";
-    priority: number;
-  }>;
-};
-
-function normalizeSlug(slug: string): string {
-  if (!slug) return "/";
-  if (slug === "/") return "/";
-  return slug.startsWith("/") ? slug : `/${slug}`;
-}
-
-function baseUrlFromRequest(req: NextApiRequest): string {
-  const xfp = req.headers["x-forwarded-proto"];
-  const proto = Array.isArray(xfp) ? xfp[0] : xfp || "https";
-
-  const xfh = req.headers["x-forwarded-host"];
-  const host =
-    (Array.isArray(xfh) ? xfh[0] : xfh) ||
-    req.headers.host ||
-    "example.com";
-
-  return `${proto}://${host}`;
-}
-
-function buildUrlSet(input: {
-  baseUrl: string;
-  includeSlugs: string[];
-  excludeSlugs: string[];
-  lastmodIso: string;
-}): SitemapArtifact["urls"] {
-  const { baseUrl, includeSlugs, excludeSlugs, lastmodIso } = input;
-
-  const include = (includeSlugs || []).map(normalizeSlug);
-  const exclude = new Set((excludeSlugs || []).map(normalizeSlug));
-
-  const unique = new Set<string>();
-  for (const s of include) {
-    if (!exclude.has(s)) unique.add(s);
-  }
-
-  // Always ensure home is present unless explicitly excluded
-  if (!exclude.has("/")) unique.add("/");
-
-  const slugs = Array.from(unique);
-
-  const urls: SitemapArtifact["urls"] = slugs.map((slug) => {
-    const loc = slug === "/" ? `${baseUrl}/` : `${baseUrl}${slug}`;
-
-    // Simple deterministic priorities (can be refined later by agents)
-    let priority = 0.7;
-    let changefreq: "daily" | "weekly" | "monthly" = "weekly";
-
-    if (slug === "/") {
-      priority = 1.0;
-      changefreq = "daily";
-    } else if (slug.startsWith("/pricing") || slug.startsWith("/templates")) {
-      priority = 0.9;
-      changefreq = "weekly";
-    } else if (slug.startsWith("/use-cases")) {
-      priority = 0.8;
-      changefreq = "weekly";
-    } else if (slug.startsWith("/docs") || slug.startsWith("/guides")) {
-      priority = 0.6;
-      changefreq = "monthly";
-    }
-
+function errToJson(e: unknown) {
+  if (e && typeof e === "object") {
+    const anyE = e as any;
     return {
-      loc,
-      lastmod: lastmodIso,
-      changefreq,
-      priority,
+      name: anyE?.name,
+      message: anyE?.message,
+      stack:
+        typeof anyE?.stack === "string"
+          ? anyE.stack.split("\n").slice(0, 12).join("\n")
+          : undefined,
     };
-  });
-
-  // Stable ordering for deterministic output
-  urls.sort((a, b) => a.loc.localeCompare(b.loc));
-
-  return urls;
+  }
+  return { message: String(e) };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, error: "Method not allowed" });
-  }
+function xmlEscape(s: string): string {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function normalizeBaseUrl(domain: string | null | undefined): string {
+  if (!domain) return "https://example.com";
+  const d = domain.trim();
+  if (!d) return "https://example.com";
+  if (d.startsWith("http://") || d.startsWith("https://")) return d.replace(/\/+$/, "");
+  return `https://${d}`.replace(/\/+$/, "");
+}
+
+function normalizeSlug(slug: string | undefined): string {
+  if (!slug) return "/";
+  const s = slug.trim();
+  if (!s) return "/";
+  if (s === "/") return "/";
+  return s.startsWith("/") ? s : `/${s}`;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
 
   const { projectId } = req.query;
   if (!projectId || typeof projectId !== "string") {
-    return res.status(400).json({ ok: false, error: "Missing projectId" });
-  }
-
-  const nowIso = new Date().toISOString();
-
-  const seoKey = `project:${projectId}:seoPlan`;
-  const publishedSpecKey = `project:${projectId}:publishedSpec`;
-  const sitemapKey = `project:${projectId}:sitemap`;
-
-  const [seoPlanRaw, publishedSpecRaw] = await Promise.all([
-    kv.get(seoKey),
-    kv.get(publishedSpecKey),
-  ]);
-
-  if (!seoPlanRaw) {
-    return res.status(409).json({
+    return res.status(400).json({
       ok: false,
       agent: "sitemap",
-      projectId,
-      error: "Missing seoPlan. Run SEO agent first.",
-      requiredKey: seoKey,
+      error: "Missing projectId",
+      source: "pages/api/projects/[projectId]/agents/sitemap.ts",
     });
   }
 
-  // seoPlanRaw may be already parsed (depending on kv wrapper) or a string.
-  let seoPlan: SeoPlan | null = null;
+  const seoKey = `project:${projectId}:seoPlan`;
+  const nowIso = new Date().toISOString();
+
+  // ✅ GET = diagnostics: tells you whether seoPlan exists (NO writes)
+  if (req.method === "GET") {
+    try {
+      const raw = await kv.get(seoKey);
+      return res.status(200).json({
+        ok: true,
+        agent: "sitemap",
+        projectId,
+        nowIso,
+        seoKey,
+        seoPlanExists: !!raw,
+        seoPlanBytes: raw ? raw.length : 0,
+        note: "Use POST to generate sitemap XML if seoPlanExists is true.",
+        source: "pages/api/projects/[projectId]/agents/sitemap.ts",
+        method: req.method,
+      });
+    } catch (e) {
+      return res.status(500).json({
+        ok: false,
+        agent: "sitemap",
+        projectId,
+        nowIso,
+        error: "KV read failed",
+        detail: errToJson(e),
+        source: "pages/api/projects/[projectId]/agents/sitemap.ts",
+        method: req.method,
+      });
+    }
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      ok: false,
+      agent: "sitemap",
+      projectId,
+      error: "Method not allowed",
+      allowed: ["GET", "POST"],
+      source: "pages/api/projects/[projectId]/agents/sitemap.ts",
+      method: req.method,
+    });
+  }
+
   try {
-    if (typeof seoPlanRaw === "string") seoPlan = JSON.parse(seoPlanRaw);
-    else seoPlan = seoPlanRaw as SeoPlan;
-  } catch {
+    const plan = await kvJsonGet<SeoPlanAny>(seoKey);
+
+    if (!plan) {
+      return res.status(409).json({
+        ok: false,
+        agent: "sitemap",
+        projectId,
+        error: "Missing seoPlan. Run SEO agent first.",
+        missingKey: seoKey,
+        source: "pages/api/projects/[projectId]/agents/sitemap.ts",
+        method: req.method,
+      });
+    }
+
+    const baseUrl = normalizeBaseUrl(plan.site?.domain ?? null);
+
+    const slugs = Array.isArray(plan.pages) ? plan.pages.map((p) => normalizeSlug(p?.slug)) : ["/"];
+    const uniqueSlugs = Array.from(new Set(slugs));
+
+    const urls = uniqueSlugs.map((slug) => `${baseUrl}${slug === "/" ? "" : slug}`);
+
+    const xml =
+      `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+      urls
+        .map((u) => `  <url><loc>${xmlEscape(u)}</loc><lastmod>${xmlEscape(nowIso)}</lastmod></url>`)
+        .join("\n") +
+      `\n</urlset>\n`;
+
+    const outKey = `project:${projectId}:sitemapXml`;
+    await kv.set(outKey, xml);
+
+    return res.status(200).json({
+      ok: true,
+      agent: "sitemap",
+      projectId,
+      nowIso,
+      seoKey,
+      sitemapKey: outKey,
+      urlCount: urls.length,
+      baseUrl,
+      source: "pages/api/projects/[projectId]/agents/sitemap.ts",
+      method: req.method,
+    });
+  } catch (e) {
     return res.status(500).json({
       ok: false,
       agent: "sitemap",
       projectId,
-      error: "seoPlan exists but could not be parsed as JSON.",
-      key: seoKey,
+      error: "Sitemap generation failed",
+      detail: errToJson(e),
+      source: "pages/api/projects/[projectId]/agents/sitemap.ts",
+      method: req.method,
     });
   }
-
-  // publishedSpec is optional for Move 2 (we still read it, but won’t fail if absent)
-  // It can be used later to refine lastmod or include dynamic pages.
-  const publishedSpecPresent = !!publishedSpecRaw;
-
-  const baseUrl =
-    (seoPlan?.site?.domain && seoPlan.site.domain.startsWith("http")
-      ? seoPlan.site.domain
-      : seoPlan?.site?.domain
-      ? `https://${seoPlan.site.domain}`
-      : baseUrlFromRequest(req)
-    ).replace(/\/+$/, "");
-
-  const include =
-    seoPlan?.sitemap?.include && Array.isArray(seoPlan.sitemap.include)
-      ? seoPlan.sitemap.include
-      : (seoPlan?.pages || []).map((p) => p.slug);
-
-  const exclude =
-    seoPlan?.sitemap?.exclude && Array.isArray(seoPlan.sitemap.exclude)
-      ? seoPlan.sitemap.exclude
-      : [];
-
-  const artifact: SitemapArtifact = {
-    generatedAtIso: nowIso,
-    urls: buildUrlSet({
-      baseUrl,
-      includeSlugs: include,
-      excludeSlugs: exclude,
-      lastmodIso: nowIso,
-    }),
-  };
-
-  await kv.set(sitemapKey, JSON.stringify(artifact));
-
-  return res.status(200).json({
-    ok: true,
-    agent: "sitemap",
-    projectId,
-    generatedAtIso: nowIso,
-    inputs: {
-      seoPlanKey: seoKey,
-      publishedSpecKey,
-      publishedSpecPresent,
-    },
-    output: {
-      sitemapKey,
-      urlCount: artifact.urls.length,
-      baseUrl,
-    },
-  });
 }
