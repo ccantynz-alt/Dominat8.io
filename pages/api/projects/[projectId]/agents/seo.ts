@@ -31,18 +31,25 @@ type SeoPlan = {
   };
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, error: "Method not allowed" });
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Always return JSON (prevents HTML 405 pages when we are actually executing)
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
 
   const { projectId } = req.query;
-
   if (!projectId || typeof projectId !== "string") {
     return res.status(400).json({ ok: false, error: "Missing projectId" });
+  }
+
+  // Allow GET for quick probing + POST for “real runs”
+  if (req.method !== "GET" && req.method !== "POST") {
+    return res.status(405).json({
+      ok: false,
+      agent: "seo",
+      projectId,
+      error: "Method not allowed",
+      allowed: ["GET", "POST"],
+      source: "pages/api/projects/[projectId]/agents/seo.ts",
+    });
   }
 
   const nowIso = new Date().toISOString();
@@ -151,7 +158,6 @@ export default async function handler(
   };
 
   const key = `project:${projectId}:seoPlan`;
-
   await kv.set(key, JSON.stringify(plan));
 
   return res.status(200).json({
@@ -161,5 +167,7 @@ export default async function handler(
     generatedAtIso: nowIso,
     artifactKey: key,
     pages: plan.pages.length,
+    source: "pages/api/projects/[projectId]/agents/seo.ts",
+    method: req.method,
   });
 }
