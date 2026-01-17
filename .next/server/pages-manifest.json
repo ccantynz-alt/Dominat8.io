@@ -1,5 +1,20 @@
 {
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
+  "/api/__deploy_bump__": "pages/api/__deploy_bump__.js",
+  "/api/__probe2__": "pages/api/__probe2__.js",
+  "/api/__probe__": "pages/api/__probe__.js",
+  "/api/__probe_debug_spec__": "pages/api/__probe_debug_spec__.js",
+  "/api/projects/[projectId]/agents/auto-publish": "pages/api/projects/[projectId]/agents/auto-publish.js",
+  "/api/__redeploy__": "pages/api/__redeploy__.js",
+  "/api/projects/[projectId]/agents/finish-for-me": "pages/api/projects/[projectId]/agents/finish-for-me.js",
+  "/api/projects/[projectId]/agents": "pages/api/projects/[projectId]/agents.js",
+  "/api/projects/[projectId]/debug/spec": "pages/api/projects/[projectId]/debug/spec.js",
+  "/api/projects/[projectId]/seed-spec": "pages/api/projects/[projectId]/seed-spec.js",
+  "/api/projects/[projectId]/agents/_runtime": "pages/api/projects/[projectId]/agents/_runtime.js",
+  "/api/projects/[projectId]/agents/audit": "pages/api/projects/[projectId]/agents/audit.js",
+  "/api/projects/[projectId]/agents/conversion": "pages/api/projects/[projectId]/agents/conversion.js",
+  "/api/projects/[projectId]/agents/seo": "pages/api/projects/[projectId]/agents/seo.js",
+  "/api/projects/[projectId]/publish": "pages/api/projects/[projectId]/publish.js",
   "/_document": "pages/_document.js"
 }
