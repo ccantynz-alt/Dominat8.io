@@ -63,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const seoKey = `project:${projectId}:seoPlan`;
   const nowIso = new Date().toISOString();
 
-  // ✅ GET = diagnostics: tells you whether seoPlan exists (NO writes)
+  // ✅ GET = diagnostics (NO writes)
   if (req.method === "GET") {
     try {
       const raw = await kv.get(seoKey);
@@ -121,44 +121,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const baseUrl = normalizeBaseUrl(plan.site?.domain ?? null);
-
     const slugs = Array.isArray(plan.pages) ? plan.pages.map((p) => normalizeSlug(p?.slug)) : ["/"];
     const uniqueSlugs = Array.from(new Set(slugs));
-
     const urls = uniqueSlugs.map((slug) => `${baseUrl}${slug === "/" ? "" : slug}`);
 
     const xml =
       `<?xml version="1.0" encoding="UTF-8"?>\n` +
       `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-      urls
-        .map((u) => `  <url><loc>${xmlEscape(u)}</loc><lastmod>${xmlEscape(nowIso)}</lastmod></url>`)
-        .join("\n") +
-      `\n</urlset>\n`;
 
-    const outKey = `project:${projectId}:sitemapXml`;
-    await kv.set(outKey, xml);
 
-    return res.status(200).json({
-      ok: true,
-      agent: "sitemap",
-      projectId,
-      nowIso,
-      seoKey,
-      sitemapKey: outKey,
-      urlCount: urls.length,
-      baseUrl,
-      source: "pages/api/projects/[projectId]/agents/sitemap.ts",
-      method: req.method,
-    });
-  } catch (e) {
-    return res.status(500).json({
-      ok: false,
-      agent: "sitemap",
-      projectId,
-      error: "Sitemap generation failed",
-      detail: errToJson(e),
-      source: "pages/api/projects/[projectId]/agents/sitemap.ts",
-      method: req.method,
-    });
-  }
-}
