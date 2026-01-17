@@ -143,7 +143,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Write to KV (authoritative)
   const key = `project:${projectId}:seoPlan`;
-  await kv.set(key, plan);
+  await kv.set(key, JSON.stringify(plan));
 
   return res.status(200).json({
     ok: true,
