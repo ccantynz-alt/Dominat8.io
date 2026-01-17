@@ -32,6 +32,7 @@ type SeoPlan = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Always JSON (prevents the empty HTML 405 you’re currently seeing)
   res.setHeader("Content-Type", "application/json; charset=utf-8");
 
   const { projectId } = req.query;
@@ -39,7 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ ok: false, error: "Missing projectId" });
   }
 
-  if (req.method !== "GET" && req.method !== "POST") {
+  // ✅ Allow POST (real run) and GET (optional probe)
+  if (req.method !== "POST" && req.method !== "GET") {
     return res.status(405).json({
       ok: false,
       agent: "seo",
@@ -55,12 +57,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const plan: SeoPlan = {
     version: 1,
     generatedAtIso: nowIso,
+
     site: {
       brand: "AI Website Builder",
       domain: null,
       language: "en",
       country: "global",
     },
+
     primaryKeywords: [
       "ai website builder",
       "ai website automation",
@@ -68,6 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       "ai powered website builder",
       "automated website builder",
     ],
+
     secondaryKeywords: [
       "generate website with ai",
       "publish website automatically",
@@ -75,6 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       "programmatic seo builder",
       "ai web development platform",
     ],
+
     pages: [
       {
         slug: "/",
@@ -137,6 +143,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         canonical: null,
       },
     ],
+
     sitemap: {
       include: [
         "/",
