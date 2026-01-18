@@ -4,11 +4,6 @@ import { kv } from "@/src/app/lib/kv";
 
 export const dynamic = "force-dynamic";
 
-function getHost(req: Request): string {
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
-  return host.split(",")[0].trim().toLowerCase();
-}
-
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const projectId = (url.searchParams.get("projectId") || "").trim();
