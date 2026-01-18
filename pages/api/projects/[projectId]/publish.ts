@@ -1,13 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
 /**
- * PUBLISH SHIM
+ * PUBLISH SHIM (Pages API)
  *
- * This file exists ONLY so Pages API agents (e.g. finish-for-me)
- * can import "../publish" without breaking the Vercel build.
+ * Pages API agents import "../publish" from:
+ *   pages/api/projects/[projectId]/agents/*
  *
  * The real publish implementation lives in:
- *   app/api/projects/[projectId]/publish/route.ts
+ *   BOOTSTRAP/app/api/projects/[projectId]/publish/route.ts
  *
  * This shim forwards the request to that handler.
  */
@@ -16,12 +16,12 @@ export default async function publishShim(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Lazy import to avoid edge/runtime conflicts
-  const mod = await import("../../../../app/api/projects/[projectId]/publish/route");
+  const mod = await import(
+    "../../../../BOOTSTRAP/app/api/projects/[projectId]/publish/route"
+  );
 
-  // App Router handlers export POST (and sometimes GET)
-  if (typeof mod.POST === "function") {
-    return mod.POST(req as any, res as any);
+  if (typeof (mod as any).POST === "function") {
+    return (mod as any).POST(req as any, res as any);
   }
 
   return res.status(500).json({
