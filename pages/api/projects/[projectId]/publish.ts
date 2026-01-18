@@ -1,95 +1,114 @@
-// pages/api/projects/[projectId]/publish.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { kv } from "@vercel/kv";
 
-export const config = {
-  api: {
-    bodyParser: true,
-  },
-};
+type AnyHandler = (req: NextApiRequest, res: NextApiResponse) => any;
 
-function json(res: NextApiResponse, status: number, data: any) {
-  res.status(status).setHeader("Content-Type", "application/json; charset=utf-8");
-  res.end(JSON.stringify(data));
+function getProjectIdFromReq(req: NextApiRequest): string | null {
+  const raw = req.query?.projectId;
+  if (!raw) return null;
+  if (Array.isArray(raw)) return raw[0] ?? null;
+  return String(raw);
 }
 
-function asString(v: unknown): string {
-  if (typeof v === "string") return v;
-  if (v == null) return "";
-  try {
-    return String(v);
-  } catch {
-    return "";
+function getBaseUrl(req: NextApiRequest): string {
+  const host = (req.headers["x-forwarded-host"] as string) || (req.headers["host"] as string) || "";
+  const proto = (req.headers["x-forwarded-proto"] as string) || "https";
+  // Fallback: Vercel prod generally sets x-forwarded-*; host should exist.
+  return `${proto}://${host}`;
+}
+
+async function loadCoreHandler(): Promise<AnyHandler> {
+  // Support both ESM default export and CommonJS module.exports patterns.
+  // Also allow named exports in case publish.core.ts exports { handler }.
+  const mod: any = await import("./publish.core");
+  return (mod?.default || mod?.handler || mod) as AnyHandler;
+}
+
+function shouldAutoRunPipeline(req: NextApiRequest): boolean {
+  // Default ON unless explicitly disabled.
+  const flag = (process.env.AUTO_PIPELINE_ON_PUBLISH || "1").trim().toLowerCase();
+  if (flag === "0" || flag === "false" || flag === "off" || flag === "no") return false;
+
+  // Only on POST publishes.
+  if ((req.method || "").toUpperCase() !== "POST") return false;
+
+  return true;
+}
+
+function getTimeoutMs(): number {
+  const raw = process.env.PIPELINE_STEP_TIMEOUT_MS || "20000";
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return 20000;
+  return Math.min(Math.max(n, 1000), 120000);
+}
+
+async function triggerPipelineFireAndForget(req: NextApiRequest): Promise<void> {
+  const projectId = getProjectIdFromReq(req);
+  if (!projectId) {
+    console.log("[AUTO-PIPELINE] skip: missing projectId");
+    return;
   }
-}
 
-type AuditResult = { readyToPublish: boolean; reasons?: string[] };
+  const baseUrl = getBaseUrl(req);
+  const url = `${baseUrl}/api/projects/${encodeURIComponent(projectId)}/agents/pipeline?ts=${Date.now()}`;
 
-function runAudit(html: string): AuditResult {
-  const reasons: string[] = [];
-  if (!html || html.trim().length < 50) reasons.push("HTML too short");
-  if (!html.includes("<html")) reasons.push("Missing <html>");
-  if (!html.includes("<body")) reasons.push("Missing <body>");
-  if (!html.includes("<title")) reasons.push("Missing <title>");
-  return { readyToPublish: reasons.length === 0, reasons };
+  const timeoutMs = getTimeoutMs();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    console.log("[AUTO-PIPELINE] start", { projectId, timeoutMs });
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        // Ensure it's treated as a server-to-server request.
+        "content-type": "application/json",
+        "x-auto-pipeline": "1",
+      },
+      // No body needed unless you want defaults on the pipeline side.
+      // If you WANT to pass defaults, do it there (pipeline.ts) or add here later.
+      body: JSON.stringify({}),
+      signal: controller.signal,
+    });
+
+    const ct = r.headers.get("content-type") || "";
+    const text = await r.text().catch(() => "");
+    console.log("[AUTO-PIPELINE] done", {
+      projectId,
+      status: r.status,
+      contentType: ct,
+      bodyFirst200: text.slice(0, 200),
+    });
+  } catch (err: any) {
+    const msg = err?.name === "AbortError" ? "timeout_abort" : (err?.message || String(err));
+    console.log("[AUTO-PIPELINE] failed", { projectId, msg });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    return json(res, 405, { ok: false, error: "Method Not Allowed" });
-  }
+  const core = await loadCoreHandler();
 
-  const projectId = asString(req.query.projectId);
-  if (!projectId) return json(res, 400, { ok: false, error: "Missing projectId" });
+  // Hook res.end so we can trigger pipeline AFTER the response is fully sent.
+  // This avoids blocking publish and avoids changing response behavior.
+  const shouldRun = shouldAutoRunPipeline(req);
 
-  // Load generated HTML (matches your bootstrap flow)
-  const genKey = `generated:project:${projectId}:latest`;
-  const html = asString(await kv.get(genKey));
+  const originalEnd = res.end.bind(res);
+  let fired = false;
 
-  if (!html) {
-    return json(res, 400, {
-      ok: false,
-      error: "No generated HTML found. Run Finish first.",
-      genKey,
-    });
-  }
+  (res as any).end = ((...args: any[]) => {
+    try {
+      return originalEnd(...args);
+    } finally {
+      if (shouldRun && !fired) {
+        fired = true;
+        // Run async without awaiting (true fire-and-forget)
+        void triggerPipelineFireAndForget(req);
+      }
+    }
+  }) as any;
 
-  // Audit gate
-  const audit = runAudit(html);
-  if (!audit.readyToPublish) {
-    return json(res, 409, { ok: false, error: "Not ready to publish", audit });
-  }
-
-  // Publish HTML
-  const pubHtmlKey = `published:project:${projectId}:latest`;
-  await kv.set(pubHtmlKey, html);
-
-  // ✅ Publish SPEC for inspector
-  const publishedAtIso = new Date().toISOString();
-
-  const publishedSpec = {
-    projectId,
-    publishedAtIso,
-    html,
-    htmlKey: pubHtmlKey,
-    audit,
-    sourceKey: genKey,
-  };
-
-  const pubSpecKey = `project:${projectId}:publishedSpec`;
-  await kv.set(pubSpecKey, JSON.stringify(publishedSpec));
-
-  // Extra aliases (optional but helps future code)
-  await kv.set(`project:${projectId}:publishedAtIso`, publishedAtIso);
-  await kv.set(`project:${projectId}:spec`, JSON.stringify(publishedSpec));
-  await kv.set(`project:${projectId}:latestSpec`, JSON.stringify(publishedSpec));
-
-  return json(res, 200, {
-    ok: true,
-    projectId,
-    publishedAtIso,
-    publicUrl: `/p/${projectId}`,
-    wrote: { pubHtmlKey, pubSpecKey },
-  });
+  // Delegate to original publish logic (unchanged).
+  return core(req, res);
 }
