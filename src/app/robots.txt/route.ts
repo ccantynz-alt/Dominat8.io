@@ -1,6 +1,8 @@
 // src/app/robots.txt/route.ts
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 function getProto(req: Request): string {
   const proto = req.headers.get("x-forwarded-proto") || "https";
   return proto.split(",")[0].trim();
@@ -27,4 +29,3 @@ export async function GET(req: Request) {
     },
   });
 }
-
