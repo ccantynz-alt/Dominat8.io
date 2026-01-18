@@ -11,31 +11,10 @@ function getHost(req: Request): string {
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const explicit = (url.searchParams.get("projectId") || "").trim();
-  const host = getHost(req);
-
-  let projectId = explicit;
-
-  if (!projectId && host) {
-    const mapped = await kv.get(`domain:${host}:projectId`).catch(() => null);
-    if (mapped) projectId = String(mapped).trim();
-  }
+  const projectId = (url.searchParams.get("projectId") || "").trim();
 
   if (!projectId) {
-    const body = [
-      "Missing projectId for sitemap.",
-      "",
-      "Use:",
-      "  /sitemap.xml?projectId=<yourProjectId>",
-      "",
-      "Or set a domain mapping key in KV:",
-      "  domain:<host>:projectId => <yourProjectId>",
-      "",
-      `Detected host: ${host || "(none)"}`,
-      "",
-    ].join("\n");
-
-    return new NextResponse(body, {
+    return new NextResponse("Missing projectId. Use /sitemap.xml?projectId=<id>\n", {
       status: 404,
       headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
     });
@@ -45,19 +24,7 @@ export async function GET(req: Request) {
   const xml = await kv.get(sitemapKey).catch(() => null);
 
   if (!xml) {
-    const body = [
-      "Sitemap not found for project.",
-      "",
-      `projectId: ${projectId}`,
-      `key: ${sitemapKey}`,
-      "",
-      "Fix:",
-      "  1) POST /api/projects/<projectId>/agents/seo-v2",
-      "  2) POST /api/projects/<projectId>/agents/sitemap",
-      "",
-    ].join("\n");
-
-    return new NextResponse(body, {
+    return new NextResponse(`Sitemap not found.\nkey=${sitemapKey}\n`, {
       status: 404,
       headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
     });
