@@ -1,221 +1,286 @@
 // pages/api/projects/[projectId]/agents/seo-v2.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { kvJsonGet, kvJsonSet } from "@/src/app/lib/kv";
+import { kvJsonSet } from "@/src/app/lib/kv";
 
-type SeoPlanPage = {
-  path: string; // e.g. "/pricing"
-  canonical: string; // full url
+type Changefreq = "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
+
+type SeoPage = {
+  path: string; // must start with /
   title: string;
-  description: string;
-  keywords?: string[];
-  changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
+  description?: string;
   priority?: number; // 0.0 - 1.0
+  changefreq?: Changefreq;
 };
 
-type SeoPlan = {
+type SeoPlanIndex = {
+  ok: true;
+  version: "seoPlan-v3-chunked";
   projectId: string;
-  createdAtIso: string;
-  baseUrl: string; // e.g. "https://example.com"
-  pages: SeoPlanPage[];
-  notes?: string[];
+  generatedAtIso: string;
+  baseUrl: string;
+  totals: {
+    pages: number;
+    chunks: number;
+    chunkSize: number;
+  };
+  chunkKeys: string[];
+  // Optional diagnostics
+  samplePaths: string[];
 };
 
-function normalizeBaseUrl(input: string | null | undefined): string | null {
-  if (!input) return null;
-  const raw = String(input).trim();
-  if (!raw) return null;
-
-  // If it already has a scheme, trust it.
-  if (raw.startsWith("http://") || raw.startsWith("https://")) {
-    return raw.replace(/\/+$/, "");
-  }
-
-  // If it's just a domain (example.com), assume https.
-  if (/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(raw)) {
-    return `https://${raw}`.replace(/\/+$/, "");
-  }
-
-  return null;
+function getProto(req: NextApiRequest): string {
+  const proto = (req.headers["x-forwarded-proto"] as string) || "https";
+  return proto.split(",")[0].trim();
 }
 
-function buildCanonical(baseUrl: string, path: string): string {
-  const cleanBase = baseUrl.replace(/\/+$/, "");
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${cleanBase}${cleanPath}`;
-}
-
-/**
- * Best-effort real baseUrl resolution.
- * We do NOT assume your publishedSpec schema; we try common fields safely.
- * If nothing found, we fall back to request host (production-safe).
- */
-async function resolveBaseUrl(req: NextApiRequest, projectId: string): Promise<{ baseUrl: string; notes: string[] }> {
-  const notes: string[] = [];
-
-  // 1) Try published latest (common patterns)
-  try {
-    const publishedLatest = await kvJsonGet<any>(`published:project:${projectId}:latest`);
-    if (publishedLatest && typeof publishedLatest === "object") {
-      const candidate =
-        publishedLatest.baseUrl ||
-        publishedLatest.siteUrl ||
-        publishedLatest.domainUrl ||
-        publishedLatest.customDomainUrl ||
-        publishedLatest.customDomain ||
-        publishedLatest.domain;
-      const normalized = normalizeBaseUrl(candidate);
-      if (normalized) {
-        notes.push("baseUrl resolved from published:project:<id>:latest");
-        return { baseUrl: normalized, notes };
-      }
-    }
-  } catch {
-    // ignore
-  }
-
-  // 2) Try project spec (common patterns)
-  try {
-    const projectSpec = await kvJsonGet<any>(`project:${projectId}:spec`);
-    if (projectSpec && typeof projectSpec === "object") {
-      const candidate =
-        projectSpec.baseUrl ||
-        projectSpec.siteUrl ||
-        projectSpec.domainUrl ||
-        projectSpec.customDomainUrl ||
-        projectSpec.customDomain ||
-        projectSpec.domain;
-      const normalized = normalizeBaseUrl(candidate);
-      if (normalized) {
-        notes.push("baseUrl resolved from project:<id>:spec");
-        return { baseUrl: normalized, notes };
-      }
-    }
-  } catch {
-    // ignore
-  }
-
-  // 3) Domain mapping (optional future-proof): domain:<host>:projectId => projectId
-  // Not used here for baseUrl, but we’ll expose this mapping mechanism for /sitemap.xml.
-  // (No action here.)
-
-  // 4) Fallback to request host (works immediately on your Vercel preview/prod host)
+function getHost(req: NextApiRequest): string {
   const host = (req.headers["x-forwarded-host"] as string) || (req.headers.host as string) || "";
-  const proto = ((req.headers["x-forwarded-proto"] as string) || "https").split(",")[0].trim();
-  const fallback = normalizeBaseUrl(`${proto}://${host}`) || "https://example.com";
-  notes.push("baseUrl fallback to request host headers");
-  return { baseUrl: fallback, notes };
+  return String(host).split(",")[0].trim().toLowerCase();
 }
 
-function generateDefaultPages(projectId: string, baseUrl: string): SeoPlanPage[] {
-  // These are “high value” defaults; you can expand anytime without breaking the pipeline.
-  const pages: Array<Omit<SeoPlanPage, "canonical">> = [
-    {
-      path: "/",
-      title: "Home",
-      description: "Welcome — fast, clear, conversion-focused.",
-      changefreq: "weekly",
-      priority: 1.0,
-    },
-    {
-      path: "/pricing",
-      title: "Pricing",
-      description: "Simple pricing with a free plan and pro upgrades.",
-      changefreq: "monthly",
-      priority: 0.9,
-    },
-    {
-      path: "/features",
-      title: "Features",
-      description: "Everything included to launch and grow — fast.",
-      changefreq: "monthly",
-      priority: 0.8,
-    },
-    {
-      path: "/templates",
-      title: "Templates",
-      description: "Pick a template and publish a polished site quickly.",
-      changefreq: "weekly",
-      priority: 0.8,
-    },
-    {
-      path: "/use-cases",
-      title: "Use Cases",
-      description: "Built for startups, local services, creators, and more.",
-      changefreq: "weekly",
-      priority: 0.7,
-    },
-    {
-      path: "/faq",
-      title: "FAQ",
-      description: "Answers to common questions about setup, billing, and publishing.",
-      changefreq: "monthly",
-      priority: 0.6,
-    },
+function safeBaseUrl(req: NextApiRequest): string {
+  const host = getHost(req);
+  const proto = getProto(req);
+  if (!host) return "https://example.com";
+  return `${proto}://${host}`;
+}
+
+function slugify(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function uniq<T>(arr: T[]): T[] {
+  return Array.from(new Set(arr));
+}
+
+// --- PROGRAMMATIC CATALOG (EDIT LATER)
+// Keep deterministic. Multi-thousand comes from combining these lists.
+const USE_CASES = [
+  "SaaS product launch",
+  "Local service business",
+  "Restaurant website",
+  "E-commerce store",
+  "Portfolio",
+  "Real estate agent",
+  "Gym / fitness studio",
+  "Consultant",
+  "Recruitment agency",
+  "Law firm",
+  "Dental clinic",
+  "Plumber",
+  "Electrician",
+  "Builder",
+  "Cleaning service",
+  "Landscaper",
+  "Photographer",
+  "Wedding venue",
+  "Event planner",
+  "Mechanic",
+  "Beauty salon",
+  "Barber",
+  "Yoga studio",
+  "Accounting firm",
+  "Non-profit fundraising",
+  "Course creator",
+  "App waitlist",
+  "AI startup landing page",
+  "Agency lead gen",
+  "Property management",
+];
+
+const INDUSTRIES = [
+  "Construction",
+  "Health",
+  "Fitness",
+  "Hospitality",
+  "Trades",
+  "Professional services",
+  "Education",
+  "Real estate",
+  "Automotive",
+  "Beauty",
+  "Technology",
+  "Finance",
+  "Legal",
+  "Events",
+  "Non-profit",
+];
+
+const CITIES = [
+  "Auckland",
+  "Wellington",
+  "Christchurch",
+  "Hamilton",
+  "Tauranga",
+  "Dunedin",
+  "Queenstown",
+  "Sydney",
+  "Melbourne",
+  "Brisbane",
+  "Perth",
+  "Adelaide",
+  "San Francisco",
+  "New York",
+  "London",
+];
+
+const SERVICES = [
+  "Web design",
+  "Website builder",
+  "Landing page",
+  "SEO services",
+  "Local SEO",
+  "Lead generation",
+  "Conversion optimization",
+  "Online bookings",
+  "Online ordering",
+  "Payments",
+];
+
+function buildPages(baseUrl: string, targetCount: number): SeoPage[] {
+  const core: SeoPage[] = [
+    { path: "/", title: "AI Website Builder", description: "Generate and publish a website in minutes.", priority: 1.0, changefreq: "weekly" },
+    { path: "/pricing", title: "Pricing", description: "Simple plans that scale with you.", priority: 0.9, changefreq: "monthly" },
+    { path: "/features", title: "Features", description: "Everything you need to launch fast.", priority: 0.9, changefreq: "monthly" },
+    { path: "/templates", title: "Templates", description: "Start from proven layouts.", priority: 0.8, changefreq: "weekly" },
+    { path: "/use-cases", title: "Use cases", description: "Websites for every business type.", priority: 0.8, changefreq: "weekly" },
   ];
 
-  return pages.map((p) => ({
-    ...p,
-    canonical: buildCanonical(baseUrl, p.path),
-    keywords: ["website builder", "AI website", "publish", "templates", "SEO"],
-  }));
+  const pages: SeoPage[] = [...core];
+
+  // Use-cases (dozens → hundreds)
+  for (const name of USE_CASES) {
+    const slug = slugify(name);
+    pages.push({
+      path: `/use-cases/${slug}`,
+      title: `${name} website`,
+      description: `Generate a high-converting ${name.toLowerCase()} website with AI.`,
+      priority: 0.7,
+      changefreq: "monthly",
+    });
+  }
+
+  // Industries
+  for (const industry of INDUSTRIES) {
+    const slug = slugify(industry);
+    pages.push({
+      path: `/industries/${slug}`,
+      title: `${industry} website templates`,
+      description: `Templates and copy for ${industry.toLowerCase()} businesses.`,
+      priority: 0.65,
+      changefreq: "monthly",
+    });
+  }
+
+  // “Location × Service” programmatic SEO (this is where “thousands” comes from)
+  // We cap to targetCount deterministically.
+  const combos: SeoPage[] = [];
+  for (const city of CITIES) {
+    for (const service of SERVICES) {
+      combos.push({
+        path: `/locations/${slugify(city)}/${slugify(service)}`,
+        title: `${service} in ${city}`,
+        description: `Launch a ${service.toLowerCase()} site for ${city} with AI.`,
+        priority: 0.55,
+        changefreq: "monthly",
+      });
+    }
+  }
+
+  // Add combos until we hit targetCount
+  for (const p of combos) {
+    if (pages.length >= targetCount) break;
+    pages.push(p);
+  }
+
+  // Ensure unique paths + clean
+  const byPath = new Map<string, SeoPage>();
+  for (const p of pages) {
+    const path = String(p.path || "").trim();
+    if (!path.startsWith("/")) continue;
+    byPath.set(path, { ...p, path });
+  }
+
+  // Deterministic order by path (stable for diffing)
+  const ordered = Array.from(byPath.values()).sort((a, b) => a.path.localeCompare(b.path));
+
+  // Touch baseUrl so it’s not “unused” (helps readers; sitemap will use baseUrl too)
+  void baseUrl;
+
+  return ordered;
+}
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const projectId = String(req.query.projectId || "").trim();
-  if (!projectId) {
-    return res.status(400).json({ ok: false, error: "Missing projectId" });
-  }
-
-  if (req.method !== "POST" && req.method !== "GET") {
-    res.setHeader("Allow", "GET, POST");
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
     return res.status(405).json({ ok: false, error: "Method Not Allowed" });
   }
 
-  // GET = diagnostics (safe, non-destructive)
-  if (req.method === "GET") {
-    const key = `project:${projectId}:seoPlan`;
-    const existing = await kvJsonGet<any>(key).catch(() => null);
-    return res.status(200).json({
+  const projectId = String(req.query.projectId || "").trim();
+  if (!projectId) return res.status(400).json({ ok: false, error: "Missing projectId" });
+
+  // Controls (safe defaults)
+  const targetCount = Math.min(Math.max(Number(req.query.targetCount || 2500), 50), 10000);
+  const chunkSize = Math.min(Math.max(Number(req.query.chunkSize || 500), 100), 2000);
+
+  const baseUrl = safeBaseUrl(req);
+  const generatedAtIso = new Date().toISOString();
+
+  const pages = buildPages(baseUrl, targetCount);
+  const chunks = chunk(pages, chunkSize);
+
+  const chunkKeys = chunks.map((_, idx) => `project:${projectId}:seoPlan:chunk:${idx + 1}`);
+
+  // Write chunks first
+  for (let i = 0; i < chunks.length; i++) {
+    const key = chunkKeys[i];
+    await kvJsonSet(key, {
       ok: true,
       projectId,
-      key,
-      exists: !!existing,
-      preview: existing ? { baseUrl: existing.baseUrl, pagesCount: Array.isArray(existing.pages) ? existing.pages.length : 0 } : null,
-      nowIso: new Date().toISOString(),
+      chunk: i + 1,
+      chunkSize,
+      pages: chunks[i],
     });
   }
 
-  // POST = generate & write seoPlan
-  try {
-    const { baseUrl, notes } = await resolveBaseUrl(req, projectId);
+  // Write small index last
+  const indexKey = `project:${projectId}:seoPlan`;
+  const index: SeoPlanIndex = {
+    ok: true,
+    version: "seoPlan-v3-chunked",
+    projectId,
+    generatedAtIso,
+    baseUrl,
+    totals: {
+      pages: pages.length,
+      chunks: chunks.length,
+      chunkSize,
+    },
+    chunkKeys,
+    samplePaths: pages.slice(0, 12).map((p) => p.path),
+  };
 
-    const plan: SeoPlan = {
-      projectId,
-      createdAtIso: new Date().toISOString(),
-      baseUrl,
-      pages: generateDefaultPages(projectId, baseUrl),
-      notes,
-    };
+  await kvJsonSet(indexKey, index);
 
-    const key = `project:${projectId}:seoPlan`;
-    await kvJsonSet(key, plan);
-
-    return res.status(200).json({
-      ok: true,
-      projectId,
-      key,
-      baseUrl: plan.baseUrl,
-      pagesCount: plan.pages.length,
-      message: "SEO-V2 generated seoPlan (multi-page) and saved to KV",
-      nowIso: new Date().toISOString(),
-    });
-  } catch (err: any) {
-    return res.status(500).json({
-      ok: false,
-      projectId,
-      error: "SEO-V2 failed",
-      detail: err?.message ? String(err.message) : String(err),
-      nowIso: new Date().toISOString(),
-    });
-  }
+  return res.status(200).json({
+    ok: true,
+    agent: "seo-v2",
+    projectId,
+    message: "seoPlan written (chunked)",
+    indexKey,
+    totals: index.totals,
+    samplePaths: index.samplePaths,
+  });
 }
