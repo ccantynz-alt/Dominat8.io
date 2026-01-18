@@ -2,12 +2,13 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 /**
  * AGENT ROUTER (CATCH-ALL)
- * Goal: Always return JSON and allow POST.
+ * Goal: Always return JSON and allow POST/GET.
  * Dispatches to known agent endpoints.
  *
  * IMPORTANT:
- * - If a dedicated file exists (seo.ts, sitemap.ts, seo-v2.ts), Next should route there first.
- * - But if this catch-all is intercepting, we explicitly dispatch here.
+ * - If a dedicated file exists (seo.ts, sitemap.ts, seo-v2.ts, pipeline.ts, launch-run.ts),
+ *   Next *should* route there first.
+ * - If this catch-all is intercepting, we explicitly dispatch here.
  */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -41,13 +42,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const mod = await import("./seo");
       return mod.default(req, res);
     }
+
     if (agent === "seo-v2") {
       const mod = await import("./seo-v2");
       return mod.default(req, res);
     }
+
     if (agent === "sitemap") {
       const mod = await import("./sitemap");
       return mod.default(req, res);
+    }
+
+    // ✅ Add pipeline
+    if (agent === "pipeline") {
+      try {
+        const mod = await import("./pipeline");
+        return mod.default(req, res);
+      } catch (e: any) {
+        return res.status(500).json({
+          ok: false,
+          error: "pipeline agent file missing or failed to load",
+          agent,
+          projectId,
+          details: String(e?.message || e),
+          expectedFile: "pages/api/projects/[projectId]/agents/pipeline.ts",
+          source: "pages/api/projects/[projectId]/agents/[agent].ts",
+        });
+      }
+    }
+
+    // ✅ Add launch-run
+    if (agent === "launch-run") {
+      try {
+        const mod = await import("./launch-run");
+        return mod.default(req, res);
+      } catch (e: any) {
+        return res.status(500).json({
+          ok: false,
+          error: "launch-run agent file missing or failed to load",
+          agent,
+          projectId,
+          details: String(e?.message || e),
+          expectedFile: "pages/api/projects/[projectId]/agents/launch-run.ts",
+          source: "pages/api/projects/[projectId]/agents/[agent].ts",
+        });
+      }
     }
 
     return res.status(404).json({
