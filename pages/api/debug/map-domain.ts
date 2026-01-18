@@ -24,19 +24,29 @@ function normalizeHost(host: string): string {
   return host.trim().toLowerCase();
 }
 
+// Kill switch: endpoint is enabled ONLY when MAP_DOMAIN_ENABLED === "true"
+function isEnabled(): boolean {
+  return String(process.env.MAP_DOMAIN_ENABLED || "").trim().toLowerCase() === "true";
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Ok | Err>) {
+  // ✅ LOCKDOWN: hide the endpoint unless explicitly enabled
+  if (!isEnabled()) {
+    // Return 404 so it looks like it doesn't exist
+    return res.status(404).json({ ok: false, error: "Not Found" });
+  }
+
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ ok: false, error: "Method Not Allowed" });
   }
 
-  const required = process.env.ADMIN_API_KEY || "";
+  const required = String(process.env.ADMIN_API_KEY || "").trim();
   if (!required) {
-    // Safety: if the env var is missing, this endpoint is unusable in prod.
     return res.status(403).json({ ok: false, error: "ADMIN_API_KEY is not set" });
   }
 
-  const provided = getAdminKey(req);
+  const provided = String(getAdminKey(req) || "").trim();
   if (!provided || provided !== required) {
     return res.status(401).json({ ok: false, error: "Unauthorized (missing/invalid x-admin-key)" });
   }
