@@ -1,4 +1,4 @@
-// src/app/robots.txt/route.ts
+// app/robots.txt/route.ts
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
