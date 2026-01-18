@@ -1,132 +1,140 @@
+// pages/api/projects/[projectId]/agents/sitemap.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { kvJsonGet, kv } from "@/src/app/lib/kv";
+import { kv, kvJsonGet } from "@/src/app/lib/kv";
 
-type SeoPlanAny = {
-  version?: number;
-  site?: { domain?: string | null };
-  pages?: Array<{ slug?: string }>;
+type SeoPlanPage = {
+  path: string;
+  canonical: string;
+  changefreq?: string;
+  priority?: number;
 };
 
-function errToJson(e: unknown) {
-  if (e && typeof e === "object") {
-    const anyE = e as any;
-    return {
-      name: anyE?.name,
-      message: anyE?.message,
-      stack:
-        typeof anyE?.stack === "string"
-          ? anyE.stack.split("\n").slice(0, 12).join("\n")
-          : undefined,
-    };
-  }
-  return { message: String(e) };
-}
+type SeoPlan = {
+  projectId: string;
+  baseUrl: string;
+  pages: SeoPlanPage[];
+  createdAtIso?: string;
+};
 
 function xmlEscape(s: string): string {
   return s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&apos;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
-function normalizeBaseUrl(domain: string | null | undefined): string {
-  if (!domain) return "https://example.com";
-  const d = domain.trim();
-  if (!d) return "https://example.com";
-  if (d.startsWith("http://") || d.startsWith("https://")) return d.replace(/\/+$/, "");
-  return `https://${d}`.replace(/\/+$/, "");
+function normalizeBaseUrl(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const raw = String(input).trim();
+  if (!raw) return null;
+
+  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw.replace(/\/+$/, "");
+  if (/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(raw)) return `https://${raw}`.replace(/\/+$/, "");
+
+  return null;
 }
 
-function normalizeSlug(slug: string | undefined): string {
-  if (!slug) return "/";
-  const s = slug.trim();
-  if (!s) return "/";
-  if (s === "/") return "/";
-  return s.startsWith("/") ? s : `/${s}`;
+function ensureCanonical(baseUrl: string, page: SeoPlanPage): string {
+  const normalized = normalizeBaseUrl(baseUrl) || "https://example.com";
+  const base = normalized.replace(/\/+$/, "");
+  const path = page.path?.startsWith("/") ? page.path : `/${page.path || ""}`;
+  return page.canonical && page.canonical.startsWith("http") ? page.canonical : `${base}${path}`;
+}
+
+function buildSitemapXml(pages: Array<{ loc: string; lastmod?: string; changefreq?: string; priority?: number }>): string {
+  const urlset = pages
+    .map((u) => {
+      const parts: string[] = [];
+      parts.push(`<loc>${xmlEscape(u.loc)}</loc>`);
+      if (u.lastmod) parts.push(`<lastmod>${xmlEscape(u.lastmod)}</lastmod>`);
+      if (u.changefreq) parts.push(`<changefreq>${xmlEscape(u.changefreq)}</changefreq>`);
+      if (typeof u.priority === "number") parts.push(`<priority>${u.priority.toFixed(1)}</priority>`);
+      return `<url>${parts.join("")}</url>`;
+    })
+    .join("");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+    urlset +
+    `</urlset>`;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  const projectId = String(req.query.projectId || "").trim();
+  if (!projectId) return res.status(400).json({ ok: false, error: "Missing projectId" });
 
-  const { projectId } = req.query;
-  if (!projectId || typeof projectId !== "string") {
-    return res.status(400).json({
-      ok: false,
-      agent: "sitemap",
-      error: "Missing projectId",
-      source: "pages/api/projects/[projectId]/agents/sitemap.ts",
+  if (req.method !== "POST" && req.method !== "GET") {
+    res.setHeader("Allow", "GET, POST");
+    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
+  }
+
+  const seoPlanKey = `project:${projectId}:seoPlan`;
+  const sitemapKey = `project:${projectId}:sitemapXml`;
+
+  // GET = diagnostics
+  if (req.method === "GET") {
+    const seoPlan = await kvJsonGet<SeoPlan>(seoPlanKey).catch(() => null);
+    const sitemapXml = await kv.get(sitemapKey).catch(() => null);
+
+    return res.status(200).json({
+      ok: true,
+      projectId,
+      seoPlanKey,
+      sitemapKey,
+      hasSeoPlan: !!seoPlan,
+      seoPlanPagesCount: seoPlan?.pages?.length || 0,
+      seoPlanBaseUrl: seoPlan?.baseUrl || null,
+      hasSitemapXml: !!sitemapXml,
+      sitemapXmlBytes: sitemapXml ? String(sitemapXml).length : 0,
+      nowIso: new Date().toISOString(),
     });
   }
 
-  const seoKey = `project:${projectId}:seoPlan`;
+  // POST = generate sitemap
+  const seoPlan = await kvJsonGet<SeoPlan>(seoPlanKey).catch(() => null);
+  if (!seoPlan) {
+    return res.status(409).json({
+      ok: false,
+      projectId,
+      error: "Missing seoPlan",
+      key: seoPlanKey,
+      hint: "Run POST /agents/seo-v2 first",
+      nowIso: new Date().toISOString(),
+    });
+  }
+
+  const baseUrl = normalizeBaseUrl(seoPlan.baseUrl) || "https://example.com";
+  const pages = Array.isArray(seoPlan.pages) ? seoPlan.pages : [];
+
+  // Always include homepage at minimum
+  const enriched = pages.length
+    ? pages
+    : [{ path: "/", canonical: `${baseUrl}/`, changefreq: "weekly", priority: 1.0 }];
+
   const nowIso = new Date().toISOString();
 
-  // ✅ GET = diagnostics (NO writes)
-  if (req.method === "GET") {
-    try {
-      const raw = await kv.get(seoKey);
-      return res.status(200).json({
-        ok: true,
-        agent: "sitemap",
-        projectId,
-        nowIso,
-        seoKey,
-        seoPlanExists: !!raw,
-        seoPlanBytes: raw ? raw.length : 0,
-        note: "Use POST to generate sitemap XML if seoPlanExists is true.",
-        source: "pages/api/projects/[projectId]/agents/sitemap.ts",
-        method: req.method,
-      });
-    } catch (e) {
-      return res.status(500).json({
-        ok: false,
-        agent: "sitemap",
-        projectId,
-        nowIso,
-        error: "KV read failed",
-        detail: errToJson(e),
-        source: "pages/api/projects/[projectId]/agents/sitemap.ts",
-        method: req.method,
-      });
-    }
-  }
+  const items = enriched.map((p) => ({
+    loc: ensureCanonical(baseUrl, p),
+    lastmod: nowIso.slice(0, 10), // YYYY-MM-DD
+    changefreq: p.changefreq || "weekly",
+    priority: typeof p.priority === "number" ? p.priority : 0.7,
+  }));
 
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      ok: false,
-      agent: "sitemap",
-      projectId,
-      error: "Method not allowed",
-      allowed: ["GET", "POST"],
-      source: "pages/api/projects/[projectId]/agents/sitemap.ts",
-      method: req.method,
-    });
-  }
+  const xml = buildSitemapXml(items);
 
-  try {
-    const plan = await kvJsonGet<SeoPlanAny>(seoKey);
+  // Write sitemap XML using REST kv wrapper (string)
+  await kv.set(sitemapKey, xml);
 
-    if (!plan) {
-      return res.status(409).json({
-        ok: false,
-        agent: "sitemap",
-        projectId,
-        error: "Missing seoPlan. Run SEO agent first.",
-        missingKey: seoKey,
-        source: "pages/api/projects/[projectId]/agents/sitemap.ts",
-        method: req.method,
-      });
-    }
-
-    const baseUrl = normalizeBaseUrl(plan.site?.domain ?? null);
-    const slugs = Array.isArray(plan.pages) ? plan.pages.map((p) => normalizeSlug(p?.slug)) : ["/"];
-    const uniqueSlugs = Array.from(new Set(slugs));
-    const urls = uniqueSlugs.map((slug) => `${baseUrl}${slug === "/" ? "" : slug}`);
-
-    const xml =
-      `<?xml version="1.0" encoding="UTF-8"?>\n` +
-      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-
-
+  return res.status(200).json({
+    ok: true,
+    projectId,
+    seoPlanKey,
+    sitemapKey,
+    baseUrl,
+    urls: items.length,
+    message: "Sitemap generated from seoPlan.pages and saved to KV",
+    nowIso,
+  });
+}
