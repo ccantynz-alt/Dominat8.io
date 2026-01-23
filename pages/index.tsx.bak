@@ -1,0 +1,99 @@
+﻿import type { GetServerSideProps } from "next";
+import React from "react";
+
+// IMPORTANT: import the file that ACTUALLY exists in your repo
+import MarketingHomeRenderer from "../src/components/marketing/MarketingHomeRenderer";
+
+type PageSpec = {
+  sections: Array<{ type: string }>;
+};
+
+function absUrlFromReq(req: any) {
+  const host = (req?.headers?.host as string) || "";
+  const proto =
+    (req?.headers?.["x-forwarded-proto"] as string) ||
+    (req?.headers?.["x-forwarded-protocol"] as string) ||
+    "https";
+
+  return proto + "://" + host;
+}
+
+async function safeJsonFetch(url: string) {
+  try {
+    const r = await fetch(url, { method: "GET", cache: "no-store" });
+    const ct = r.headers.get("content-type") || "";
+    const text = await r.text();
+    if (!ct.toLowerCase().includes("application/json")) {
+      return { ok: false, status: r.status, ct, textFirst200: text.slice(0, 200) };
+    }
+    const json = JSON.parse(text);
+    return { ok: true, status: r.status, ct, json };
+  } catch (e: any) {
+    return { ok: false, status: 0, ct: "", textFirst200: String(e?.message || e).slice(0, 200) };
+  }
+}
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const base = absUrlFromReq(ctx.req);
+  const url = base + "/api/marketing/page-spec?ts=" + Date.now();
+
+  const out = await safeJsonFetch(url);
+
+  if (!out.ok) {
+    return {
+      props: {
+        spec: null,
+        error: {
+          message: "Failed to load marketing page spec",
+          url,
+          details: out,
+        },
+      },
+    };
+  }
+
+  const spec = (out as any).json?.spec || (out as any).json;
+
+  return {
+    props: {
+      spec: spec || null,
+      error: null,
+    },
+  };
+};
+
+export default function HomePage(props: { spec: PageSpec | null; error: any }) {
+  const { spec, error } = props;
+
+  if (error) {
+    return (
+      <main className="mx-auto max-w-3xl p-8">
+        <h1 className="text-2xl font-semibold">Homepage failed to load</h1>
+        <p className="mt-2 opacity-80">
+          The marketing page spec could not be fetched from <code>/api/marketing/page-spec</code>.
+        </p>
+        <pre className="mt-6 rounded bg-black text-white p-4 text-xs overflow-auto">
+          {JSON.stringify(error, null, 2)}
+        </pre>
+      </main>
+    );
+  }
+
+  if (!spec?.sections?.length) {
+    return (
+      <main className="mx-auto max-w-3xl p-8">
+        <h1 className="text-2xl font-semibold">No page spec yet</h1>
+        <p className="mt-2 opacity-80">
+          Run the composer once to generate: <code>marketing:dominat8:pageSpec:v1</code>
+        </p>
+        <p className="mt-6 opacity-80">
+          PowerShell:
+          <br />
+          <code>curl.exe -X POST https://my-saas-app-5eyw.vercel.app/api/marketing/compose</code>
+        </p>
+      </main>
+    );
+  }
+
+  return <MarketingHomeRenderer spec={spec as any} />;
+}

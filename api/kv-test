@@ -1,0 +1,70 @@
+import { NextResponse } from "next/server";
+import { kv } from "@vercel/kv";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function json(data: any, status = 200) {
+  return NextResponse.json(data, { status });
+}
+
+export async function GET() {
+  const out: any = {
+    ok: true,
+    now: new Date().toISOString(),
+    tests: {},
+  };
+
+  // 1) Basic SET/GET test (string/json)
+  try {
+    const key = `kvtest:string:${crypto.randomUUID()}`;
+    const value = { hello: "world", ts: Date.now() };
+    await kv.set(key, value);
+    const read = await kv.get<any>(key);
+    await kv.del(key);
+
+    out.tests.string = { ok: true, wrote: value, read };
+  } catch (e: any) {
+    out.tests.string = { ok: false, error: e?.message || String(e) };
+  }
+
+  // 2) Hash test (HSET/HGETALL)
+  try {
+    const key = `kvtest:hash:${crypto.randomUUID()}`;
+    const value = {
+      a: "1",
+      b: "two",
+      createdAt: new Date().toISOString(),
+    };
+
+    await kv.hset(key, value as any);
+    const read = await kv.hgetall<any>(key);
+    await kv.del(key);
+
+    out.tests.hash = { ok: true, wrote: value, read };
+  } catch (e: any) {
+    out.tests.hash = { ok: false, error: e?.message || String(e) };
+  }
+
+  // 3) List test (LPUSH/LRANGE)
+  try {
+    const key = `kvtest:list:${crypto.randomUUID()}`;
+    await kv.lpush(key, "one", "two", "three");
+    const read = await kv.lrange<string>(key, 0, 10);
+    await kv.del(key);
+
+    out.tests.list = { ok: true, read };
+  } catch (e: any) {
+    out.tests.list = { ok: false, error: e?.message || String(e) };
+  }
+
+  // 4) Read your real projects:index (non-destructive)
+  try {
+    const ids = await kv.lrange<string>("projects:index", 0, 50);
+    out.tests.projectsIndex = { ok: true, count: ids?.length || 0, ids };
+  } catch (e: any) {
+    out.tests.projectsIndex = { ok: false, error: e?.message || String(e) };
+  }
+
+  return json(out);
+}

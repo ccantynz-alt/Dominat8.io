@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci --legacy-peer-deps
+
+      - name: Lint (fail on warnings)
+        run: npm run lint --if-present -- --max-warnings=0
+
+      - name: Typecheck (tsc)
+        run: npx tsc --noEmit
+
+      - name: Build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build

@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_nL5nvt9I9bFRudpBSkA65xUXdVZX",
+  "orgId": "team_zMGIW1l1T0jHJWu98ANKZORN",
+  "projectName": "my-saas-app-5eyw",
+  "settings": {
+    "createdAt": 1766480711829,
+    "framework": "nextjs",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "20.x"
+  }
+}
