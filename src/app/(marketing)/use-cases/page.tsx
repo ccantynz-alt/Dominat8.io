@@ -1,30 +1,12 @@
 import MarketingCTA from "@/src/components/marketing/MarketingCTA";
 
 const cases = [
-  {
-    title: "Launch a SaaS landing page",
-    body: "Ship a polished homepage + pricing + FAQs that converts, then iterate nightly with proof checks.",
-  },
-  {
-    title: "Local services & bookings",
-    body: "Create a clear offer page with service areas, testimonials, and contact conversion paths.",
-  },
-  {
-    title: "Agency client sites",
-    body: "Repeatable structure + fast generation pipeline. Hook in custom domains and billing as you scale.",
-  },
-  {
-    title: "Portfolio & personal brand",
-    body: "Build credibility with case studies, outcomes, and a sharp CTA for leads.",
-  },
-  {
-    title: "Product validation",
-    body: "Test positioning quickly: swap copy, reorder sections, and redeploy with confidence.",
-  },
-  {
-    title: "SEO foundation",
-    body: "Start with safe canonical/metadata baselines, then wire in sitemap/robots/SEO plans next.",
-  },
+  { title: "Launch a SaaS landing page", body: "Ship a polished homepage + pricing + FAQs that converts, then iterate nightly with proof checks." },
+  { title: "Local services & bookings", body: "Create a clear offer page with service areas, testimonials, and contact conversion paths." },
+  { title: "Agency client sites", body: "Repeatable structure + fast generation pipeline. Hook in custom domains and billing as you scale." },
+  { title: "Portfolio & personal brand", body: "Build credibility with case studies, outcomes, and a sharp CTA for leads." },
+  { title: "Product validation", body: "Test positioning quickly: swap copy, reorder sections, and redeploy with confidence." },
+  { title: "SEO foundation", body: "Start with safe canonical/metadata baselines, then wire in sitemap/robots/SEO plans next." },
 ];
 
 export default function UseCasesPage() {
