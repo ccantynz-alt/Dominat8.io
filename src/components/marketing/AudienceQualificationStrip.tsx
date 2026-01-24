@@ -1,28 +1,33 @@
-﻿import React from "react";
+﻿export default function AudienceQualificationStrip() {
+  const items = [
+    { title: "Solo founders", desc: "Launch a real site fast without hiring a full team." },
+    { title: "Local businesses", desc: "Look premium + trustworthy, even on day one." },
+    { title: "Agencies", desc: "Generate strong first drafts and iterate with clients." },
+    { title: "Side projects", desc: "Ship a clean presence, then grow into pages + SEO." },
+  ];
 
-export default function AudienceQualificationStrip() {
   return (
-    <section className="w-full border-y border-white/10 bg-black/30">
-      <div className="mx-auto max-w-6xl px-6 py-8">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <section className="relative mx-auto w-full max-w-6xl px-6 py-10">
+      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="text-xs tracking-widest text-white/50">BUILT FOR</div>
-            <h2 className="mt-2 text-lg font-semibold text-white">
-              Rural &amp; professional businesses that need a premium web presence — fast.
+            <p className="text-xs uppercase tracking-[0.22em] text-white/60">Built for</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
+              Rural-professional calm, flagship-level polish.
             </h2>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-xs text-white/70">
-              Trades &amp; Services
-            </span>
-            <span className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-xs text-white/70">
-              Rural Contractors
-            </span>
-            <span className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-xs text-white/70">
-              Local Professional Firms
-            </span>
+          <div className="text-sm text-white/60">
+            If you want <span className="text-white/80">premium</span> without chaos — you’re in the right place.
           </div>
+        </div>
+
+        <div className="mt-7 grid gap-4 md:grid-cols-2">
+          {items.map((it) => (
+            <div key={it.title} className="rounded-2xl border border-white/10 bg-black/20 p-5">
+              <div className="text-base font-medium text-white">{it.title}</div>
+              <p className="mt-1 text-sm leading-relaxed text-white/65">{it.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

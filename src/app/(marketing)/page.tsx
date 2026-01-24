@@ -1,4 +1,7 @@
-﻿export const runtime = "nodejs";
+﻿import AudienceQualificationStrip from "@/src/components/marketing/AudienceQualificationStrip";
+import ValuePropositionCyclone from "@/src/components/marketing/ValuePropositionCyclone";
+import HowItWorksCalm from "@/src/components/marketing/HowItWorksCalm";
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import React from "react";
@@ -16,7 +19,12 @@ export default function MarketingHomePage() {
       <div className="sr-only">HOME_OK</div>
 
       <LuxuryHero />
-      <div className="px-6 pt-2 text-[11px] text-white/40">BUILD_STAMP: BUILD_20260124_211355</div>
+      <div className="px-6 pt-2 text-[11px] text-white/40">BUILD_STAMP: BUILD_20260124_211633</div>
+      {/* WOW_FLOW_START */}
+      <AudienceQualificationStrip />
+      <ValuePropositionCyclone />
+      <HowItWorksCalm />
+      {/* WOW_FLOW_END */}
 
       <AudienceQualificationStrip />
       <ValuePropCyclone />
@@ -28,3 +36,4 @@ export default function MarketingHomePage() {
     </main>
   );
 }
+
