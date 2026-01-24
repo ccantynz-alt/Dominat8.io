@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1100" viewBox="0 0 1100 1100">
+  <defs>
+    <radialGradient id="pGlow" cx="60%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.10)"/>
+      <stop offset="55%" stop-color="rgba(255,255,255,0.04)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="1100" height="1100" fill="rgba(0,0,0,0)"/>
+  <circle cx="650" cy="520" r="430" fill="url(#pGlow)"/>
+  <path d="M365 785c40-155 118-250 235-275 10-70 45-120 110-135 90-20 190 35 210 145 105 45 155 125 165 265H365z"
+        fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>
+  <path d="M520 560h250c20 0 35 15 35 35v80H485v-80c0-20 15-35 35-35z"
+        fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.20)" stroke-width="2"/>
+  <text x="70" y="1040" fill="rgba(255,255,255,0.35)" font-size="28" font-family="Segoe UI, Arial, sans-serif">
+    Replace /public/hero/person.svg with your own transparent cutout (person.png or person.webp)
+  </text>
+</svg>
