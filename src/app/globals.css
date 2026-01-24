@@ -1,10 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* Dominat8 baseline polish */
+/* Dominat8 baseline */
 html, body { height: 100%; }
 body { background: white; color: black; }
-
-/* Better defaults if CSS loads */
 a { text-underline-offset: 3px; }
