@@ -1,4 +1,5 @@
 ﻿import HideHeaderUntilScroll from "../components/marketing/HideHeaderUntilScroll";
+import HeaderRevealOnScroll from "../components/marketing/HeaderRevealOnScroll";
 export const fetchCache = "force-no-store";
 import "./globals.css";
 import type { Metadata } from "next";
@@ -100,3 +101,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
