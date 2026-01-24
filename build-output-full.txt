@@ -1,121 +1,121 @@
-> [debug] [2026-01-24T00:10:19.304Z] Found config in file "C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\vercel.json"
+> [debug] [2026-01-24T00:14:25.651Z] Found config in file "C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\vercel.json"
 Vercel CLI 50.1.6
-> [debug] [2026-01-24T00:10:19.309Z] user supplied a possible target for deployment or an extension
-> [debug] [2026-01-24T00:10:19.316Z] failed to find extension command with name "vercel---prod"
-> [debug] [2026-01-24T00:10:19.333Z] Setting target to production
-> [debug] [2026-01-24T00:10:19.414Z] Found ".git\config" - detected "C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main" as repo root
-> [debug] [2026-01-24T00:10:19.436Z] Spinner invoked (Retrieving project…) with a 1000ms delay
-> [debug] [2026-01-24T00:10:19.438Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:10:19.438Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:10:19.451Z] #1 → GET https://api.vercel.com/teams/team_zMGIW1l1T0jHJWu98ANKZORN
-> [debug] [2026-01-24T00:10:19.452Z] #2 → GET https://api.vercel.com/v9/projects/prj_nL5nvt9I9bFRudpBSkA65xUXdVZX?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-> [debug] [2026-01-24T00:10:20.019Z] #1 ← 200 OK: sfo1::fhnkp-1769213418443-0e4d06e39b23 [568ms]
-> [debug] [2026-01-24T00:10:20.039Z] #2 ← 200 OK: sfo1::m9fsp-1769213418441-40bed3275f9d [587ms]
-> [debug] [2026-01-24T00:10:20.271Z] Spinner invoked (Deploying craig-cantys-projects/my-saas-app-5eyw) with a 0ms delay
-[client-debug] 2026-01-24T00:10:20.271Z Creating deployment...
-[client-debug] 2026-01-24T00:10:20.271Z Provided 'path' is a directory.
-[client-debug] 2026-01-24T00:10:20.273Z Found 26 rules in .vercelignore
-[client-debug] 2026-01-24T00:10:20.273Z Building file tree...
-[client-debug] 2026-01-24T00:10:20.283Z Found 327 files in the specified directory
-[client-debug] 2026-01-24T00:10:20.298Z Yielding a 'hashes-calculated' event with 309 hashes
-> [debug] [2026-01-24T00:10:20.299Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:10:20.299Z] #3 → GET https://api.vercel.com/v9/projects/my-saas-app-5eyw?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-> [debug] [2026-01-24T00:10:20.526Z] #3 ← 200 OK: sfo1::m9fsp-1769213418920-69db920e2603 [227ms]
-[client-debug] 2026-01-24T00:10:20.528Z Using provided API URL: https://api.vercel.com
-[client-debug] 2026-01-24T00:10:20.528Z Using provided user agent: vercel 50.1.6 node-v24.12.0 win32 (x64)
-[client-debug] 2026-01-24T00:10:20.528Z Setting platform version to harcoded value 2
-[client-debug] 2026-01-24T00:10:20.528Z Creating the deployment and starting upload...
-[client-debug] 2026-01-24T00:10:20.529Z Determining necessary files for upload...
-[client-debug] 2026-01-24T00:10:20.529Z Creating deployment
-[client-debug] 2026-01-24T00:10:20.532Z Sending deployment creation API request
-[client-debug] 2026-01-24T00:10:21.006Z Deployment response: {"error":{"code":"missing_files","message":"Missing files","missing":["54a9f95df535f3a70739ace1e8cafa56b88977a4"]}}
-[client-debug] 2026-01-24T00:10:21.006Z Error: Deployment request status is 400
-[client-debug] 2026-01-24T00:10:21.006Z 1 files are required to upload
-[client-debug] 2026-01-24T00:10:21.006Z Yielding a 'file-count' event
-> [debug] [2026-01-24T00:10:21.006Z] Total files 309, 1 changed
-> [debug] [2026-01-24T00:10:21.007Z] Spinner invoked (Uploading [--------------------] (0.0B/1.7KB)) with a 0ms delay
-[client-debug] 2026-01-24T00:10:21.007Z Building an upload list...
-[client-debug] 2026-01-24T00:10:21.007Z Starting upload
-[client-debug] 2026-01-24T00:10:21.008Z POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-> [debug] [2026-01-24T00:10:21.009Z] Spinner invoked (Uploading [====================] (1.7KB/1.7KB)) with a 0ms delay
-[client-debug] 2026-01-24T00:10:21.304Z DONE in 296ms: POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-[client-debug] 2026-01-24T00:10:21.304Z File 54a9f95df535f3a70739ace1e8cafa56b88977a4 (C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\build-output-full.txt) uploaded
-[client-debug] 2026-01-24T00:10:21.304Z Yielding a 'file-uploaded' event
-> [debug] [2026-01-24T00:10:21.305Z] Uploaded: C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\build-output-full.txt (1.7KB)
-[client-debug] 2026-01-24T00:10:21.305Z All files uploaded
-[client-debug] 2026-01-24T00:10:21.305Z Yielding a 'all-files-uploaded' event
-[client-debug] 2026-01-24T00:10:21.305Z Starting deployment creation
-[client-debug] 2026-01-24T00:10:21.305Z Creating deployment
-[client-debug] 2026-01-24T00:10:21.309Z Sending deployment creation API request
-[client-debug] 2026-01-24T00:10:22.465Z Deployment response: {"alias":["my-saas-app-5eyw-craig-cantys-projects.vercel.app","my-saas-app-5eyw-ccantynz-9622-craig-cantys-projects.vercel.app"],"aliasAssigned":false,"automaticAliases":["my-saas-app-5eyw-craig-cantys-projects.vercel.app","my-saas-app-5eyw-ccantynz-9622-craig-cantys-projects.vercel.app"],"bootedAt":1769213420325,"buildingAt":1769213420325,"buildSkipped":false,"createdAt":1769213420325,"creator":{"uid":"qetqotxVcmydQ4gC8d7uaGzW","username":"ccantynz-9622"},"id":"dpl_92cLhxT5ed3ugM2dPkUyvrdUuX5M","name":"my-saas-app-5eyw","meta":{"githubCommitAuthorName":"ccantynz-alt","githubCommitAuthorEmail":"ccantynz@gmail.com","githubCommitMessage":"chore(release): lock v1 + clean deploy proof UI (keep endpoint)","githubCommitOrg":"ccantynz-alt","githubCommitRef":"main","githubCommitRepo":"my-saas-app","githubCommitSha":"483902f995cbfe5fbcf98fa723745c981c2ec053","githubDeployment":"1","githubOrg":"ccantynz-alt","githubRepo":"my-saas-app","gitDirty":"1"},"originCacheRegion":"iad1","project":{"id":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","name":"my-saas-app-5eyw","framework":"nextjs"},"public":false,"readyState":"INITIALIZING","regions":["iad1"],"source":"cli","status":"INITIALIZING","target":"production","team":{"id":"team_zMGIW1l1T0jHJWu98ANKZORN","name":"Craig Canty's projects","slug":"craig-cantys-projects","avatar":"d2215fb18ff0412454f6f7c85db1ee7d1709e751"},"type":"LAMBDAS","url":"my-saas-app-5eyw-faoma61ea-craig-cantys-projects.vercel.app","version":2,"previewCommentsEnabled":true,"oidcTokenClaims":{"sub":"owner:craig-cantys-projects:project:my-saas-app-5eyw:environment:production","iss":"https://oidc.vercel.com/craig-cantys-projects","scope":"owner:craig-cantys-projects:project:my-saas-app-5eyw:environment:production","aud":"https://vercel.com/craig-cantys-projects","owner":"craig-cantys-projects","owner_id":"team_zMGIW1l1T0jHJWu98ANKZORN","project":"my-saas-app-5eyw","project_id":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","environment":"production","plan":"pro"},"lambdas":[{"id":"bld_l6kw4s69r","createdAt":1769213420543,"entrypoint":".","readyState":"READY","readyStateAt":1769213420543,"output":[]}],"aliasAssignedAt":null,"build":{"env":[]},"builds":[],"createdIn":"sfo1","env":[],"functions":null,"inspectorUrl":"https://vercel.com/craig-cantys-projects/my-saas-app-5eyw/92cLhxT5ed3ugM2dPkUyvrdUuX5M","isInConcurrentBuildsQueue":false,"isInSystemBuildsQueue":true,"ownerId":"team_zMGIW1l1T0jHJWu98ANKZORN","plan":"pro","projectId":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","projectSettings":{"buildCommand":"npm run vercel-build","devCommand":null,"framework":"nextjs","commandForIgnoringBuildStep":"","installCommand":"npm install --legacy-peer-deps","outputDirectory":null,"speedInsights":{"id":"hT4fsACp3hAIE3oHtGAb2HSn63a","hasData":false},"webAnalytics":{"id":"wzf6Vr0vepbZbFQMzYesSVnUg"},"nodeVersion":"20.x"},"routes":null,"integrations":{"status":"ready","startedAt":1769213420298,"completedAt":1769213420298},"config":{"version":1,"secureComputePrimaryRegion":null,"secureComputeFallbackRegion":null,"functionTimeout":300,"functionType":"fluid","functionMemoryType":"standard","isUsingActiveCPU":true}}
-[client-debug] 2026-01-24T00:10:22.465Z Deployment created
-[client-debug] 2026-01-24T00:10:22.465Z Yielding a 'created' event
-Inspect: https://vercel.com/craig-cantys-projects/my-saas-app-5eyw/92cLhxT5ed3ugM2dPkUyvrdUuX5M [2s]
-Production: https://my-saas-app-5eyw-faoma61ea-craig-cantys-projects.vercel.app [2s]
-https://my-saas-app-5eyw-faoma61ea-craig-cantys-projects.vercel.app> [debug] [2026-01-24T00:10:22.466Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:10:22.466Z] Spinner invoked (Building...) with a 0ms delay
-> [debug] [2026-01-24T00:10:22.466Z] #4 → GET https://api.vercel.com/v2/user
-[client-debug] 2026-01-24T00:10:22.466Z Waiting for deployment to be ready...
-[client-debug] 2026-01-24T00:10:22.467Z Waiting for builds and the deployment to complete...
-> [debug] [2026-01-24T00:10:22.662Z] #4 ← 200 OK: sfo1::m9fsp-1769213421087-67fcc7b4b7df [196ms]
-> [debug] [2026-01-24T00:10:22.663Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:10:22.663Z] #5 → GET https://api.vercel.com/v3/now/deployments/dpl_92cLhxT5ed3ugM2dPkUyvrdUuX5M/events?direction=forward&follow=1&format=lines&teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-[client-debug] 2026-01-24T00:10:24.244Z Deployment state changed to BUILDING
-[client-debug] 2026-01-24T00:10:24.244Z Yielding a 'building' event
-> [debug] [2026-01-24T00:10:24.244Z] Spinner invoked (Building...) with a 0ms delay
-> [debug] [2026-01-24T00:10:26.073Z] #5 ← 200 OK: sfo1::m9fsp-1769213421282-fec129ebd96f [3.41s]
-> [debug] [2026-01-24T00:10:26.075Z] Spinner invoked (Building: Running build in Portland, USA (West) – pdx1) with a 0ms delay
-> [debug] [2026-01-24T00:10:26.075Z] Spinner invoked (Building: Build machine configuration: 4 cores, 8 GB) with a 0ms delay
-> [debug] [2026-01-24T00:10:26.075Z] Spinner invoked (Building: Retrieving list of deployment files...) with a 0ms delay
-> [debug] [2026-01-24T00:10:26.075Z] Spinner invoked (Building: Skipping build cache, deployment was triggered without cache.) with a 0ms delay
-> [debug] [2026-01-24T00:10:26.076Z] Spinner invoked (Building: Downloading 327 deployment files...) with a 0ms delay
-> [debug] [2026-01-24T00:10:28.133Z] Spinner invoked (Building: Running "vercel build") with a 0ms delay
-> [debug] [2026-01-24T00:10:28.134Z] Spinner invoked (Building: Vercel CLI 50.4.10) with a 0ms delay
-> [debug] [2026-01-24T00:10:29.164Z] Spinner invoked (Building: Running "install" command: `npm install --legacy-peer-deps`...) with a 0ms delay
-> [debug] [2026-01-24T00:10:31.234Z] Spinner invoked (Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported) with a 0ms delay
-> [debug] [2026-01-24T00:10:31.234Z] Spinner invoked (Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.) with a 0ms delay
-> [debug] [2026-01-24T00:10:32.268Z] Spinner invoked (Building: npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead) with a 0ms delay
-> [debug] [2026-01-24T00:10:32.268Z] Spinner invoked (Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead) with a 0ms delay
-> [debug] [2026-01-24T00:10:32.268Z] Spinner invoked (Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead) with a 0ms delay
-> [debug] [2026-01-24T00:10:32.268Z] Spinner invoked (Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported) with a 0ms delay
-> [debug] [2026-01-24T00:10:34.346Z] Spinner invoked (Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.726Z] Spinner invoked (Building: npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: added 423 packages, and audited 424 packages in 17s) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: 151 packages are looking for funding) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: run `npm fund` for details) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: 4 vulnerabilities (3 high, 1 critical)) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: To address all issues (including breaking changes), run:) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: npm audit fix --force) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: Run `npm audit` for details.) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: Detected Next.js version: 14.2.5) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: Running "npm run vercel-build") with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: > my-saas-app@0.1.0 vercel-build) with a 0ms delay
-> [debug] [2026-01-24T00:10:45.727Z] Spinner invoked (Building: > next build) with a 0ms delay
-> [debug] [2026-01-24T00:10:46.760Z] Spinner invoked (Building: Attention: Next.js now collects completely anonymous telemetry regarding usage.) with a 0ms delay
-> [debug] [2026-01-24T00:10:46.760Z] Spinner invoked (Building: This information is used to shape Next.js' roadmap and prioritize features.) with a 0ms delay
-> [debug] [2026-01-24T00:10:46.760Z] Spinner invoked (Building: You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:) with a 0ms delay
-> [debug] [2026-01-24T00:10:46.761Z] Spinner invoked (Building: https://nextjs.org/telemetry) with a 0ms delay
-> [debug] [2026-01-24T00:10:46.761Z] Spinner invoked (Building: ▲ Next.js 14.2.5) with a 0ms delay
-> [debug] [2026-01-24T00:10:46.761Z] Spinner invoked (Building: Creating an optimized production build ...) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.961Z] Spinner invoked (Building: Failed to compile.) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: ./pages/api/__deploy_proof__.ts) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: Error:) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: x Expected ';', '}' or <eof>) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: ,-[/vercel/path0/pages/api/__deploy_proof__.ts:1:1]) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: 1 | #Requires -Version 5.1) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: : ^^^^^^^^^|^^^^^^^^ ^^^) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: :          `-- This is the expression part of an expression statement) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: 2 | Set-StrictMode -Version Latest) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: 3 | $ErrorActionPreference = "Stop") with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: `----) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: Caused by:) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: Syntax Error) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: Import trace for requested module:) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: ./pages/api/__deploy_proof__.ts) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: > Build failed because of webpack errors) with a 0ms delay
-> [debug] [2026-01-24T00:10:52.962Z] Spinner invoked (Building: Error: Command "npm run vercel-build" exited with 1) with a 0ms delay
-[client-debug] 2026-01-24T00:10:54.254Z Yielding a 'error' event
-> [debug] [2026-01-24T00:10:54.256Z] Error: Error: Command "npm run vercel-build" exited with 1
+> [debug] [2026-01-24T00:14:25.655Z] user supplied a possible target for deployment or an extension
+> [debug] [2026-01-24T00:14:25.661Z] failed to find extension command with name "vercel---prod"
+> [debug] [2026-01-24T00:14:25.677Z] Setting target to production
+> [debug] [2026-01-24T00:14:25.761Z] Found ".git\config" - detected "C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main" as repo root
+> [debug] [2026-01-24T00:14:25.784Z] Spinner invoked (Retrieving project…) with a 1000ms delay
+> [debug] [2026-01-24T00:14:25.785Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:14:25.785Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:14:25.798Z] #1 → GET https://api.vercel.com/teams/team_zMGIW1l1T0jHJWu98ANKZORN
+> [debug] [2026-01-24T00:14:25.799Z] #2 → GET https://api.vercel.com/v9/projects/prj_nL5nvt9I9bFRudpBSkA65xUXdVZX?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+> [debug] [2026-01-24T00:14:26.386Z] #1 ← 200 OK: sfo1::22dbf-1769213664782-4ff82bb033d3 [588ms]
+> [debug] [2026-01-24T00:14:26.391Z] #2 ← 200 OK: sfo1::hhzb2-1769213664785-03ec733a875b [592ms]
+> [debug] [2026-01-24T00:14:26.771Z] Spinner invoked (Deploying craig-cantys-projects/my-saas-app-5eyw) with a 0ms delay
+[client-debug] 2026-01-24T00:14:26.772Z Creating deployment...
+[client-debug] 2026-01-24T00:14:26.772Z Provided 'path' is a directory.
+[client-debug] 2026-01-24T00:14:26.774Z Found 26 rules in .vercelignore
+[client-debug] 2026-01-24T00:14:26.774Z Building file tree...
+[client-debug] 2026-01-24T00:14:26.802Z Found 328 files in the specified directory
+[client-debug] 2026-01-24T00:14:26.830Z Yielding a 'hashes-calculated' event with 310 hashes
+> [debug] [2026-01-24T00:14:26.831Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:14:26.831Z] #3 → GET https://api.vercel.com/v9/projects/my-saas-app-5eyw?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+> [debug] [2026-01-24T00:14:27.051Z] #3 ← 200 OK: sfo1::hhzb2-1769213665449-c3381754a325 [220ms]
+[client-debug] 2026-01-24T00:14:27.054Z Using provided API URL: https://api.vercel.com
+[client-debug] 2026-01-24T00:14:27.054Z Using provided user agent: vercel 50.1.6 node-v24.12.0 win32 (x64)
+[client-debug] 2026-01-24T00:14:27.054Z Setting platform version to harcoded value 2
+[client-debug] 2026-01-24T00:14:27.054Z Creating the deployment and starting upload...
+[client-debug] 2026-01-24T00:14:27.055Z Determining necessary files for upload...
+[client-debug] 2026-01-24T00:14:27.055Z Creating deployment
+[client-debug] 2026-01-24T00:14:27.060Z Sending deployment creation API request
+[client-debug] 2026-01-24T00:14:27.511Z Deployment response: {"error":{"code":"missing_files","message":"Missing files","missing":["580c0f605b92df4d82eb85215f07d1617c5d605a"]}}
+[client-debug] 2026-01-24T00:14:27.511Z Error: Deployment request status is 400
+[client-debug] 2026-01-24T00:14:27.511Z 1 files are required to upload
+[client-debug] 2026-01-24T00:14:27.511Z Yielding a 'file-count' event
+> [debug] [2026-01-24T00:14:27.511Z] Total files 310, 1 changed
+> [debug] [2026-01-24T00:14:27.512Z] Spinner invoked (Uploading [--------------------] (0.0B/1.7KB)) with a 0ms delay
+[client-debug] 2026-01-24T00:14:27.512Z Building an upload list...
+[client-debug] 2026-01-24T00:14:27.514Z Starting upload
+[client-debug] 2026-01-24T00:14:27.514Z POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+> [debug] [2026-01-24T00:14:27.517Z] Spinner invoked (Uploading [====================] (1.7KB/1.7KB)) with a 0ms delay
+[client-debug] 2026-01-24T00:14:27.822Z DONE in 308ms: POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:14:27.822Z File 580c0f605b92df4d82eb85215f07d1617c5d605a (C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\build-output-full.txt) uploaded
+[client-debug] 2026-01-24T00:14:27.822Z Yielding a 'file-uploaded' event
+> [debug] [2026-01-24T00:14:27.823Z] Uploaded: C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\build-output-full.txt (1.7KB)
+[client-debug] 2026-01-24T00:14:27.823Z All files uploaded
+[client-debug] 2026-01-24T00:14:27.823Z Yielding a 'all-files-uploaded' event
+[client-debug] 2026-01-24T00:14:27.823Z Starting deployment creation
+[client-debug] 2026-01-24T00:14:27.823Z Creating deployment
+[client-debug] 2026-01-24T00:14:27.827Z Sending deployment creation API request
+[client-debug] 2026-01-24T00:14:29.153Z Deployment response: {"alias":["my-saas-app-5eyw-craig-cantys-projects.vercel.app","my-saas-app-5eyw-ccantynz-9622-craig-cantys-projects.vercel.app"],"aliasAssigned":false,"automaticAliases":["my-saas-app-5eyw-craig-cantys-projects.vercel.app","my-saas-app-5eyw-ccantynz-9622-craig-cantys-projects.vercel.app"],"bootedAt":1769213666858,"buildingAt":1769213666858,"buildSkipped":false,"createdAt":1769213666858,"creator":{"uid":"qetqotxVcmydQ4gC8d7uaGzW","username":"ccantynz-9622"},"id":"dpl_3dKH6eJYusJDVkspk8GHgj42rcC3","name":"my-saas-app-5eyw","meta":{"githubCommitAuthorName":"ccantynz-alt","githubCommitAuthorEmail":"ccantynz@gmail.com","githubCommitMessage":"fix: repair deploy proof api ts (was accidentally powershell)","githubCommitOrg":"ccantynz-alt","githubCommitRef":"main","githubCommitRepo":"my-saas-app","githubCommitSha":"3f48e74c0bfd4067debbb285b746e424760dbd9b","githubDeployment":"1","githubOrg":"ccantynz-alt","githubRepo":"my-saas-app","gitDirty":"1"},"originCacheRegion":"iad1","project":{"id":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","name":"my-saas-app-5eyw","framework":"nextjs"},"public":false,"readyState":"INITIALIZING","regions":["iad1"],"source":"cli","status":"INITIALIZING","target":"production","team":{"id":"team_zMGIW1l1T0jHJWu98ANKZORN","name":"Craig Canty's projects","slug":"craig-cantys-projects","avatar":"d2215fb18ff0412454f6f7c85db1ee7d1709e751"},"type":"LAMBDAS","url":"my-saas-app-5eyw-q4s42qlih-craig-cantys-projects.vercel.app","version":2,"previewCommentsEnabled":true,"oidcTokenClaims":{"sub":"owner:craig-cantys-projects:project:my-saas-app-5eyw:environment:production","iss":"https://oidc.vercel.com/craig-cantys-projects","scope":"owner:craig-cantys-projects:project:my-saas-app-5eyw:environment:production","aud":"https://vercel.com/craig-cantys-projects","owner":"craig-cantys-projects","owner_id":"team_zMGIW1l1T0jHJWu98ANKZORN","project":"my-saas-app-5eyw","project_id":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","environment":"production","plan":"pro"},"lambdas":[{"id":"bld_8ms9xje20","createdAt":1769213667206,"entrypoint":".","readyState":"READY","readyStateAt":1769213667206,"output":[]}],"aliasAssignedAt":null,"build":{"env":[]},"builds":[],"createdIn":"sfo1","env":[],"functions":null,"inspectorUrl":"https://vercel.com/craig-cantys-projects/my-saas-app-5eyw/3dKH6eJYusJDVkspk8GHgj42rcC3","isInConcurrentBuildsQueue":false,"isInSystemBuildsQueue":true,"ownerId":"team_zMGIW1l1T0jHJWu98ANKZORN","plan":"pro","projectId":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","projectSettings":{"buildCommand":"npm run vercel-build","devCommand":null,"framework":"nextjs","commandForIgnoringBuildStep":"","installCommand":"npm install --legacy-peer-deps","outputDirectory":null,"speedInsights":{"id":"hT4fsACp3hAIE3oHtGAb2HSn63a","hasData":false},"webAnalytics":{"id":"wzf6Vr0vepbZbFQMzYesSVnUg"},"nodeVersion":"20.x"},"routes":null,"integrations":{"status":"ready","startedAt":1769213666834,"completedAt":1769213666834},"config":{"version":1,"secureComputePrimaryRegion":null,"secureComputeFallbackRegion":null,"functionTimeout":300,"functionType":"fluid","functionMemoryType":"standard","isUsingActiveCPU":true}}
+[client-debug] 2026-01-24T00:14:29.153Z Deployment created
+[client-debug] 2026-01-24T00:14:29.153Z Yielding a 'created' event
+Inspect: https://vercel.com/craig-cantys-projects/my-saas-app-5eyw/3dKH6eJYusJDVkspk8GHgj42rcC3 [2s]
+Production: https://my-saas-app-5eyw-q4s42qlih-craig-cantys-projects.vercel.app [2s]
+https://my-saas-app-5eyw-q4s42qlih-craig-cantys-projects.vercel.app> [debug] [2026-01-24T00:14:29.154Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:14:29.154Z] Spinner invoked (Building...) with a 0ms delay
+> [debug] [2026-01-24T00:14:29.154Z] #4 → GET https://api.vercel.com/v2/user
+[client-debug] 2026-01-24T00:14:29.154Z Waiting for deployment to be ready...
+[client-debug] 2026-01-24T00:14:29.154Z Waiting for builds and the deployment to complete...
+> [debug] [2026-01-24T00:14:29.344Z] #4 ← 200 OK: sfo1::hhzb2-1769213667772-6cecfa37ba61 [190ms]
+> [debug] [2026-01-24T00:14:29.345Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:14:29.346Z] #5 → GET https://api.vercel.com/v3/now/deployments/dpl_3dKH6eJYusJDVkspk8GHgj42rcC3/events?direction=forward&follow=1&format=lines&teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:14:30.934Z Deployment state changed to BUILDING
+[client-debug] 2026-01-24T00:14:30.934Z Yielding a 'building' event
+> [debug] [2026-01-24T00:14:30.935Z] Spinner invoked (Building...) with a 0ms delay
+> [debug] [2026-01-24T00:14:31.655Z] #5 ← 200 OK: sfo1::hhzb2-1769213667964-16e92629bef4 [2.31s]
+> [debug] [2026-01-24T00:14:31.657Z] Spinner invoked (Building: Running build in Portland, USA (West) – pdx1) with a 0ms delay
+> [debug] [2026-01-24T00:14:31.658Z] Spinner invoked (Building: Build machine configuration: 4 cores, 8 GB) with a 0ms delay
+> [debug] [2026-01-24T00:14:31.658Z] Spinner invoked (Building: Retrieving list of deployment files...) with a 0ms delay
+> [debug] [2026-01-24T00:14:31.658Z] Spinner invoked (Building: Skipping build cache, deployment was triggered without cache.) with a 0ms delay
+> [debug] [2026-01-24T00:14:31.658Z] Spinner invoked (Building: Downloading 328 deployment files...) with a 0ms delay
+> [debug] [2026-01-24T00:14:34.759Z] Spinner invoked (Building: Running "vercel build") with a 0ms delay
+> [debug] [2026-01-24T00:14:34.759Z] Spinner invoked (Building: Vercel CLI 50.4.10) with a 0ms delay
+> [debug] [2026-01-24T00:14:35.799Z] Spinner invoked (Building: Running "install" command: `npm install --legacy-peer-deps`...) with a 0ms delay
+> [debug] [2026-01-24T00:14:37.867Z] Spinner invoked (Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported) with a 0ms delay
+> [debug] [2026-01-24T00:14:37.868Z] Spinner invoked (Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.) with a 0ms delay
+> [debug] [2026-01-24T00:14:38.904Z] Spinner invoked (Building: npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead) with a 0ms delay
+> [debug] [2026-01-24T00:14:38.904Z] Spinner invoked (Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead) with a 0ms delay
+> [debug] [2026-01-24T00:14:38.904Z] Spinner invoked (Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead) with a 0ms delay
+> [debug] [2026-01-24T00:14:38.905Z] Spinner invoked (Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported) with a 0ms delay
+> [debug] [2026-01-24T00:14:40.970Z] Spinner invoked (Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: added 423 packages, and audited 424 packages in 16s) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: 151 packages are looking for funding) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: run `npm fund` for details) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: 4 vulnerabilities (3 high, 1 critical)) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: To address all issues (including breaking changes), run:) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: npm audit fix --force) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: Run `npm audit` for details.) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: Detected Next.js version: 14.2.5) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: Running "npm run vercel-build") with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: > my-saas-app@0.1.0 vercel-build) with a 0ms delay
+> [debug] [2026-01-24T00:14:50.289Z] Spinner invoked (Building: > next build) with a 0ms delay
+> [debug] [2026-01-24T00:14:52.371Z] Spinner invoked (Building: Attention: Next.js now collects completely anonymous telemetry regarding usage.) with a 0ms delay
+> [debug] [2026-01-24T00:14:52.371Z] Spinner invoked (Building: This information is used to shape Next.js' roadmap and prioritize features.) with a 0ms delay
+> [debug] [2026-01-24T00:14:52.371Z] Spinner invoked (Building: You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:) with a 0ms delay
+> [debug] [2026-01-24T00:14:52.371Z] Spinner invoked (Building: https://nextjs.org/telemetry) with a 0ms delay
+> [debug] [2026-01-24T00:14:52.371Z] Spinner invoked (Building: ▲ Next.js 14.2.5) with a 0ms delay
+> [debug] [2026-01-24T00:14:52.371Z] Spinner invoked (Building: Creating an optimized production build ...) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: Failed to compile.) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: ./pages/api/__deploy_proof__.BROKEN_20260124_131144.ts) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: Error:) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: x Expected ';', '}' or <eof>) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: ,-[/vercel/path0/pages/api/__deploy_proof__.BROKEN_20260124_131144.ts:1:1]) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: 1 | #Requires -Version 5.1) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: : ^^^^^^^^^|^^^^^^^^ ^^^) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: :          `-- This is the expression part of an expression statement) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: 2 | Set-StrictMode -Version Latest) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: 3 | $ErrorActionPreference = "Stop") with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: `----) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: Caused by:) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: Syntax Error) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.567Z] Spinner invoked (Building: Import trace for requested module:) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.568Z] Spinner invoked (Building: ./pages/api/__deploy_proof__.BROKEN_20260124_131144.ts) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.568Z] Spinner invoked (Building: > Build failed because of webpack errors) with a 0ms delay
+> [debug] [2026-01-24T00:14:58.568Z] Spinner invoked (Building: Error: Command "npm run vercel-build" exited with 1) with a 0ms delay
+[client-debug] 2026-01-24T00:15:01.156Z Yielding a 'error' event
+> [debug] [2026-01-24T00:15:01.157Z] Error: Error: Command "npm run vercel-build" exited with 1
 Error: Command "npm run vercel-build" exited with 1
     at Now.handleDeploymentError (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:153225:16)
     at processDeployment (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:152963:34)
@@ -124,7 +124,7 @@ Error: Command "npm run vercel-build" exited with 1
     at async createDeploy (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:153371:12)
     at async deploy_default (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:154283:22)
     at async main18 (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:191812:19)
-> [debug] [2026-01-24T00:10:54.256Z] handling error: Error: Command "npm run vercel-build" exited with 1
+> [debug] [2026-01-24T00:15:01.157Z] handling error: Error: Command "npm run vercel-build" exited with 1
     at Now.handleDeploymentError (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:153225:16)
     at processDeployment (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:152963:34)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
@@ -133,7 +133,7 @@ Error: Command "npm run vercel-build" exited with 1
     at async deploy_default (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:154283:22)
     at async main18 (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:191812:19)
 Error: Command "npm run vercel-build" exited with 1
-> [debug] [2026-01-24T00:10:55.172Z] Vercel CLI 50.1.6
+> [debug] [2026-01-24T00:15:02.086Z] Vercel CLI 50.1.6
 
-> [debug] [2026-01-24T00:10:55.801Z] Telemetry event tracked
-> [debug] [2026-01-24T00:10:55.814Z] Telemetry subprocess exited with code 0
+> [debug] [2026-01-24T00:15:02.695Z] Telemetry event tracked
+> [debug] [2026-01-24T00:15:02.708Z] Telemetry subprocess exited with code 0
