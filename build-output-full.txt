@@ -1,229 +1,142 @@
-> [debug] [2026-01-24T00:15:50.138Z] Found config in file "C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\vercel.json"
+> [debug] [2026-01-24T00:19:07.907Z] Found config in file "C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\vercel.json"
 Vercel CLI 50.1.6
-> [debug] [2026-01-24T00:15:50.142Z] user supplied a possible target for deployment or an extension
-> [debug] [2026-01-24T00:15:50.148Z] failed to find extension command with name "vercel---prod"
-> [debug] [2026-01-24T00:15:50.164Z] Setting target to production
-> [debug] [2026-01-24T00:15:50.250Z] Found ".git\config" - detected "C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main" as repo root
-> [debug] [2026-01-24T00:15:50.273Z] Spinner invoked (Retrieving project…) with a 1000ms delay
-> [debug] [2026-01-24T00:15:50.273Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:15:50.274Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:15:50.286Z] #1 → GET https://api.vercel.com/teams/team_zMGIW1l1T0jHJWu98ANKZORN
-> [debug] [2026-01-24T00:15:50.288Z] #2 → GET https://api.vercel.com/v9/projects/prj_nL5nvt9I9bFRudpBSkA65xUXdVZX?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-> [debug] [2026-01-24T00:15:50.863Z] #1 ← 200 OK: sfo1::9lc28-1769213749279-81b598e1bf79 [577ms]
-> [debug] [2026-01-24T00:15:50.888Z] #2 ← 200 OK: sfo1::6nmqt-1769213749282-26f842ce0357 [600ms]
-> [debug] [2026-01-24T00:15:51.148Z] Spinner invoked (Deploying craig-cantys-projects/my-saas-app-5eyw) with a 0ms delay
-[client-debug] 2026-01-24T00:15:51.148Z Creating deployment...
-[client-debug] 2026-01-24T00:15:51.148Z Provided 'path' is a directory.
-[client-debug] 2026-01-24T00:15:51.150Z Found 26 rules in .vercelignore
-[client-debug] 2026-01-24T00:15:51.151Z Building file tree...
-[client-debug] 2026-01-24T00:15:51.165Z Found 327 files in the specified directory
-[client-debug] 2026-01-24T00:15:51.182Z Yielding a 'hashes-calculated' event with 309 hashes
-> [debug] [2026-01-24T00:15:51.183Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:15:51.183Z] #3 → GET https://api.vercel.com/v9/projects/my-saas-app-5eyw?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-> [debug] [2026-01-24T00:15:51.405Z] #3 ← 200 OK: sfo1::6nmqt-1769213749802-6b1c16935666 [222ms]
-[client-debug] 2026-01-24T00:15:51.408Z Using provided API URL: https://api.vercel.com
-[client-debug] 2026-01-24T00:15:51.408Z Using provided user agent: vercel 50.1.6 node-v24.12.0 win32 (x64)
-[client-debug] 2026-01-24T00:15:51.408Z Setting platform version to harcoded value 2
-[client-debug] 2026-01-24T00:15:51.409Z Creating the deployment and starting upload...
-[client-debug] 2026-01-24T00:15:51.409Z Determining necessary files for upload...
-[client-debug] 2026-01-24T00:15:51.410Z Creating deployment
-[client-debug] 2026-01-24T00:15:51.414Z Sending deployment creation API request
-[client-debug] 2026-01-24T00:15:51.829Z Deployment response: {"error":{"code":"missing_files","message":"Missing files","missing":["c16c38ebe815cdd9faa73ca81f53ff1517e02312"]}}
-[client-debug] 2026-01-24T00:15:51.829Z Error: Deployment request status is 400
-[client-debug] 2026-01-24T00:15:51.829Z 1 files are required to upload
-[client-debug] 2026-01-24T00:15:51.829Z Yielding a 'file-count' event
-> [debug] [2026-01-24T00:15:51.829Z] Total files 309, 1 changed
-> [debug] [2026-01-24T00:15:51.830Z] Spinner invoked (Uploading [--------------------] (0.0B/1.7KB)) with a 0ms delay
-[client-debug] 2026-01-24T00:15:51.830Z Building an upload list...
-[client-debug] 2026-01-24T00:15:51.831Z Starting upload
-[client-debug] 2026-01-24T00:15:51.832Z POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-> [debug] [2026-01-24T00:15:51.833Z] Spinner invoked (Uploading [====================] (1.7KB/1.7KB)) with a 0ms delay
-[client-debug] 2026-01-24T00:15:52.135Z DONE in 303ms: POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-[client-debug] 2026-01-24T00:15:52.135Z File c16c38ebe815cdd9faa73ca81f53ff1517e02312 (C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\build-output-full.txt) uploaded
-[client-debug] 2026-01-24T00:15:52.135Z Yielding a 'file-uploaded' event
-> [debug] [2026-01-24T00:15:52.135Z] Uploaded: C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\build-output-full.txt (1.7KB)
-[client-debug] 2026-01-24T00:15:52.135Z All files uploaded
-[client-debug] 2026-01-24T00:15:52.135Z Yielding a 'all-files-uploaded' event
-[client-debug] 2026-01-24T00:15:52.135Z Starting deployment creation
-[client-debug] 2026-01-24T00:15:52.135Z Creating deployment
-[client-debug] 2026-01-24T00:15:52.139Z Sending deployment creation API request
-[client-debug] 2026-01-24T00:15:53.442Z Deployment response: {"alias":["my-saas-app-5eyw-craig-cantys-projects.vercel.app","my-saas-app-5eyw-ccantynz-9622-craig-cantys-projects.vercel.app"],"aliasAssigned":false,"automaticAliases":["my-saas-app-5eyw-craig-cantys-projects.vercel.app","my-saas-app-5eyw-ccantynz-9622-craig-cantys-projects.vercel.app"],"bootedAt":1769213751127,"buildingAt":1769213751127,"buildSkipped":false,"createdAt":1769213751127,"creator":{"uid":"qetqotxVcmydQ4gC8d7uaGzW","username":"ccantynz-9622"},"id":"dpl_4yDpUxqdaTJNWqBUUaQkSW9MvshC","name":"my-saas-app-5eyw","meta":{"githubCommitAuthorName":"ccantynz-alt","githubCommitAuthorEmail":"ccantynz@gmail.com","githubCommitMessage":"chore: remove broken deploy proof backup ts files","githubCommitOrg":"ccantynz-alt","githubCommitRef":"main","githubCommitRepo":"my-saas-app","githubCommitSha":"c36fbeb9a6e25cbf37178248c42244f35456c047","githubDeployment":"1","githubOrg":"ccantynz-alt","githubRepo":"my-saas-app","gitDirty":"1"},"originCacheRegion":"iad1","project":{"id":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","name":"my-saas-app-5eyw","framework":"nextjs"},"public":false,"readyState":"INITIALIZING","regions":["iad1"],"source":"cli","status":"INITIALIZING","target":"production","team":{"id":"team_zMGIW1l1T0jHJWu98ANKZORN","name":"Craig Canty's projects","slug":"craig-cantys-projects","avatar":"d2215fb18ff0412454f6f7c85db1ee7d1709e751"},"type":"LAMBDAS","url":"my-saas-app-5eyw-cxepl3sdy-craig-cantys-projects.vercel.app","version":2,"previewCommentsEnabled":true,"oidcTokenClaims":{"sub":"owner:craig-cantys-projects:project:my-saas-app-5eyw:environment:production","iss":"https://oidc.vercel.com/craig-cantys-projects","scope":"owner:craig-cantys-projects:project:my-saas-app-5eyw:environment:production","aud":"https://vercel.com/craig-cantys-projects","owner":"craig-cantys-projects","owner_id":"team_zMGIW1l1T0jHJWu98ANKZORN","project":"my-saas-app-5eyw","project_id":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","environment":"production","plan":"pro"},"lambdas":[{"id":"bld_6tlu0gpyt","createdAt":1769213751539,"entrypoint":".","readyState":"READY","readyStateAt":1769213751539,"output":[]}],"aliasAssignedAt":null,"build":{"env":[]},"builds":[],"createdIn":"sfo1","env":[],"functions":null,"inspectorUrl":"https://vercel.com/craig-cantys-projects/my-saas-app-5eyw/4yDpUxqdaTJNWqBUUaQkSW9MvshC","isInConcurrentBuildsQueue":false,"isInSystemBuildsQueue":true,"ownerId":"team_zMGIW1l1T0jHJWu98ANKZORN","plan":"pro","projectId":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","projectSettings":{"buildCommand":"npm run vercel-build","devCommand":null,"framework":"nextjs","commandForIgnoringBuildStep":"","installCommand":"npm install --legacy-peer-deps","outputDirectory":null,"speedInsights":{"id":"hT4fsACp3hAIE3oHtGAb2HSn63a","hasData":false},"webAnalytics":{"id":"wzf6Vr0vepbZbFQMzYesSVnUg"},"nodeVersion":"20.x"},"routes":null,"integrations":{"status":"ready","startedAt":1769213751102,"completedAt":1769213751102},"config":{"version":1,"secureComputePrimaryRegion":null,"secureComputeFallbackRegion":null,"functionTimeout":300,"functionType":"fluid","functionMemoryType":"standard","isUsingActiveCPU":true}}
-[client-debug] 2026-01-24T00:15:53.442Z Deployment created
-[client-debug] 2026-01-24T00:15:53.442Z Yielding a 'created' event
-Inspect: https://vercel.com/craig-cantys-projects/my-saas-app-5eyw/4yDpUxqdaTJNWqBUUaQkSW9MvshC [2s]
-Production: https://my-saas-app-5eyw-cxepl3sdy-craig-cantys-projects.vercel.app [2s]
-https://my-saas-app-5eyw-cxepl3sdy-craig-cantys-projects.vercel.app> [debug] [2026-01-24T00:15:53.443Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:15:53.443Z] Spinner invoked (Building...) with a 0ms delay
-> [debug] [2026-01-24T00:15:53.443Z] #4 → GET https://api.vercel.com/v2/user
-[client-debug] 2026-01-24T00:15:53.443Z Waiting for deployment to be ready...
-[client-debug] 2026-01-24T00:15:53.443Z Waiting for builds and the deployment to complete...
-> [debug] [2026-01-24T00:15:53.640Z] #4 ← 200 OK: sfo1::6nmqt-1769213752062-4e30c17aa276 [197ms]
-> [debug] [2026-01-24T00:15:53.641Z] Valid access token, skipping token refresh.
-> [debug] [2026-01-24T00:15:53.641Z] #5 → GET https://api.vercel.com/v3/now/deployments/dpl_4yDpUxqdaTJNWqBUUaQkSW9MvshC/events?direction=forward&follow=1&format=lines&teamId=team_zMGIW1l1T0jHJWu98ANKZORN
-[client-debug] 2026-01-24T00:15:55.205Z Deployment state changed to BUILDING
-[client-debug] 2026-01-24T00:15:55.205Z Yielding a 'building' event
-> [debug] [2026-01-24T00:15:55.205Z] Spinner invoked (Building...) with a 0ms delay
-> [debug] [2026-01-24T00:15:56.992Z] #5 ← 200 OK: sfo1::6nmqt-1769213752260-e2e6593b45cf [3.35s]
-> [debug] [2026-01-24T00:15:56.994Z] Spinner invoked (Building: Running build in Portland, USA (West) – pdx1) with a 0ms delay
-> [debug] [2026-01-24T00:15:56.994Z] Spinner invoked (Building: Build machine configuration: 4 cores, 8 GB) with a 0ms delay
-> [debug] [2026-01-24T00:15:56.994Z] Spinner invoked (Building: Retrieving list of deployment files...) with a 0ms delay
-> [debug] [2026-01-24T00:15:56.995Z] Spinner invoked (Building: Skipping build cache, deployment was triggered without cache.) with a 0ms delay
-> [debug] [2026-01-24T00:15:56.995Z] Spinner invoked (Building: Downloading 327 deployment files...) with a 0ms delay
-> [debug] [2026-01-24T00:16:00.096Z] Spinner invoked (Building: Running "vercel build") with a 0ms delay
-> [debug] [2026-01-24T00:16:00.096Z] Spinner invoked (Building: Vercel CLI 50.4.10) with a 0ms delay
-> [debug] [2026-01-24T00:16:01.131Z] Spinner invoked (Building: Running "install" command: `npm install --legacy-peer-deps`...) with a 0ms delay
-> [debug] [2026-01-24T00:16:02.162Z] Spinner invoked (Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported) with a 0ms delay
-> [debug] [2026-01-24T00:16:02.163Z] Spinner invoked (Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.) with a 0ms delay
-> [debug] [2026-01-24T00:16:03.198Z] Spinner invoked (Building: npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead) with a 0ms delay
-> [debug] [2026-01-24T00:16:03.198Z] Spinner invoked (Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead) with a 0ms delay
-> [debug] [2026-01-24T00:16:03.198Z] Spinner invoked (Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported) with a 0ms delay
-> [debug] [2026-01-24T00:16:03.198Z] Spinner invoked (Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead) with a 0ms delay
-> [debug] [2026-01-24T00:16:05.286Z] Spinner invoked (Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.672Z] Spinner invoked (Building: npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.672Z] Spinner invoked (Building: added 423 packages, and audited 424 packages in 17s) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.672Z] Spinner invoked (Building: 151 packages are looking for funding) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.672Z] Spinner invoked (Building: run `npm fund` for details) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.672Z] Spinner invoked (Building: 4 vulnerabilities (3 high, 1 critical)) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.673Z] Spinner invoked (Building: To address all issues (including breaking changes), run:) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.673Z] Spinner invoked (Building: npm audit fix --force) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.673Z] Spinner invoked (Building: Run `npm audit` for details.) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.673Z] Spinner invoked (Building: Detected Next.js version: 14.2.5) with a 0ms delay
-> [debug] [2026-01-24T00:16:16.673Z] Spinner invoked (Building: Running "npm run vercel-build") with a 0ms delay
-> [debug] [2026-01-24T00:16:17.704Z] Spinner invoked (Building: > my-saas-app@0.1.0 vercel-build) with a 0ms delay
-> [debug] [2026-01-24T00:16:17.705Z] Spinner invoked (Building: > next build) with a 0ms delay
-> [debug] [2026-01-24T00:16:17.705Z] Spinner invoked (Building: Attention: Next.js now collects completely anonymous telemetry regarding usage.) with a 0ms delay
-> [debug] [2026-01-24T00:16:17.705Z] Spinner invoked (Building: This information is used to shape Next.js' roadmap and prioritize features.) with a 0ms delay
-> [debug] [2026-01-24T00:16:17.705Z] Spinner invoked (Building: You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:) with a 0ms delay
-> [debug] [2026-01-24T00:16:17.705Z] Spinner invoked (Building: https://nextjs.org/telemetry) with a 0ms delay
-> [debug] [2026-01-24T00:16:17.705Z] Spinner invoked (Building: ▲ Next.js 14.2.5) with a 0ms delay
-> [debug] [2026-01-24T00:16:17.705Z] Spinner invoked (Building: Creating an optimized production build ...) with a 0ms delay
-> [debug] [2026-01-24T00:16:23.917Z] Spinner invoked (Building: ⚠ Compiled with warnings) with a 0ms delay
-> [debug] [2026-01-24T00:16:23.917Z] Spinner invoked (Building: ./src/app/(marketing)/templates/page.tsx) with a 0ms delay
-> [debug] [2026-01-24T00:16:23.917Z] Spinner invoked (Building: Attempted import error: 'TEMPLATES' is not exported from '@/src/lib/marketing/catalog' (imported as 'TEMPLATES').) with a 0ms delay
-> [debug] [2026-01-24T00:16:23.917Z] Spinner invoked (Building: Import trace for requested module:) with a 0ms delay
-> [debug] [2026-01-24T00:16:23.917Z] Spinner invoked (Building: ./src/app/(marketing)/templates/page.tsx) with a 0ms delay
-> [debug] [2026-01-24T00:16:23.918Z] Spinner invoked (Building: ./src/app/(marketing)/use-cases/page.tsx) with a 0ms delay
-> [debug] [2026-01-24T00:16:23.918Z] Spinner invoked (Building: Attempted import error: 'USE_CASES' is not exported from '@/src/lib/marketing/catalog' (imported as 'USE_CASES').) with a 0ms delay
-> [debug] [2026-01-24T00:16:23.918Z] Spinner invoked (Building: Import trace for requested module:) with a 0ms delay
-> [debug] [2026-01-24T00:16:23.918Z] Spinner invoked (Building: ./src/app/(marketing)/use-cases/page.tsx) with a 0ms delay
-> [debug] [2026-01-24T00:16:31.134Z] Spinner invoked (Building: ✓ Compiled successfully) with a 0ms delay
-> [debug] [2026-01-24T00:16:31.134Z] Spinner invoked (Building: Skipping validation of types) with a 0ms delay
-> [debug] [2026-01-24T00:16:31.134Z] Spinner invoked (Building: Skipping linting) with a 0ms delay
-> [debug] [2026-01-24T00:16:31.134Z] Spinner invoked (Building: Collecting page data ...) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.237Z] Spinner invoked (Building: Generating static pages (0/46) ...) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.237Z] Spinner invoked (Building: Generating static pages (11/46)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.237Z] Spinner invoked (Building: Generating static pages (22/46)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.237Z] Spinner invoked (Building: TypeError: Cannot read properties of undefined (reading 'map')) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at o (/vercel/path0/.next/server/app/(marketing)/templates/page.js:1:2797)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eh (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:134786)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at e (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:137671)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at ek (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138145)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at Array.toJSON (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135755)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at stringify (<anonymous>)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eR (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142219)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eE (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142698)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at AsyncLocalStorage.run (node:async_hooks:346:14)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at Timeout._onTimeout (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:150397) {) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: digest: '3833719915') with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: }) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: TypeError: Cannot read properties of undefined (reading 'map')) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at o (/vercel/path0/.next/server/app/(marketing)/templates/page.js:1:2797)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eh (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:134786)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at e (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:137671)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at ek (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138145)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at Array.toJSON (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135755)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at stringify (<anonymous>)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eR (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142219)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eE (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142698)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at Timeout._onTimeout (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135475)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at listOnTimeout (node:internal/timers:581:17) {) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: digest: '2797377845') with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: }) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: TypeError: Cannot read properties of undefined (reading 'map')) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at o (/vercel/path0/.next/server/app/(marketing)/templates/page.js:1:2797)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eh (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:134786)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at e (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:137671)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at ek (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138145)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at Array.toJSON (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135755)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at stringify (<anonymous>)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eR (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142219)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eE (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142698)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at Timeout._onTimeout (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135475)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at listOnTimeout (node:internal/timers:581:17) {) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: digest: '2797377845') with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: }) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: Error occurred prerendering page "/templates". Read more: https://nextjs.org/docs/messages/prerender-error) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: TypeError: Cannot read properties of undefined (reading 'map')) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at o (/vercel/path0/.next/server/app/(marketing)/templates/page.js:1:2797)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eh (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:134786)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at e (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:137671)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at ek (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138145)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at Array.toJSON (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135755)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at stringify (<anonymous>)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eR (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142219)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eE (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142698)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at AsyncLocalStorage.run (node:async_hooks:346:14)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at Timeout._onTimeout (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:150397)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: Generating static pages (34/46)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: TypeError: Cannot read properties of undefined (reading 'map')) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at l (/vercel/path0/.next/server/app/(marketing)/use-cases/page.js:1:2787)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at eh (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:134786)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at e (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:137671)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.238Z] Spinner invoked (Building: at ek (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138145)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at Array.toJSON (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135755)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at stringify (<anonymous>)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eR (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142219)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eE (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142698)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at AsyncLocalStorage.run (node:async_hooks:346:14)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at Timeout._onTimeout (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:150397) {) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: digest: '2197517955') with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: }) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: TypeError: Cannot read properties of undefined (reading 'map')) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at l (/vercel/path0/.next/server/app/(marketing)/use-cases/page.js:1:2787)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eh (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:134786)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at e (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:137671)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at ek (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138145)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at Array.toJSON (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135755)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at stringify (<anonymous>)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eR (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142219)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eE (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142698)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at Timeout._onTimeout (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135475)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at listOnTimeout (node:internal/timers:581:17) {) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: digest: '2523421533') with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: }) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: TypeError: Cannot read properties of undefined (reading 'map')) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at l (/vercel/path0/.next/server/app/(marketing)/use-cases/page.js:1:2787)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eh (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:134786)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at e (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:137671)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at ek (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138145)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at Array.toJSON (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135755)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at stringify (<anonymous>)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eR (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142219)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eE (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142698)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at Timeout._onTimeout (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135475)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at listOnTimeout (node:internal/timers:581:17) {) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: digest: '2523421533') with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: }) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: Error occurred prerendering page "/use-cases". Read more: https://nextjs.org/docs/messages/prerender-error) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: TypeError: Cannot read properties of undefined (reading 'map')) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at l (/vercel/path0/.next/server/app/(marketing)/use-cases/page.js:1:2787)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eh (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:134786)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at e (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:137671)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at ek (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138145)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at Array.toJSON (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135755)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at stringify (<anonymous>)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eR (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142219)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.253Z] Spinner invoked (Building: at eE (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142698)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.254Z] Spinner invoked (Building: at AsyncLocalStorage.run (node:async_hooks:346:14)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.254Z] Spinner invoked (Building: at Timeout._onTimeout (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:150397)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.254Z] Spinner invoked (Building: ✓ Generating static pages (46/46)) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.254Z] Spinner invoked (Building: > Export encountered errors on following paths:) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.254Z] Spinner invoked (Building: /(marketing)/templates/page: /templates) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.254Z] Spinner invoked (Building: /(marketing)/use-cases/page: /use-cases) with a 0ms delay
-> [debug] [2026-01-24T00:16:33.254Z] Spinner invoked (Building: Error: Command "npm run vercel-build" exited with 1) with a 0ms delay
-[client-debug] 2026-01-24T00:16:36.262Z Yielding a 'error' event
-> [debug] [2026-01-24T00:16:36.264Z] Error: Error: Command "npm run vercel-build" exited with 1
-Error: Command "npm run vercel-build" exited with 1
+> [debug] [2026-01-24T00:19:07.910Z] user supplied a possible target for deployment or an extension
+> [debug] [2026-01-24T00:19:07.917Z] failed to find extension command with name "vercel---prod"
+> [debug] [2026-01-24T00:19:07.934Z] Setting target to production
+> [debug] [2026-01-24T00:19:08.020Z] Found ".git\config" - detected "C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main" as repo root
+> [debug] [2026-01-24T00:19:08.042Z] Spinner invoked (Retrieving project…) with a 1000ms delay
+> [debug] [2026-01-24T00:19:08.043Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:19:08.043Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:19:08.055Z] #1 → GET https://api.vercel.com/teams/team_zMGIW1l1T0jHJWu98ANKZORN
+> [debug] [2026-01-24T00:19:08.056Z] #2 → GET https://api.vercel.com/v9/projects/prj_nL5nvt9I9bFRudpBSkA65xUXdVZX?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+> [debug] [2026-01-24T00:19:08.645Z] #1 ← 200 OK: sfo1::797z7-1769213947046-ab16f8748d49 [590ms]
+> [debug] [2026-01-24T00:19:08.670Z] #2 ← 200 OK: sfo1::z5xb4-1769213947042-75c1d3277a40 [614ms]
+> [debug] [2026-01-24T00:19:08.900Z] Spinner invoked (Deploying craig-cantys-projects/my-saas-app-5eyw) with a 0ms delay
+[client-debug] 2026-01-24T00:19:08.900Z Creating deployment...
+[client-debug] 2026-01-24T00:19:08.900Z Provided 'path' is a directory.
+[client-debug] 2026-01-24T00:19:08.902Z Found 26 rules in .vercelignore
+[client-debug] 2026-01-24T00:19:08.903Z Building file tree...
+[client-debug] 2026-01-24T00:19:08.913Z Found 328 files in the specified directory
+[client-debug] 2026-01-24T00:19:08.927Z Yielding a 'hashes-calculated' event with 310 hashes
+> [debug] [2026-01-24T00:19:08.928Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:19:08.928Z] #3 → GET https://api.vercel.com/v9/projects/my-saas-app-5eyw?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+> [debug] [2026-01-24T00:19:09.154Z] #3 ← 200 OK: sfo1::z5xb4-1769213947545-4c18d917f61e [225ms]
+[client-debug] 2026-01-24T00:19:09.156Z Using provided API URL: https://api.vercel.com
+[client-debug] 2026-01-24T00:19:09.156Z Using provided user agent: vercel 50.1.6 node-v24.12.0 win32 (x64)
+[client-debug] 2026-01-24T00:19:09.156Z Setting platform version to harcoded value 2
+[client-debug] 2026-01-24T00:19:09.156Z Creating the deployment and starting upload...
+[client-debug] 2026-01-24T00:19:09.157Z Determining necessary files for upload...
+[client-debug] 2026-01-24T00:19:09.157Z Creating deployment
+[client-debug] 2026-01-24T00:19:09.160Z Sending deployment creation API request
+[client-debug] 2026-01-24T00:19:09.586Z Deployment response: {"error":{"code":"missing_files","message":"Missing files","missing":["3569e548409ff00976e8a2e91b179a8f90aec2dc","e3bb102b1845d9c6895b961facb0beac160b0fbb","96a3f017212c82f39108cd55ff02febd030cfbf2","c2f7187a054aa20bc95b36232bf822232254d14b"]}}
+[client-debug] 2026-01-24T00:19:09.586Z Error: Deployment request status is 400
+[client-debug] 2026-01-24T00:19:09.586Z 4 files are required to upload
+[client-debug] 2026-01-24T00:19:09.587Z Yielding a 'file-count' event
+> [debug] [2026-01-24T00:19:09.587Z] Total files 310, 4 changed
+> [debug] [2026-01-24T00:19:09.587Z] Spinner invoked (Uploading [--------------------] (0.0B/8.3KB)) with a 0ms delay
+[client-debug] 2026-01-24T00:19:09.587Z Building an upload list...
+[client-debug] 2026-01-24T00:19:09.588Z Starting upload
+[client-debug] 2026-01-24T00:19:09.589Z POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:19:09.590Z POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:19:09.591Z POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:19:09.591Z POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+> [debug] [2026-01-24T00:19:09.594Z] Spinner invoked (Uploading [======--------------] (2.9KB/8.3KB)) with a 0ms delay
+> [debug] [2026-01-24T00:19:09.594Z] Spinner invoked (Uploading [===========---------] (4.6KB/8.3KB)) with a 0ms delay
+> [debug] [2026-01-24T00:19:09.594Z] Spinner invoked (Uploading [====================] (8.3KB/8.3KB)) with a 0ms delay
+[client-debug] 2026-01-24T00:19:09.907Z DONE in 318ms: POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:19:09.907Z File 3569e548409ff00976e8a2e91b179a8f90aec2dc (C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\upgrades\UPGRADE_2026-01-24_FIX_MARKETING_PRERENDER_AND_REDEPLOY.ps1) uploaded
+[client-debug] 2026-01-24T00:19:09.907Z Yielding a 'file-uploaded' event
+> [debug] [2026-01-24T00:19:09.907Z] Uploaded: C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\upgrades\UPGRADE_2026-01-24_FIX_MARKETING_PRERENDER_AND_REDEPLOY.ps1 (2.87KB)
+[client-debug] 2026-01-24T00:19:09.913Z DONE in 323ms: POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:19:09.913Z File e3bb102b1845d9c6895b961facb0beac160b0fbb (C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\build-output-full.txt) uploaded
+[client-debug] 2026-01-24T00:19:09.913Z Yielding a 'file-uploaded' event
+> [debug] [2026-01-24T00:19:09.913Z] Uploaded: C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\build-output-full.txt (1.7KB)
+[client-debug] 2026-01-24T00:19:10.230Z DONE in 639ms: POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:19:10.230Z File 96a3f017212c82f39108cd55ff02febd030cfbf2 (C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\src\app\(marketing)\use-cases\page.tsx) uploaded
+[client-debug] 2026-01-24T00:19:10.230Z Yielding a 'file-uploaded' event
+> [debug] [2026-01-24T00:19:10.230Z] Uploaded: C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\src\app\(marketing)\use-cases\page.tsx (1.49KB)
+[client-debug] 2026-01-24T00:19:10.412Z DONE in 821ms: POST https://api.vercel.com/v2/files?teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:19:10.413Z File c2f7187a054aa20bc95b36232bf822232254d14b (C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\src\app\(marketing)\templates\page.tsx) uploaded
+[client-debug] 2026-01-24T00:19:10.413Z Yielding a 'file-uploaded' event
+> [debug] [2026-01-24T00:19:10.413Z] Uploaded: C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\src\app\(marketing)\templates\page.tsx (2.25KB)
+[client-debug] 2026-01-24T00:19:10.413Z All files uploaded
+[client-debug] 2026-01-24T00:19:10.413Z Yielding a 'all-files-uploaded' event
+[client-debug] 2026-01-24T00:19:10.413Z Starting deployment creation
+[client-debug] 2026-01-24T00:19:10.413Z Creating deployment
+[client-debug] 2026-01-24T00:19:10.417Z Sending deployment creation API request
+[client-debug] 2026-01-24T00:19:11.689Z Deployment response: {"alias":["my-saas-app-5eyw-craig-cantys-projects.vercel.app","my-saas-app-5eyw-ccantynz-9622-craig-cantys-projects.vercel.app"],"aliasAssigned":false,"automaticAliases":["my-saas-app-5eyw-craig-cantys-projects.vercel.app","my-saas-app-5eyw-ccantynz-9622-craig-cantys-projects.vercel.app"],"bootedAt":1769213949569,"buildingAt":1769213949569,"buildSkipped":false,"createdAt":1769213949569,"creator":{"uid":"qetqotxVcmydQ4gC8d7uaGzW","username":"ccantynz-9622"},"id":"dpl_D3d9cHrybonrU7ucNeNP9hizufRE","name":"my-saas-app-5eyw","meta":{"githubCommitAuthorName":"ccantynz-alt","githubCommitAuthorEmail":"ccantynz@gmail.com","githubCommitMessage":"fix(marketing): stop prerender crashes + cleanup stray deploy proof ts","githubCommitOrg":"ccantynz-alt","githubCommitRef":"main","githubCommitRepo":"my-saas-app","githubCommitSha":"dc05d3d157690548e013c764d610e7e65c6766c8","githubDeployment":"1","githubOrg":"ccantynz-alt","githubRepo":"my-saas-app","gitDirty":"1"},"originCacheRegion":"iad1","project":{"id":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","name":"my-saas-app-5eyw","framework":"nextjs"},"public":false,"readyState":"INITIALIZING","regions":["iad1"],"source":"cli","status":"INITIALIZING","target":"production","team":{"id":"team_zMGIW1l1T0jHJWu98ANKZORN","name":"Craig Canty's projects","slug":"craig-cantys-projects","avatar":"d2215fb18ff0412454f6f7c85db1ee7d1709e751"},"type":"LAMBDAS","url":"my-saas-app-5eyw-3iv2x59g1-craig-cantys-projects.vercel.app","version":2,"previewCommentsEnabled":true,"oidcTokenClaims":{"sub":"owner:craig-cantys-projects:project:my-saas-app-5eyw:environment:production","iss":"https://oidc.vercel.com/craig-cantys-projects","scope":"owner:craig-cantys-projects:project:my-saas-app-5eyw:environment:production","aud":"https://vercel.com/craig-cantys-projects","owner":"craig-cantys-projects","owner_id":"team_zMGIW1l1T0jHJWu98ANKZORN","project":"my-saas-app-5eyw","project_id":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","environment":"production","plan":"pro"},"lambdas":[{"id":"bld_c8jgoiz08","createdAt":1769213949790,"entrypoint":".","readyState":"READY","readyStateAt":1769213949790,"output":[]}],"aliasAssignedAt":null,"build":{"env":[]},"builds":[],"createdIn":"sfo1","env":[],"functions":null,"inspectorUrl":"https://vercel.com/craig-cantys-projects/my-saas-app-5eyw/D3d9cHrybonrU7ucNeNP9hizufRE","isInConcurrentBuildsQueue":false,"isInSystemBuildsQueue":true,"ownerId":"team_zMGIW1l1T0jHJWu98ANKZORN","plan":"pro","projectId":"prj_nL5nvt9I9bFRudpBSkA65xUXdVZX","projectSettings":{"buildCommand":"npm run vercel-build","devCommand":null,"framework":"nextjs","commandForIgnoringBuildStep":"","installCommand":"npm install --legacy-peer-deps","outputDirectory":null,"speedInsights":{"id":"hT4fsACp3hAIE3oHtGAb2HSn63a","hasData":false},"webAnalytics":{"id":"wzf6Vr0vepbZbFQMzYesSVnUg"},"nodeVersion":"20.x"},"routes":null,"integrations":{"status":"ready","startedAt":1769213949539,"completedAt":1769213949539},"config":{"version":1,"secureComputePrimaryRegion":null,"secureComputeFallbackRegion":null,"functionTimeout":300,"functionType":"fluid","functionMemoryType":"standard","isUsingActiveCPU":true}}
+[client-debug] 2026-01-24T00:19:11.689Z Deployment created
+[client-debug] 2026-01-24T00:19:11.689Z Yielding a 'created' event
+Inspect: https://vercel.com/craig-cantys-projects/my-saas-app-5eyw/D3d9cHrybonrU7ucNeNP9hizufRE [3s]
+Production: https://my-saas-app-5eyw-3iv2x59g1-craig-cantys-projects.vercel.app [3s]
+https://my-saas-app-5eyw-3iv2x59g1-craig-cantys-projects.vercel.app> [debug] [2026-01-24T00:19:11.689Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:19:11.689Z] Spinner invoked (Building...) with a 0ms delay
+> [debug] [2026-01-24T00:19:11.690Z] #4 → GET https://api.vercel.com/v2/user
+[client-debug] 2026-01-24T00:19:11.690Z Waiting for deployment to be ready...
+[client-debug] 2026-01-24T00:19:11.690Z Waiting for builds and the deployment to complete...
+> [debug] [2026-01-24T00:19:11.892Z] #4 ← 200 OK: sfo1::x9fh7-1769213950308-3ab9f4e77287 [202ms]
+> [debug] [2026-01-24T00:19:11.892Z] Valid access token, skipping token refresh.
+> [debug] [2026-01-24T00:19:11.893Z] #5 → GET https://api.vercel.com/v3/now/deployments/dpl_D3d9cHrybonrU7ucNeNP9hizufRE/events?direction=forward&follow=1&format=lines&teamId=team_zMGIW1l1T0jHJWu98ANKZORN
+[client-debug] 2026-01-24T00:19:13.523Z Deployment state changed to BUILDING
+[client-debug] 2026-01-24T00:19:13.523Z Yielding a 'building' event
+> [debug] [2026-01-24T00:19:13.523Z] Spinner invoked (Building...) with a 0ms delay
+> [debug] [2026-01-24T00:19:14.217Z] #5 ← 200 OK: sfo1::x9fh7-1769213950507-322ca149fc8d [2.32s]
+> [debug] [2026-01-24T00:19:14.219Z] Spinner invoked (Building: Running build in Portland, USA (West) – pdx1) with a 0ms delay
+> [debug] [2026-01-24T00:19:14.220Z] Spinner invoked (Building: Build machine configuration: 4 cores, 8 GB) with a 0ms delay
+> [debug] [2026-01-24T00:19:14.220Z] Spinner invoked (Building: Retrieving list of deployment files...) with a 0ms delay
+> [debug] [2026-01-24T00:19:14.220Z] Spinner invoked (Building: Skipping build cache, deployment was triggered without cache.) with a 0ms delay
+> [debug] [2026-01-24T00:19:14.220Z] Spinner invoked (Building: Downloading 328 deployment files...) with a 0ms delay
+> [debug] [2026-01-24T00:19:17.319Z] Spinner invoked (Building: Running "vercel build") with a 0ms delay
+> [debug] [2026-01-24T00:19:17.320Z] Spinner invoked (Building: Vercel CLI 50.4.10) with a 0ms delay
+> [debug] [2026-01-24T00:19:18.350Z] Spinner invoked (Building: Running "install" command: `npm install --legacy-peer-deps`...) with a 0ms delay
+> [debug] [2026-01-24T00:19:20.419Z] Spinner invoked (Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported) with a 0ms delay
+> [debug] [2026-01-24T00:19:20.419Z] Spinner invoked (Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.) with a 0ms delay
+> [debug] [2026-01-24T00:19:21.449Z] Spinner invoked (Building: npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead) with a 0ms delay
+> [debug] [2026-01-24T00:19:21.449Z] Spinner invoked (Building: npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead) with a 0ms delay
+> [debug] [2026-01-24T00:19:21.449Z] Spinner invoked (Building: npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead) with a 0ms delay
+> [debug] [2026-01-24T00:19:21.449Z] Spinner invoked (Building: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported) with a 0ms delay
+> [debug] [2026-01-24T00:19:23.515Z] Spinner invoked (Building: npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.918Z] Spinner invoked (Building: npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.918Z] Spinner invoked (Building: added 423 packages, and audited 424 packages in 16s) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: 151 packages are looking for funding) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: run `npm fund` for details) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: 4 vulnerabilities (3 high, 1 critical)) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: To address all issues (including breaking changes), run:) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: npm audit fix --force) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: Run `npm audit` for details.) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: Detected Next.js version: 14.2.5) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: Running "npm run vercel-build") with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: > my-saas-app@0.1.0 vercel-build) with a 0ms delay
+> [debug] [2026-01-24T00:19:34.919Z] Spinner invoked (Building: > next build) with a 0ms delay
+> [debug] [2026-01-24T00:19:35.938Z] Spinner invoked (Building: Attention: Next.js now collects completely anonymous telemetry regarding usage.) with a 0ms delay
+> [debug] [2026-01-24T00:19:35.938Z] Spinner invoked (Building: This information is used to shape Next.js' roadmap and prioritize features.) with a 0ms delay
+> [debug] [2026-01-24T00:19:35.938Z] Spinner invoked (Building: You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:) with a 0ms delay
+> [debug] [2026-01-24T00:19:35.938Z] Spinner invoked (Building: https://nextjs.org/telemetry) with a 0ms delay
+> [debug] [2026-01-24T00:19:35.939Z] Spinner invoked (Building: ▲ Next.js 14.2.5) with a 0ms delay
+> [debug] [2026-01-24T00:19:35.939Z] Spinner invoked (Building: Creating an optimized production build ...) with a 0ms delay
+> [debug] [2026-01-24T00:19:42.138Z] Spinner invoked (Building: ⚠ Compiled with warnings) with a 0ms delay
+> [debug] [2026-01-24T00:19:42.138Z] Spinner invoked (Building: ./src/app/(marketing)/templates/page.tsx) with a 0ms delay
+> [debug] [2026-01-24T00:19:42.138Z] Spinner invoked (Building: Attempted import error: 'TEMPLATES' is not exported from '@/src/lib/marketing/catalog' (imported as 'TEMPLATES').) with a 0ms delay
+> [debug] [2026-01-24T00:19:42.138Z] Spinner invoked (Building: Import trace for requested module:) with a 0ms delay
+> [debug] [2026-01-24T00:19:42.138Z] Spinner invoked (Building: ./src/app/(marketing)/templates/page.tsx) with a 0ms delay
+> [debug] [2026-01-24T00:19:42.138Z] Spinner invoked (Building: ./src/app/(marketing)/use-cases/page.tsx) with a 0ms delay
+> [debug] [2026-01-24T00:19:42.138Z] Spinner invoked (Building: Attempted import error: 'USE_CASES' is not exported from '@/src/lib/marketing/catalog' (imported as 'USE_CASES').) with a 0ms delay
+> [debug] [2026-01-24T00:19:42.138Z] Spinner invoked (Building: Import trace for requested module:) with a 0ms delay
+> [debug] [2026-01-24T00:19:42.138Z] Spinner invoked (Building: ./src/app/(marketing)/use-cases/page.tsx) with a 0ms delay
+> [debug] [2026-01-24T00:19:48.333Z] Spinner invoked (Building: ✓ Compiled successfully) with a 0ms delay
+> [debug] [2026-01-24T00:19:48.334Z] Spinner invoked (Building: Skipping validation of types) with a 0ms delay
+> [debug] [2026-01-24T00:19:48.334Z] Spinner invoked (Building: Skipping linting) with a 0ms delay
+> [debug] [2026-01-24T00:19:48.334Z] Spinner invoked (Building: Collecting page data ...) with a 0ms delay
+> [debug] [2026-01-24T00:19:49.367Z] Spinner invoked (Building: Generating static pages (0/46) ...) with a 0ms delay
+> [debug] [2026-01-24T00:19:49.367Z] Spinner invoked (Building: Generating static pages (11/46)) with a 0ms delay
+> [debug] [2026-01-24T00:19:49.367Z] Spinner invoked (Building: Generating static pages (22/46)) with a 0ms delay
+> [debug] [2026-01-24T00:19:49.367Z] Spinner invoked (Building: Generating static pages (34/46)) with a 0ms delay
+> [debug] [2026-01-24T00:19:49.367Z] Spinner invoked (Building: ✓ Generating static pages (46/46)) with a 0ms delay
+> [debug] [2026-01-24T00:19:52.465Z] Spinner invoked (Building: Finalizing page optimization ...) with a 0ms delay
+> [debug] [2026-01-24T00:19:52.465Z] Spinner invoked (Building: Collecting build traces ...) with a 0ms delay
+[client-debug] 2026-01-24T00:20:00.113Z Yielding a 'error' event
+> [debug] [2026-01-24T00:20:00.115Z] Error: Error: ENOENT: no such file or directory, lstat '/vercel/path0/.next/server/app/(marketing)/page_client-reference-manifest.js'
+Error: ENOENT: no such file or directory, lstat '/vercel/path0/.next/server/app/(marketing)/page_client-reference-manifest.js'
     at Now.handleDeploymentError (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:153225:16)
     at processDeployment (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:152963:34)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
@@ -231,7 +144,7 @@ Error: Command "npm run vercel-build" exited with 1
     at async createDeploy (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:153371:12)
     at async deploy_default (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:154283:22)
     at async main18 (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:191812:19)
-> [debug] [2026-01-24T00:16:36.264Z] handling error: Error: Command "npm run vercel-build" exited with 1
+> [debug] [2026-01-24T00:20:00.115Z] handling error: Error: ENOENT: no such file or directory, lstat '/vercel/path0/.next/server/app/(marketing)/page_client-reference-manifest.js'
     at Now.handleDeploymentError (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:153225:16)
     at processDeployment (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:152963:34)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
@@ -239,8 +152,8 @@ Error: Command "npm run vercel-build" exited with 1
     at async createDeploy (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:153371:12)
     at async deploy_default (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:154283:22)
     at async main18 (C:\Users\ccant\AppData\Roaming\npm\node_modules\vercel\dist\index.js:191812:19)
-Error: Command "npm run vercel-build" exited with 1
-> [debug] [2026-01-24T00:16:37.203Z] Vercel CLI 50.1.6
+Error: ENOENT: no such file or directory, lstat '/vercel/path0/.next/server/app/(marketing)/page_client-reference-manifest.js'
+> [debug] [2026-01-24T00:20:01.041Z] Vercel CLI 50.1.6
 
-> [debug] [2026-01-24T00:16:37.814Z] Telemetry event tracked
-> [debug] [2026-01-24T00:16:37.826Z] Telemetry subprocess exited with code 0
+> [debug] [2026-01-24T00:20:01.636Z] Telemetry event tracked
+> [debug] [2026-01-24T00:20:01.651Z] Telemetry subprocess exited with code 0

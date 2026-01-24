@@ -1,4 +1,4 @@
-export type MarketingTemplate = {
+﻿export type MarketingTemplate = {
   slug: string;
   name: string;
   description: string;
@@ -38,7 +38,7 @@ export const templates: MarketingTemplate[] = [
     slug: "ecommerce-lite",
     name: "Ecommerce Lite",
     description:
-      "Showcase products, collections, and trust signals — even without a full store build.",
+      "Showcase products, collections, and trust signals â€” even without a full store build.",
     includes: ["Home", "Collections", "Product Highlights", "Shipping", "FAQs", "Contact"],
   },
   {
@@ -196,4 +196,5 @@ export const useCases: MarketingUseCase[] = [
       "Strong conversion CTA placement",
     ],
   },
-];
+];export const USE_CASES = useCases;
+

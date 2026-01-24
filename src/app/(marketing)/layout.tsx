@@ -1,9 +1,10 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { marketingFooter, marketingNav, marketingRoutes } from "@/src/lib/marketing/routes";
+import ClientBoundary from "@/src/components/marketing/ClientBoundary";
 
 export const metadata = {
   title: "Dominat8",
-  description: "AI website automation builder — generate, optimize, and publish with agents.",
+  description: "AI website automation builder â€” generate, optimize, and publish with agents.",
 };
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
@@ -61,7 +62,8 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main>{children}</main>
+      <main>{children}
+  <ClientBoundary /></main>
 
       <footer className="mt-16 border-t border-black/10">
         <div className="mx-auto w-full max-w-6xl px-6 py-10">
@@ -69,7 +71,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <div>
               <div className="text-sm font-semibold">Dominat8</div>
               <div className="mt-2 text-sm opacity-70">
-                AI website automation builder — generate, optimize, publish.
+                AI website automation builder â€” generate, optimize, publish.
               </div>
             </div>
 
@@ -79,7 +81,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
                   {f.label}
                 </Link>
               ))}
-              <div className="text-sm opacity-50">© {new Date().getFullYear()} Dominat8</div>
+              <div className="text-sm opacity-50">Â© {new Date().getFullYear()} Dominat8</div>
             </div>
           </div>
         </div>
