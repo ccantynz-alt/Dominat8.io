@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 
-const BUILD_STAMP = "BUILD_20260124_211945";
+const BUILD_STAMP = "BUILD_20260124_212756";
+const LIVE_MARKER = "LIVE_MARKER_FULLBLEED_20260124_212756";
 
 function Pill({ children }: { children: React.ReactNode }) {
   return (
@@ -52,7 +53,7 @@ export default function MarketingHomePage() {
       <div className="sr-only">HOME_OK</div>
 
       {/* ===== HERO (flagship / premium / calm) ===== */}
-      <section className="relative flex min-h-screen w-screen items-center overflow-hidden">
+      <section className="relative flex min-h-[100svh] w-screen items-center overflow-hidden">
   {/* Background */}
   <div className="absolute inset-0">
     <div className="absolute inset-0 bg-black" />
@@ -62,63 +63,63 @@ export default function MarketingHomePage() {
   </div>
 
   {/* Content */}
-  <div className="relative mx-auto w-full px-8 md:px-20">
-    <div className="grid items-center gap-12 md:grid-cols-12">
-      <div className="md:col-span-7">
-        <div className="flex flex-wrap gap-2">
-          <Pill>Flagship calm</Pill>
-          <Pill>Premium by default</Pill>
-          <Pill>Publishable instantly</Pill>
-        </div>
-
-        <h1 className="mt-8 text-[clamp(3rem,6vw,5.5rem)] font-semibold leading-[1.05] tracking-tight text-white">
-          Build a website that
-          <span className="block text-white/85">feels expensive</span>
-          from the first scroll.
-        </h1>
-
-        <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/70">
-          Dominat8 creates calm, flagship-quality homepages that earn trust instantly —
-          then helps you grow into pages, SEO, and real conversions.
-        </p>
-
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <a
-            href="/app"
-            className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-sm font-semibold text-black hover:bg-white/90"
-          >
-            Start building
-          </a>
-
-          <a
-            href="/preview/marketing"
-            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-8 py-4 text-sm font-semibold text-white hover:bg-white/[0.12]"
-          >
-            See a live example
-          </a>
-        </div>
-
-        <div className="mt-10 text-sm text-white/45">
-          Calm. Confident. Built to convert.
-        </div>
+  <div className="relative w-full px-8 md:px-20">
+    <div className="mx-auto max-w-6xl">
+      <div className="mb-6 text-center text-[11px] tracking-[0.22em] text-white/35">
+        BUILD_STAMP: {BUILD_STAMP} • {LIVE_MARKER}
       </div>
 
-      {/* Minimal right-side frame */}
-      <div className="hidden md:col-span-5 md:block">
-        <div className="rounded-[36px] border border-white/10 bg-white/[0.04] p-6 shadow-sm">
-          <div className="rounded-[28px] border border-white/10 bg-black/40 p-6">
-            <div className="h-3 w-24 rounded-full bg-white/20" />
-            <div className="mt-4 h-8 w-3/4 rounded-lg bg-white/15" />
-            <div className="mt-4 h-4 w-full rounded-lg bg-white/10" />
-            <div className="mt-3 h-4 w-11/12 rounded-lg bg-white/10" />
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              <div className="h-20 rounded-2xl bg-white/10" />
-              <div className="h-20 rounded-2xl bg-white/10" />
+      <div className="grid items-center gap-12 md:grid-cols-12">
+        <div className="md:col-span-7">
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-white/70">Flagship calm</span>
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-white/70">Premium by default</span>
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-white/70">Publishable instantly</span>
+          </div>
+
+          <h1 className="mt-8 text-[clamp(3rem,6vw,5.5rem)] font-semibold leading-[1.05] tracking-tight text-white">
+            Build a website that
+            <span className="block text-white/85">feels expensive</span>
+            from the first scroll.
+          </h1>
+
+          <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/70">
+            Dominat8 creates calm, flagship-quality homepages that earn trust instantly —
+            then helps you grow into pages, SEO, and real conversions.
+          </p>
+
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+            <a href="/app" className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-sm font-semibold text-black hover:bg-white/90">
+              Start building
+            </a>
+            <a href="/preview/marketing" className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-8 py-4 text-sm font-semibold text-white hover:bg-white/[0.12]">
+              See a live example
+            </a>
+          </div>
+
+          <div className="mt-10 text-sm text-white/45">
+            Calm. Confident. Built to convert.
+          </div>
+        </div>
+
+        <div className="hidden md:col-span-5 md:block">
+          <div className="rounded-[36px] border border-white/10 bg-white/[0.04] p-6 shadow-sm">
+            <div className="rounded-[28px] border border-white/10 bg-black/40 p-6">
+              <div className="h-3 w-24 rounded-full bg-white/20" />
+              <div className="mt-4 h-8 w-3/4 rounded-lg bg-white/15" />
+              <div className="mt-4 h-4 w-full rounded-lg bg-white/10" />
+              <div className="mt-3 h-4 w-11/12 rounded-lg bg-white/10" />
+              <div className="mt-6 grid grid-cols-2 gap-4">
+                <div className="h-20 rounded-2xl bg-white/10" />
+                <div className="h-20 rounded-2xl bg-white/10" />
+              </div>
+              <div className="mt-6 h-12 rounded-2xl bg-white/15" />
             </div>
-            <div className="mt-6 h-12 rounded-2xl bg-white/15" />
           </div>
         </div>
       </div>
+
+      <div className="sr-only">HOME_OK</div>
     </div>
   </div>
 </section>
@@ -329,4 +330,5 @@ export default function MarketingHomePage() {
     </main>
   );
 }
+
 
