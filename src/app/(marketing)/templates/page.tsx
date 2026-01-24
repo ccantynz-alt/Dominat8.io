@@ -1,64 +1,37 @@
-﻿export const dynamic = "force-dynamic";
-
-import type { Metadata } from "next";
-import Link from "next/link";
 import MarketingCTA from "@/src/components/marketing/MarketingCTA";
-import { TEMPLATES } from "@/src/lib/marketing/catalog";
 
-export const metadata: Metadata = {
-  title: "Templates — Dominat8",
-  description: "Pick a template direction and generate a full site with AI.",
-};
+const templates = [
+  { name: "AI SaaS Website", desc: "Clean SaaS landing, features, pricing, FAQs, and a strong CTA." },
+  { name: "Local Service", desc: "Book calls, show service areas, testimonials, and conversion-first layout." },
+  { name: "Portfolio", desc: "Case studies, about, contact, and a minimalist hero." },
+  { name: "E-commerce Starter", desc: "Simple product highlights, benefits, and trust building." },
+  { name: "Creator / Newsletter", desc: "Subscribe-first layout with social proof and content blocks." },
+  { name: "Consulting", desc: "Authority-driven page with offers, outcomes, and booking CTA." },
+];
 
 export default function TemplatesPage() {
   return (
-    <div>
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <h1 className="text-4xl font-semibold tracking-tight">Templates</h1>
-        <p className="mt-3 max-w-2xl text-sm opacity-80">
-          Choose a starting point. Dominat8 generates the site structure, copy blocks, and SEO plan.
+    <div className="space-y-10">
+      <section className="rounded-3xl border bg-white p-8 shadow-sm">
+        <h1 className="text-3xl font-semibold tracking-tight">Templates</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 opacity-80">
+          Start from a strong baseline. Next upgrade can wire this to your KV catalog and agent-generated specs.
         </p>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {TEMPLATES.map((t) => (
-            <div key={t.slug} className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="text-lg font-semibold">{t.name}</div>
-              <div className="mt-2 text-sm opacity-80">{t.description}</div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {t.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-white/15 bg-black/30 px-2 py-1 text-xs opacity-80"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-6 flex gap-3">
-                <Link
-                  href="/sign-up"
-                  className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-black hover:opacity-90 transition"
-                >
-                  Use this template
-                </Link>
-                <Link
-                  href="/use-cases"
-                  className="rounded-2xl border border-white/20 px-4 py-2 text-sm hover:bg-white/10 transition"
-                >
-                  Browse use cases
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
       </section>
 
-      <MarketingCTA
-        title="Want a custom layout?"
-        subtitle="Start with a template, then let the agents refine copy, structure, and SEO."
-      />
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {templates.map((t) => (
+          <div key={t.name} className="rounded-3xl border bg-white p-6 shadow-sm">
+            <div className="text-sm font-semibold">{t.name}</div>
+            <p className="mt-2 text-sm leading-6 opacity-80">{t.desc}</p>
+            <a href="/pricing" className="mt-4 inline-flex rounded-xl border px-4 py-2 text-sm font-medium">
+              Use this template →
+            </a>
+          </div>
+        ))}
+      </section>
+
+      <MarketingCTA />
     </div>
   );
 }
-
-

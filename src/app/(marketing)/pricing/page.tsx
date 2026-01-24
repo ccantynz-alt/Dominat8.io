@@ -1,71 +1,86 @@
-import Link from "next/link";
 import MarketingCTA from "@/src/components/marketing/MarketingCTA";
-import ComparisonTable from "@/src/components/marketing/blocks/ComparisonTable";
 
-export const metadata = {
-  title: "Pricing — Dominat8",
-  description: "Simple pricing for Dominat8. Start free, upgrade when you need automation + custom domains.",
-};
+function PriceCard({
+  name,
+  price,
+  desc,
+  bullets,
+  cta,
+  emphasis,
+}: {
+  name: string;
+  price: string;
+  desc: string;
+  bullets: string[];
+  cta: string;
+  emphasis?: boolean;
+}) {
+  return (
+    <div className={"rounded-3xl border bg-white p-7 shadow-sm " + (emphasis ? "ring-2 ring-black" : "")}>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-sm font-semibold">{name}</div>
+          <div className="mt-2 text-4xl font-semibold tracking-tight">{price}</div>
+        </div>
+        {emphasis ? (
+          <div className="rounded-full bg-black px-3 py-1 text-xs font-medium text-white">Recommended</div>
+        ) : null}
+      </div>
+      <p className="mt-3 text-sm leading-6 opacity-80">{desc}</p>
+      <ul className="mt-5 space-y-2 text-sm">
+        {bullets.map((b) => (
+          <li key={b} className="flex gap-2">
+            <span className="mt-[6px] inline-block h-2 w-2 shrink-0 rounded-full bg-black" />
+            <span className="opacity-90">{b}</span>
+          </li>
+        ))}
+      </ul>
+      <a
+        href="/templates"
+        className={"mt-6 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium " + (emphasis ? "bg-black text-white" : "border")}
+      >
+        {cta}
+      </a>
+    </div>
+  );
+}
 
 export default function PricingPage() {
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10">
-      <div className="mb-6">
-        <Link href="/" className="text-sm opacity-70 hover:opacity-100">
-          ← Back home
-        </Link>
-      </div>
-
-      <h1 className="text-3xl font-semibold tracking-tight">Pricing</h1>
-      <p className="mt-3 text-base opacity-80">
-        Start free. Upgrade when you want full automation and custom domain publishing.
-      </p>
-
-      <section className="mt-8 grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-          <div className="text-sm font-semibold">Free</div>
-          <div className="mt-2 text-3xl font-semibold">$0</div>
-          <div className="mt-1 text-sm opacity-70">For trying it out</div>
-
-          <ul className="mt-5 space-y-2 text-sm opacity-80">
-            <li>• Generate a website draft</li>
-            <li>• Explore templates + use-cases</li>
-            <li>• Limited SEO outputs</li>
-          </ul>
-
-          <div className="mt-6">
-            <Link
-              href="/sign-up"
-              className="inline-flex w-full items-center justify-center rounded-md border border-black/20 px-5 py-3 text-sm hover:bg-black/[0.02]"
-            >
-              Start free
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-black/10 bg-black text-white p-6 shadow-sm">
-          <div className="text-sm font-semibold">Pro</div>
-          <div className="mt-2 text-3xl font-semibold">$29</div>
-          <div className="mt-1 text-sm opacity-80">Per month (starter)</div>
-
-          <ul className="mt-5 space-y-2 text-sm opacity-90">
-            <li>• Full SEO outputs (metadata + sitemap)</li>
-            <li>• Conversion pass (pricing + FAQs + CTAs)</li>
-            <li>• Custom domain publishing</li>
-            <li>• Automation / pipeline runs</li>
-          </ul>
-
-          <div className="mt-6">
-            <MarketingCTA />
-          </div>
-
-          <div className="mt-3 text-xs opacity-70">
-            Replace price/features to match your Stripe plans.
-          </div>
-        </div>
+    <div className="space-y-10">
+      <section className="rounded-3xl border bg-white p-8 shadow-sm">
+        <h1 className="text-3xl font-semibold tracking-tight">Pricing</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 opacity-80">
+          Simple tiers for a fast build loop. This is a baseline — wire Stripe plan gating next.
+        </p>
       </section>
 
-      <ComparisonTable />
-    </main>
+      <section className="grid gap-4 lg:grid-cols-3">
+        <PriceCard
+          name="Free"
+          price="$0"
+          desc="Perfect for exploring templates and generating drafts."
+          bullets={["Template browsing", "Draft generation baseline", "Proof endpoints for deploy checks"]}
+          cta="Start free"
+        />
+        <PriceCard
+          name="Pro"
+          price="$29"
+          desc="For shipping real sites with faster iteration and better polish."
+          bullets={["More generation runs", "Priority pipeline", "Advanced SEO steps (next upgrade)"]}
+          cta="Go Pro"
+          emphasis
+        />
+        <PriceCard
+          name="Agency"
+          price="Custom"
+          desc="Multiple clients, domains, and workflows."
+          bullets={["Multi-project management", "Custom domain flows", "SLA + support"]}
+          cta="Talk to us"
+        />
+      </section>
+
+      <MarketingCTA title="Ready to ship?" subtitle="Pick a template and start iterating with the boom loop." />
+    </div>
   );
 }
