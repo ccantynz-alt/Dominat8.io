@@ -1,30 +1,35 @@
-const faqs = [
-  {
-    q: "Is this a template?",
-    a: "It starts from a template, but the goal is repeatable structure and a pipeline that generates the full site coherently.",
-  },
-  {
-    q: "How do I know / is really live?",
-    a: "Your truth test checks for HOME_OK on /. If it appears and _not-found does not, you’re live.",
-  },
-  {
-    q: "What’s the next big jump after this?",
-    a: "Gallery pages + case studies + stronger proof blocks, then SEO/sitemap polish and publish flows.",
-  },
-];
+﻿import * as React from "react";
 
-export default function MarketingFAQ() {
+export type MarketingFaqItem = {
+  q: string;
+  a: string;
+};
+
+export type MarketingFAQProps = {
+  items: MarketingFaqItem[];
+};
+
+export function MarketingFAQ({ items }: MarketingFAQProps) {
   return (
-    <section className="mt-14">
-      <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">FAQ</h2>
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        {faqs.map((f) => (
-          <div key={f.q} className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm">
-            <div className="text-base font-semibold">{f.q}</div>
-            <div className="mt-2 text-sm leading-relaxed opacity-75">{f.a}</div>
-          </div>
+    <section className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+      <div className="text-sm font-semibold opacity-90">FAQ</div>
+
+      <div className="mt-4 grid gap-3">
+        {items.map((it, idx) => (
+          <details
+            key={idx}
+            className="group rounded-xl border border-white/10 bg-black/[0.18] px-4 py-3"
+          >
+            <summary className="cursor-pointer list-none font-semibold opacity-95">
+              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-white/50 align-middle" />
+              {it.q}
+            </summary>
+            <div className="mt-2 text-sm leading-6 opacity-80">{it.a}</div>
+          </details>
         ))}
       </div>
     </section>
   );
 }
+
+export default MarketingFAQ;

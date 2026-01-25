@@ -1,7 +1,47 @@
+﻿Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+function Fail([string]$m) { throw "ERROR: $m" }
+function Info([string]$m) { Write-Host $m -ForegroundColor Cyan }
+function Ok([string]$m) { Write-Host $m -ForegroundColor Green }
+function Warn([string]$m) { Write-Host $m -ForegroundColor Yellow }
+
+if (-not (Test-Path -LiteralPath ".git")) { Fail "Run from repo root (folder with .git)." }
+
+$repo = (git config --get remote.origin.url)
+Info "Repo: $repo"
+
+# Ensure main and up to date
+$branch = (git rev-parse --abbrev-ref HEAD).Trim()
+if ($branch -ne "main") { Info "Switching to main"; git checkout main | Out-Host }
+
+Info "Fetching + syncing origin/main..."
+git fetch origin | Out-Host
+git pull --ff-only origin main | Out-Host
+
+$beforeLocal  = (git rev-parse HEAD).Trim()
+$beforeRemote = (git rev-parse origin/main).Trim()
+Info "BEFORE  local HEAD : $beforeLocal"
+Info "BEFORE  origin/main: $beforeRemote"
+
+# ===== WRITE HOMEPAGE (INLINE-SAFE WOW) =====
+$target = ".\src\app\page.tsx"
+New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
+
+$stamp   = (Get-Date -Format "yyyyMMdd_HHmmss")
+$buildId = "BUILD_ID_" + $stamp
+$buildIso = (Get-Date).ToUniversalTime().ToString("o")
+
+if (Test-Path -LiteralPath $target) {
+  Copy-Item -LiteralPath $target -Destination ".\src\app\page.tsx.bak_DEPLOY_PROOF_$stamp" -Force
+  Warn "Backup created: .\src\app\page.tsx.bak_DEPLOY_PROOF_$stamp"
+}
+
+$tsx = @"
 export const dynamic = "force-dynamic";
 
 export default function HomePage() {
-  const BUILD_ID = "BUILD_ID_20260125_163131";
+  const BUILD_ID = "$buildId";
   return (
     <main style={{
       minHeight: "100vh",
@@ -63,3 +103,55 @@ export default function HomePage() {
     </main>
   );
 }
+"@
+
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText((Resolve-Path -LiteralPath $target), $tsx, $utf8NoBom)
+Ok "WROTE page.tsx (marker $buildId)"
+
+# ===== LOCAL BUILD GATE =====
+Info "Build gate: npm run build"
+npm run build | Out-Host
+if ($LASTEXITCODE -ne 0) { Fail "Local build failed. Not committing or pushing." }
+Ok "Local build PASSED"
+
+# ===== COMMIT + PUSH =====
+git add -A | Out-Host
+$st = (git status --porcelain)
+if ([string]::IsNullOrWhiteSpace($st)) { Fail "No changes detected; nothing to commit." }
+
+$commitMsg = "feat(homepage): deploy-proof marker $buildId"
+git commit -m $commitMsg | Out-Host
+
+$afterLocal = (git rev-parse HEAD).Trim()
+Info "AFTER   local HEAD : $afterLocal"
+
+Info "Pushing to origin/main (deploy trigger)..."
+git push origin main | Out-Host
+
+git fetch origin | Out-Host
+$afterRemote = (git rev-parse origin/main).Trim()
+Info "AFTER   origin/main: $afterRemote"
+
+if ($afterRemote -ne $afterLocal) { Fail "Push did not update origin/main. Something blocked the push." }
+Ok "Push confirmed on GitHub."
+
+# ===== LIVE VERIFY (vercel.app first, then domain) =====
+Start-Sleep -Seconds 2
+$ts = [int][double]::Parse((Get-Date -UFormat %s))
+
+function GetMarker([string]$url) {
+  $r = Invoke-WebRequest -UseBasicParsing -Uri ($url + "?ts=" + $ts)
+  (($r.Content | Select-String -Pattern "BUILD_ID_[0-9_]+" -AllMatches).Matches.Value | Select-Object -First 1)
+}
+
+Info "Checking live markers (may take a moment if Vercel is building)..."
+$mVercel = GetMarker "https://my-saas-app-5eyw.vercel.app/"
+$mDomain = GetMarker "https://www.dominat8.com/"
+
+Info "LIVE vercel.app marker: $mVercel"
+Info "LIVE domain     marker: $mDomain"
+Warn "Expected marker (new): $buildId"
+Warn "If live marker is still old, Vercel build is still running or failed. Check Vercel build logs for the latest commit hash."
+
+Ok "DEPLOY_PROOF script completed."

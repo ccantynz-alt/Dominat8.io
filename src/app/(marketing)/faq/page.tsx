@@ -1,11 +1,11 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import MarketingCTA from "@/src/components/marketing/MarketingCTA";
-import MarketingFAQ from "@/src/components/marketing/MarketingFAQ";
+import MarketingFAQ from "@/components/marketing/MarketingFAQ";
 import SeoJsonLd from "@/src/components/marketing/SeoJsonLd";
 import { marketingFaq } from "@/src/lib/marketing/faq";
 
 export const metadata = {
-  title: "FAQ — Dominat8",
+  title: "FAQ â€” Dominat8",
   description:
     "Answers to common questions about Dominat8: AI website generation, SEO, publishing, and domains.",
 };
@@ -27,7 +27,7 @@ export default function FaqPage() {
 
       <div className="mb-6">
         <Link href="/" className="text-sm opacity-70 hover:opacity-100">
-          ← Back home
+          â† Back home
         </Link>
       </div>
 
@@ -41,7 +41,7 @@ export default function FaqPage() {
       <section className="mt-10 rounded-2xl border border-black/10 bg-black/[0.02] p-6">
         <div className="text-sm font-semibold">Still have questions?</div>
         <p className="mt-2 text-sm opacity-80">
-          Start free and explore the workflow — you’ll see how the agents generate and refine your site.
+          Start free and explore the workflow â€” youâ€™ll see how the agents generate and refine your site.
         </p>
         <div className="mt-4">
           <MarketingCTA />
