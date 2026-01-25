@@ -1,22 +1,23 @@
 /**
  * marketingMachine/store.ts
- * BUILD-SAFE STUB (TEMP)
- * Marker: MM_STORE_STUB_V2
+ * BUILD-SAFE STUB (TEMP).
+ * Marker: MM_STORE_STUB_V1
+ *
+ * This module is intentionally stubbed to prevent marketingMachine
+ * from blocking homepage deploys while we polish / ship the homepage.
  */
+
 export type MarketingContentItem = any;
 export type MarketingScheduleEntry = any;
 
 export async function createContentItem(..._args: any[]): Promise<any> { return null; }
 export async function createScheduleEntry(..._args: any[]): Promise<any> { return null; }
+
 export async function listCampaigns(..._args: any[]): Promise<any[]> { return []; }
 export async function listSchedules(..._args: any[]): Promise<any[]> { return []; }
+
 export async function getContentItem(..._args: any[]): Promise<any> { return null; }
 export async function getScheduleEntry(..._args: any[]): Promise<any> { return null; }
+
 export async function upsertCampaign(..._args: any[]): Promise<any> { return null; }
 export async function upsertSchedule(..._args: any[]): Promise<any> { return null; }
-
-export async function getCampaign(..._args: any[]): Promise<any> { return null; }
-export async function updateCampaign(..._args: any[]): Promise<any> { return null; }
-
-export async function createCampaign(..._args: any[]): Promise<any> { return null; }
-export async function listCampaigns(..._args: any[]): Promise<any[]> { return []; }
