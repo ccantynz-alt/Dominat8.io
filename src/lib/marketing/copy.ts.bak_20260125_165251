@@ -70,9 +70,3 @@ export const FAQ = [
     a: "A multi-page site structure with homepage, pricing, FAQ, and contact — plus SEO basics and publish-ready output.",
   },
 ] as const;
-
-export const STEPS = [
-  { title: "Brief", desc: "Tell us what you do. We extract structure, tone, and layout rhythm." },
-  { title: "Generate", desc: "Pages + content + components — polished, consistent, and brand-aligned." },
-  { title: "Publish", desc: "SEO, sitemap, and publish artifacts — ready to ship on your domain." }
-] as const;
