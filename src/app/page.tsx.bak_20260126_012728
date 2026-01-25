@@ -13,9 +13,9 @@ export default function Page() {
           position: sticky;
           top: 0;
           z-index: 99999;
-          background: linear-gradient(90deg, rgba(255,255,255,0.98), rgba(255,255,255,0.92));
-          color: #071018;
-          border-bottom: 3px solid rgba(0,0,0,0.20);
+          background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.90));
+          color: #0b1220;
+          border-bottom: 2px solid rgba(0,0,0,0.18);
           font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
           padding: 14px 16px;
         }
@@ -45,11 +45,11 @@ export default function Page() {
 
       <div className="routeProofBanner">
         <div className="routeProofTitle">
-          ✅ ROUTE OK — V31_MARKER_FORCE_DEPLOY
-          <span className="routeProofPill">If you see this, / is updated</span>
+          ✅ ROUTE PURGE ACTIVE — / is now src/app/page.tsx only
+          <span className="routeProofPill">If you see this, routing is fixed</span>
         </div>
         <div className="routeProofMeta">
-          ROOT_STAMP: {stamp}
+          ROOT_STAMP: {stamp} • This banner must be visible at the top of /.
         </div>
       </div>
 
