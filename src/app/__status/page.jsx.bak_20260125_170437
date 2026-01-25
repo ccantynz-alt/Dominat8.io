@@ -22,12 +22,7 @@ export default function StatusPage() {
 
           <div className="mt-6 space-y-3 text-sm">
             <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-              <div className="text-xs font-semibold text-slate-600">BUILD MARKER
-              
-              <div className="mt-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                <div className="text-xs font-semibold text-slate-600">DEPLOY PROOF MARKER</div>
-                <div className="mt-1 font-mono text-slate-950 break-all">D8_DEPLOY_PROOF_2026-01-25T04-04-38Z</div>
-              </div></div>
+              <div className="text-xs font-semibold text-slate-600">BUILD MARKER</div>
               <div className="mt-1 font-mono text-slate-950 break-all">{BUILD_MARKER}</div>
             </div>
 
@@ -61,4 +56,3 @@ export default function StatusPage() {
     </main>
   );
 }
-
