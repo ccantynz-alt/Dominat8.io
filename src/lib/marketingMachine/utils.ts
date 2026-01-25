@@ -27,3 +27,25 @@ export function shortId(prefix = "mm"): string {
   const time = Date.now().toString(36);
   return `${prefix}_${time}_${rnd}`;
 }
+/**
+ * Compatibility export: publisher.ts expects randomId().
+ * Alias to shortId() to keep build green.
+ */
+export function randomId(prefix = "mm"): string {
+  return shortId(prefix);
+}
+/**
+ * Compatibility export: store.ts expects uniq().
+ * Returns a de-duplicated array preserving first-seen order.
+ */
+export function uniq<T>(arr: T[]): T[] {
+  const out: T[] = [];
+  const seen = new Set<unknown>();
+  for (const v of arr ?? []) {
+    if (!seen.has(v)) {
+      seen.add(v);
+      out.push(v);
+    }
+  }
+  return out;
+}

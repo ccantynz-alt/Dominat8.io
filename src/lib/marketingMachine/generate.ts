@@ -31,3 +31,56 @@ export function generateMarketingPageSpec(input: {
     generatedAt: nowIso()
   };
 }
+/**
+ * Compatibility export: store.ts expects generateContentForCampaign().
+ * Returns deterministic, stub-safe content for build + dry-run.
+ */
+export type CampaignInput = {
+  campaignId?: string;
+  topic?: string;
+  intent?: string;
+  slugs?: string[];
+};
+
+export type GeneratedContentItem = {
+  slug: string;
+  title: string;
+  description: string;
+  html: string;
+  spec: MarketingPageSpec;
+};
+
+export async function generateContentForCampaign(input: CampaignInput): Promise<GeneratedContentItem[]> {
+  const slugs = (input.slugs && input.slugs.length ? input.slugs : [
+    input.topic ? slugify(input.topic) : "wow-website-builder",
+    "templates",
+    "use-cases"
+  ]);
+
+  return slugs.map((s) => {
+    const spec = generateMarketingPageSpec({
+      slug: s,
+      title: toTitle(s),
+      description: input.topic
+        ? `Campaign content (stub-safe) for: ${input.topic}`
+        : "Campaign content (stub-safe). Replace generator when ready."
+    });
+
+    const html = `
+      <main style="font-family:system-ui;padding:40px;max-width:900px;margin:0 auto;">
+        <h1>${spec.title}</h1>
+        <p>${spec.description}</p>
+        <hr />
+        <p><strong>Note:</strong> This is deterministic stub content for build safety.</p>
+      </main>
+    `.trim();
+
+    return {
+      slug: s,
+      title: spec.title,
+      description: spec.description,
+      html,
+      spec
+    };
+  });
+}
