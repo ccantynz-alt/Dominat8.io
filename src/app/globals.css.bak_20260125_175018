@@ -1,0 +1,67 @@
+﻿@import "tailwindcss";
+
+/* Dominat8 baseline */
+html, body { height: 100%; }
+body { background: white; color: black; }
+a { text-underline-offset: 3px; }
+
+
+
+/* === Dominat8 Flagship Homepage helpers (safe append) === */
+.d8-grid{
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+.d8-vignette{
+  background: radial-gradient(1200px 700px at 50% 45%, rgba(255,255,255,0.10), transparent 60%);
+  mix-blend-mode: screen;
+}
+/* ============================
+   D8 HERO POLISH ANIMATIONS (v1)
+   - CSS-only micro-motion
+   - Safe: does not require JS
+   ============================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .d8-fade-up, .d8-card-float, .d8-btn-lift { animation: none !important; transition: none !important; transform: none !important; }
+}
+
+@keyframes d8FadeUp {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.d8-fade-up {
+  opacity: 0;
+  animation: d8FadeUp 520ms ease-out forwards;
+}
+
+.d8-delay-0 { animation-delay: 0ms; }
+.d8-delay-1 { animation-delay: 90ms; }
+.d8-delay-2 { animation-delay: 160ms; }
+.d8-delay-3 { animation-delay: 230ms; }
+.d8-delay-4 { animation-delay: 300ms; }
+
+@keyframes d8CardFloat {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+.d8-card-float {
+  animation: d8CardFloat 6.5s ease-in-out infinite;
+}
+
+.d8-btn-lift {
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.d8-btn-lift:hover {
+  transform: translateY(-1px);
+}
+/* D8 thumbnail background helper */
+.d8-thumb-bg {
+  background:
+    radial-gradient(700px circle at 20% 10%, rgba(59,130,246,0.18), transparent 55%),
+    radial-gradient(650px circle at 80% 30%, rgba(16,185,129,0.14), transparent 60%),
+    linear-gradient(to bottom, rgba(255,255,255,0.55), rgba(255,255,255,1));
+}
