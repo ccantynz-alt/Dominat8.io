@@ -41,3 +41,9 @@ export async function getSchedule(..._args: any[]): Promise<any> { return null; 
 export async function updateSchedule(..._args: any[]): Promise<any> { return null; }
 export async function deleteSchedule(..._args: any[]): Promise<any> { return null; }
 
+export async function listPostLogs(..._args: any[]): Promise<any[]> { return []; }
+export async function createPostLog(..._args: any[]): Promise<any> { return null; }
+
+export async function listSchedulesWithContent(..._args: any[]): Promise<any[]> { return []; }
+export async function listScheduleLogs(..._args: any[]): Promise<any[]> { return []; }
+
