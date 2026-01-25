@@ -1,0 +1,34 @@
+import { NextResponse } from "next/server";
+import { getBuildInfo } from "@/lib/buildInfo";
+
+/**
+ * GET /api/__probe__
+ * Marker: BUILD_PROOF_V1
+ *
+ * Super-light health/proof endpoint.
+ * Also disables caching to avoid stale results.
+ */
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  const info = getBuildInfo();
+
+  const res = NextResponse.json(
+    {
+      ok: true,
+      marker: "BUILD_PROOF_V1",
+      stamp: info.stamp,
+      nowIso: info.nowIso,
+    },
+    { status: 200 }
+  );
+
+  res.headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.headers.set("pragma", "no-cache");
+  res.headers.set("expires", "0");
+
+  res.headers.set("x-dominat8-build-stamp", info.stamp);
+  res.headers.set("x-dominat8-build-marker", info.marker);
+  return res;
+}
