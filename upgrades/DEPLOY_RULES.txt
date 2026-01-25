@@ -1,0 +1,4 @@
+﻿DEPLOY RULE (SINGLE SOURCE OF TRUTH)
+- Production deploys happen ONLY via GitHub -> Vercel auto-deploy on main.
+- Do NOT run: vercel --prod / npx vercel --prod (unless explicitly instructed).
+- Workflow: edit -> git add -A -> git commit -> git push -> check dominat8.com
