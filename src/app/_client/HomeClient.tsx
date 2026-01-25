@@ -1,671 +1,467 @@
-﻿"use client";
+"use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-function clamp(n: number, a: number, b: number) {
-  return Math.max(a, Math.min(b, n));
+type Phase =
+  | "idle"
+  | "frameIn"
+  | "typing"
+  | "heroIn"
+  | "sectionsIn"
+  | "pricingIn"
+  | "badgesIn"
+  | "done";
+
+type Badge = { label: string; done: boolean };
+
+const SESSION_KEY = "d8_home_demo_v1_played";
+
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
 }
 
-function useParallax() {
-  const [p, setP] = useState({ x: 0, y: 0 });
-
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
   useEffect(() => {
-    let raf = 0;
-    function onMove(e: PointerEvent) {
-      const w = window.innerWidth || 1;
-      const h = window.innerHeight || 1;
-      const dx = ((e.clientX / w) - 0.5) * 2;
-      const dy = ((e.clientY / h) - 0.5) * 2;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => setP({ x: clamp(dx, -1, 1), y: clamp(dy, -1, 1) }));
-    }
-    function onLeave() {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => setP({ x: 0, y: 0 }));
-    }
-    window.addEventListener("pointermove", onMove, { passive: true });
-    window.addEventListener("blur", onLeave);
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(!!mq.matches);
+    update();
+    if (typeof mq.addEventListener === "function") mq.addEventListener("change", update);
+    else mq.addListener(update);
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("pointermove", onMove as any);
-      window.removeEventListener("blur", onLeave as any);
+      if (typeof mq.removeEventListener === "function") mq.removeEventListener("change", update);
+      else mq.removeListener(update);
     };
   }, []);
-
-  return p;
+  return reduced;
 }
 
-function Icon({ name }: { name: "spark" | "shield" | "bolt" | "check" }) {
-  const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none" as const };
-  if (name === "shield") {
-    return (
-      <svg {...common} aria-hidden="true">
-        <path d="M12 3l8 4v6c0 5-3.5 8.4-8 9-4.5-.6-8-4-8-9V7l8-4z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-        <path d="M9.5 12l1.7 1.7L15 9.9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-  if (name === "bolt") {
-    return (
-      <svg {...common} aria-hidden="true">
-        <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-  if (name === "check") {
-    return (
-      <svg {...common} aria-hidden="true">
-        <path d="M20 7L10 17l-4-4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function BrowserDot({ className }: { className?: string }) {
+  return <span className={cn("inline-block h-2.5 w-2.5 rounded-full", className)} />;
+}
+
+function MiniProgress({ value }: { value: number }) {
+  const v = clamp(value, 0, 100);
   return (
-    <svg {...common} aria-hidden="true">
-      <path d="M12 2l1.2 5.2L18 9l-4.8 1.8L12 16l-1.2-5.2L6 9l4.8-1.8L12 2z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+      <div
+        className="h-full rounded-full bg-white/35 transition-all duration-300"
+        style={{ width: `${v}%` }}
+      />
+    </div>
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" className={cn("h-4 w-4", className)} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M7.667 13.2 4.4 9.933 3.333 11l4.334 4.334L16.667 6.334 15.6 5.267z"
+      />
     </svg>
   );
 }
 
-export default function HomeClient() {
-  const [sparkleOnce, setSparkleOnce] = useState(false);
+function Sparkle({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("h-4 w-4", className)} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 2l1.6 6.1L20 10l-6.4 1.9L12 18l-1.6-6.1L4 10l6.4-1.9L12 2z"
+        opacity="0.9"
+      />
+    </svg>
+  );
+}
+
+function useOncePerSession(): [boolean, () => void] {
+  const [shouldPlay, setShouldPlay] = useState(false);
 
   useEffect(() => {
-    const seen = sessionStorage.getItem('d8_sparkle_seen');
-    if (!seen) {
-      setSparkleOnce(true);
-      sessionStorage.setItem('d8_sparkle_seen', '1');
-      setTimeout(() => setSparkleOnce(false), 1600);
+    if (typeof window === "undefined") return;
+    try {
+      const played = window.sessionStorage.getItem(SESSION_KEY);
+      setShouldPlay(played !== "1");
+    } catch {
+      // If sessionStorage is blocked, default to playing once.
+      setShouldPlay(true);
     }
   }, []);
 
-  const stamp = useMemo(() => new Date().toISOString(), []);
-  const [probeOk, setProbeOk] = useState<null | boolean>(null);
-  const p = useParallax();
+  const markPlayed = () => {
+    try {
+      window.sessionStorage.setItem(SESSION_KEY, "1");
+    } catch {
+      // ignore
+    }
+    setShouldPlay(false);
+  };
+
+  return [shouldPlay, markPlayed];
+}
+
+function useTyping(text: string, active: boolean, speedMs: number) {
+  const [out, setOut] = useState("");
+  useEffect(() => {
+    if (!active) return;
+    let i = 0;
+    setOut("");
+    const t = setInterval(() => {
+      i += 1;
+      setOut(text.slice(0, i));
+      if (i >= text.length) clearInterval(t);
+    }, speedMs);
+    return () => clearInterval(t);
+  }, [text, active, speedMs]);
+  return out;
+}
+
+function DemoBrowser({
+  play,
+  onDone,
+}: {
+  play: boolean;
+  onDone: () => void;
+}) {
+  const reducedMotion = usePrefersReducedMotion();
+
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [progress, setProgress] = useState(0);
+
+  const headlineFull = "Grow your business with a website that converts.";
+  const typed = useTyping(headlineFull, phase === "typing" && !reducedMotion, 22);
+
+  const badgesBase: Badge[] = useMemo(
+    () => [
+      { label: "SEO Ready", done: false },
+      { label: "Sitemap Generated", done: false },
+      { label: "Published", done: false },
+    ],
+    []
+  );
+  const [badges, setBadges] = useState<Badge[]>(badgesBase);
+
+  const timeouts = useRef<number[]>([]);
+  const clearAll = () => {
+    timeouts.current.forEach((id) => window.clearTimeout(id));
+    timeouts.current = [];
+  };
+
+  const schedule = (fn: () => void, ms: number) => {
+    const id = window.setTimeout(fn, ms);
+    timeouts.current.push(id);
+  };
 
   useEffect(() => {
-    fetch(`/api/__probe__?ts=${Date.now()}`, { cache: "no-store" })
-      .then((r) => setProbeOk(r.ok))
-      .catch(() => setProbeOk(false));
-  }, []);
+    if (typeof window === "undefined") return;
+    clearAll();
 
-  const live = probeOk === null ? "Checkingâ€¦" : probeOk ? "LIVE_OK" : "WARN";
+    // Reset state whenever play toggles on/off
+    setPhase("idle");
+    setProgress(0);
+    setBadges(badgesBase);
 
-  // Optional: set your own background image without editing code:
-  // Vercel env var: NEXT_PUBLIC_HERO_BG_URL = "https://...your-image.jpg"
-  // If not set, we use a clean tech photo from Unsplash CDN.
-  const bgUrl =
-    (process.env.NEXT_PUBLIC_HERO_BG_URL && process.env.NEXT_PUBLIC_HERO_BG_URL.trim()) ||
-    "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=2400&q=80";
+    if (!play) {
+      // Calm state: show final, no animation
+      setPhase("done");
+      setProgress(100);
+      setBadges(badgesBase.map((b) => ({ ...b, done: true })));
+      return;
+    }
+
+    if (reducedMotion) {
+      // Reduced motion: skip animation but still communicate the value
+      setPhase("done");
+      setProgress(100);
+      setBadges(badgesBase.map((b) => ({ ...b, done: true })));
+      schedule(() => onDone(), 350);
+      return;
+    }
+
+    // Timeline (~5 seconds total)
+    schedule(() => setPhase("frameIn"), 150);
+    schedule(() => setPhase("typing"), 520);
+    schedule(() => setPhase("heroIn"), 1500);
+    schedule(() => setPhase("sectionsIn"), 2300);
+    schedule(() => setPhase("pricingIn"), 3100);
+    schedule(() => setPhase("badgesIn"), 3700);
+    schedule(() => setPhase("done"), 5000);
+    schedule(() => onDone(), 5200);
+
+    // Smooth progress
+    const progTimers: Array<[number, number]> = [
+      [650, 18],
+      [1150, 32],
+      [1750, 46],
+      [2400, 62],
+      [3150, 78],
+      [3850, 92],
+      [5000, 100],
+    ];
+    progTimers.forEach(([ms, val]) => schedule(() => setProgress(val), ms));
+
+    // Badges tick
+    schedule(
+      () => setBadges((prev) => prev.map((b, i) => (i === 0 ? { ...b, done: true } : b))),
+      3950
+    );
+    schedule(
+      () => setBadges((prev) => prev.map((b, i) => (i === 1 ? { ...b, done: true } : b))),
+      4350
+    );
+    schedule(
+      () => setBadges((prev) => prev.map((b, i) => (i === 2 ? { ...b, done: true } : b))),
+      4750
+    );
+
+    return () => clearAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [play, reducedMotion]); // badgesBase is stable via useMemo
+
+  const showCursor = phase === "typing" && typed.length < headlineFull.length;
+
+  const finalHeadline = reducedMotion || phase === "done" ? headlineFull : typed;
 
   return (
-    <>
-      <style>{`
-        :root{
-          --bg: #070A0F;
-          --ink: rgba(255,255,255,.96);
-          --muted: rgba(255,255,255,.74);
-          --muted2: rgba(255,255,255,.58);
-          --line: rgba(255,255,255,.14);
-          --glass: rgba(0,0,0,.34);
-          --shadow: 0 28px 90px rgba(0,0,0,.62);
-          --shadow2: 0 14px 44px rgba(0,0,0,.46);
-          --r: 20px;
-          --r2: 28px;
-          --max: 1160px;
-        }
-
-        *{ box-sizing:border-box; }
-        html, body { margin:0; padding:0; background: var(--bg); color: var(--ink); }
-        a{ color:inherit; text-decoration:none; }
-        ::selection{ background: rgba(255,255,255,.18); }
-
-        .page{
-          min-height:100vh;
-          font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-          background: var(--bg);
-        }
-
-        /* Real tech photo background (full page) */
-        .bg{
-          position: fixed;
-          inset:0;
-          pointer-events:none;
-          overflow:hidden;
-        }
-        .bgPhoto{
-          position:absolute;
-          inset:-12%;
-          background-image: var(--bgUrl);
-          background-size: cover;
-          background-position: center;
-          transform: translate3d(calc(var(--px) * 16px), calc(var(--py) * 12px), 0) scale(1.05);
-          filter: saturate(1.05) contrast(1.05);
-          opacity: .55;
-        }
-        /* overlay to make it classy + readable */
-        .bgOverlay{
-          position:absolute; inset:0;
-          background:
-            radial-gradient(60% 55% at 40% 28%, rgba(0,0,0,.28), rgba(0,0,0,.70) 60%, rgba(0,0,0,.90) 100%),
-            linear-gradient(180deg, rgba(0,0,0,.60), rgba(0,0,0,.70));
-        }
-        /* subtle â€œsparkleâ€ highlights â€” NOT purple moon */
-        .bgSheen{
-          position:absolute; inset:-20%;
-          background:
-            radial-gradient(700px 360px at 22% 18%, rgba(255,255,255,.12), transparent 70%),
-            radial-gradient(520px 320px at 78% 32%, rgba(255,255,255,.09), transparent 70%),
-            radial-gradient(520px 320px at 70% 86%, rgba(255,255,255,.06), transparent 72%);
-          filter: blur(14px);
-          opacity: .75;
-          transform: translate3d(calc(var(--px) * -10px), calc(var(--py) * -8px), 0);
-        }
-        /* gentle grain for â€œpremium photoâ€ look */
-        .bgGrain{
-          position:absolute; inset:0;
-          opacity:.10;
-          background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, transparent 1px, transparent 2px);
-          mix-blend-mode: overlay;
-          filter: blur(.6px);
-        }
-
-        .wrap{ position:relative; z-index: 10; }
-        .container{ width: min(var(--max), calc(100% - 56px)); margin: 0 auto; }
-
-        /* Nav */
-        .navBar{
-          position: sticky;
-          top: 0;
-          z-index: 40;
-          backdrop-filter: blur(16px);
-          background: rgba(0,0,0,.28);
-          border-bottom: 1px solid rgba(255,255,255,.10);
-        }
-        .nav{
-          height: 76px;
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap: 16px;
-        }
-        .brand{
-          display:flex; align-items:center; gap: 10px;
-          font-weight: 1000;
-          letter-spacing: -0.03em;
-        }
-        .logo{
-          width: 36px; height: 36px;
-          border-radius: 14px;
-          background: rgba(255,255,255,.10);
-          border: 1px solid rgba(255,255,255,.14);
-          box-shadow: 0 18px 60px rgba(0,0,0,.45);
-          display:grid; place-items:center;
-        }
-        .logoDot{
-          width: 10px; height: 10px; border-radius: 999px;
-          background: rgba(255,255,255,.92);
-          box-shadow: 0 0 30px rgba(255,255,255,.16);
-        }
-        .links{
-          display:none;
-          gap: 22px;
-          color: rgba(255,255,255,.70);
-          font-weight: 900;
-          font-size: 14px;
-        }
-        .links a:hover{ color: rgba(255,255,255,.92); }
-        .right{ display:flex; align-items:center; gap: 12px; }
-
-        .chip{
-          height: 40px;
-          padding: 0 14px;
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,.14);
-          background: rgba(255,255,255,.08);
-          color: rgba(255,255,255,.86);
-          font-weight: 950;
-          font-size: 13px;
-          box-shadow: 0 12px 34px rgba(0,0,0,.26);
-          display:inline-flex;
-          align-items:center;
-          justify-content:center;
-        }
-        .chip:hover{ background: rgba(255,255,255,.10); }
-        .chipPrimary{
-          background: rgba(255,255,255,.92);
-          color: #0b1220;
-          border: none;
-        }
-        .chipPrimary:hover{ background: rgba(255,255,255,.98); }
-
-        /* Full-page hero system */
-        .hero{
-          padding: 84px 0 54px;
-          min-height: calc(92vh - 76px);
-          display:flex;
-          align-items:center;
-        }
-        .heroGrid{
-          display:grid;
-          grid-template-columns: 1fr;
-          gap: 22px;
-          align-items:center;
-          width:100%;
-        }
-
-        .pill{
-          display:inline-flex;
-          align-items:center;
-          gap: 10px;
-          padding: 9px 12px;
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,.16);
-          background: rgba(0,0,0,.26);
-          color: rgba(255,255,255,.82);
-          font-size: 12px;
-          font-weight: 1000;
-          letter-spacing: .12em;
-          text-transform: uppercase;
-          backdrop-filter: blur(12px);
-        }
-
-        .h1{
-          margin: 18px 0 0;
-          font-size: 62px;
-          line-height: 1.01;
-          letter-spacing: -0.055em;
-          font-weight: 1100;
-          color: rgba(255,255,255,.98);
-        }
-        .grad{
-          background: linear-gradient(90deg, rgba(255,255,255,.98), rgba(255,255,255,.86));
-          -webkit-background-clip:text;
-          background-clip:text;
-          color: transparent;
-        }
-        .sub{
-          margin: 18px 0 0;
-          font-size: 18px;
-          line-height: 1.6;
-          color: rgba(255,255,255,.76);
-          max-width: 66ch;
-        }
-
-        .ctaRow{
-          margin-top: 26px;
-          display:flex;
-          flex-wrap:wrap;
-          gap: 12px;
-          align-items:center;
-        }
-        .btn{
-          height: 50px;
-          padding: 0 18px;
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,.14);
-          background: rgba(255,255,255,.10);
-          color: rgba(255,255,255,.92);
-          font-weight: 1000;
-          box-shadow: 0 18px 60px rgba(0,0,0,.42);
-          display:inline-flex;
-          align-items:center;
-          justify-content:center;
-        }
-        .btn:hover{ background: rgba(255,255,255,.12); }
-        .btnPrimary{
-          background: rgba(255,255,255,.92);
-          color: #0b1220;
-          border: none;
-        }
-        .btnPrimary:hover{ background: rgba(255,255,255,.98); }
-
-        /* Trust / credibility strip */
-        .trust{
-          margin-top: 18px;
-          border-radius: var(--r);
-          border: 1px solid rgba(255,255,255,.12);
-          background: rgba(0,0,0,.20);
-          backdrop-filter: blur(14px);
-          padding: 12px 14px;
-          display:flex;
-          flex-wrap:wrap;
-          gap: 10px 14px;
-          align-items:center;
-          color: rgba(255,255,255,.72);
-          font-size: 12px;
-        }
-        .dot{
-          width: 8px; height: 8px; border-radius: 999px;
-          background: rgba(255,255,255,.88);
-          box-shadow: 0 0 22px rgba(255,255,255,.18);
-        }
-        .trust b{ color: rgba(255,255,255,.92); font-weight: 1000; }
-        .sep{ opacity: .35; }
-
-        /* Right â€œpreviewâ€ panel â€“ classy, minimal */
-        .panel{
-          border-radius: var(--r2);
-          border: 1px solid rgba(255,255,255,.14);
-          background: rgba(0,0,0,.30);
-          backdrop-filter: blur(18px);
-          box-shadow: var(--shadow);
-          overflow:hidden;
-        }
-        .panelTop{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          padding: 16px;
-          border-bottom: 1px solid rgba(255,255,255,.10);
-        }
-        .panelTitle{ font-weight: 1000; letter-spacing: -0.02em; }
-        .mini{
-          display:inline-flex;
-          align-items:center;
-          gap: 8px;
-          padding: 7px 10px;
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,.14);
-          background: rgba(255,255,255,.08);
-          color: rgba(255,255,255,.88);
-          font-size: 12px;
-          font-weight: 950;
-        }
-        .panelBody{ padding: 16px; display:grid; gap: 10px; }
-
-        .row{
-          border-radius: 16px;
-          border: 1px solid rgba(255,255,255,.10);
-          background: rgba(0,0,0,.18);
-          padding: 12px;
-          display:flex;
-          gap: 12px;
-          align-items:flex-start;
-        }
-        .rowIcon{
-          width: 36px; height: 36px;
-          border-radius: 14px;
-          display:grid; place-items:center;
-          background: rgba(255,255,255,.08);
-          border: 1px solid rgba(255,255,255,.12);
-          color: rgba(255,255,255,.92);
-        }
-        .rowTitle{ font-weight: 1000; letter-spacing: -0.01em; }
-        .rowText{
-          margin-top: 2px;
-          font-size: 13px;
-          line-height: 1.45;
-          color: rgba(255,255,255,.68);
-        }
-
-        /* Below-hero: tight feature grid */
-        .section{
-          padding: 10px 0 68px;
-        }
-        .cards{
-          margin-top: 18px;
-          display:grid;
-          grid-template-columns: 1fr;
-          gap: 14px;
-        }
-        .card{
-          border-radius: var(--r);
-          border: 1px solid rgba(255,255,255,.12);
-          background: rgba(0,0,0,.22);
-          backdrop-filter: blur(14px);
-          box-shadow: var(--shadow2);
-          padding: 16px;
-        }
-        .cardTop{ display:flex; gap: 10px; align-items:center; }
-        .cardIcon{
-          width: 36px; height: 36px;
-          border-radius: 14px;
-          display:grid; place-items:center;
-          background: rgba(255,255,255,.08);
-          border: 1px solid rgba(255,255,255,.12);
-          color: rgba(255,255,255,.92);
-        }
-        .cardTitle{ font-weight: 1100; letter-spacing: -0.01em; }
-        .cardBody{
-          margin-top: 10px;
-          color: rgba(255,255,255,.70);
-          font-size: 14px;
-          line-height: 1.55;
-        }
-        .list{
-          margin-top: 10px;
-          display:grid;
-          gap: 8px;
-          color: rgba(255,255,255,.70);
-          font-size: 13px;
-        }
-        .li{ display:flex; gap: 8px; align-items:flex-start; }
-        .li i{ margin-top: 1px; color: rgba(255,255,255,.86); }
-
-        /* Bottom CTA */
-        .ctaBox{
-          margin-top: 18px;
-          border-radius: var(--r2);
-          border: 1px solid rgba(255,255,255,.14);
-          background: rgba(0,0,0,.26);
-          backdrop-filter: blur(16px);
-          box-shadow: var(--shadow);
-          padding: 18px;
-          display:flex;
-          gap: 14px;
-          align-items:center;
-          justify-content:space-between;
-          flex-wrap:wrap;
-        }
-        .ctaTitle{ font-weight: 1100; letter-spacing: -0.02em; font-size: 18px; }
-        .ctaSub{ margin-top: 4px; color: rgba(255,255,255,.72); font-size: 13px; }
-
-        @media (min-width: 980px){
-          .links{ display:flex; }
-          .heroGrid{ grid-template-columns: 1.12fr .88fr; gap: 22px; align-items:stretch; }
-          .h1{ font-size: 78px; }
-          .cards{ grid-template-columns: repeat(3, 1fr); }
-        }
-        @media (max-width: 520px){
-          .container{ width: calc(100% - 28px); }
-          .h1{ font-size: 44px; }
-        }
-        @media (prefers-reduced-motion: reduce){
-          .bgPhoto, .bgSheen{ transform:none !important; }
-        }
-      `}</style>
+    <div className="relative">
+      {/* Soft glow behind the demo */}
+      <div className="pointer-events-none absolute -inset-6 rounded-3xl bg-gradient-to-b from-white/12 via-white/6 to-transparent blur-2xl" />
 
       <div
-        className="page"
-        style={
-          {
-            ["--px" as any]: String(p.x),
-            ["--py" as any]: String(p.y),
-            ["--bgUrl" as any]: `url("${bgUrl}")`,
-          } as React.CSSProperties
-        }
+        className={cn(
+          "relative overflow-hidden rounded-3xl border border-white/12 bg-black/35 shadow-2xl backdrop-blur-xl",
+          "transition-transform duration-700",
+          play && phase !== "idle" ? "translate-y-0 opacity-100" : "translate-y-2 opacity-95"
+        )}
       >
-        <div className="bg" aria-hidden="true">
-          <div className="bgPhoto" />
-          <div className="bgSheen" />
-          <div className="bgOverlay" />
-          <div className="bgGrain" />
+        {/* Browser bar */}
+        <div className="flex items-center gap-3 border-b border-white/10 bg-black/35 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <BrowserDot className="bg-red-400/80" />
+            <BrowserDot className="bg-yellow-300/80" />
+            <BrowserDot className="bg-green-400/80" />
+          </div>
+          <div className="flex-1">
+            <div className="mx-auto flex max-w-[420px] items-center justify-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/70">
+              dominat8.com / preview
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 text-white/60">
+            <Sparkle className="opacity-80" />
+            <span className="text-[11px] tracking-wide">Live Builder</span>
+          </div>
         </div>
 
-        <div className="wrap">
-          <div className="navBar">
-            <div className="container">
-              <div className="nav">
-                <a className="brand" href="/">
-                  <span className="logo"><span className="logoDot" /></span>
-                  <span>Dominat8</span>
-                </a>
-
-                <div className="links">
-                  <a href="/templates">Gallery</a>
-                  <a href="/use-cases">Use cases</a>
-                  <a href="/pricing">Pricing</a>
-                  <a href="/contact">Support</a>
-                </div>
-
-                <div className="right">
-                  <a className="chip" href="/pricing">See pricing</a>
-                  <a className="chip chipPrimary" href="/app">Launch builder</a>
-                </div>
-)}
-
-        </div>
-      </div>
+        {/* Content */}
+        <div className="p-5 sm:p-6">
+          {/* Top: headline typing */}
+          <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">
+                Generating homepage
+              </div>
+              <div className="text-[11px] text-white/55">{progress}%</div>
+            </div>
+            <MiniProgress value={progress} />
+            <div className="mt-4 text-sm sm:text-base font-semibold text-white">
+              <span>{finalHeadline}</span>
+              {showCursor && (
+                <span className="ml-1 inline-block w-[8px] animate-pulse rounded-sm bg-white/80 align-middle">
+                  &nbsp;
+                </span>
+              )}
+            </div>
+            <div className="mt-2 text-xs text-white/60">
+              Sections assemble automatically — no coding, no templates, no fuss.
+            </div>
           </div>
 
-          <section className="hero">
-            <div className="container">
-              <div className="heroGrid">
-                <div>
-                  <span className="pill">AI WEBSITE AUTOMATION</span>
-
-                  <h1 className="h1">
-                    A <span className="grad">flagship</span> website that sells â€” built fast, refined clean.
-                  </h1>
-
-                  <p className="sub">
-                    Dominat8 generates your structure, copy, layout rhythm, SEO plan, and publish-ready outputs â€”
-                    then gives you controls to perfect the final result.
-                  </p>
-
-                  <div className="ctaRow">
-                    <a className="btn btnPrimary" href="/app">Generate my site</a>
-                    <a className="btn" href="/templates">See examples</a>
-                  </div>
-
-                  <div className="trust">
-                    <span className="dot" />
-                    <span><b>{live}</b></span>
-                    <span className="sep">â€¢</span>
-                    <span>Deploy stamp: <b>{stamp}</b></span>
-                    <span className="sep">â€¢</span>
-                    <span><b>SEO</b> + <b>Sitemap</b> + <b>Publish</b> included</span>
-                    <span className="sep">â€¢</span>
-                    <span>Built for <b>subscriptions</b></span>
-                  </div>
-                </div>
-
-                <div className="panel" aria-label="What you get">
-                  <div className="panelTop">
-                    <div className="panelTitle">What you get</div>
-                    <div className="mini"><Icon name="shield" /> Proof-first</div>
-                  </div>
-
-                  <div className="panelBody">
-                    <div className="row">
-                      <div className="rowIcon"><Icon name="spark" /></div>
-                      <div>
-                        <div className="rowTitle">Premium homepage rhythm</div>
-                        <div className="rowText">Clean hierarchy, strong hero, and sections that feel â€œenterpriseâ€.</div>
-)}
-
-        </div>
-      </div>
-
-                    <div className="row">
-                      <div className="rowIcon"><Icon name="bolt" /></div>
-                      <div>
-                        <div className="rowTitle">Fast build, clean control</div>
-                        <div className="rowText">The system drafts, you refine â€” without â€œtemplate soupâ€.</div>
-)}
-
-        </div>
-      </div>
-
-                    <div className="row">
-                      <div className="rowIcon"><Icon name="shield" /></div>
-                      <div>
-                        <div className="rowTitle">Publish-ready outputs</div>
-                        <div className="rowText">SEO plan, sitemap, robots, and proof markers baked in.</div>
-)}
-
-        </div>
-      </div>
-                  </div>
-)}
-
-        </div>
-      </div>
-
-              <div className="section">
-                <div className="cards">
-                  <div className="card">
-                    <div className="cardTop">
-                      <div className="cardIcon"><Icon name="spark" /></div>
-                      <div className="cardTitle">Designed to convert</div>
-                    </div>
-                    <div className="cardBody">
-                      Not â€œpretty sectionsâ€ â€” a structured sales narrative.
-                      <div className="list">
-                        <div className="li"><i><Icon name="check" /></i><span>One clear promise</span></div>
-                        <div className="li"><i><Icon name="check" /></i><span>Credibility strip</span></div>
-                        <div className="li"><i><Icon name="check" /></i><span>High-signal features</span></div>
-)}
-
-        </div>
-      </div>
-                  </div>
-
-                  <div className="card">
-                    <div className="cardTop">
-                      <div className="cardIcon"><Icon name="shield" /></div>
-                      <div className="cardTitle">Trust baked in</div>
-                    </div>
-                    <div className="cardBody">
-                      People buy when it feels real and reliable.
-                      <div className="list">
-                        <div className="li"><i><Icon name="check" /></i><span>Deploy proof markers</span></div>
-                        <div className="li"><i><Icon name="check" /></i><span>No-store probes</span></div>
-                        <div className="li"><i><Icon name="check" /></i><span>Deterministic outputs</span></div>
-)}
-
-        </div>
-      </div>
-                  </div>
-
-                  <div className="card">
-                    <div className="cardTop">
-                      <div className="cardIcon"><Icon name="bolt" /></div>
-                      <div className="cardTitle">Launch-ready</div>
-                    </div>
-                    <div className="cardBody">
-                      The aesthetic is clean and sharp â€” ready for a paid product.
-                      <div className="list">
-                        <div className="li"><i><Icon name="check" /></i><span>Photo background + overlays</span></div>
-                        <div className="li"><i><Icon name="check" /></i><span>Premium glass hierarchy</span></div>
-                        <div className="li"><i><Icon name="check" /></i><span>Strong CTA system</span></div>
-)}
-
-        </div>
-      </div>
-                  </div>
-                </div>
-
-                <div className="ctaBox">
-                  <div>
-                    <div className="ctaTitle">Ready to build your flagship?</div>
-                    <div className="ctaSub">Launch the builder, answer a few prompts, and publish with confidence.</div>
-                  </div>
-                  <div className="ctaRow" style={{ marginTop: 0 }}>
-                    <a className="btn btnPrimary" href="/app">Launch builder</a>
-                    <a className="btn" href="/pricing">See pricing</a>
-                  </div>
-)}
-
-        </div>
-      </div>
-
+          {/* Middle: sections (slide in) */}
+          <div className="grid gap-3">
+            <div
+              className={cn(
+                "rounded-2xl border border-white/10 bg-white/5 p-4 transition-all duration-700",
+                phase === "heroIn" || phase === "sectionsIn" || phase === "pricingIn" || phase === "badgesIn" || phase === "done"
+                  ? "translate-x-0 opacity-100"
+                  : "translate-x-2 opacity-0"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-semibold text-white">Hero</div>
+                <div className="text-[11px] text-white/55">Headline + CTA</div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <div className="h-2 w-2/3 rounded-full bg-white/20" />
+                <div className="h-2 w-1/3 rounded-full bg-white/10" />
+              </div>
+              <div className="mt-3 h-8 w-28 rounded-full bg-white/15" />
             </div>
-          </section>
 
-          <div style={{ height: 26 }} />
+            <div
+              className={cn(
+                "rounded-2xl border border-white/10 bg-white/5 p-4 transition-all duration-700",
+                phase === "sectionsIn" || phase === "pricingIn" || phase === "badgesIn" || phase === "done"
+                  ? "translate-x-0 opacity-100"
+                  : "translate-x-2 opacity-0"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-semibold text-white">Features</div>
+                <div className="text-[11px] text-white/55">Trust + clarity</div>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="h-10 rounded-xl bg-white/10" />
+                <div className="h-10 rounded-xl bg-white/10" />
+                <div className="h-10 rounded-xl bg-white/10" />
+              </div>
+            </div>
+
+            <div
+              className={cn(
+                "rounded-2xl border border-white/10 bg-white/5 p-4 transition-all duration-700",
+                phase === "pricingIn" || phase === "badgesIn" || phase === "done"
+                  ? "translate-x-0 opacity-100"
+                  : "translate-x-2 opacity-0"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-semibold text-white">Pricing</div>
+                <div className="text-[11px] text-white/55">Simple plans</div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <div className="text-[11px] text-white/60">Starter</div>
+                  <div className="mt-1 h-3 w-16 rounded-full bg-white/20" />
+                  <div className="mt-3 h-8 w-full rounded-lg bg-white/10" />
+                </div>
+                <div className="rounded-xl border border-white/15 bg-white/8 p-3">
+                  <div className="text-[11px] text-white/70">Pro</div>
+                  <div className="mt-1 h-3 w-20 rounded-full bg-white/25" />
+                  <div className="mt-3 h-8 w-full rounded-lg bg-white/15" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom: badges tick */}
+          <div
+            className={cn(
+              "mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition-all duration-700",
+              phase === "badgesIn" || phase === "done" ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-semibold text-white">Ready to launch</div>
+              <div className="text-[11px] text-white/55">Auto-complete</div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {badges.map((b) => (
+                <div
+                  key={b.label}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs",
+                    b.done ? "border-white/18 bg-white/10 text-white" : "border-white/10 bg-white/5 text-white/70"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-flex h-5 w-5 items-center justify-center rounded-full border",
+                      b.done ? "border-white/25 bg-white/10 text-white" : "border-white/10 bg-white/5 text-white/50"
+                    )}
+                  >
+                    {b.done ? <CheckIcon /> : <span className="text-[10px]">•</span>}
+                  </span>
+                  <span className="tracking-wide">{b.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 text-xs text-white/60">
+              Animation plays once — then the page stays calm and readable.
+            </div>
+          </div>
         </div>
       </div>
-    </>
+    </div>
+  );
+}
+
+export default function HomeClient() {
+  const [shouldPlay, markPlayed] = useOncePerSession();
+
+  // When the demo completes, mark session as played so it won't repeat
+  const handleDone = () => markPlayed();
+
+  return (
+    <section className="relative w-full">
+      <div className="mx-auto w-full max-w-7xl px-6 py-14 sm:py-18 lg:py-20">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          {/* Left: hero copy */}
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-4 py-2 text-xs text-white/75">
+              <Sparkle className="opacity-80" />
+              <span className="tracking-[0.18em] uppercase">AI Website Automation</span>
+            </div>
+
+            <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+              Your site, built for you.
+              <span className="block text-white/80">From idea to published — fast.</span>
+            </h1>
+
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70">
+              Dominat8 assembles a conversion-focused website automatically: structure, sections, and launch-ready output —
+              without the usual setup.
+            </p>
+
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <a
+                href="/builder"
+                className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black shadow-lg shadow-black/20 transition hover:opacity-90"
+              >
+                Start building
+              </a>
+
+              <a
+                href="/templates"
+                className="inline-flex items-center justify-center rounded-xl border border-white/14 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 backdrop-blur transition hover:bg-white/8"
+              >
+                View examples
+              </a>
+
+              <div className="ml-0 mt-2 w-full text-xs text-white/55 sm:ml-2 sm:mt-0 sm:w-auto">
+                No credit card required
+              </div>
+            </div>
+
+            <div className="mt-8 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-xs font-semibold text-white">Fast</div>
+                <div className="mt-1 text-xs text-white/60">Assembles pages in minutes</div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-xs font-semibold text-white">Structured</div>
+                <div className="mt-1 text-xs text-white/60">Designed to convert</div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-xs font-semibold text-white">Launch-ready</div>
+                <div className="mt-1 text-xs text-white/60">SEO + sitemap included</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: live builder preview demo */}
+          <div className="relative lg:pl-2">
+            <DemoBrowser play={shouldPlay} onDone={handleDone} />
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
