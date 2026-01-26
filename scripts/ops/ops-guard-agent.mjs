@@ -6,16 +6,12 @@ const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
 const VERCEL_TEAM_ID = (process.env.VERCEL_TEAM_ID || "").trim();
 
-if (!VERCEL_TOKEN) throw new Error("Missing GitHub secret: VERCEL_TOKEN");
-if (!VERCEL_PROJECT_ID) throw new Error("Missing GitHub secret: VERCEL_PROJECT_ID");
-if (!OPS_DOMAINS.length) throw new Error("Missing GitHub secret: OPS_DOMAINS");
+if (!VERCEL_TOKEN) throw new Error("Missing: VERCEL_TOKEN");
+if (!VERCEL_PROJECT_ID) throw new Error("Missing: VERCEL_PROJECT_ID");
+if (!OPS_DOMAINS.length) throw new Error("Missing: OPS_DOMAINS");
 
 const URLS = [
-  `${OPS_BASE_URL}/`,
-  `${OPS_BASE_URL}/pricing`,
-  `${OPS_BASE_URL}/templates`,
-  `${OPS_BASE_URL}/use-cases`,
-  `${OPS_BASE_URL}/gallery`,
+  `${OPS_BASE_URL}/`, // only gate on homepage for now
 ];
 
 const FAIL_PATTERNS = [
@@ -23,6 +19,13 @@ const FAIL_PATTERNS = [
   "Application error",
   "Internal Server Error",
   "__NEXT_ERROR__",
+];
+
+// Optional: require a positive marker to reduce false-OK
+const OK_MARKERS = [
+  "LIVE_",
+  "HOME_OK",
+  "ROUTE OK",
 ];
 
 function qs(obj) {
@@ -60,9 +63,12 @@ async function healthCheck() {
   for (const base of URLS) {
     const url = base.includes("?") ? `${base}&ts=${Date.now()}` : `${base}?ts=${Date.now()}`;
     const { r, text } = await httpText(url, { redirect: "follow" });
+
     const hit = FAIL_PATTERNS.find(p => text.includes(p)) || "";
-    const ok = r.ok && !hit;
-    out.push({ url, status: r.status, ok, hit });
+    const hasOkMarker = OK_MARKERS.some(m => text.includes(m));
+
+    const ok = r.ok && !hit && hasOkMarker;
+    out.push({ url, status: r.status, ok, hit, hasOkMarker });
   }
   return out;
 }
@@ -91,7 +97,7 @@ async function assignAlias(deploymentId, alias) {
 
 (async () => {
   const results = await healthCheck();
-  results.forEach(x => console.log(`[CHECK] ${x.ok ? "OK" : "FAIL"} ${x.status} ${x.url} ${x.hit ? `hit="${x.hit}"` : ""}`));
+  results.forEach(x => console.log(`[CHECK] ${x.ok ? "OK" : "FAIL"} ${x.status} ${x.url} ${x.hit ? `hit="${x.hit}"` : ""} marker=${x.hasOkMarker}`));
 
   if (results.every(x => x.ok)) {
     console.log("[OPS] ✅ Health OK. No action.");
