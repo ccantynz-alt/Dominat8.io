@@ -103,8 +103,8 @@ export async function POST(req: Request) {
   const reasoningEffort = String(body?.reasoningEffort || "low");
   const maxOutputTokens = Number(body?.maxOutputTokens || 900);
 
-  const promptText = String(body?.promptText || body?.instruction || "").trim();
-  if (!promptText) {
+  const prompt = String(body?.prompt || body?.instruction || "").trim();
+  if (!prompt) {
     return NextResponse.json({ ok: false, error: "MISSING_PROMPT" }, { status: 400 });
   }
 
@@ -114,7 +114,7 @@ export async function POST(req: Request) {
     model: modelName as any,
     reasoning: { effort: reasoningEffort as any },
     max_output_tokens: maxOutputTokens,
-    promptText: [
+    input: [
       {
         role: "user",
         content: [
@@ -124,8 +124,8 @@ export async function POST(req: Request) {
 `Return ONLY a single fenced PowerShell code block.
 No commentary. No extra text.
 
-promptText:
-${promptText}
+TASK:
+${prompt}
 `
           }
         ]
@@ -140,7 +140,7 @@ ${promptText}
   const outputText = extractAnyText(raw);
   let extracted = extractPatchScript(outputText);
 
-  // 2) If empty outputText, fallback to raw JSON as text promptText (so we ALWAYS save something)
+  // 2) If empty outputText, fallback to raw JSON as text input (so we ALWAYS save something)
   let mode = extracted?.mode || "";
   let script = extracted?.script || "";
 
@@ -206,5 +206,4 @@ ${promptText}
     patchKeys: { patchLatest, patchById },
   });
 }
-
 
