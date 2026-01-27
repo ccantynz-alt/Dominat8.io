@@ -1,37 +1,52 @@
-import MarketingCTA from "@/src/components/marketing/MarketingCTA";
+import Link from "next/link";
+import { D8Section } from "../_d8/D8Section";
+import { D8Card } from "../_d8/D8Bits";
 
-const templates = [
-  { name: "AI SaaS Website", desc: "Clean SaaS landing, features, pricing, FAQs, and a strong CTA." },
-  { name: "Local Service", desc: "Book calls, show service areas, testimonials, and conversion-first layout." },
-  { name: "Portfolio", desc: "Case studies, about, contact, and a minimalist hero." },
-  { name: "E-commerce Starter", desc: "Simple product highlights, benefits, and trust building." },
-  { name: "Creator / Newsletter", desc: "Subscribe-first layout with social proof and content blocks." },
-  { name: "Consulting", desc: "Authority-driven page with offers, outcomes, and booking CTA." },
-];
-
-export default function TemplatesPage() {
+export default function Page() {
   return (
-    <div className="space-y-10">
-      <section className="rounded-3xl border bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-semibold tracking-tight">Templates</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 opacity-80">
-          Start from a strong baseline. Next upgrade can wire this to your KV catalog and agent-generated specs.
-        </p>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {templates.map((t) => (
-          <div key={t.name} className="rounded-3xl border bg-white p-6 shadow-sm">
-            <div className="text-sm font-semibold">{t.name}</div>
-            <p className="mt-2 text-sm leading-6 opacity-80">{t.desc}</p>
-            <a href="/pricing" className="mt-4 inline-flex rounded-xl border px-4 py-2 text-sm font-medium">
-              Use this template →
-            </a>
+    <main
+      style={{
+        minHeight: "100vh",
+        background:
+          "radial-gradient(1200px 800px at 65% 5%, rgba(168,85,247,0.20), rgba(0,0,0,0) 60%), radial-gradient(900px 700px at 15% 20%, rgba(59,130,246,0.12), rgba(0,0,0,0) 62%), linear-gradient(180deg, #07070B 0%, #07070B 40%, #05050A 100%)",
+        color: "#EDEAF7",
+        fontFamily:
+          "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'",
+        padding: "28px 16px 56px",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 1160, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 0 18px" }}>
+          <Link href="/" style={{ color: "rgba(243,238,255,0.95)", textDecoration: "none", fontWeight: 900, letterSpacing: "0.14em", textTransform: "uppercase", fontSize: 12 }}>
+            Dominat8
+          </Link>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <Link href="/templates" style={{ color: "rgba(237,234,247,0.82)", textDecoration: "none", padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", fontSize: 13 }}>
+              Templates
+            </Link>
+            <Link href="/pricing" style={{ color: "rgba(237,234,247,0.82)", textDecoration: "none", padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", fontSize: 13 }}>
+              Pricing
+            </Link>
           </div>
-        ))}
-      </section>
+        </div>
 
-      <MarketingCTA />
-    </div>
+        <D8Section eyebrow="Premium SaaS" title="Templates" lead="Start with a proven layout, then refine. Premium framing keeps everything cohesive." tone="glass">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 }}>
+            <D8Card title="Consistent sections" body="Premium framing and hierarchy across marketing pages." kicker="SYSTEM" />
+            <D8Card title="Inline-safe" body="Core content renders intentionally even if utility classes fail." kicker="LOCKED" />
+            <D8Card title="Conversion-first" body="Clear CTAs and predictable page rhythm." kicker="CONVERT" />
+          </div>
+        </D8Section>
+
+        <div style={{ marginTop: 34, opacity: 0.85, fontSize: 12, color: "rgba(237,234,247,0.65)", display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>© 2026 Dominat8</div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            <Link href="/privacy" style={{ color: "rgba(237,234,247,0.70)", textDecoration: "none", borderBottom: "1px solid rgba(237,234,247,0.20)", paddingBottom: 2 }}>Privacy</Link>
+            <Link href="/terms" style={{ color: "rgba(237,234,247,0.70)", textDecoration: "none", borderBottom: "1px solid rgba(237,234,247,0.20)", paddingBottom: 2 }}>Terms</Link>
+            <Link href="/contact" style={{ color: "rgba(237,234,247,0.70)", textDecoration: "none", borderBottom: "1px solid rgba(237,234,247,0.20)", paddingBottom: 2 }}>Contact</Link>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
