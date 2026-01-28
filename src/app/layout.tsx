@@ -2,6 +2,7 @@ import PolishShell from "@/app/_client/PolishShell";
 import "./globals.css";
 import type { Metadata } from "next";
 import DxlAtmosphere from "@/components/dxl/DxlAtmosphere";
+import DxlStatusPill from "@/components/dxl/DxlStatusPill";
 
 export const metadata: Metadata = {
   title: "Dominat8",
@@ -143,7 +144,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   /* If something renders totally naked, this keeps content readable */
   main{display:block}
 `}</style>
-      </div>
+      
+      {process.env.DXL_STATUS_PILL === "0" ? null : <DxlStatusPill />}
+</div>
     </body>
     </html>
   );
