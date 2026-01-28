@@ -43,12 +43,23 @@ export function D8Card(props: { title: string; desc: string; badge?: string }) {
           {props.badge}
         </div>
       )}
-      <div style={{ marginTop: props.badge ? 10 : 0, fontWeight: 900, color: "rgba(246,242,255,0.98)" }}>
+
+      <div
+        style={{
+          marginTop: props.badge ? 10 : 0,
+          fontWeight: 900,
+          color: "rgba(246,242,255,0.98)",
+        }}
+      >
         {props.title}
       </div>
+
       <div style={{ marginTop: 8, color: "rgba(237,234,247,0.72)", lineHeight: 1.55 }}>
         {props.desc}
       </div>
     </div>
   );
 }
+
+const D8Bits = { D8Grid, D8Card };
+export default D8Bits;

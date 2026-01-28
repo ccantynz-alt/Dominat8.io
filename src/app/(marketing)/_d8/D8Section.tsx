@@ -1,6 +1,6 @@
 import React from "react";
 
-type D8SectionProps = {
+export type D8SectionProps = {
   eyebrow?: string;
   title?: string;
   subtitle?: string;
@@ -8,7 +8,7 @@ type D8SectionProps = {
   id?: string;
 };
 
-export default function D8Section(props: D8SectionProps) {
+export function D8Section(props: D8SectionProps) {
   const { eyebrow, title, subtitle, children, id } = props;
 
   return (
@@ -53,6 +53,7 @@ export default function D8Section(props: D8SectionProps) {
                 {eyebrow}
               </div>
             )}
+
             {title && (
               <h2
                 style={{
@@ -68,8 +69,16 @@ export default function D8Section(props: D8SectionProps) {
                 {title}
               </h2>
             )}
+
             {subtitle && (
-              <p style={{ marginTop: 10, maxWidth: 820, color: "rgba(237,234,247,0.74)", lineHeight: 1.6 }}>
+              <p
+                style={{
+                  marginTop: 10,
+                  maxWidth: 820,
+                  color: "rgba(237,234,247,0.74)",
+                  lineHeight: 1.6,
+                }}
+              >
                 {subtitle}
               </p>
             )}
@@ -81,3 +90,5 @@ export default function D8Section(props: D8SectionProps) {
     </section>
   );
 }
+
+export default D8Section;
