@@ -1,6 +1,7 @@
 import React from "react";
 
 export type D8SectionProps = {
+  eyebrow?: string;
   title?: string;
   subtitle?: string;
   children?: React.ReactNode;
