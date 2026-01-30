@@ -3575,8 +3575,8 @@ async def admin_bootstrap(body: _BootstrapBody, x_admin_token: Optional[str] = N
 
     admins.update_one(
         {"username": body.username},
-        {$set: {"username": body.username, "password_hash": pwd_hash, "updated_at": now},
-         $setOnInsert: {"created_at": now}},
+        {"$set": {"username": body.username, "password_hash": pwd_hash, "updated_at": now},
+         "$setOnInsert": {"created_at": now}},
         upsert=True
     )
 
