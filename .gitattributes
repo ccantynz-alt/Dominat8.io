@@ -1,9 +1,16 @@
-﻿* text=auto
+# Normalize line endings in repo (Windows-friendly)
+* text=auto
 
+# Prefer LF for code files (Git will handle checkout appropriately)
 *.ts  text eol=lf
 *.tsx text eol=lf
 *.js  text eol=lf
 *.jsx text eol=lf
 *.json text eol=lf
-*.css text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
 *.md  text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.py  text eol=lf
+*.txt text eol=lf

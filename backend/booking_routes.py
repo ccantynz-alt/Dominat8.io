@@ -1,3 +1,4 @@
+from fastapi.responses import JSONResponse
 from fastapi import APIRouter, HTTPException, Depends, Response, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -215,7 +216,7 @@ async def create_booking(booking: BookingCreate):
             # Check if this is an URGENT booking (within 24 hours)
             is_urgent, hours_until = is_urgent_booking(booking.date, booking.time)
             if is_urgent:
-                logger.warning(f"🚨 URGENT BOOKING DETECTED: {booking_ref} - only {hours_until}hrs notice!")
+                logger.warning(f"Ã°Å¸Å¡Â¨ URGENT BOOKING DETECTED: {booking_ref} - only {hours_until}hrs notice!")
                 try:
                     send_urgent_admin_email(booking_doc, hours_until)
                     send_urgent_admin_sms(booking_doc, hours_until)
@@ -598,7 +599,7 @@ Questions? 021 743 321"""
             "payment_url": payment_url,
             "email_sent": email_sent,
             "sms_sent": sms_sent,
-            "message": f"Payment link sent! Email: {'✓' if email_sent else '✗'}, SMS: {'✓' if sms_sent else '✗'}"
+            "message": f"Payment link sent! Email: {'Ã¢Å“â€œ' if email_sent else 'Ã¢Å“â€”'}, SMS: {'Ã¢Å“â€œ' if sms_sent else 'Ã¢Å“â€”'}"
         }
         
     except HTTPException:
@@ -2001,12 +2002,12 @@ async def send_driver_job_notification(booking: dict, driver: dict, payout: floa
         
         # Send Email to driver
         if driver_email:
-            subject = f"🚗 NEW JOB: {booking_ref} - ${payout:.2f}"
+            subject = f"Ã°Å¸Å¡â€” NEW JOB: {booking_ref} - ${payout:.2f}"
             
             email_body = f"""
             <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
               <div style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0;">
-                <h1 style="margin: 0; font-size: 24px;">🚗 New Job Available</h1>
+                <h1 style="margin: 0; font-size: 24px;">Ã°Å¸Å¡â€” New Job Available</h1>
                 <p style="margin: 8px 0 0; color: #f59e0b;">Booking {booking_ref}</p>
               </div>
               
@@ -2023,15 +2024,15 @@ async def send_driver_job_notification(booking: dict, driver: dict, payout: floa
                 </div>
                 
                 <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-                  <p style="margin: 0;"><strong>📅 Date:</strong> {booking_date}</p>
-                  <p style="margin: 10px 0 0;"><strong>⏰ Pickup Time:</strong> {booking_time}</p>
-                  <p style="margin: 10px 0 0;"><strong>📍 Pickup:</strong> {booking.get('pickupAddress', 'N/A')}</p>
-                  <p style="margin: 10px 0 0;"><strong>🏁 Drop-off:</strong> {booking.get('dropoffAddress', 'N/A')}</p>
-                  <p style="margin: 10px 0 0;"><strong>👥 Passengers:</strong> {booking.get('passengers', 1)}</p>
-                  <p style="margin: 10px 0 0;"><strong>👤 Customer:</strong> {booking.get('name', 'N/A')}</p>
+                  <p style="margin: 0;"><strong>Ã°Å¸â€œâ€¦ Date:</strong> {booking_date}</p>
+                  <p style="margin: 10px 0 0;"><strong>Ã¢ÂÂ° Pickup Time:</strong> {booking_time}</p>
+                  <p style="margin: 10px 0 0;"><strong>Ã°Å¸â€œÂ Pickup:</strong> {booking.get('pickupAddress', 'N/A')}</p>
+                  <p style="margin: 10px 0 0;"><strong>Ã°Å¸ÂÂ Drop-off:</strong> {booking.get('dropoffAddress', 'N/A')}</p>
+                  <p style="margin: 10px 0 0;"><strong>Ã°Å¸â€˜Â¥ Passengers:</strong> {booking.get('passengers', 1)}</p>
+                  <p style="margin: 10px 0 0;"><strong>Ã°Å¸â€˜Â¤ Customer:</strong> {booking.get('name', 'N/A')}</p>
                 </div>
                 
-                {f'<div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0;"><p style="margin: 0; font-size: 14px; color: #0369a1;"><strong>📝 Notes:</strong> {notes}</p></div>' if notes else ''}
+                {f'<div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0;"><p style="margin: 0; font-size: 14px; color: #0369a1;"><strong>Ã°Å¸â€œÂ Notes:</strong> {notes}</p></div>' if notes else ''}
                 
                 <div style="text-align: center; margin: 30px 0;">
                   <a href="{accept_url}" style="display: inline-block; background: #f59e0b; color: black; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
@@ -2151,7 +2152,7 @@ async def driver_respond_to_job(booking_id: str, data: dict):
             from utils import send_email
             send_email(
                 admin_email,
-                f"✅ Driver ACCEPTED: {booking.get('booking_ref')}",
+                f"Ã¢Å“â€¦ Driver ACCEPTED: {booking.get('booking_ref')}",
                 f"<p><strong>{driver_name}</strong> has ACCEPTED job <strong>{booking.get('booking_ref')}</strong></p><p>Pickup: {booking.get('date')} at {booking.get('time')}</p>"
             )
             
@@ -2181,7 +2182,7 @@ async def driver_respond_to_job(booking_id: str, data: dict):
             from utils import send_email
             send_email(
                 admin_email,
-                f"❌ Driver DECLINED: {booking.get('booking_ref')}",
+                f"Ã¢ÂÅ’ Driver DECLINED: {booking.get('booking_ref')}",
                 f"<p><strong>{driver_name}</strong> has DECLINED job <strong>{booking.get('booking_ref')}</strong></p><p>Reason: {decline_reason or 'No reason given'}</p><p>Please assign another driver.</p>"
             )
             
@@ -2350,7 +2351,7 @@ async def send_5min_arrival_sms(tracking_session: dict, tracking_id: str):
         # Format tracking URL (use production domain)
         tracking_url = f"https://hibiscustoairport.co.nz/track/{booking_ref}"
         
-        message = f"Hi {customer_name.split()[0]}! 🚗 Your driver {driver_name} is approximately 10 minutes away. Track live: {tracking_url}"
+        message = f"Hi {customer_name.split()[0]}! Ã°Å¸Å¡â€” Your driver {driver_name} is approximately 10 minutes away. Track live: {tracking_url}"
         
         # Send via Twilio
         account_sid = os.environ.get("TWILIO_ACCOUNT_SID", "")
@@ -2739,7 +2740,7 @@ At the end of your response, on a NEW LINE, add one of these tags:
 def fallback_response(session: WhatsAppSession, user_message: str) -> str:
     """Fallback responses if AI fails"""
     if session.state == "greeting":
-        return "Hi! 👋 Welcome to Hibiscus to Airport! Where would you like to be picked up from?\n\n[NONE]"
+        return "Hi! Ã°Å¸â€˜â€¹ Welcome to Hibiscus to Airport! Where would you like to be picked up from?\n\n[NONE]"
     elif session.state == "collecting_pickup":
         return f"Thanks! And where are you heading to? (e.g., Auckland Airport)\n\n[EXTRACTED_PICKUP: {user_message}]"
     elif session.state == "collecting_dropoff":
@@ -2807,7 +2808,7 @@ async def whatsapp_webhook(
         if message.lower() in ['reset', 'start over', 'cancel', 'restart']:
             reset_session(phone)
             session = get_or_create_session(phone)
-            response_text = "No problem! Let's start fresh. 🔄\n\nWhere would you like to be picked up from?"
+            response_text = "No problem! Let's start fresh. Ã°Å¸â€â€ž\n\nWhere would you like to be picked up from?"
             session.state = "collecting_pickup"
         else:
             # Add user message to history
@@ -2850,13 +2851,13 @@ async def whatsapp_webhook(
                     session.state = "confirming"
                     
                     # Add pricing info to response
-                    response_text += f"\n\n💰 **Your Quote:**\n"
-                    response_text += f"📍 From: {session.pickup_address}\n"
-                    response_text += f"📍 To: {session.dropoff_address}\n"
-                    response_text += f"📅 Date: {session.date}\n"
-                    response_text += f"⏰ Time: {session.time}\n"
-                    response_text += f"👥 Passengers: {session.passengers}\n"
-                    response_text += f"💵 **Total: ${session.pricing['totalPrice']:.2f} NZD**\n\n"
+                    response_text += f"\n\nÃ°Å¸â€™Â° **Your Quote:**\n"
+                    response_text += f"Ã°Å¸â€œÂ From: {session.pickup_address}\n"
+                    response_text += f"Ã°Å¸â€œÂ To: {session.dropoff_address}\n"
+                    response_text += f"Ã°Å¸â€œâ€¦ Date: {session.date}\n"
+                    response_text += f"Ã¢ÂÂ° Time: {session.time}\n"
+                    response_text += f"Ã°Å¸â€˜Â¥ Passengers: {session.passengers}\n"
+                    response_text += f"Ã°Å¸â€™Âµ **Total: ${session.pricing['totalPrice']:.2f} NZD**\n\n"
                     response_text += "Reply 'BOOK' to confirm and receive payment link, or 'CHANGE' to modify details."
                 except Exception as e:
                     logger.error(f"Pricing calculation error: {str(e)}")
@@ -2896,12 +2897,12 @@ async def whatsapp_webhook(
                         public_domain = os.environ.get('PUBLIC_DOMAIN', 'https://hibiscustoairport.co.nz')
                         payment_url = f"{public_domain}/booking?pay={booking_id}"
                         
-                        response_text = f"✅ **Booking Created!**\n\n"
-                        response_text += f"📋 Reference: **{booking_ref}**\n"
-                        response_text += f"💵 Total: **${session.pricing['totalPrice']:.2f} NZD**\n\n"
-                        response_text += f"💳 Pay securely here:\n{payment_url}\n\n"
+                        response_text = f"Ã¢Å“â€¦ **Booking Created!**\n\n"
+                        response_text += f"Ã°Å¸â€œâ€¹ Reference: **{booking_ref}**\n"
+                        response_text += f"Ã°Å¸â€™Âµ Total: **${session.pricing['totalPrice']:.2f} NZD**\n\n"
+                        response_text += f"Ã°Å¸â€™Â³ Pay securely here:\n{payment_url}\n\n"
                         response_text += "Or pay cash to the driver on pickup day.\n\n"
-                        response_text += "Questions? Just message us here! 😊"
+                        response_text += "Questions? Just message us here! Ã°Å¸ËœÅ "
                         
                         session.state = "payment"
                         
@@ -3203,28 +3204,28 @@ async def add_booking_to_google_calendar(booking: dict):
         description = f"""
 BOOKING REFERENCE: {booking_ref}
 
-👤 Customer: {booking.get('name', 'N/A')}
-📞 Phone: {booking.get('phone', 'N/A')}
-✉️ Email: {booking.get('email', 'N/A')}
+Ã°Å¸â€˜Â¤ Customer: {booking.get('name', 'N/A')}
+Ã°Å¸â€œÅ¾ Phone: {booking.get('phone', 'N/A')}
+Ã¢Å“â€°Ã¯Â¸Â Email: {booking.get('email', 'N/A')}
 
-📍 Pickup: {booking.get('pickupAddress', 'N/A')}
-🏁 Drop-off: {booking.get('dropoffAddress', 'N/A')}
+Ã°Å¸â€œÂ Pickup: {booking.get('pickupAddress', 'N/A')}
+Ã°Å¸ÂÂ Drop-off: {booking.get('dropoffAddress', 'N/A')}
 
-👥 Passengers: {booking.get('passengers', 1)}
-💰 Total: ${booking.get('pricing', {}).get('totalPrice', 0):.2f} NZD
+Ã°Å¸â€˜Â¥ Passengers: {booking.get('passengers', 1)}
+Ã°Å¸â€™Â° Total: ${booking.get('pricing', {}).get('totalPrice', 0):.2f} NZD
 
-✈️ Flight Info:
+Ã¢Å“Ë†Ã¯Â¸Â Flight Info:
 - Departure: {booking.get('departureFlightNumber', 'N/A')} at {booking.get('departureTime', 'N/A')}
 - Arrival: {booking.get('arrivalFlightNumber', 'N/A')} at {booking.get('arrivalTime', 'N/A')}
 
-📝 Notes: {booking.get('notes', 'None')}
+Ã°Å¸â€œÂ Notes: {booking.get('notes', 'None')}
 
 Status: {booking.get('status', 'pending').upper()}
 Payment: {booking.get('payment_status', 'pending').upper()}
 """.strip()
         
         event = {
-            'summary': f"🚗 {booking_ref} - {booking.get('name', 'Customer')} | {booking.get('passengers', 1)} pax",
+            'summary': f"Ã°Å¸Å¡â€” {booking_ref} - {booking.get('name', 'Customer')} | {booking.get('passengers', 1)} pax",
             'location': booking.get('pickupAddress', ''),
             'description': description,
             'start': {
@@ -3278,7 +3279,7 @@ async def create_test_calendar_event(current_user: dict = Depends(get_current_us
         end_datetime = tomorrow.replace(hour=11, minute=0, second=0, microsecond=0).isoformat()
         
         event = {
-            'summary': '🧪 Test Booking - Hibiscus to Airport',
+            'summary': 'Ã°Å¸Â§Âª Test Booking - Hibiscus to Airport',
             'location': 'Auckland Airport',
             'description': 'This is a test event to verify Google Calendar integration is working correctly.',
             'start': {
@@ -3317,12 +3318,12 @@ async def send_booking_reminder(booking: dict):
         formatted_date = booking.get('date', 'N/A')
         
         # Send reminder email
-        subject = f"⏰ Reminder: Your Airport Transfer Tomorrow - {booking_ref}"
+        subject = f"Ã¢ÂÂ° Reminder: Your Airport Transfer Tomorrow - {booking_ref}"
         
         body = f"""
         <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
           <div style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0;">
-            <h1 style="margin: 0; font-size: 24px;">⏰ Transfer Reminder</h1>
+            <h1 style="margin: 0; font-size: 24px;">Ã¢ÂÂ° Transfer Reminder</h1>
             <p style="margin: 8px 0 0; color: #f59e0b;">Your transfer is tomorrow!</p>
           </div>
           
@@ -3343,15 +3344,15 @@ async def send_booking_reminder(booking: dict):
             
             <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <p style="margin: 0; font-size: 14px; color: #92400e;">
-                <strong>📌 Please be ready 5-10 minutes before your pickup time.</strong><br>
+                <strong>Ã°Å¸â€œÅ’ Please be ready 5-10 minutes before your pickup time.</strong><br>
                 Your driver will contact you when they are on their way.
               </p>
             </div>
             
             <p style="font-size: 14px; color: #6b7280;">
               If you need to make any changes, please contact us:<br>
-              📞 021 743 321<br>
-              ✉️ bookings@bookaride.co.nz
+              Ã°Å¸â€œÅ¾ 021 743 321<br>
+              Ã¢Å“â€°Ã¯Â¸Â bookings@bookaride.co.nz
             </p>
           </div>
         </div>
@@ -3442,3 +3443,142 @@ async def get_pending_reminders(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"Error fetching pending reminders: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# === DOMINAT8_ADMIN_DIAGNOSTICS_V1 ===
+# Adds:
+#  - GET  /health                 => confirms API is up (and optionally DB reachable)
+#  - GET  /admin/bookings/latest  => shows latest bookings (requires ADMIN_TOKEN)
+#  - POST /admin/bookings/test-write => writes a test booking (requires ADMIN_TOKEN)
+
+import os
+from datetime import datetime, timezone
+from fastapi import HTTPException
+
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
+
+def _require_admin(x_admin_token: str | None):
+    if not ADMIN_TOKEN:
+        raise HTTPException(status_code=500, detail="ADMIN_TOKEN not set on server")
+    if not x_admin_token or x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+@router.get("/health")
+async def health():
+    # If DB is reachable, this should not throw
+    ok_db = True
+    err = None
+    try:
+        # lightweight ping: count 0/1 doc
+        await db.bookings.count_documents({}, limit=1)
+    except Exception as e:
+        ok_db = False
+        err = str(e)
+    return {
+        "ok": True,
+        "service": "hibiscus-backend",
+        "db_ok": ok_db,
+        "db_error": err,
+        "ts": datetime.now(timezone.utc).isoformat()
+    }
+
+@router.get("/admin/bookings/latest")
+async def admin_latest_bookings(limit: int = 25, x_admin_token: str | None = None):
+    _require_admin(x_admin_token)
+    if limit < 1: limit = 1
+    if limit > 200: limit = 200
+    items = []
+    cursor = db.bookings.find({}).sort("_id", -1).limit(limit)
+    async for doc in cursor:
+        # sanitize Mongo _id for JSON
+        if "_id" in doc:
+            doc["_id"] = str(doc["_id"])
+        items.append(doc)
+    return {"ok": True, "count": len(items), "items": items}
+
+@router.post("/admin/bookings/test-write")
+async def admin_test_write(x_admin_token: str | None = None):
+    _require_admin(x_admin_token)
+    now = datetime.now(timezone.utc)
+    test_doc = {
+        "id": "TEST_WRITE_" + now.strftime("%Y%m%d_%H%M%S"),
+        "booking_ref": "TEST",
+        "name": "TEST_WRITE",
+        "email": "test@example.com",
+        "phone": "000000000",
+        "pickupAddress": "TEST",
+        "dropoffAddress": "TEST",
+        "date": now.strftime("%Y-%m-%d"),
+        "time": now.strftime("%H:%M"),
+        "passengers": 0,
+        "notes": "TEST_WRITE - safe to delete later",
+        "pricing": {"totalPrice": 0},
+        "status": "test",
+        "payment_status": "test",
+        "serviceType": "test",
+        "created_at_utc": now.isoformat()
+    }
+    r = await db.bookings.insert_one(test_doc)
+    return {"ok": True, "insertedId": str(r.inserted_id), "test_id": test_doc["id"]}
+# === /DOMINAT8_ADMIN_DIAGNOSTICS_V1 ===
+
+# === HTA BREAK-GLASS ADMIN BOOTSTRAP (token-gated) ===
+# POST /api/admin/bootstrap
+# Header: x-admin-token: <ADMIN_TOKEN>
+# Body: { "username": "...", "password": "..." }
+import os
+from typing import Optional
+
+try:
+    from pydantic import BaseModel
+except Exception:
+    BaseModel = object
+
+try:
+    # Prefer shared hashing from auth.py to match existing login verification
+    from auth import hash_password as _hash_password  # type: ignore
+except Exception:
+    try:
+        from auth import get_password_hash as _hash_password  # type: ignore
+    except Exception:
+        _hash_password = None
+
+from pymongo import MongoClient
+
+class _BootstrapBody(BaseModel):
+    username: str
+    password: str
+
+def _get_db():
+    mongo_url = (os.getenv("MONGO_URL") or "").strip()
+    db_name = (os.getenv("DB_NAME") or "hibiscustoairport").strip()
+    if not mongo_url:
+        raise RuntimeError("MONGO_URL is not set")
+    client = MongoClient(mongo_url)
+    return client[db_name]
+
+@router.post("/api/admin/bootstrap")
+async def admin_bootstrap(body: _BootstrapBody, x_admin_token: Optional[str] = None):
+    expected = (os.getenv("ADMIN_TOKEN") or "").strip()
+    provided = (x_admin_token or "").strip()
+    if (not expected) or (provided != expected):
+        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+
+    if _hash_password is None:
+        return JSONResponse(status_code=500, content={"detail": "Password hashing not configured (auth.py hash function not found)"})
+
+    db = _get_db()
+    admins = db["admins"]
+
+    pwd_hash = _hash_password(body.password)
+    now = datetime.utcnow()
+
+    admins.update_one(
+        {"username": body.username},
+        {"$set": {"username": body.username, "password_hash": pwd_hash, "updated_at": now},
+         "$setOnInsert": {"created_at": now}},
+        upsert=True
+    )
+
+    return {"ok": True, "username": body.username}
+# === END BREAK-GLASS ADMIN BOOTSTRAP ===

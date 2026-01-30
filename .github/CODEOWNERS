@@ -1,0 +1,17 @@
+# Dominat8 protected paths
+# Replace @ccantynz-alt with your GitHub username if needed.
+
+# Always require owner review for CI / workflows
+.github/workflows/ @ccantynz-alt
+
+# Core routing / app shell
+app/ @ccantynz-alt
+src/app/ @ccantynz-alt
+src/middleware* @ccantynz-alt
+middleware* @ccantynz-alt
+
+# Critical domain + billing + agents + auth (adjust if paths differ)
+src/app/api/ @ccantynz-alt
+src/pages/api/ @ccantynz-alt
+pages/api/ @ccantynz-alt
+src/lib/ @ccantynz-alt
