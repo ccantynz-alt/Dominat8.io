@@ -1,9 +1,126 @@
+# UPGRADE_2026-01-31_PHASE_D_LOCK_HOMEPAGE.ps1
+# Dominat8 — PHASE D: LOCK THE HOMEPAGE (Design Architecture Showpiece)
+# - Installs section system (SectionShell + sections)
+# - Overwrites HomeClient with a finished, premium homepage built on the system
+# - Uses inline styles (no Tailwind dependency)
+# - Adds BUILD_STAMP markers
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+function Ok($m){ Write-Host "[OK]  $m" -ForegroundColor Green }
+function Warn($m){ Write-Host "[WARN] $m" -ForegroundColor Yellow }
+function Fail($m){ Write-Host "[FAIL] $m" -ForegroundColor Red; throw $m }
+
+function Write-Utf8NoBom {
+  param([Parameter(Mandatory=$true)][string]$Path,[Parameter(Mandatory=$true)][string]$Content)
+  $enc = New-Object System.Text.UTF8Encoding($false)
+  $dir = Split-Path -Parent $Path
+  if ($dir -and !(Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+  [System.IO.File]::WriteAllText($Path, $Content, $enc)
+}
+
+function Backup-IfExists {
+  param([Parameter(Mandatory=$true)][string]$Path)
+  if (Test-Path -LiteralPath $Path) {
+    $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $bak = "$Path.bak_$stamp"
+    Copy-Item -LiteralPath $Path -Destination $bak -Force
+    Ok "Backup: $bak"
+  }
+}
+
+$STAMP = "PHASE_D_LOCK_HOMEPAGE_2026-01-31"
+
+# Targets
+$sectionShellPath = "src/ui/sections/SectionShell.tsx"
+$homeClientPath   = "src/app/_client/HomeClient.tsx"
+
+Backup-IfExists $sectionShellPath
+Backup-IfExists $homeClientPath
+
+# --- SectionShell.tsx ---
+$sectionShell = @"
+'use client';
+
+import React from 'react';
+
+export const SECTION_SHELL_STAMP = '$STAMP' as const;
+
+type Tone = 'dark' | 'panel';
+
+type Props = React.PropsWithChildren<{
+  id?: string;
+  tone?: Tone;
+  padY?: 'tight' | 'normal' | 'loose';
+  maxWidth?: number; // px
+  showDividerTop?: boolean;
+  showDividerBottom?: boolean;
+}>;
+
+function py(padY: Props['padY']): string {
+  if (padY === 'tight') return '48px';
+  if (padY === 'loose') return '96px';
+  return '72px';
+}
+
+function toneStyle(tone: Tone): React.CSSProperties {
+  if (tone === 'panel') {
+    return {
+      background:
+        'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%)',
+      border: '1px solid rgba(255,255,255,0.10)',
+      boxShadow: '0 18px 60px rgba(0,0,0,0.35)',
+    };
+  }
+  return {
+    background: 'transparent',
+  };
+}
+
+export function SectionShell({
+  id,
+  tone = 'dark',
+  padY = 'normal',
+  maxWidth = 1120,
+  showDividerTop,
+  showDividerBottom,
+  children,
+}: Props) {
+  return (
+    <section id={id} style={{ position: 'relative', paddingTop: py(padY), paddingBottom: py(padY) }}>
+      {showDividerTop ? (
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.10)', width: '100%' }} />
+      ) : null}
+
+      <div style={{ width: '100%', maxWidth, margin: '0 auto', paddingLeft: 16, paddingRight: 16 }}>
+        <div
+          style={{
+            borderRadius: 22,
+            padding: tone === 'panel' ? 22 : 0,
+            ...toneStyle(tone),
+          }}
+        >
+          {children}
+        </div>
+      </div>
+
+      {showDividerBottom ? (
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.10)', width: '100%', marginTop: 40 }} />
+      ) : null}
+    </section>
+  );
+}
+"@
+
+# --- HomeClient.tsx (FULL overwrite) ---
+$homeClient = @"
 'use client';
 
 import React, { useMemo } from 'react';
 import { SectionShell } from '../../ui/sections/SectionShell';
 
-export const HOMECLIENT_STAMP = 'PHASE_D_LOCK_HOMEPAGE_2026-01-31' as const;
+export const HOMECLIENT_STAMP = '$STAMP' as const;
 
 function Pill({ children }: { children: React.ReactNode }) {
   return (
@@ -124,7 +241,7 @@ export default function HomeClient() {
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', marginBottom: 14 }}>
               <div style={{ width: 10, height: 10, borderRadius: 999, background: 'linear-gradient(135deg, rgba(157,123,255,1), rgba(45,226,230,1))' }} />
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', fontWeight: 800 }}>
-                Dominat8 â€¢ AI Website Builder
+                Dominat8 • AI Website Builder
               </div>
             </div>
 
@@ -135,7 +252,7 @@ export default function HomeClient() {
             </div>
 
             <div style={{ marginTop: 14, maxWidth: 720, fontSize: 17, lineHeight: 1.7, color: 'rgba(255,255,255,0.78)' }}>
-              Describe your business â€” Dominat8 generates a complete, publishable site with clean structure, conversion sections, and SEO fundamentals.
+              Describe your business — Dominat8 generates a complete, publishable site with clean structure, conversion sections, and SEO fundamentals.
             </div>
 
             <div style={{ marginTop: 18, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -203,7 +320,7 @@ export default function HomeClient() {
       <SectionShell tone="dark" padY="normal" maxWidth={1180} showDividerTop={false} showDividerBottom={true}>
         <div style={{ fontSize: 34, fontWeight: 950, letterSpacing: '-0.02em' }}>Everything your site needs to launch</div>
         <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.75)', maxWidth: 800, lineHeight: 1.7 }}>
-          A real site layout â€” not a half-finished template. Sections, hierarchy, and clarity â€” so customers trust it immediately.
+          A real site layout — not a half-finished template. Sections, hierarchy, and clarity — so customers trust it immediately.
         </div>
 
         <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14 }}>
@@ -220,13 +337,13 @@ export default function HomeClient() {
       <SectionShell tone="panel" padY="normal" maxWidth={1180}>
         <div style={{ fontSize: 34, fontWeight: 950, letterSpacing: '-0.02em' }}>How it works</div>
         <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.75)', maxWidth: 840, lineHeight: 1.7 }}>
-          You donâ€™t need to be technical. You just need to describe what you do.
+          You don’t need to be technical. You just need to describe what you do.
         </div>
 
         <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14 }}>
           <Card title="1) Describe" body="Tell Dominat8 your business, audience, and offer." />
           <Card title="2) Generate" body="Get a clean site structure with sections and SEO basics." />
-          <Card title="3) Publish" body="Ship a premium-looking website fast â€” then improve over time." />
+          <Card title="3) Publish" body="Ship a premium-looking website fast — then improve over time." />
         </div>
       </SectionShell>
 
@@ -234,7 +351,7 @@ export default function HomeClient() {
       <SectionShell tone="dark" padY="normal" maxWidth={1180} showDividerTop={false} showDividerBottom={true}>
         <div style={{ fontSize: 34, fontWeight: 950, letterSpacing: '-0.02em' }}>Pricing that makes sense</div>
         <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.75)', maxWidth: 820, lineHeight: 1.7 }}>
-          Start free, then upgrade when youâ€™re ready to publish and scale.
+          Start free, then upgrade when you’re ready to publish and scale.
         </div>
 
         <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14 }}>
@@ -244,9 +361,9 @@ export default function HomeClient() {
               Explore Dominat8 and generate your first layout.
             </div>
             <div style={{ marginTop: 12, color: 'rgba(255,255,255,0.78)', fontSize: 14 }}>
-              â€¢ Build concept sites<br />
-              â€¢ Preview structure<br />
-              â€¢ Start your draft
+              • Build concept sites<br />
+              • Preview structure<br />
+              • Start your draft
             </div>
           </div>
 
@@ -256,9 +373,9 @@ export default function HomeClient() {
               Publish-ready, premium finish and faster iteration.
             </div>
             <div style={{ marginTop: 12, color: 'rgba(255,255,255,0.78)', fontSize: 14 }}>
-              â€¢ Custom domains<br />
-              â€¢ SEO essentials<br />
-              â€¢ Faster publish workflow
+              • Custom domains<br />
+              • SEO essentials<br />
+              • Faster publish workflow
             </div>
             <div style={{ marginTop: 14 }}>
               <PrimaryButton href="/pricing">See Pro</PrimaryButton>
@@ -271,10 +388,10 @@ export default function HomeClient() {
       <SectionShell tone="panel" padY="normal" maxWidth={1180}>
         <div style={{ fontSize: 34, fontWeight: 950, letterSpacing: '-0.02em' }}>FAQ</div>
         <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
-          <QA q="Is this a template?" a="No â€” Dominat8 generates a real structured site layout designed to convert." />
+          <QA q="Is this a template?" a="No — Dominat8 generates a real structured site layout designed to convert." />
           <QA q="Will it look finished?" a="Yes. The section architecture locks spacing and hierarchy so it feels premium." />
           <QA q="Can I edit it later?" a="Yes. You can refine copy and iterate as your business evolves." />
-          <QA q="Can I use my own domain?" a="Yes â€” custom domain support is part of the roadmap and onboarding flow." />
+          <QA q="Can I use my own domain?" a="Yes — custom domain support is part of the roadmap and onboarding flow." />
         </div>
       </SectionShell>
 
@@ -282,10 +399,10 @@ export default function HomeClient() {
       <SectionShell tone="dark" padY="loose" maxWidth={1180}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 44, fontWeight: 950, letterSpacing: '-0.03em', lineHeight: 1.05 }}>
-            Ready to ship something youâ€™re proud of?
+            Ready to ship something you’re proud of?
           </div>
           <div style={{ marginTop: 12, color: 'rgba(255,255,255,0.78)', maxWidth: 840, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.7 }}>
-            This is the homepage â€œlock.â€ Now every future upgrade lands into a clean architecture instead of chaos.
+            This is the homepage “lock.” Now every future upgrade lands into a clean architecture instead of chaos.
           </div>
 
           <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -303,3 +420,22 @@ export default function HomeClient() {
     </div>
   );
 }
+"@
+
+# Write files
+Write-Utf8NoBom $sectionShellPath $sectionShell
+Ok "Wrote: $sectionShellPath"
+
+Write-Utf8NoBom $homeClientPath $homeClient
+Ok "Wrote: $homeClientPath"
+
+Ok "DONE: $STAMP"
+Write-Host ""
+Write-Host "NEXT (copy/paste):" -ForegroundColor Yellow
+Write-Host "  npm run build" -ForegroundColor Yellow
+Write-Host "  git add -A" -ForegroundColor Yellow
+Write-Host "  git commit -m ""feat(home): lock homepage with section architecture (phase d)""" -ForegroundColor Yellow
+Write-Host "  git push" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Optional deploy:" -ForegroundColor Yellow
+Write-Host "  vercel --prod --force" -ForegroundColor Yellow

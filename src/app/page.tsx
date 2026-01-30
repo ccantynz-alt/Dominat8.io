@@ -1,3 +1,6 @@
+import { AppNav } from "../ui/layout/AppNav";
+import { AppFooter } from "../ui/layout/AppFooter";
+
 export const dynamic = "force-dynamic";
 
 import HomeClient from "./_client/HomeClient";
