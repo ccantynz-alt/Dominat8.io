@@ -1,6 +1,7 @@
 import React from "react";
 
 export type D8SectionProps = {
+  tone?: 'default' | 'glass' | 'dark';
   lead?: string;
   eyebrow?: string;
   title?: string;
@@ -10,7 +11,7 @@ export type D8SectionProps = {
 };
 
 export function D8Section(props: D8SectionProps) {
-  const { title, subtitle, children, id } = props;
+  const { tone = 'default', title, subtitle, children, id } = props;
 
   // Keep server-safe: no "use client", no browser-only APIs.
   return (
