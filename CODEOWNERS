@@ -1,0 +1,15 @@
+# Dominat8 CODEOWNERS
+# Note: CODEOWNERS requires a repo-level setting + branch rules to be enforced.
+# Still useful as a “signal” in GitHub UI.
+
+* @ccantynz-alt
+
+# High-risk areas
+/.github/workflows/ @ccantynz-alt
+/src/middleware.ts @ccantynz-alt
+/middleware.ts @ccantynz-alt
+/src/app/ @ccantynz-alt
+/pages/api/ @ccantynz-alt
+/package.json @ccantynz-alt
+/next.config.* @ccantynz-alt
+/vercel.json @ccantynz-alt
