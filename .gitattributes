@@ -1,16 +1,10 @@
-# Normalize line endings in repo (Windows-friendly)
+# Normalize line endings
 * text=auto
 
-# Prefer LF for code files (Git will handle checkout appropriately)
-*.ts  text eol=lf
-*.tsx text eol=lf
-*.js  text eol=lf
-*.jsx text eol=lf
-*.json text eol=lf
+# Keep PowerShell scripts as CRLF on Windows
+*.ps1 text eol=crlf
+
+# YAML/MD are fine as LF
 *.yml text eol=lf
 *.yaml text eol=lf
-*.md  text eol=lf
-*.css text eol=lf
-*.html text eol=lf
-*.py  text eol=lf
-*.txt text eol=lf
+*.md text eol=lf
