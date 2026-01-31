@@ -1,0 +1,209 @@
+/* =========================================================
+   D8_OBSIDIAN_UI_PASS_v1_20260131
+   Glass + Steel + Depth system (layout-safe)
+   Apply via: body.d8-obsidian OR any ancestor .d8-obsidian
+   ========================================================= */
+
+.d8-obsidian {
+  /* Core palette (neutral, premium, no purple) */
+  --d8-bg0: #07090f;
+  --d8-bg1: #0b0f1a;
+  --d8-bg2: #0e1426;
+
+  --d8-fg0: #ffffff;
+  --d8-fg1: #d7dbea;
+  --d8-fg2: #9aa3c7;
+
+  --d8-border0: rgba(255,255,255,0.08);
+  --d8-border1: rgba(255,255,255,0.14);
+
+  /* Glass */
+  --d8-glass0: rgba(255,255,255,0.04);
+  --d8-glass1: rgba(255,255,255,0.06);
+  --d8-glass2: rgba(255,255,255,0.08);
+
+  /* Highlights */
+  --d8-hl0: rgba(255,255,255,0.10);
+  --d8-hl1: rgba(255,255,255,0.18);
+
+  /* Depth shadows (subtle, expensive) */
+  --d8-shadow0: 0 10px 35px rgba(0,0,0,0.45);
+  --d8-shadow1: 0 22px 70px rgba(0,0,0,0.55);
+
+  /* Ring */
+  --d8-ring: rgba(255,255,255,0.28);
+
+  /* Radiance (neutral) */
+  --d8-aura0: rgba(255,255,255,0.05);
+  --d8-aura1: rgba(255,255,255,0.03);
+
+  color: var(--d8-fg1);
+}
+
+/* Background layer (safe: no layout changes) */
+.d8-obsidian body,
+body.d8-obsidian {
+  background:
+    radial-gradient(1200px 900px at 50% -30%, var(--d8-aura0), transparent 60%),
+    radial-gradient(900px 700px at 10% 20%, var(--d8-aura1), transparent 55%),
+    linear-gradient(180deg, var(--d8-bg0), var(--d8-bg1) 45%, var(--d8-bg2));
+  color: var(--d8-fg1);
+}
+
+/* Optional: fine noise overlay (very subtle) */
+.d8-obsidian body::before,
+body.d8-obsidian::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 3px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 4px);
+}
+
+/* Typography polish */
+.d8-obsidian h1, .d8-obsidian h2, .d8-obsidian h3,
+body.d8-obsidian h1, body.d8-obsidian h2, body.d8-obsidian h3 {
+  color: var(--d8-fg0);
+  letter-spacing: -0.02em;
+}
+
+/* =========================
+   Reusable UI Primitives
+   ========================= */
+
+/* Card / Panel base */
+.d8-card, .d8-panel {
+  border: 1px solid var(--d8-border0);
+  background: linear-gradient(180deg, var(--d8-glass1), rgba(255,255,255,0.02));
+  border-radius: 16px;
+  box-shadow: var(--d8-shadow0);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Inner highlight rim */
+.d8-card::before, .d8-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 260px at 20% 0%, rgba(255,255,255,0.10), transparent 55%),
+    radial-gradient(700px 240px at 80% 0%, rgba(255,255,255,0.06), transparent 60%);
+  opacity: 0.65;
+}
+
+/* Glass stronger (for hero panels/modals) */
+.d8-glass {
+  border: 1px solid var(--d8-border1);
+  background: linear-gradient(180deg, var(--d8-glass2), rgba(255,255,255,0.03));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Steel border (chrome edge) */
+.d8-steel {
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 16px 50px rgba(0,0,0,0.55);
+}
+
+/* Divider */
+.d8-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
+}
+
+/* Chip / Tag */
+.d8-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--d8-border0);
+  background: rgba(255,255,255,0.03);
+  color: var(--d8-fg2);
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Button */
+.d8-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  color: var(--d8-fg0);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 14px 40px rgba(0,0,0,0.55);
+  transition: transform 120ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.d8-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.24);
+  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+}
+
+.d8-btn:active {
+  transform: translateY(0px);
+}
+
+.d8-btn--ghost {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.12);
+  color: var(--d8-fg1);
+  box-shadow: none;
+}
+
+.d8-btn--solid {
+  background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  border-color: rgba(255,255,255,0.26);
+}
+
+/* Inputs */
+.d8-input, .d8-select, .d8-textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.25);
+  color: var(--d8-fg0);
+  padding: 10px 12px;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.d8-input:focus, .d8-select:focus, .d8-textarea:focus {
+  border-color: rgba(255,255,255,0.22);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.10);
+}
+
+/* Focus visible (neutral ring) */
+.d8-obsidian :focus-visible,
+body.d8-obsidian :focus-visible {
+  outline: 2px solid var(--d8-ring);
+  outline-offset: 2px;
+}
+
+/* Debug proof stamp (tiny) */
+.d8-obsidian html::after,
+html.d8-obsidian::after {
+  content: "D8_OBSIDIAN_UI_PASS_v1";
+  position: fixed;
+  bottom: 6px;
+  right: 10px;
+  font-size: 10px;
+  opacity: 0.28;
+  pointer-events: none;
+}

@@ -1,15 +1,8 @@
-/* ===== D8_HOME_MONSTER_HERO_V2_20260131_210809 =====
-   Dominat8 Homepage — MONSTER HERO V2
-   Proof: D8_MONSTER_PROOF_20260131_210809
-*/
+import * as React from "react";
+import { RocketCockpit } from "../io/surfaces/RocketCockpit";
 
-import MonsterHeroClient from "./_client/MonsterHeroClient";
-
-export const metadata = {
-  title: "Dominat8 — Your website doesn't sit there. It works.",
-  description: "Generate. Launch. Rank. The AI system that keeps your site alive and growing.",
-};
+const PATCH = "IO_ROCKET_COCKPIT_v1_20260131";
 
 export default function Page() {
-  return <MonsterHeroClient buildStamp={"D8_HOME_MONSTER_HERO_V2_20260131_210809"} proofToken={"D8_MONSTER_PROOF_20260131_210809"} />;
+  return <RocketCockpit patchId={PATCH} />;
 }

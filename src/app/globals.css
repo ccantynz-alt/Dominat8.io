@@ -1,251 +1,72 @@
+@import "./_styles/obsidian.css";
 /* =========================================================
-   DXL-07 Live Optimization Toasts (DXL07_20260128)
-   - Ultra subtle, premium notifications
-   - Kill switch: DXL_TOASTS=0
+   D8_NO_PURPLE_CORE_v1_20260131
+   Absolute neutral premium dark theme
    ========================================================= */
 
-html[data-dxl="DXL01_20260128"] .dxl-toasts {
+:root {
+  /* Core surfaces */
+  --bg-0: #07090f;
+  --bg-1: #0b0f1a;
+  --bg-2: #11162a;
+
+  /* Text */
+  --fg-0: #ffffff;
+  --fg-1: #d7dbea;
+  --fg-2: #9aa3c7;
+
+  /* Accent â€” HARD LOCK (NO PURPLE) */
+  --accent: #e5e7eb;         /* neutral light */
+  --primary: #e5e7eb;
+  --ring: rgba(255,255,255,0.25);
+
+  /* Kill glows */
+  --glow: transparent;
+  --glow-soft: transparent;
+  --glow-strong: transparent;
+
+  /* Borders */
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.16);
+}
+
+/* HARD NUKE ANY PURPLE GRADIENTS */
+body,
+main {
+  background:
+    radial-gradient(1200px 800px at 50% -20%, rgba(255,255,255,0.04), transparent 60%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1) 40%, var(--bg-2));
+  color: var(--fg-1);
+}
+
+/* Remove purple shadows / focus rings globally */
+*,
+*::before,
+*::after {
+  box-shadow: none !important;
+}
+
+/* Neutral focus (no purple ring) */
+:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.35);
+  outline-offset: 2px;
+}
+
+/* Kill Tailwind purple utilities if they slipped through */
+[class*="purple"],
+[class*="violet"],
+[class*="fuchsia"] {
+  background: none !important;
+  color: inherit !important;
+}
+
+/* Debug proof */
+html::after {
+  content: "D8_NO_PURPLE_CORE_v1";
   position: fixed;
-  right: 14px;
-  bottom: 14px;
-  z-index: 60;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
-  pointer-events: none; /* toasts are not interactive */
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toasts__hide {
-  pointer-events: auto;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 900;
-
-  padding: 8px 10px;
-  border-radius: 999px;
-
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(246,242,255,0.70);
-
-  backdrop-filter: blur(10px) saturate(1.05);
-  box-shadow: 0 18px 55px rgba(0,0,0,0.45);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  html[data-dxl="DXL01_20260128"] .dxl-toasts__hide:hover {
-    filter: brightness(1.06);
-    transform: translate3d(0,-1px,0);
-  }
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast {
-  width: min(360px, calc(100vw - 28px));
-  pointer-events: none;
-
-  border-radius: 16px;
-  padding: 10px 12px;
-
-  background: rgba(0,0,0,0.38);
-  border: 1px solid rgba(255,255,255,0.14);
-  box-shadow: 0 22px 70px rgba(0,0,0,0.55);
-
-  backdrop-filter: blur(12px) saturate(1.05);
-
-  color: rgba(246,242,255,0.86);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-
-  animation: dxlToastIn 260ms cubic-bezier(0.16,1,0.30,1) both;
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind {
+  bottom: 6px;
+  right: 10px;
   font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  padding: 6px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
-  color: rgba(246,242,255,0.74);
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind--optimized {
-  border-color: rgba(168,85,247,0.22);
-}
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind--scheduled {
-  border-color: rgba(59,130,246,0.22);
-}
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind--published {
-  border-color: rgba(34,197,94,0.22);
-}
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind--bundle {
-  border-color: rgba(250,204,21,0.22);
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__ago {
-  font-size: 11px;
-  opacity: 0.62;
-  white-space: nowrap;
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__title {
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__detail {
-  margin-top: 6px;
-  font-size: 12px;
-  line-height: 1.45;
-  opacity: 0.72;
-}
-
-@keyframes dxlToastIn {
-  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.98); }
-  to   { opacity: 1; transform: translate3d(0, 0px, 0) scale(1); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html[data-dxl="DXL01_20260128"] .dxl-toast {
-    animation: none !important;
-  }
-}
-
-/* =========================================================
-   DXL-07 Live Optimization Toasts (DXL07_20260128)
-   - Ultra subtle, premium notifications
-   - Kill switch: DXL_TOASTS=0
-   ========================================================= */
-
-html[data-dxl="DXL01_20260128"] .dxl-toasts {
-  position: fixed;
-  right: 14px;
-  bottom: 14px;
-  z-index: 60;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
-  pointer-events: none; /* toasts are not interactive */
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toasts__hide {
-  pointer-events: auto;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 900;
-
-  padding: 8px 10px;
-  border-radius: 999px;
-
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(246,242,255,0.70);
-
-  backdrop-filter: blur(10px) saturate(1.05);
-  box-shadow: 0 18px 55px rgba(0,0,0,0.45);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  html[data-dxl="DXL01_20260128"] .dxl-toasts__hide:hover {
-    filter: brightness(1.06);
-    transform: translate3d(0,-1px,0);
-  }
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast {
-  width: min(360px, calc(100vw - 28px));
+  opacity: 0.35;
   pointer-events: none;
-
-  border-radius: 16px;
-  padding: 10px 12px;
-
-  background: rgba(0,0,0,0.38);
-  border: 1px solid rgba(255,255,255,0.14);
-  box-shadow: 0 22px 70px rgba(0,0,0,0.55);
-
-  backdrop-filter: blur(12px) saturate(1.05);
-
-  color: rgba(246,242,255,0.86);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-
-  animation: dxlToastIn 260ms cubic-bezier(0.16,1,0.30,1) both;
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind {
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  padding: 6px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
-  color: rgba(246,242,255,0.74);
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind--optimized {
-  border-color: rgba(168,85,247,0.22);
-}
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind--scheduled {
-  border-color: rgba(59,130,246,0.22);
-}
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind--published {
-  border-color: rgba(34,197,94,0.22);
-}
-html[data-dxl="DXL01_20260128"] .dxl-toast__kind--bundle {
-  border-color: rgba(250,204,21,0.22);
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__ago {
-  font-size: 11px;
-  opacity: 0.62;
-  white-space: nowrap;
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__title {
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-html[data-dxl="DXL01_20260128"] .dxl-toast__detail {
-  margin-top: 6px;
-  font-size: 12px;
-  line-height: 1.45;
-  opacity: 0.72;
-}
-
-@keyframes dxlToastIn {
-  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.98); }
-  to   { opacity: 1; transform: translate3d(0, 0px, 0) scale(1); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html[data-dxl="DXL01_20260128"] .dxl-toast {
-    animation: none !important;
-  }
 }

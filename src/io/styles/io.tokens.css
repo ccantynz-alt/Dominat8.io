@@ -1,0 +1,25 @@
+/* ===== ROCKET_COCKPIT_IO_v1_20260131 : IO TOKENS ===== */
+:root{
+  color-scheme: dark;
+
+  --io-bg0:#04060B;
+  --io-bg1:#070A12;
+  --io-ink:rgba(255,255,255,0.92);
+  --io-muted:rgba(255,255,255,0.66);
+  --io-muted2:rgba(255,255,255,0.50);
+
+  --io-panel:rgba(255,255,255,0.055);
+  --io-panel2:rgba(255,255,255,0.085);
+  --io-stroke:rgba(255,255,255,0.12);
+  --io-stroke2:rgba(255,255,255,0.18);
+
+  --io-electric:#7C5CFF;
+  --io-cyan:#3DF0FF;
+  --io-hot:#FF4D6D;
+  --io-warn:#FFD166;
+  --io-ok:#38F8A6;
+
+  --io-r:18px;
+  --io-shadow: 0 22px 80px rgba(0,0,0,0.62);
+  --io-blur: 14px;
+}
