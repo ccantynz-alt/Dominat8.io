@@ -28,7 +28,6 @@ jobs:
       - name: Install
         run: npm ci
 
-      # Protected paths gate (PRs only). Allow override via PR title tag [ALLOW_PROTECTED]
       - name: Protected paths guardrail
         if: github.event_name == 'pull_request'
         env:

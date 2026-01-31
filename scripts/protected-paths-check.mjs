@@ -1,22 +1,17 @@
 /**
  * Protected Paths Guardrail
  * Fails CI if protected areas change unless ALLOW_PROTECTED_PATHS=1.
- *
- * Works in GitHub Actions PRs:
- * - We compute diff between base SHA and head SHA.
- * - If any changed file matches protected patterns, fail.
  */
-
 import { execSync } from "node:child_process";
 
 const allow = process.env.ALLOW_PROTECTED_PATHS === "1";
 
 const protectedPrefixes = [
-  "src/app/api/",            // API routes (runtime-critical)
-  "src/lib/engine/",         // engine plumbing
-  "src/middleware.ts",       // routing/auth/caching behavior
-  "middleware.ts",           // (some repos place it here)
-  "src/app/_client/FallbackStyles.tsx", // known “do not touch”
+  "src/app/api/",
+  "src/lib/engine/",
+  "src/middleware.ts",
+  "middleware.ts",
+  "src/app/_client/FallbackStyles.tsx",
 ];
 
 function run(cmd) {
@@ -30,11 +25,8 @@ function getChangedFiles(base, head) {
 
 function isProtected(path) {
   for (const p of protectedPrefixes) {
-    if (p.endsWith("/")) {
-      if (path.startsWith(p)) return true;
-    } else {
-      if (path === p) return true;
-    }
+    if (p.endsWith("/")) { if (path.startsWith(p)) return true; }
+    else { if (path === p) return true; }
   }
   return false;
 }
@@ -62,9 +54,9 @@ function main() {
     return;
   }
 
-  console.error("[protected-paths] BLOCKED: protected paths modified. To allow, include [ALLOW_PROTECTED] in PR title.");
+  console.error("[protected-paths] BLOCKED: protected paths modified.");
+  console.error("To allow for a deliberate change, include [ALLOW_PROTECTED] in PR title.");
   for (const f of hit) console.error("  - " + f);
   process.exit(2);
 }
-
 main();
