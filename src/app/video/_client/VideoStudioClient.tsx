@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { d8 } from "@/lib/ui/d8InlineUi";
@@ -178,7 +178,9 @@ export default function VideoStudioClient() {
       }
       if (idx >= durations.length) {
         setActiveIndex(durations.length - 1);
-        drawFrame(ctx, w, h, shots[durations.length - 1], 1);
+        if (ctx) {
+          drawFrame(ctx, w, h, shots[durations.length - 1], 1);
+        }
         stopAnimation();
         if (previewOnly) setStatus("ready");
         return;
@@ -186,6 +188,7 @@ export default function VideoStudioClient() {
       setActiveIndex(idx);
       const local = elapsed - acc;
       const p = Math.max(0, Math.min(1, local / durations[idx]));
+      if (!ctx) return;
       drawFrame(ctx, w, h, shots[idx], p);
       rafRef.current = requestAnimationFrame(tick);
     }
@@ -325,7 +328,7 @@ export default function VideoStudioClient() {
           <div style={{ flex: "1 1 420px" }}>
             <h1 style={d8.h1}>AI Auto Video Studio</h1>
             <p style={d8.p}>
-              Generate → Preview → Record → <b>Publish to Project</b> (stores the latest video URL in KV and auto-embeds on the project video page).
+              Generate â†’ Preview â†’ Record â†’ <b>Publish to Project</b> (stores the latest video URL in KV and auto-embeds on the project video page).
             </p>
           </div>
 
@@ -432,7 +435,7 @@ export default function VideoStudioClient() {
                 <div style={{ fontSize: 13, fontWeight: 950, marginBottom: 6 }}>{storyboard.title}</div>
 
                 <div style={{ fontSize: 12, color: "rgba(237,234,247,0.70)", fontWeight: 800, marginBottom: 6 }}>
-                  Active shot: <span style={{ color: "rgba(246,242,255,0.92)" }}>{activeShot?.title || "—"}</span>
+                  Active shot: <span style={{ color: "rgba(246,242,255,0.92)" }}>{activeShot?.title || "â€”"}</span>
                 </div>
 
                 <div style={{ display: "grid", gap: 8 }}>
@@ -453,7 +456,7 @@ export default function VideoStudioClient() {
                         </div>
                       </div>
                       <div style={{ marginTop: 6, fontSize: 12, color: "rgba(237,234,247,0.72)", lineHeight: 1.5 }}>
-                        {(s.lines || []).map((ln, k) => <div key={k}>• {ln}</div>)}
+                        {(s.lines || []).map((ln, k) => <div key={k}>â€¢ {ln}</div>)}
                       </div>
                     </div>
                   ))}
@@ -463,7 +466,7 @@ export default function VideoStudioClient() {
                   <div style={{ marginTop: 12 }}>
                     <div style={{ fontWeight: 950, fontSize: 12, marginBottom: 6 }}>Voiceover (optional)</div>
                     <div style={{ fontSize: 12, color: "rgba(237,234,247,0.72)", lineHeight: 1.6 }}>
-                      {storyboard.voiceover.map((v, i) => <div key={i}>— {v}</div>)}
+                      {storyboard.voiceover.map((v, i) => <div key={i}>â€” {v}</div>)}
                     </div>
                   </div>
                 )}
@@ -479,3 +482,4 @@ export default function VideoStudioClient() {
     </div>
   );
 }
+

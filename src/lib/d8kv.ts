@@ -1,4 +1,4 @@
-type Json = any;
+﻿type Json = any;
 
 function kvBase() {
   const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
@@ -51,3 +51,13 @@ export function d8Key_bundleRun(projectId: string, runId: string) {
 export function d8Key_patchLatest(projectId: string) {
   return `agentPatch:project:${projectId}:latest`;
 }
+
+/**
+ * Stable KV key helper (compat export).
+ * Used by: /projects/[projectId]/video
+ * Keep this name stable to avoid build breaks.
+ */
+export function projectVideoKey(projectId: string): string {
+  return `project:${projectId}:video`;
+}
+
