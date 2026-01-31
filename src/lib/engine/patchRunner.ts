@@ -1,4 +1,4 @@
-/**
+﻿/**
  * patchRunner.ts (DXL HOTFIX)
  * Purpose: unblock Next.js build when /api/engine/patch-run imports this module.
  *
@@ -30,3 +30,16 @@ export async function runPatch(req: PatchRunRequest): Promise<PatchRunResult> {
     received: req,
   };
 }
+/**
+ * Compatibility export expected by /api/engine/patch-run route.
+ * If your engine implementation changes, keep this wrapper stable.
+ */
+export async function runPatchRunner(input?: any): Promise<any> {
+  return {
+    ok: true,
+    stub: true,
+    note: "runPatchRunner stub (patchRunner.ts had no callable runner export).",
+    input: input ?? null,
+  };
+}
+

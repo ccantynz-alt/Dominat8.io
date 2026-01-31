@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { kvSetJson, kvGetJson, requireAdmin } from "@/lib/aleKv";
 
 export const dynamic = "force-dynamic";
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     };
 
     // Dedupe by patchId, unshift newest, cap length
-    const next = [item, ...existing.filter(x => x?.patchId !== patchId)].slice(0, 50);
+    const next = ([item, ...((Array.isArray(existing) ? existing : [])).filter(x => x?.patchId !== patchId)]).slice(0, 50);
     await kvSetJson(kIndex, next);
 
     return NextResponse.json({
@@ -81,3 +81,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok:false, error: e?.message || "Server error" }, { status });
   }
 }
+
+
