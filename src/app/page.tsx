@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { buildStamp } from "@/lib/buildStamp";
+import { BUILD_STAMP } from "@/lib/buildStamp";
 
 export default function Page() {
-  const stamp = buildStamp();
+  const stamp = BUILD_STAMP;
 
   return (
     <main className="min-h-screen bg-[#06070b] text-white">
@@ -70,12 +70,12 @@ export default function Page() {
             <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 ring-1 ring-white/10">
               <span className="h-2 w-2 rounded-full bg-emerald-400/90" />
               <span className="text-xs font-medium tracking-wide text-white/80">
-                Finish Pack installed • Deploy proof endpoints live
+                Finish Pack installed â€¢ Deploy proof endpoints live
               </span>
             </div>
 
             <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-6xl">
-              Build a premium site in minutes —
+              Build a premium site in minutes â€”
               <span className="block text-white/80">then ship it with confidence.</span>
             </h1>
 
@@ -98,7 +98,7 @@ export default function Page() {
                 See Pricing
               </Link>
               <span className="text-xs text-white/50 sm:pl-2">
-                No new deps • Clean build • Guardrails on
+                No new deps â€¢ Clean build â€¢ Guardrails on
               </span>
             </div>
 
@@ -139,15 +139,15 @@ export default function Page() {
                 <ul className="mt-3 space-y-2 text-sm text-white/75">
                   <li className="flex items-start gap-2">
                     <span className="mt-1 inline-block h-2 w-2 rounded-full bg-emerald-400/90" />
-                    <span><span className="font-semibold text-white/85">/api/__health__</span> — health check endpoint</span>
+                    <span><span className="font-semibold text-white/85">/api/__health__</span> â€” health check endpoint</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="mt-1 inline-block h-2 w-2 rounded-full bg-emerald-400/90" />
-                    <span><span className="font-semibold text-white/85">/api/__build_stamp__</span> — build stamp proof</span>
+                    <span><span className="font-semibold text-white/85">/api/__build_stamp__</span> â€” build stamp proof</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="mt-1 inline-block h-2 w-2 rounded-full bg-emerald-400/90" />
-                    <span><span className="font-semibold text-white/85">/api/__env_presence__</span> — env presence checks</span>
+                    <span><span className="font-semibold text-white/85">/api/__env_presence__</span> â€” env presence checks</span>
                   </li>
                 </ul>
               </div>
@@ -190,7 +190,7 @@ export default function Page() {
       <footer className="relative z-10 mx-auto max-w-6xl px-6 pb-10">
         <div className="flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-white/50">
-            © {new Date().getFullYear()} DOMINAT8 • Premium defaults • No drama deploys
+            Â© {new Date().getFullYear()} DOMINAT8 â€¢ Premium defaults â€¢ No drama deploys
           </div>
           <div className="flex items-center gap-3 text-xs">
             <Link href="/pricing" className="text-white/60 hover:text-white">Pricing</Link>
