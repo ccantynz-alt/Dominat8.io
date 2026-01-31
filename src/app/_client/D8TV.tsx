@@ -270,7 +270,7 @@ export default function D8TV() {
       <div className="d8-panel" style={{ padding: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Badge ok={okCount -ge 2} text={"D8 TV  •  " + okCount + "/4"} />
+            <Badge ok={okCount -ge 2} text={"D8 TV  â€¢  " + okCount + "/4"} />
             <span style={{ fontSize: 12, opacity: 0.72 }}>{isoNow()}</span>
           </div>
           <button className="d8-btn d8-btn--ghost" style={{ padding: '6px 10px', borderRadius: 999 }} onClick={() => setOpen((v) => !v)} type="button">
@@ -342,13 +342,13 @@ export default function D8TV() {
                           {String(r.data?.url || '')}
                         </div>
                         <div style={{ fontSize: 12, opacity: 0.85 }}>
-                          {r.ok ? ('OK ' + r.status) : ('FAIL ' + (r.status || '0'))} • {r.ms}ms
+                          {r.ok ? ('OK ' + r.status) : ('FAIL ' + (r.status || '0'))} â€¢ {r.ms}ms
                         </div>
                       </div>
                     ))}
                   </div>
                   <div style={{ marginTop: 8, fontSize: 12, opacity: 0.65 }}>
-                    Tip: 404 is fine here — it tells you exactly what’s missing on this deploy.
+                    Tip: 404 is fine here â€” it tells you exactly whatâ€™s missing on this deploy.
                   </div>
                 </div>
               </div>
@@ -400,7 +400,7 @@ export default function D8TV() {
                           {String(r.data?.url || '')}
                         </div>
                         <div style={{ fontSize: 12, opacity: 0.85 }}>
-                          {r.ok ? ('OK ' + r.status) : ('FAIL ' + (r.status || '0'))} • {r.ms}ms
+                          {r.ok ? ('OK ' + r.status) : ('FAIL ' + (r.status || '0'))} â€¢ {r.ms}ms
                         </div>
                       </div>
                     ))}
