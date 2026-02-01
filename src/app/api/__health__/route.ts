@@ -1,19 +1,21 @@
-import { NextResponse } from "next/server";
-import { buildStamp } from "@/lib/buildStamp";
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const s = buildStamp();
-  return NextResponse.json({
+  const now = new Date().toISOString();
+  const body = {
     ok: true,
-    service: "dominat8-io",
-    ...s,
-    nowIso: new Date().toISOString(),
-  }, {
+    service: "dominat8",
+    now,
+  };
+
+  return new Response(JSON.stringify(body), {
+    status: 200,
     headers: {
-      "cache-control": "no-store, max-age=0",
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
+      "pragma": "no-cache",
+      "x-d8-proof": "D8_HEALTH_OK",
     },
   });
 }

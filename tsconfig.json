@@ -42,6 +42,7 @@
                     "builder-workspace-v1",
                     "**/builder-workspace-v1/**",
     "src/_legacy_app_*",
-    "src/_legacy_app_*/**/*"
+    "src/_legacy_app_*/**/*",
+    "_quarantine/**/*"
   ]
 }
