@@ -136,10 +136,10 @@ export default function D8TV() {
 
     async function pullCore() {
       const ts = Math.floor(Date.now() / 1000);
-      const s = await getJson(/api/__d8__/stamp?ts=20260131_232831);
-      const w = await getJson(/api/__d8__/where?ts=20260131_232831);
-      const p = await getJson(/api/__d8__/proof?ts=20260131_232831);
-      const k = await getJson(/api/__d8__/kv?ts=20260131_232831);
+      const s = await getJson(`/api/__d8__/stamp?ts=${ts}`);
+      const w = await getJson(`/api/__d8__/where?ts=${ts}`);
+      const p = await getJson(`/api/__d8__/proof?ts=${ts}`);
+      const k = await getJson(`/api/__d8__/kv?ts=${ts}`);
 
       if (!alive) return;
       setStamp(s);
