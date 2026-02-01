@@ -215,8 +215,7 @@ export default function D8TV() {
       }}
       data-d8="TV_CHANNELS_v1_20260201a"
     >
-      <style jsx global>{
-        /* D8_TV_CHANNELS self-contained styling (does not touch your main UI) */
+      <style jsx global>{`n/* D8_TV_CHANNELS self-contained styling (does not touch your main UI) */
         [data-d8="TV_CHANNELS_v1_20260201a"] { pointer-events: auto; }
         [data-d8="TV_CHANNELS_v1_20260201a"] .d8-panel{
           border-radius: 16px;
@@ -264,8 +263,7 @@ export default function D8TV() {
         [data-d8="TV_CHANNELS_v1_20260201a"] .d8-divider{
           height: 1px;
           background: rgba(255,255,255,0.08);
-        }
-      }</style>
+        }`n}</style>
 
       <div className="d8-panel" style={{ padding: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -418,3 +416,4 @@ export default function D8TV() {
     </div>
   );
 }
+
