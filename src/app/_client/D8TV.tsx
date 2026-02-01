@@ -167,7 +167,7 @@ export default function D8TV() {
     const ts = Math.floor(Date.now() / 1000);
     const out: ApiResult[] = [];
     for (const u of probes) {
-      const r = await probe(${u}ts=20260131_232831);
+      const r = await probe(``${u}ts=${ts}``);
       out.push(r);
     }
     setAgents(out);
@@ -187,7 +187,7 @@ export default function D8TV() {
     const ts = Math.floor(Date.now() / 1000);
     const out: ApiResult[] = [];
     for (const u of checks) {
-      const r = await probe(${u}ts=20260131_232831);
+      const r = await probe(``${u}ts=${ts}``);
       out.push(r);
     }
     setRoutes(out);
