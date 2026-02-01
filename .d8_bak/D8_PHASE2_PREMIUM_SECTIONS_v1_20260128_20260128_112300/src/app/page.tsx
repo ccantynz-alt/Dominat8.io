@@ -15,7 +15,10 @@ function getBuildInfo(): BuildInfo {
   return { env, deployId, sha };
 }
 
-export default function HomePage() {
+export default function HomePage() {  // D8_FAILSAFE_500_GUARD
+  // If server render throws (missing env, fetch failure, etc.), show cockpit shell instead of 500.
+  try {
+
   const build = getBuildInfo();
 
   const styles: Record<string, any> = {
@@ -468,4 +471,18 @@ export default function HomePage() {
       `}</style>
     </main>
   );
+  } catch (err) {
+    const msg = (err && (err as any).message) ? String((err as any).message) : "unknown";
+    return (
+      <main style={{ minHeight: "100vh", padding: 24, fontFamily: "system-ui, Segoe UI, Roboto, Arial" }}>
+        <div style={{ position: "fixed", top: 10, right: 10, zIndex: 999999, padding: "6px 10px", borderRadius: 8, background: "black", border: "1px solid white", color: "white", fontSize: 12, fontFamily: "monospace" }}>
+          D8_FAILSAFE ✓
+        </div>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Rocket Cockpit (Failsafe)</h1>
+        <p style={{ marginTop: 10, opacity: 0.85 }}>
+          Failsafe prevented a server crash. Error: <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" }}>{msg}</span>
+        </p>
+      </main>
+    );
+  }
 }
