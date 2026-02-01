@@ -37,9 +37,11 @@
                     ".next/types/**/*.ts"
                 ],
     "exclude":  [
-                    "src/_app_backup/**",
+"src/_app_backup/**",
                     "node_modules",
                     "builder-workspace-v1",
-                    "**/builder-workspace-v1/**"
-                ]
+                    "**/builder-workspace-v1/**",
+    "src/_legacy_app_*",
+    "src/_legacy_app_*/**/*"
+  ]
 }
