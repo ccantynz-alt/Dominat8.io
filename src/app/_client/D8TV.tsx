@@ -215,60 +215,25 @@ export default function D8TV() {
       }}
       data-d8="TV_CHANNELS_v1_20260201a"
     >
-      <style jsx global>{`n/* D8_TV_CHANNELS self-contained styling (does not touch your main UI) */
-        [data-d8="TV_CHANNELS_v1_20260201a"] { pointer-events: auto; }
-        [data-d8="TV_CHANNELS_v1_20260201a"] .d8-panel{
-          border-radius: 16px;
-          border: 1px solid rgba(255,255,255,0.10);
-          background: linear-gradient(180deg, rgba(20,24,34,0.72), rgba(10,12,18,0.66));
-          box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 18px 60px rgba(0,0,0,0.65);
-          color: rgba(255,255,255,0.92);
-          backdrop-filter: blur(10px);
-        }
-        [data-d8="TV_CHANNELS_v1_20260201a"] .d8-chip{
-          display: inline-flex;
-          gap: 8px;
-          align-items: center;
-          padding: 6px 10px;
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,0.10);
-          font-size: 12px;
-          line-height: 1;
-          user-select: none;
-        }
-        [data-d8="TV_CHANNELS_v1_20260201a"] .d8-btn{
-          border: 1px solid rgba(255,255,255,0.10);
-          background: rgba(255,255,255,0.03);
-          color: rgba(255,255,255,0.92);
-          cursor: pointer;
-          user-select: none;
-        }
-        [data-d8="TV_CHANNELS_v1_20260201a"] .d8-btn--ghost{
-          background: rgba(255,255,255,0.02);
-        }
-        [data-d8="TV_CHANNELS_v1_20260201a"] .d8-btn--solid{
-          background: rgba(255,255,255,0.08);
-          border-color: rgba(255,255,255,0.18);
-        }
-        [data-d8="TV_CHANNELS_v1_20260201a"] .d8-btn:hover{
-          background: rgba(255,255,255,0.06);
-          border-color: rgba(255,255,255,0.18);
-        }
-        [data-d8="TV_CHANNELS_v1_20260201a"] .d8-card{
-          border-radius: 14px;
-          border: 1px solid rgba(255,255,255,0.08);
-          background: rgba(255,255,255,0.03);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-        }
-        [data-d8="TV_CHANNELS_v1_20260201a"] .d8-divider{
-          height: 1px;
-          background: rgba(255,255,255,0.08);
-        }`n}</style>
+      <style jsx global>{`
+  /* D8_TV_CHANNELS self-contained styling (does not touch your main UI) */
+  [data-d8="TV_CHANNELS_v1_20260201a"] { pointer-events: auto; }
+  [data-d8="TV_CHANNELS_v1_20260201a"] .d8-panel{
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(10px);
+  }
+  [data-d8="TV_CHANNELS_v1_20260201a"] .d8-hr{
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+  }
+`}</style>
 
       <div className="d8-panel" style={{ padding: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Badge ok={okCount -ge 2} text={"D8 TV  â€¢  " + okCount + "/4"} />
+            <Badge ok={okCount >= 2} text={"D8 TV  â€¢  " + okCount + "/4"} />
             <span style={{ fontSize: 12, opacity: 0.72 }}>{isoNow()}</span>
           </div>
           <button className="d8-btn d8-btn--ghost" style={{ padding: '6px 10px', borderRadius: 999 }} onClick={() => setOpen((v) => !v)} type="button">
@@ -416,4 +381,6 @@ export default function D8TV() {
     </div>
   );
 }
+
+
 
