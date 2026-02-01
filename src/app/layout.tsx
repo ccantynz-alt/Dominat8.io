@@ -1,4 +1,4 @@
-﻿import "./globals.css";
+import "./globals.css";
 import "../io/styles/io.css";
 import D8TV from './_client/D8TV';
 
@@ -10,7 +10,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}{(process.env.NEXT_PUBLIC_D8_TV === '1' || process.env.NODE_ENV !== 'production') ? <D8TV /> : null}
+      <body>{children}{(process.env.NEXT_PUBLIC_D8_TV === '1' || process.env.NODE_ENV !== 'production') ? {/* <D8TV /> */} : null}
 <div style={{
   position: 'fixed',
   top: 10,
