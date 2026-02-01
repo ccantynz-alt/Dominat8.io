@@ -1,0 +1,160 @@
+name: D8 Agent Auto-Fix PR (on CI failure)
+
+on:
+  workflow_run:
+    workflows: ["D8 CI - Build Gate"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: d8-autofix
+  cancel-in-progress: true
+
+jobs:
+  autofix:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout failing branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Guard (avoid loops on agent branches)
+        run: |
+          BR="${{ github.event.workflow_run.head_branch }}"
+          echo "branch=$BR"
+          if echo "$BR" | grep -E '^agent/' >/dev/null; then
+            echo "Agent branch detected; exiting to prevent loops."
+            exit 0
+          fi
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install + Reproduce failure (capture log)
+        id: repro
+        run: |
+          set -o pipefail
+          npm ci
+          npm run build 2>&1 | tee build.log || true
+          # If it actually passes on rerun, stop.
+          if grep -q "Compiled successfully" build.log; then
+            echo "passed=1" >> $GITHUB_OUTPUT
+          else
+            echo "passed=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop if build passed on rerun
+        if: steps.repro.outputs.passed == '1'
+        run: exit 0
+
+      - name: Generate patch via OpenAI (Responses API)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "Missing OPENAI_API_KEY secret."
+            exit 1
+          fi
+
+          python3 - << 'PY'
+import json, os, sys, urllib.request
+
+log = open("build.log","r",encoding="utf-8",errors="ignore").read()
+# Bound prompt size to reduce costs and avoid oversized requests.
+if len(log) > 45000:
+  log = log[-45000:]
+
+prompt = f"""
+You are an automated code-fix agent for a Next.js App Router repo (Dominat8).
+Goal: make `npm run build` succeed.
+
+HARD RULES:
+- Do NOT introduce visible UI/design changes.
+- Prefer minimal, surgical fixes (types, imports, syntax, broken routes, config).
+- Output MUST be a single unified diff patch (git apply compatible), and nothing else.
+- If you need to add files, include them in the patch.
+- Do NOT include backticks around the patch.
+- Do NOT include explanations.
+
+BUILD LOG:
+{log}
+""".strip()
+
+payload = {
+  "model": "gpt-5.2",
+  "input": prompt
+}
+
+req = urllib.request.Request(
+  "https://api.openai.com/v1/responses",
+  data=json.dumps(payload).encode("utf-8"),
+  headers={
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + os.environ["OPENAI_API_KEY"]
+  },
+  method="POST"
+)
+
+with urllib.request.urlopen(req, timeout=120) as resp:
+  body = resp.read().decode("utf-8")
+
+data = json.loads(body)
+
+texts = []
+for item in data.get("output", []):
+  for c in item.get("content", []):
+    if c.get("type") == "output_text":
+      texts.append(c.get("text",""))
+
+patch = "\n".join(texts).strip()
+
+# Basic sanity for unified diff
+if not (patch.startswith("diff --git ") or patch.startswith("--- ")):
+  print("OpenAI did not return a unified diff. Raw output follows:\n")
+  print(patch)
+  sys.exit(2)
+
+open("agent.patch","w",encoding="utf-8").write(patch)
+print("Wrote agent.patch")
+PY
+
+      - name: Apply patch
+        run: |
+          git apply --verbose agent.patch
+
+      - name: Rebuild after patch
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build_after.log
+
+      - name: Create PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          ts=$(date +%Y%m%d_%H%M%S)
+          BR="agent/autofix_${ts}"
+
+          git config user.name "agent-bot"
+          git config user.email "agent-bot@users.noreply.github.com"
+
+          git checkout -b "$BR"
+          git add -A
+          git commit -m "agent: autofix build"
+          git push origin "$BR"
+
+          gh pr create \
+            --title "agent: autofix build (CI failure)" \
+            --body "Automated fix PR generated after CI build failure. No visible UI/design changes intended." \
+            --base "${{ github.event.workflow_run.head_branch }}" \
+            --head "$BR"
