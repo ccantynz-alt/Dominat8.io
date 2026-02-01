@@ -1,0 +1,32 @@
+
+> my-saas-app@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.5
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings
+
+./src/io/surfaces/RocketCockpit.tsx
+Attempted import error: 'AgentRunsPanel' is not exported from '../widgets/AgentRunsPanel' (imported as 'AgentRunsPanel').
+
+Import trace for requested module:
+./src/io/surfaces/RocketCockpit.tsx
+./src/app/page.tsx
+./app/page.tsx
+
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/app/_client/D8TV.tsx:266:11
+Type error: '}' expected.
+
+[0m [90m 264 |[39m [32m          height: 1px;[39m[0m
+[0m [90m 265 |[39m [32m          background: rgba(255,255,255,0.08);[39m[0m
+[0m[31m[1m>[22m[39m[90m 266 |[39m [32m        }`[39mn}[33m<[39m[33m/[39m[33mstyle[39m[33m>[39m[0m
+[0m [90m     |[39m           [31m[1m^[22m[39m[0m
+[0m [90m 267 |[39m[0m
+[0m [90m 268 |[39m       [33m<[39m[33mdiv[39m className[33m=[39m[32m"d8-panel"[39m style[33m=[39m{{ padding[33m:[39m [35m12[39m }}[33m>[39m[0m
+[0m [90m 269 |[39m         [33m<[39m[33mdiv[39m style[33m=[39m{{ display[33m:[39m [32m'flex'[39m[33m,[39m alignItems[33m:[39m [32m'center'[39m[33m,[39m justifyContent[33m:[39m [32m'space-between'[39m[33m,[39m gap[33m:[39m [35m10[39m }}[33m>[39m[0m
