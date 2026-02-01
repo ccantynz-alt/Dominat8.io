@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Shell } from "../ui/Shell";
-import { AgentRunsPanel } from "../widgets/AgentRunsPanel";
+import AgentRunsPanel from "../widgets/AgentRunsPanel";
 
 export function RocketCockpit(props: { patchId: string }) {
   return (

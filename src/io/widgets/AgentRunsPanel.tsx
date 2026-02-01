@@ -8,3 +8,6 @@ export default function AgentRunsPanel() {
     </div>
   );
 }
+
+export { AgentRunsPanel };
+
