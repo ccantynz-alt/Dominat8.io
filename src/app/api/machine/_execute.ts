@@ -39,7 +39,7 @@ export async function executeSafe(req: Request, guard: GuardReport): Promise<{
   actions: SafeActionResult[];
   guardAfter?: GuardReport | null;
 }> {
-  const base = inferBaseUrl(req);
+  const base = inferBaseUrl();
 
   // Only run when degraded (safe mode)
   if (!guard.degraded) {
