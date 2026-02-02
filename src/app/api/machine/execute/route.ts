@@ -4,7 +4,7 @@ import { executeSafe } from '../_execute';
 export const runtime = 'nodejs';
 
 export async function GET(req: Request) {
-  const guard = await runGuard(req);
+  const guard = await runGuard(req.url);
   const exec = await executeSafe(req, guard);
 
   return new Response(
