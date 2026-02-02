@@ -82,10 +82,11 @@ export async function executeSafe(req: Request, guard: GuardReport): Promise<{
 
   const failed = actions.filter(a => !a.ok);
 if (failed.length >= 2) {
-  escalate('executor_failed_multiple_actions');
+  escalate({ code: "executor_failed_multiple_actions" });
 }
 return { ran: true, base, actions, guardAfter };
 }
+
 
 
 
