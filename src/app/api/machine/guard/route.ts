@@ -3,7 +3,7 @@ import { runGuard } from '../_guard';
 export const runtime = 'nodejs';
 
 export async function GET(req: Request) {
-  const report = await runGuard(req);
+  const report = await runGuard(req.url);
 
   return new Response(
     JSON.stringify({
