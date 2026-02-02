@@ -73,7 +73,7 @@ export async function executeSafe(req: Request, guard: GuardReport): Promise<{
   {
     const t0 = Date.now();
     try {
-      guardAfter = await runGuard(req);
+      guardAfter = await runGuard(req.url);
       actions.push({ name: 'recheck_guard', ok: !guardAfter.degraded, ms: Date.now() - t0, detail: { degraded: guardAfter.degraded, summary: (guardAfter as any)?.classification?.summary || null } });
     } catch (e: any) {
       actions.push({ name: 'recheck_guard', ok: false, ms: Date.now() - t0, detail: String(e?.message || e) });
@@ -86,4 +86,5 @@ if (failed.length >= 2) {
 }
 return { ran: true, base, actions, guardAfter };
 }
+
 
