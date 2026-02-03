@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 type DockItem = {
   id: string;
   label: string;
-  icon: string; // emoji placeholder; swap later for your icon system
+  icon: string;
 };
 
 const DOCK: DockItem[] = [
@@ -23,18 +23,27 @@ const DOCK: DockItem[] = [
 function getQueryFlag(name: string): boolean {
   try {
     const u = new URL(window.location.href);
-    return u.searchParams.get(name) === "1" || u.searchParams.get(name) === "true";
+    const v = u.searchParams.get(name);
+    return v === "1" || v === "true";
+  } catch {
+    return false;
+  }
+}
+
+function hostIsIo(): boolean {
+  try {
+    const h = (window.location.hostname || "").toLowerCase();
+    return h === "dominat8.io" || h === "www.dominat8.io";
   } catch {
     return false;
   }
 }
 
 function isFullscreen(): boolean {
-  return !!(document.fullscreenElement);
+  return !!document.fullscreenElement;
 }
 
 async function enterFullscreen(el: HTMLElement) {
-  // Fullscreen API is user-gesture gated; button/tap triggers it.
   const anyEl = el as any;
   if (anyEl.requestFullscreen) return anyEl.requestFullscreen();
   if (anyEl.webkitRequestFullscreen) return anyEl.webkitRequestFullscreen();
@@ -56,18 +65,20 @@ export default function D8TVClient() {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const swipeRef = useRef<{x:number;y:number;t:number} | null>(null);
 
-  // Enable rules:
-  //  - NEXT_PUBLIC_D8_TV=1  (for .com deployment)
-  //  - URL: ?tv=1
-  //  - localStorage: d8_tv=1 (sticky)
+  // Enable rules (IMPORTANT):
+  // - dominat8.io => ON by default (this is your fully automated TV surface)
+  // - OR NEXT_PUBLIC_D8_TV=1
+  // - OR ?tv=1
+  // - OR localStorage d8_tv=1
   useEffect(() => {
     let on = false;
     try {
       const sticky = window.localStorage.getItem("d8_tv") === "1";
       const q = getQueryFlag("tv");
-      on = envOn || q || sticky;
+      const io = hostIsIo();
+      on = io || envOn || q || sticky;
     } catch {
-      on = envOn || getQueryFlag("tv");
+      on = hostIsIo() || envOn || getQueryFlag("tv");
     }
     setEnabled(on);
   }, [envOn]);
@@ -79,14 +90,12 @@ export default function D8TVClient() {
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
-  // Keyboard shortcuts (Apple-like quick control)
+  // Keyboard shortcuts
   useEffect(() => {
     if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        // Exit TV mode (and fullscreen)
-        try { window.localStorage.setItem("d8_tv", "0"); } catch {}
-        setEnabled(false);
+        // Exit fullscreen; keep TV enabled on .io (since it's default)
         if (isFullscreen()) exitFullscreen();
       }
       if (e.key.toLowerCase() === "f") {
@@ -100,7 +109,7 @@ export default function D8TVClient() {
     return () => window.removeEventListener("keydown", onKey);
   }, [enabled]);
 
-  // Touch / pointer swipe (left/right) to cycle dock sections
+  // Touch / pointer swipe to cycle dock sections
   useEffect(() => {
     if (!enabled) return;
 
@@ -110,7 +119,6 @@ export default function D8TVClient() {
     const ids = DOCK.map(d => d.id);
 
     const onPointerDown = (e: PointerEvent) => {
-      // only left click / touch
       if (e.pointerType === "mouse" && e.button !== 0) return;
       swipeRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
     };
@@ -124,7 +132,6 @@ export default function D8TVClient() {
       const dy = e.clientY - s.y;
       const dt = Date.now() - s.t;
 
-      // Swipe heuristic: quick-ish horizontal swipe
       if (dt < 600 && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.2) {
         const idx = Math.max(0, ids.indexOf(dock));
         const next = dx < 0 ? Math.min(ids.length - 1, idx + 1) : Math.max(0, idx - 1);
@@ -165,13 +172,7 @@ export default function D8TVClient() {
     else await enterFullscreen(el);
   };
 
-  const exitTv = async () => {
-    try { window.localStorage.setItem("d8_tv", "0"); } catch {}
-    setEnabled(false);
-    if (isFullscreen()) await exitFullscreen();
-  };
-
-  const stickyOn = () => {
+  const pinTvLocal = () => {
     try { window.localStorage.setItem("d8_tv", "1"); } catch {}
   };
 
@@ -180,9 +181,9 @@ export default function D8TVClient() {
       <style dangerouslySetInnerHTML={{ __html: css }} />
       <div style={styles.glass}>
         <div style={styles.header}>
-          <div style={styles.brand} onDoubleClick={stickyOn} title="Double-click to pin TV mode (local)">
+          <div style={styles.brand} onDoubleClick={pinTvLocal} title="Double-click to pin TV mode (local)">
             <span style={{opacity:0.9}}>Dominat8</span>
-            <span style={{opacity:0.55}}>.com TV</span>
+            <span style={{opacity:0.55}}>.io TV</span>
           </div>
 
           <div style={styles.h1}>What would you like to build?</div>
@@ -191,7 +192,6 @@ export default function D8TVClient() {
             <button style={styles.btnGhost} onClick={toggleFull}>
               {full ? "Exit Fullscreen" : "Fullscreen"}
             </button>
-            <button style={styles.btnGhost} onClick={exitTv}>Exit</button>
           </div>
         </div>
 
@@ -205,7 +205,7 @@ export default function D8TVClient() {
               style={styles.input}
             />
           </div>
-          <button style={styles.btnPrimary} onClick={() => { /* hook your generator later */ }}>
+          <button style={styles.btnPrimary} onClick={() => { }}>
             GENERATE
           </button>
         </div>
@@ -213,7 +213,6 @@ export default function D8TVClient() {
         <div style={styles.panel}>
           <div style={styles.panelTitle}>{title}</div>
 
-          {/* Placeholder data (wire to your real deployment data later) */}
           <div style={styles.row}>
             <div style={styles.rowLeft}>
               <div style={styles.dot}>🚀</div>
@@ -271,7 +270,7 @@ export default function D8TVClient() {
         </div>
 
         <div style={styles.hint}>
-          Tip: Press <b>F</b> for fullscreen, <b>Esc</b> to exit TV. Swipe left/right to change sections.
+          Tip: Press <b>F</b> for fullscreen. Swipe left/right to change sections.
         </div>
       </div>
     </div>
@@ -432,12 +431,9 @@ const styles: Record<string, React.CSSProperties> = {
 };
 
 const css = 
-/* Touch + "Apple-like" smoothness */
 * { -webkit-font-smoothing: antialiased; }
 button { transition: transform 120ms ease, filter 120ms ease; }
 button:active { transform: scale(0.98); }
 button:hover { filter: brightness(1.05); }
-
-/* Prevent iOS double-tap zoom weirdness on buttons */
 button, input { touch-action: manipulation; }
 ;
