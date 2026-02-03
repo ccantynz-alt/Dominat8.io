@@ -1,25 +1,42 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+const IO_HOSTS = new Set<string>([
+  "dominat8.io",
+  "www.dominat8.io",
+]);
 
-  // Allow Builder + probes explicitly
-  if (
-    pathname === "/api/__route_probe__" ||
-    pathname.startsWith("/api/builder/")
-  ) {
-    return NextResponse.next();
+function isStaticOrApi(pathname: string): boolean {
+  if (pathname.startsWith("/api")) return true;
+  if (pathname.startsWith("/_next")) return true;
+  if (pathname === "/favicon.ico") return true;
+  if (pathname === "/robots.txt") return true;
+  if (pathname === "/sitemap.xml") return true;
+  if (pathname === "/site.webmanifest") return true;
+  return false;
+}
+
+export function middleware(req: NextRequest) {
+  const host = (req.headers.get("host") || "").toLowerCase();
+  const { pathname } = req.nextUrl;
+
+  // dominat8.io invariant: never render marketing routes.
+  if (IO_HOSTS.has(host)) {
+    if (isStaticOrApi(pathname)) return NextResponse.next();
+
+    // If already on /io, allow.
+    if (pathname === "/io" || pathname.startsWith("/io/")) return NextResponse.next();
+
+    // Rewrite everything else to /io, preserving the visible URL.
+    const url = req.nextUrl.clone();
+    url.pathname = "/io";
+    return NextResponse.rewrite(url);
   }
 
-  // Default: allow everything else as-is
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico).*)",
-    "/api/builder/:path*",
-    "/api/__route_probe__"
-  ]
+    "/((?!_next/static|_next/image).*)",
+  ],
 };

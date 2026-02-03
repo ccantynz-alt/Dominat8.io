@@ -2,13 +2,6 @@
 
 import React from "react";
 
-/**
- * D8TVClient — STABLE STUB (BUILD IMMUNITY)
- * Marker: D8TVCLIENT_STUB_LOCK_20260203
- *
- * This file must remain syntactically valid at all times.
- * Expand TV enhancements by creating new files and importing them ONLY AFTER automation is stable.
- */
 class SafeBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: any) {
     super(props);
@@ -26,10 +19,11 @@ class SafeBoundary extends React.Component<{ children: React.ReactNode }, { hasE
   }
 }
 
-export default function D8TVClient() {
+export default function IOTVClientEnhance() {
+  // IMPORTANT: Keep this file stable. Expand later once automation repair loop is proven.
   return (
     <SafeBoundary>
-      {/* Intentionally empty stub. */}
+      {/* Enhancement slot (optional). Intentionally empty for now. */}
     </SafeBoundary>
   );
 }
