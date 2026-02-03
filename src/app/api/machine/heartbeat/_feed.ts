@@ -1,10 +1,12 @@
-export type FeedEvent = {
-  ts: number;
-  type: string;
-  detail?: any;
+/**
+ * Minimal heartbeat feed to satisfy imports during build.
+ * emit() is a no-op hook (returns a small payload) so route code can call it safely.
+ */
+export type HeartbeatEvent = {
+  at: number;
+  message?: string;
 };
 
-// Minimal no-op emitter. Safe for builds; can be upgraded later to persist to KV/DB.
-export async function emit(_event: FeedEvent): Promise<void> {
-  return;
+export function emit(message?: string): HeartbeatEvent {
+  return { at: Date.now(), message };
 }

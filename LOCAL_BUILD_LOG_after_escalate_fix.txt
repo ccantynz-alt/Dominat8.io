@@ -1,0 +1,21 @@
+
+> my-saas-app@0.1.0 build
+> next build
+
+  Γû▓ Next.js 14.2.5
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/app/api/machine/execute/route.ts:7:32
+Type error: Argument of type 'Request' is not assignable to parameter of type 'string'.
+
+   5 |
+   6 | export async function GET(req: Request) {
+>  7 |   const guard = await runGuard(req);
+     |                                ^
+   8 |   const exec = await executeSafe(req, guard);
+   9 |
+  10 |   return new Response(
