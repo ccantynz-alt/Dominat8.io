@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 function hostIsIo(): boolean {
   try {
     if (typeof window === "undefined") return false;
-    const h = window.location?.host || "";
+    const h = (window.location && window.location.host) ? window.location.host : "";
     return h.toLowerCase().includes("dominat8.io");
   } catch {
     return false;
@@ -31,30 +31,18 @@ async function tryFullscreen(el: HTMLElement): Promise<boolean> {
 
 export default function D8TVClient() {
   const envOn = (process.env.NEXT_PUBLIC_D8_TV === "1");
-  const enabledByHost = useMemo(() => {
-    // host check must run on client; memo here is fine, we also re-check after mount
-    return false;
-  }, []);
-
   const [enabled, setEnabled] = useState(false);
   const [full, setFull] = useState(false);
 
   useEffect(() => {
-    // Activate TV if env flag is on OR we're on dominat8.io
+    // Enable TV on dominat8.io OR if env flag is set
     const on = envOn || hostIsIo();
     setEnabled(on);
-  }, [envOn]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    // mark body for any CSS targeting without changing UI structure
     try {
-      document.documentElement.dataset.d8tv = "1";
+      if (on) (document.documentElement as any).dataset.d8tv = "1";
+      else delete (document.documentElement as any).dataset.d8tv;
     } catch {}
-    return () => {
-      try { delete (document.documentElement.dataset as any).d8tv; } catch {}
-    };
-  }, [enabled]);
+  }, [envOn]);
 
   if (!enabled) return null;
 
@@ -88,14 +76,12 @@ button, input { touch-action: manipulation; }
           >
             {full ? "Fullscreen ✓" : "Go Fullscreen"}
           </button>
-
           <div style={{ opacity: 0.7, fontSize: 12 }}>
-            D8TV is ON (env:{String(envOn)} host:{String(hostIsIo())})
+            D8TV ON (env:{String(envOn)} host:{String(hostIsIo())})
           </div>
         </div>
 
         <div className="d8tv_stage">
-          {/* Placeholder stage. You can wire the Apple-like interactive TV UI here later. */}
           <iframe className="d8tv_iframe" src="/" title="D8TV Stage" />
         </div>
       </div>
