@@ -22,37 +22,12 @@ const DOCK: DockItem[] = [
 
 function getQueryFlag(name: string): boolean {
   try {
-    const u = new URL(window.location.href);
-    const v = u.searchParams.get(name);
-    return v === "1" || v === "true";
-  } catch {
-    return false;
-  }
+
 }
 
 function hostIsIo(): boolean {
   try {
-    const h = (window.location.hostname || "").toLowerCase();
-    return h === "dominat8.io" || h === "www.dominat8.io";
-  } catch {
-    return false;
-  }
-}
 
-function isFullscreen(): boolean {
-  return !!document.fullscreenElement;
-}
-
-async function enterFullscreen(el: HTMLElement) {
-  const anyEl = el as any;
-  if (anyEl.requestFullscreen) return anyEl.requestFullscreen();
-  if (anyEl.webkitRequestFullscreen) return anyEl.webkitRequestFullscreen();
-}
-
-async function exitFullscreen() {
-  const d: any = document as any;
-  if (document.exitFullscreen) return document.exitFullscreen();
-  if (d.webkitExitFullscreen) return d.webkitExitFullscreen();
 }
 
 export default function D8TVClient() {
@@ -73,37 +48,14 @@ export default function D8TVClient() {
   useEffect(() => {
     let on = false;
     try {
-      const sticky = window.localStorage.getItem("d8_tv") === "1";
-      const q = getQueryFlag("tv");
-      const io = hostIsIo();
-      on = io || envOn || q || sticky;
-    } catch {
-      on = hostIsIo() || envOn || getQueryFlag("tv");
-    }
+
     setEnabled(on);
   }, [envOn]);
 
   // Track fullscreen changes
   useEffect(() => {
-    const onFs = () => setFull(isFullscreen());
-    document.addEventListener("fullscreenchange", onFs);
-    return () => document.removeEventListener("fullscreenchange", onFs);
-  }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    if (!enabled) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        // Exit fullscreen; keep TV enabled on .io (since it's default)
-        if (isFullscreen()) exitFullscreen();
-      }
-      if (e.key.toLowerCase() === "f") {
-        const el = rootRef.current;
-        if (!el) return;
-        if (isFullscreen()) exitFullscreen();
-        else enterFullscreen(el);
-      }
+
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -123,20 +75,6 @@ export default function D8TVClient() {
       swipeRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
     };
 
-    const onPointerUp = (e: PointerEvent) => {
-      if (!swipeRef.current) return;
-      const s = swipeRef.current;
-      swipeRef.current = null;
-
-      const dx = e.clientX - s.x;
-      const dy = e.clientY - s.y;
-      const dt = Date.now() - s.t;
-
-      if (dt < 600 && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-        const idx = Math.max(0, ids.indexOf(dock));
-        const next = dx < 0 ? Math.min(ids.length - 1, idx + 1) : Math.max(0, idx - 1);
-        setDock(ids[next]);
-      }
     };
 
     el.addEventListener("pointerdown", onPointerDown, { passive: true });
@@ -199,10 +137,9 @@ export default function D8TVClient() {
           <div style={styles.prompt}>
             <span style={styles.rocket}>🚀</span>
             <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Describe your project..."
-              style={styles.input}
+
+
+
             />
           </div>
           <button style={styles.btnPrimary} onClick={() => { }}>
@@ -259,9 +196,9 @@ export default function D8TVClient() {
         <div style={styles.dock}>
           {DOCK.map((d) => (
             <button
-              key={d.id}
-              style={d.id === dock ? styles.dockItemOn : styles.dockItem}
-              onClick={() => setDock(d.id)}
+
+
+
             >
               <div style={styles.dockIcon}>{d.icon}</div>
               <div style={styles.dockLabel}>{d.label}</div>
@@ -430,14 +367,8 @@ const styles: Record<string, React.CSSProperties> = {
   hint: { marginTop: 10, fontSize: 12, opacity: 0.6, textAlign: "center" },
 };
 
-const css = `
-* { -webkit-font-smoothing: antialiased; }
-button { transition: transform 120ms ease, filter 120ms ease; }
-button:active { transform: scale(0.98); }
-button:hover { filter: brightness(1.05); }
-button, input { touch-action: manipulation; }
-`;button, input { touch-action: manipulation; }
 ;
+
 
 
 
