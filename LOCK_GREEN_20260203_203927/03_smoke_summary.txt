@@ -1,0 +1,5 @@
+200  https://dominat8.io/
+404  https://dominat8.io/robots.txt
+200  https://dominat8.io/api/__d8__/stamp
+200  https://dominat8.io/api/__health__
+404  https://dominat8.io/api/health

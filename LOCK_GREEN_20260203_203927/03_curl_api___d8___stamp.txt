@@ -1,0 +1,19 @@
+HTTP/1.1 200 OK
+Date: Tue, 03 Feb 2026 07:39:29 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+CF-RAY: 9c804653d8a11c53-AKL
+Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+etag: W/"qdkh76xxxt4j"
+pragma: no-cache
+rndr-id: 7faca0df-8e61-472b
+vary: Accept-Encoding
+vary: Accept-Encoding
+x-d8-proof: D8_PAGES_STAMP_OK
+x-render-origin-server: Render
+cf-cache-status: DYNAMIC
+Server: cloudflare
+alt-svc: h3=":443"; ma=86400
+
+{"ok":true,"stamp":"D8_STAMP_2026-02-02_ROUTE_LANDING_PAD","now":"2026-02-03T07:39:29.399Z","via":"pages-api","vercel_git_commit_sha":null,"vercel_deploy_id":null}

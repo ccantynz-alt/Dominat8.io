@@ -1,0 +1,3 @@
+origin	https://github.com/ccantynz-alt/Dominat8.io.git (fetch)
+origin	https://github.com/ccantynz-alt/Dominat8.io.git (push)
+
