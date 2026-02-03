@@ -1,40 +1,15 @@
 import "./globals.css";
-import "../io/styles/io.css";
-import D8TV from './_client/D8TV';
+import type { Metadata } from "next";
 
-import D8TVClient from "./_client/D8TVClient";
-export const metadata = {
-  title: "Dominat8.io ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Rocket Cockpit",
-  description: "Operator-grade IO cockpit for Dominat8.",
+export const metadata: Metadata = {
+  title: "Dominat8 — The WOW Website Builder",
+  description: "AI-built websites. Shipped fast.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}{(process.env.NEXT_PUBLIC_D8_TV === '1' || process.env.NODE_ENV !== 'production') ? null : null}
-<div style={{
-  position: 'fixed',
-  top: 10,
-  right: 10,
-  zIndex: 999999,
-  padding: '6px 10px',
-  borderRadius: 8,
-  background: 'black',
-  border: '1px solid white',
-  color: 'white',
-  fontSize: 12,
-  fontFamily: 'monospace'
-}}>
-  AUTO_UPGRADE_ACTIVE ✓
-</div>
-  {/** D8_TV_MODE_GATE: enabled via NEXT_PUBLIC_D8_TV=1 or ?tv=1 */}
-  <D8TVClient />
-</body>
+      <body>{children}</body>
     </html>
   );
 }
-
-
-
-
-
