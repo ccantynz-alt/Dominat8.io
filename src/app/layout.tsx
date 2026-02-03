@@ -2,11 +2,13 @@ import "./globals.css";
 import "../io/styles/io.css";
 import D8TV from './_client/D8TV';
 
+import D8TVClient from "./_client/D8TVClient";
 export const metadata = {
   title: "Dominat8.io ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Rocket Cockpit",
   description: "Operator-grade IO cockpit for Dominat8.",
 };
 
+import D8TVClient from "./_client/D8TVClient";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -26,9 +28,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }}>
   AUTO_UPGRADE_ACTIVE ✓
 </div>
+  {/** D8_TV_MODE_GATE: enabled via NEXT_PUBLIC_D8_TV=1 or ?tv=1 */}
+  <D8TVClient />
 </body>
     </html>
   );
 }
+
 
 
