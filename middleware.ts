@@ -23,10 +23,10 @@ export function middleware(req: NextRequest) {
   if (IO_HOSTS.has(host)) {
     if (isStaticOrApi(pathname)) return NextResponse.next();
 
-    // If already on /io, allow.
+    // Allow /io itself
     if (pathname === "/io" || pathname.startsWith("/io/")) return NextResponse.next();
 
-    // Rewrite everything else to /io, preserving the visible URL.
+    // Rewrite everything else to /io while preserving URL in browser.
     const url = req.nextUrl.clone();
     url.pathname = "/io";
     return NextResponse.rewrite(url);
@@ -36,7 +36,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };
