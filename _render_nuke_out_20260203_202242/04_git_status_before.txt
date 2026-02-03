@@ -1,0 +1,9 @@
+## main...origin/main
+ M src/app/api/machine/execute/route.ts
+ M src/app/api/machine/guard/route.ts
+ M src/app/api/machine/heartbeat/route.ts
+?? _render_nuke_out_20260203_201912/04_git_add.txt
+?? _render_nuke_out_20260203_201912/04_git_commit.txt
+?? _render_nuke_out_20260203_201912/04_git_push.txt
+?? _render_nuke_out_20260203_201912/05_render_guidance.txt
+?? _render_nuke_out_20260203_202242/

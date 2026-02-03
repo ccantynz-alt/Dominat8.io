@@ -1,0 +1,7 @@
+warning: in the working copy of 'src/app/api/machine/execute/route.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'src/app/api/machine/guard/route.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'src/app/api/machine/heartbeat/route.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of '_scripts/A1_ENV_PREFLIGHT.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '_scripts/A2_PATCH_BUILD_BLOCKERS.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '_scripts/A3_LOCAL_BUILD_GREEN_GATE.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '_scripts/A4_PUSH_AND_DEPLOY.ps1', LF will be replaced by CRLF the next time Git touches it

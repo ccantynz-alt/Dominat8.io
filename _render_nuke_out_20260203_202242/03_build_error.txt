@@ -1,0 +1,2 @@
+Local build threw: COMMAND FAILED (1): npm run build
+See log: C:\Temp\FARMS\Dominat8.io-clone\_render_nuke_out_20260203_202242\03_npm_run_build.txt

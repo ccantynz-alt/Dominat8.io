@@ -1,0 +1,7 @@
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'my-saas-app@0.1.0',
+npm warn EBADENGINE   required: { node: '20.x' },
+npm warn EBADENGINE   current: { node: 'v24.13.0', npm: '11.6.2' }
+npm warn EBADENGINE }
+
+up to date in 798ms

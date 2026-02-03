@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
  * NUCLEAR SAFE MODE: heartbeat disabled to keep builds green on Render/Vercel.
  * Not required for the public marketing site.
  */
-export async function GET() {
+export async function GET(_req: Request) {
   return new Response(
     JSON.stringify({
       ok: true,

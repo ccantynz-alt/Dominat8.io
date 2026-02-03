@@ -1,0 +1,23 @@
+
+> my-saas-app@0.1.0 build
+> next build
+
+  Γû▓ Next.js 14.2.5
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/app/layout.tsx:13:23
+Type error: Type '{} | null' is not assignable to type 'ReactNode'.
+  Type '{}' is not assignable to type 'ReactNode'.
+
+  11 |   return (
+  12 |     <html lang="en">
+> 13 |       <body>{children}{(process.env.NEXT_PUBLIC_D8_TV === '1' || process.env.NODE_ENV !== 'production') ? {/* <D8TV /> */} : null}
+     |                       ^
+  14 | <div style={{
+  15 |   position: 'fixed',
+  16 |   top: 10,

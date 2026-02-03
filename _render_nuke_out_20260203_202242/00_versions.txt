@@ -1,0 +1,5 @@
+time: 2026-02-03T20:22:43.3791804+13:00
+pwd: C:\Temp\FARMS\Dominat8.io-clone
+git: git version 2.52.0.windows.1
+node: v24.13.0
+npm: 11.6.2
