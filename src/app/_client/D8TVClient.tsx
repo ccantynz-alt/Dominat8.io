@@ -430,10 +430,12 @@ const styles: Record<string, React.CSSProperties> = {
   hint: { marginTop: 10, fontSize: 12, opacity: 0.6, textAlign: "center" },
 };
 
-const css = 
-* { -webkit-font-smoothing: antialiased; }
+const css = `
+`* { -webkit-font-smoothing: antialiased; }
 button { transition: transform 120ms ease, filter 120ms ease; }
 button:active { transform: scale(0.98); }
 button:hover { filter: brightness(1.05); }
+`;
 button, input { touch-action: manipulation; }
 ;
+
