@@ -2,8 +2,8 @@
 
 import React from "react";
 
-class SafeBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor(props: any) {
+class SafeBoundary extends React.Component<React.PropsWithChildren<{}>, { hasError: boolean }> {
+  constructor(props: React.PropsWithChildren<{}>) {
     super(props);
     this.state = { hasError: false };
   }
@@ -15,12 +15,11 @@ class SafeBoundary extends React.Component<{ children: React.ReactNode }, { hasE
   }
   render() {
     if (this.state.hasError) return null;
-    return this.props.children;
+    return this.props.children ?? null;
   }
 }
 
 export default function IOTVClientEnhance() {
-  // IMPORTANT: Keep this file stable. Expand later once automation repair loop is proven.
   return (
     <SafeBoundary>
       {/* Enhancement slot (optional). Intentionally empty for now. */}

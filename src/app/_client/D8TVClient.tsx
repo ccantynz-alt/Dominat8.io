@@ -4,13 +4,13 @@ import React from "react";
 
 /**
  * D8TVClient — STABLE STUB (BUILD IMMUNITY)
- * Marker: D8TVCLIENT_STUB_LOCK_20260203
+ * Marker: D8TVCLIENT_STUB_LOCK_20260204
  *
- * This file must remain syntactically valid at all times.
- * Expand TV enhancements by creating new files and importing them ONLY AFTER automation is stable.
+ * NOTE: children must NOT be required in props typing, otherwise TS may fail at <SafeBoundary> usage.
+ * Using React.PropsWithChildren<{}> is the safest.
  */
-class SafeBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor(props: any) {
+class SafeBoundary extends React.Component<React.PropsWithChildren<{}>, { hasError: boolean }> {
+  constructor(props: React.PropsWithChildren<{}>) {
     super(props);
     this.state = { hasError: false };
   }
@@ -22,7 +22,7 @@ class SafeBoundary extends React.Component<{ children: React.ReactNode }, { hasE
   }
   render() {
     if (this.state.hasError) return null;
-    return this.props.children;
+    return this.props.children ?? null;
   }
 }
 
