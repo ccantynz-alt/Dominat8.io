@@ -1,23 +1,22 @@
 /**
- * Minimal heartbeat state to satisfy imports during build.
- * Intentionally tiny: provides stable primitives with no external deps.
+ * Heartbeat state model (minimal).
+ * Goal: keep builds green and keep runtime safe (no side effects).
  */
-export type HeartbeatState = {
-  lastBeatAt: number;
-  count: number;
+
+export const LMM1_STAMP = "LMM1_HEARTBEAT_STATE_V1";
+
+export type MachineSnapshot = {
+  stamp: string;
+  ts: number;
+  ok: boolean;
+  note?: string;
 };
 
-const state: HeartbeatState = {
-  lastBeatAt: 0,
-  count: 0,
-};
-
-export function getState(): HeartbeatState {
-  return state;
-}
-
-export function touch(now: number = Date.now()): HeartbeatState {
-  state.lastBeatAt = now;
-  state.count += 1;
-  return state;
+export function initialSnapshot(): MachineSnapshot {
+  return {
+    stamp: LMM1_STAMP,
+    ts: Date.now(),
+    ok: true,
+    note: "initial",
+  };
 }
