@@ -8,7 +8,6 @@ export const metadata = {
   description: "Operator-grade IO cockpit for Dominat8.",
 };
 
-import D8TVClient from "./_client/D8TVClient";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -34,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
 
 
 
