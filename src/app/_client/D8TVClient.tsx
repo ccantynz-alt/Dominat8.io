@@ -435,8 +435,9 @@ const css = `
 button { transition: transform 120ms ease, filter 120ms ease; }
 button:active { transform: scale(0.98); }
 button:hover { filter: brightness(1.05); }
-`;
 button, input { touch-action: manipulation; }
+`;button, input { touch-action: manipulation; }
 ;
+
 
 
