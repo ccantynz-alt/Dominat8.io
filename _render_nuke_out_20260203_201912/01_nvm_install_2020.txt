@@ -1,0 +1,7 @@
+Downloading node.js version 20.20.0 (64-bit)... 
+Extracting node and npm...
+Complete
+Installation complete.
+If you want to use this version, type:
+
+nvm use 20.20.0

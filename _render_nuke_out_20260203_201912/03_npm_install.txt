@@ -1,0 +1,10 @@
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'my-saas-app@0.1.0',
+npm warn EBADENGINE   required: { node: '20.x' },
+npm warn EBADENGINE   current: { node: 'v24.13.0', npm: '11.6.2' }
+npm warn EBADENGINE }
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
+
+added 5 packages, and changed 20 packages in 33s
