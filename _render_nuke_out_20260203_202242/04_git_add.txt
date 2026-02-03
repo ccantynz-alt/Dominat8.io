@@ -1,0 +1,5 @@
+warning: in the working copy of 'src/app/api/machine/execute/route.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'src/app/api/machine/guard/route.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'src/app/api/machine/heartbeat/route.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of '_render_nuke_out_20260203_201912/05_render_guidance.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '_render_nuke_out_20260203_202242/03_build_error.txt', LF will be replaced by CRLF the next time Git touches it

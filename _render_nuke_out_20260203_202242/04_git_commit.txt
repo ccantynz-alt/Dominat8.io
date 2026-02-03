@@ -1,0 +1,16 @@
+[main 7fbdc7c7] NUKE: stub machine API routes to unblock Render build
+ 17 files changed, 89 insertions(+), 3 deletions(-)
+ create mode 100644 _render_nuke_out_20260203_201912/04_git_add.txt
+ create mode 100644 _render_nuke_out_20260203_201912/04_git_commit.txt
+ create mode 100644 _render_nuke_out_20260203_201912/04_git_push.txt
+ create mode 100644 _render_nuke_out_20260203_201912/05_render_guidance.txt
+ create mode 100644 _render_nuke_out_20260203_202242/00_versions.txt
+ create mode 100644 _render_nuke_out_20260203_202242/01_node_after.txt
+ create mode 100644 _render_nuke_out_20260203_202242/01_npm_after.txt
+ create mode 100644 _render_nuke_out_20260203_202242/01_nvm_install_2020.txt
+ create mode 100644 _render_nuke_out_20260203_202242/01_nvm_list.txt
+ create mode 100644 _render_nuke_out_20260203_202242/01_nvm_use_2020.txt
+ create mode 100644 _render_nuke_out_20260203_202242/03_build_error.txt
+ create mode 100644 _render_nuke_out_20260203_202242/03_npm_install.txt
+ create mode 100644 _render_nuke_out_20260203_202242/03_npm_run_build.txt
+ create mode 100644 _render_nuke_out_20260203_202242/04_git_status_before.txt

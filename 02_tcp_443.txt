@@ -1,0 +1,9 @@
+
+ComputerName     : dominat8.io
+RemoteAddress    : 216.24.57.1
+RemotePort       : 443
+InterfaceAlias   : Wi-Fi
+SourceAddress    : 192.168.68.51
+TcpTestSucceeded : True
+
+

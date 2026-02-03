@@ -10,7 +10,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}{(process.env.NEXT_PUBLIC_D8_TV === '1' || process.env.NODE_ENV !== 'production') ? {/* <D8TV /> */} : null}
+      <body>{children}{(process.env.NEXT_PUBLIC_D8_TV === '1' || process.env.NODE_ENV !== 'production') ? null : null}
 <div style={{
   position: 'fixed',
   top: 10,
@@ -30,4 +30,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
 

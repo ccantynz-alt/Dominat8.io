@@ -1,0 +1,7 @@
+RENDER RECOMMENDED SETTINGS (for a Next.js web service):
+- Build Command: npm install && npm run build
+- Start Command: npm run start
+- Node Version: 20.x (set in package.json engines OR Render env)
+
+If Render is using a Dockerfile or Static Site settings, that can break Next SSR.
+Ensure service type is: Web Service (Node) and not Static Site.
