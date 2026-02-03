@@ -1,25 +1,23 @@
 /**
- * Heartbeat state contract.
- * Minimal, import-compatible exports used by ./route.ts.
- * No external deps, no side effects.
+ * Minimal heartbeat state to satisfy imports during build.
+ * Intentionally tiny: provides stable primitives with no external deps.
  */
-
-export type MachineSnapshot = {
-  /** ISO string for human readability */
-  at: string;
-  /** Unix epoch ms for sorting */
-  atMs: number;
-  /** Build/deploy marker expected by route */
-  stamp: string;
-  /** Free-form info bag (route may add fields later) */
-  meta?: Record<string, unknown>;
+export type HeartbeatState = {
+  lastBeatAt: number;
+  count: number;
 };
 
-export const LMM1_STAMP = "LMM1_STAMP_PLACEHOLDER";
-
-export const initialSnapshot: MachineSnapshot = {
-  at: new Date(0).toISOString(),
-  atMs: 0,
-  stamp: LMM1_STAMP,
-  meta: { initialized: true }
+const state: HeartbeatState = {
+  lastBeatAt: 0,
+  count: 0,
 };
+
+export function getState(): HeartbeatState {
+  return state;
+}
+
+export function touch(now: number = Date.now()): HeartbeatState {
+  state.lastBeatAt = now;
+  state.count += 1;
+  return state;
+}
