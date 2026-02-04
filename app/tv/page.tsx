@@ -1,3 +1,111 @@
+#requires -version 5.1
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+param(
+  [Parameter(Mandatory=$true)]
+  [string]$RepoRoot,
+
+  [string]$StagingBaseUrl = "",
+
+  [int]$MaxTimeSeconds = 25
+)
+
+function Ok($m){ Write-Host "OK   $m" -ForegroundColor Green }
+function Info($m){ Write-Host "INFO $m" -ForegroundColor Cyan }
+function Bad($m){ Write-Host "FAIL $m" -ForegroundColor Red; throw $m }
+
+function Require-Command($name){
+  if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { Bad "Missing command: $name" }
+}
+
+function Ensure-Dir($path){
+  if (-not (Test-Path -LiteralPath $path)) { New-Item -ItemType Directory -Path $path -Force | Out-Null }
+}
+
+function Backup-File($path){
+  if (Test-Path -LiteralPath $path) {
+    $ts = Get-Date -Format "yyyyMMdd_HHmmss"
+    Copy-Item -LiteralPath $path -Destination ($path + ".bak_" + $ts) -Force
+  }
+}
+
+function Normalize-BaseUrl([string]$u){
+  $u = $u.Trim()
+  if ($u -eq "") { return "" }
+  if ($u.EndsWith("/")) { $u = $u.TrimEnd("/") }
+  if (-not ($u -match '^https://')) { Bad "StagingBaseUrl must start with https:// (got: $u)" }
+  return $u
+}
+
+function Curl-Headers([string]$url){
+  $ts=[int](Get-Date -UFormat %s)
+  curl.exe -s -D - -L --max-time $MaxTimeSeconds "$url?ts=$ts" 2>$null | Select-Object -First 40
+}
+
+function Curl-Body([string]$url){
+  $ts=[int](Get-Date -UFormat %s)
+  curl.exe -s -L --max-time $MaxTimeSeconds "$url?ts=$ts" 2>$null
+}
+
+function Get-LatestProdUrl(){
+  $raw = cmd /c "vercel ls" 2>&1
+  if (-not $raw) { Bad "vercel ls returned no output" }
+
+  $prod = $raw | Where-Object { ($_ -match 'https://') -and ($_ -match 'Production') } | Select-Object -First 1
+  if (-not $prod) { Bad "Could not locate a Production deployment line containing a URL in RAW vercel ls output." }
+
+  $url = ([regex]::Match($prod, 'https://\S+')).Value
+  if (-not $url) { Bad "Could not extract URL from line: $prod" }
+  return $url
+}
+
+# -------------------- START --------------------
+$RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
+if (-not (Test-Path -LiteralPath $RepoRoot)) { Bad "RepoRoot not found: $RepoRoot" }
+Set-Location -LiteralPath $RepoRoot
+
+Require-Command git
+Require-Command vercel
+Require-Command curl.exe
+
+if (-not (Test-Path -LiteralPath ".\.git")) { Bad "Not a git repo: $RepoRoot" }
+if (-not (Test-Path -LiteralPath ".\package.json")) { Bad "package.json missing at repo root: $RepoRoot" }
+
+$StagingBaseUrl = Normalize-BaseUrl $StagingBaseUrl
+
+Info "LOCKED PWD: $(Get-Location)"
+
+Info "Vercel link (non-destructive)"
+cmd /c "cd /d `"$RepoRoot`" && vercel link --yes" | Out-Host
+
+if ($StagingBaseUrl -ne "") {
+  Info "Setting env NEXT_PUBLIC_STAGING_BASE_URL (production + preview)"
+  $escaped = $StagingBaseUrl.Replace("^","^^")
+  cmd /c "cd /d `"$RepoRoot`" && (echo $escaped) | vercel env add NEXT_PUBLIC_STAGING_BASE_URL production --force --yes" | Out-Host
+  cmd /c "cd /d `"$RepoRoot`" && (echo $escaped) | vercel env add NEXT_PUBLIC_STAGING_BASE_URL preview --force --yes" | Out-Host
+  Ok "Env set"
+} else {
+  Info "StagingBaseUrl not provided; env unchanged."
+}
+
+# Detect roots for app/pages (src first, then root)
+$roots = @()
+if (Test-Path -LiteralPath ".\src") { $roots += (Resolve-Path ".\src").Path }
+$roots += (Resolve-Path ".").Path
+
+$installed = New-Object System.Collections.Generic.List[string]
+
+# App Router install
+foreach ($r in $roots) {
+  $app = Join-Path $r "app"
+  if (Test-Path -LiteralPath $app) {
+    $tvDir = Join-Path $app "tv"
+    Ensure-Dir $tvDir
+    $page = Join-Path $tvDir "page.tsx"
+    Backup-File $page
+
+@'
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
