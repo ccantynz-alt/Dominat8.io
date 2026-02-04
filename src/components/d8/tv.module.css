@@ -1,0 +1,132 @@
+.root{
+  min-height:100vh;
+  background:
+    radial-gradient(1200px 800px at 20% 10%, rgba(120,180,255,.22), transparent 60%),
+    radial-gradient(900px 700px at 80% 30%, rgba(180,120,255,.18), transparent 60%),
+    radial-gradient(700px 600px at 50% 90%, rgba(120,255,210,.12), transparent 60%),
+    linear-gradient(180deg, #050814, #03040a 70%, #02030a);
+  color:#fff;
+  font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial;
+  overflow:hidden;
+}
+.scan{
+  position:fixed; inset:-20vh -20vw;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255,255,255,.06) 0px,
+    rgba(255,255,255,.06) 1px,
+    rgba(0,0,0,0) 6px,
+    rgba(0,0,0,0) 10px
+  );
+  opacity:.18;
+  mix-blend-mode: overlay;
+  pointer-events:none;
+  animation: drift 9s linear infinite;
+}
+@keyframes drift { from{ transform: translateY(-40px);} to{ transform: translateY(40px);} }
+
+.shell{
+  position:relative;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 22px 26px;
+}
+.header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:18px; margin-bottom:16px;
+}
+.brand{
+  display:flex; align-items:center; gap:12px;
+}
+.logo{
+  width:42px; height:42px; border-radius:14px;
+  background: linear-gradient(135deg, rgba(255,255,255,.22), rgba(255,255,255,.06));
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 18px 55px rgba(0,0,0,.55);
+}
+.title{
+  font-weight:900; letter-spacing:-.7px; font-size:22px;
+}
+.sub{
+  opacity:.7; font-weight:700; font-size:12px; margin-top:2px;
+}
+.pills{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+}
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background: rgba(255,255,255,.06);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.09) inset;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-size:12px; font-weight:800;
+  opacity:.92;
+}
+.dot{ width:8px; height:8px; border-radius:99px; background: rgba(120,255,210,.95); box-shadow: 0 0 18px rgba(120,255,210,.55); }
+
+.panel{
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.10) inset,
+    0 28px 90px rgba(0,0,0,.55);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  overflow:hidden;
+}
+
+.rows{ padding:18px; display:grid; gap:12px; }
+.row{
+  display:grid;
+  grid-template-columns: 34px 1.3fr 1fr 120px;
+  gap:12px;
+  align-items:center;
+  padding:14px 14px;
+  border-radius:18px;
+  background: rgba(0,0,0,.26);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.07) inset;
+}
+.rowActive{
+  background: rgba(255,255,255,.08);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset, 0 16px 60px rgba(0,0,0,.45);
+}
+.ico{
+  width:34px; height:34px; border-radius:14px;
+  background: rgba(255,255,255,.10);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:900;
+}
+.main{ display:flex; flex-direction:column; gap:3px; }
+.domain{ font-weight:950; letter-spacing:-.4px; }
+.desc{ opacity:.72; font-weight:700; font-size:12px; }
+.status{ opacity:.75; font-weight:800; font-size:12px; justify-self:start; }
+.right{ justify-self:end; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.badge{
+  padding:6px 10px; border-radius:999px;
+  background: rgba(255,255,255,.08);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
+  font-weight:900; font-size:12px;
+}
+.bar{
+  width:120px; height:8px; border-radius:99px; background: rgba(255,255,255,.08);
+  overflow:hidden;
+}
+.fill{ height:100%; background: linear-gradient(90deg, rgba(120,255,210,.92), rgba(120,180,255,.92), rgba(180,120,255,.92)); }
+
+.footer{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+}
+.kb{ opacity:.75; font-weight:800; font-size:12px; }
+.btn{
+  border:0; cursor:pointer;
+  padding:10px 14px; border-radius:14px;
+  background: rgba(255,255,255,.10);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
+  color:#fff; font-weight:900;
+}
+.btn:active{ transform: translateY(1px); }
