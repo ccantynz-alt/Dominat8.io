@@ -20,19 +20,19 @@ if ($dirty) { Die "Working tree not clean. Commit/stash first.`n$dirty" }
 Ok "Fetching origin..."
 git fetch --all --prune | Out-Host
 
-# Detect whether prod branch is main or master
-$hasMain = $false
-$hasMaster = $false
-try { git show-ref --verify --quiet "refs/remotes/origin/main"; $hasMain=$true } catch {}
-try { git show-ref --verify --quiet "refs/remotes/origin/master"; $hasMaster=$true } catch {}
-
-if (-not (git show-ref --verify --quiet "refs/remotes/origin/staging" 2>$null)) {
-  Die "origin/staging not found. Push staging branch first."
+# Robust check: parse refs instead of relying on try/catch
+$refs = git for-each-ref --format="%(refname)" refs/remotes/origin | Out-String
+if ($refs -notmatch "refs/remotes/origin/staging") {
+  Die "origin/staging not found (after fetch). Existing origin refs:`n$refs"
 }
+
+# Detect prod branch main vs master
+$hasMain = ($refs -match "refs/remotes/origin/main")
+$hasMaster = ($refs -match "refs/remotes/origin/master")
 
 if ($hasMain) { $prod="main" }
 elseif ($hasMaster) { $prod="master" }
-else { Die "Neither origin/main nor origin/master exists. Paste git branch -a output." }
+else { Die "Neither origin/main nor origin/master exists. Existing origin refs:`n$refs" }
 
 Ok "Using production branch: $prod"
 
@@ -40,10 +40,14 @@ git checkout $prod | Out-Host
 git pull --ff-only origin $prod | Out-Host
 
 Ok "Promoting origin/staging -> $prod..."
-try {
-  git merge --ff-only origin/staging | Out-Host
+# Prefer fast-forward (clean)
+$ffOk = $true
+cmd /c "git merge --ff-only origin/staging" | Out-Host
+if ($LASTEXITCODE -ne 0) { $ffOk = $false }
+
+if ($ffOk) {
   Ok "Fast-forwarded $prod to origin/staging."
-} catch {
+} else {
   Warn "FF-only not possible; doing normal merge commit..."
   git merge --no-ff origin/staging -m "Promote staging -> live" | Out-Host
   Ok "Merged origin/staging into $prod."
