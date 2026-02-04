@@ -1,17 +1,25 @@
-/* ===== IO_ROCKET_COCKPIT_v1_20260131 : CACHE NUKE ===== */
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+﻿import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  res.headers.set("cache-control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
-  res.headers.set("pragma", "no-cache");
-  res.headers.set("expires", "0");
-  res.headers.set("surrogate-control", "no-store");
-  res.headers.set("x-d8io-cache-nuke", "1");
-  return res;
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // D8_TV_BYPASS_FORCE_DEPLOY_011
+  if (
+    pathname === '/tv' || pathname.startsWith('/tv/') ||
+    pathname === '/api/tv' || pathname.startsWith('/api/tv/') ||
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname === '/favicon.ico'
+  ) {
+    return NextResponse.next();
+  }
+
+  // Default: route everything else to /io (existing architecture)
+  const url = request.nextUrl.clone();
+  url.pathname = '/io';
+  return NextResponse.rewrite(url);
 }
 
 export const config = {
-  matcher: ["/", "/api/__d8__/:path*", "/api/io/:path*"],
+  matcher: '/:path*',
 };

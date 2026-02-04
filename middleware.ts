@@ -1,40 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from 'next/server';
 
-const IO_HOSTS = new Set<string>([
-  "dominat8.io",
-  "www.dominat8.io",
-]);
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-function isStaticOrApi(pathname: string): boolean {
-  if (pathname.startsWith("/api")) return true;
-  if (pathname.startsWith("/_next")) return true;
-  if (pathname === "/favicon.ico") return true;
-  if (pathname === "/robots.txt") return true;
-  if (pathname === "/sitemap.xml") return true;
-  if (pathname === "/site.webmanifest") return true;
-  return false;
-}
-
-export function middleware(req: NextRequest) {
-  const host = (req.headers.get("host") || "").toLowerCase();
-  const { pathname } = req.nextUrl;
-
-  // dominat8.io invariant: never render marketing routes.
-  if (IO_HOSTS.has(host)) {
-    if (isStaticOrApi(pathname)) return NextResponse.next();
-
-    // Allow /io itself
-    if (pathname === "/io" || pathname.startsWith("/io/")) return NextResponse.next();
-
-    // Rewrite everything else to /io while preserving URL in browser.
-    const url = req.nextUrl.clone();
-    url.pathname = "/io";
-    return NextResponse.rewrite(url);
+  // D8_TV_BYPASS_FORCE_DEPLOY_011
+  if (
+    pathname === '/tv' || pathname.startsWith('/tv/') ||
+    pathname === '/api/tv' || pathname.startsWith('/api/tv/') ||
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname === '/favicon.ico'
+  ) {
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  // Default: route everything else to /io (existing architecture)
+  const url = request.nextUrl.clone();
+  url.pathname = '/io';
+  return NextResponse.rewrite(url);
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image).*)"],
+  matcher: '/:path*',
 };
