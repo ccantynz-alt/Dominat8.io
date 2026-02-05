@@ -1,19 +1,43 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// ===== D8_STAGING_BYPASS_V1 =====
-const __D8_STAGING_HOST__ = "staging.dominat8.io";
-function __d8_is_staging_host__(req: any): boolean {
-  try {
-    const h = (req?.headers?.get?.("host") || req?.headers?.host || "").toString().toLowerCase();
-    return h === __D8_STAGING_HOST__;
-  } catch { return false; }
-}
-// ===== /D8_STAGING_BYPASS_V1 =====
+/**
+ * D8_IO_MIDDLEWARE_SINGLE_SOURCE_V1_20260205
+ *
+ * Rules:
+ * - dominat8.io + www.dominat8.io => TV lock (rewrite everything to /io), except allowlist + protected paths
+ * - staging.dominat8.io => bypass TV lock
+ *   - and force "/" -> "/live" so you SEE A WEBSITE immediately
+ */
 
+const PROD_HOSTS = new Set(["dominat8.io", "www.dominat8.io"]);
+const STAGING_HOST = "staging.dominat8.io";
 
-const PROTECTED_PREFIXES: string[] = ["/admin","/cockpit","/agents","/api/agents","/api/engine","/api/admin","/api/cockpit"];
-const ALLOW_PREFIXES: string[] = ["/api/__d8__/stamp","/stamp","/healthz","/robots.txt","/sitemap.xml","/favicon.ico"];
+// Keep these reachable everywhere (proof endpoints, health, static)
+const ALLOW_PREFIXES: string[] = [
+  "/api/__d8__/stamp",
+  "/api/__d8__/where",
+  "/api/__d8__/proof",
+  "/stamp",
+  "/healthz",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/favicon.ico",
+  "/live" // our heartbeat page
+];
+
+// Do NOT rewrite these; let app handle auth/logic
+const PROTECTED_PREFIXES: string[] = [
+  "/admin",
+  "/cockpit",
+  "/agents",
+  "/api/agents",
+  "/api/engine",
+  "/api/admin",
+  "/api/cockpit",
+  "/tv",
+  "/api/tv"
+];
 
 function startsWithAny(pathname: string, prefixes: string[]): boolean {
   for (const p of prefixes) {
@@ -24,49 +48,51 @@ function startsWithAny(pathname: string, prefixes: string[]): boolean {
   return false;
 }
 
+function getHost(req: NextRequest): string {
+  const h =
+    req.headers.get("x-forwarded-host") ||
+    req.headers.get("host") ||
+    "";
+  return h.toString().trim().toLowerCase();
+}
+
 export function middleware(req: NextRequest) {
-  // ===== D8_STAGING_BYPASS_V1 early bypass =====
-  // Keep dominat8.io locked to TV, but allow staging host to render normal site.
-  if (__d8_is_staging_host__(req)) {
+  const url = req.nextUrl;
+  const pathname = (url.pathname || "/").toString();
+  const host = getHost(req);
+
+  // Always allow Next internals + static
+  if (pathname.startsWith("/_next/")) return NextResponse.next();
+  if (pathname.startsWith("/assets/")) return NextResponse.next();
+
+  // Always allow proof/public endpoints and protected paths
+  if (startsWithAny(pathname, ALLOW_PREFIXES)) return NextResponse.next();
+  if (startsWithAny(pathname, PROTECTED_PREFIXES)) return NextResponse.next();
+
+  // ===== STAGING BYPASS =====
+  if (host === STAGING_HOST) {
+    // Fastest "I SEE A WEBSITE" win: force staging root to /live
+    if (pathname === "/") {
+      const u = req.nextUrl.clone();
+      u.pathname = "/live";
+      return NextResponse.rewrite(u);
+    }
+    // Otherwise: allow normal routing on staging
     return NextResponse.next();
   }
-  // ===== /D8_STAGING_BYPASS_V1 early bypass =====
 
-  const url = req.nextUrl;
-  const pathname = url.pathname || "/";
+  // ===== PROD TV LOCK =====
+  // For dominat8.io + www, rewrite everything to /io (TV shell architecture)
+  if (PROD_HOSTS.has(host)) {
+    const u = req.nextUrl.clone();
+    u.pathname = "/io";
+    return NextResponse.rewrite(u);
+  }
 
-  // Always allow proof/public endpoints and static assets
-  if (startsWithAny(pathname, ALLOW_PREFIXES)) return NextResponse.next();
-  if (pathname.startsWith("/_next/")) return NextResponse.next();
-
-  // Only guard the sensitive surfaces
-  if (!startsWithAny(pathname, PROTECTED_PREFIXES)) return NextResponse.next();
-
-  const adminKey = process.env.ADMIN_API_KEY || "";
-  if (!adminKey) return new NextResponse("Unauthorized", { status: 401 });
-
-  const hdr =
-    req.headers.get("x-admin-key") ||
-    req.headers.get("x-d8-admin-key") ||
-    req.headers.get("x-dom-admin-key") ||
-    "";
-
-  const q = url.searchParams.get("admin_key") || "";
-
-  if (hdr === adminKey || q === adminKey) return NextResponse.next();
-
-  return new NextResponse("Unauthorized", { status: 401 });
+  // Default behavior for any other host: DO NOT surprise-route; just pass through.
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/cockpit/:path*",
-    "/agents/:path*",
-    "/api/agents/:path*",
-    "/api/engine/:path*",
-    "/api/admin/:path*",
-    "/api/cockpit/:path*"
-  ]
+  matcher: "/:path*",
 };
-
