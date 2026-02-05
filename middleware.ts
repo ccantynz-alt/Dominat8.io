@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// ===== D8_STAGING_BYPASS_V1 =====
+const __D8_STAGING_HOST__ = "staging.dominat8.io";
+function __d8_is_staging_host__(req: any): boolean {
+  try {
+    const h = (req?.headers?.get?.("host") || req?.headers?.host || "").toString().toLowerCase();
+    return h === __D8_STAGING_HOST__;
+  } catch { return false; }
+}
+// ===== /D8_STAGING_BYPASS_V1 =====
+
+
 const PROTECTED_PREFIXES: string[] = ["/admin","/cockpit","/agents","/api/agents","/api/engine","/api/admin","/api/cockpit"];
 const ALLOW_PREFIXES: string[] = ["/api/__d8__/stamp","/stamp","/healthz","/robots.txt","/sitemap.xml","/favicon.ico"];
 
@@ -14,6 +25,13 @@ function startsWithAny(pathname: string, prefixes: string[]): boolean {
 }
 
 export function middleware(req: NextRequest) {
+  // ===== D8_STAGING_BYPASS_V1 early bypass =====
+  // Keep dominat8.io locked to TV, but allow staging host to render normal site.
+  if (__d8_is_staging_host__(req)) {
+    return NextResponse.next();
+  }
+  // ===== /D8_STAGING_BYPASS_V1 early bypass =====
+
   const url = req.nextUrl;
   const pathname = url.pathname || "/";
 
@@ -51,3 +69,4 @@ export const config = {
     "/api/cockpit/:path*"
   ]
 };
+
