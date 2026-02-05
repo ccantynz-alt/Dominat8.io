@@ -35,9 +35,12 @@
     "@types/adm-zip": "^0.5.7",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.2.5",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0"
   },
   "engines": {
     "node": "20.x"
   }
 }
+
