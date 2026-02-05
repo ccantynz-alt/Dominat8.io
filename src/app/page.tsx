@@ -1,8 +1,5 @@
-import * as React from "react";
-import { RocketCockpit } from "../io/surfaces/RocketCockpit";
-
-const PATCH = "IO_ROCKET_COCKPIT_v1_20260131";
+import InviteToBuilder from "./_client/InviteToBuilder";
 
 export default function Page() {
-  return <RocketCockpit patchId={PATCH} />;
+  return <InviteToBuilder />;
 }

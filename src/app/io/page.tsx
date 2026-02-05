@@ -1,12 +1,8 @@
-import React from "react";
-import IOTVShell from "@/shared/io/IOTVShell";
+import InviteToBuilder from "../_client/InviteToBuilder";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default function IOPage() {
-  return <IOTVShell />;
+  return <InviteToBuilder />;
 }
-// REPAIR_OWNER_SYNTH_BREAK_TEST
-
-// REPAIR_OWNER_SYNTH_BREAK_TEST

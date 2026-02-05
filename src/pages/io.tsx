@@ -1,10 +1,6 @@
 import React from "react";
-import IOTVShell from "../shared/io/IOTVShell";
+import InviteToBuilder from "../app/_client/InviteToBuilder";
 
-export const config = {
-  unstable_runtimeJS: true
-};
-
-export default function IOPage() {
-  return <IOTVShell />;
+export default function IO() {
+  return <InviteToBuilder />;
 }

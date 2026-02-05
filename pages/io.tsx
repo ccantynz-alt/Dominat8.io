@@ -1,6 +1,6 @@
 import React from "react";
-import IOTVShell from "../src/shared/io/IOTVShell";
+import InviteToBuilder from "../src/app/_client/InviteToBuilder";
 
-export default function IOPage() {
-  return <IOTVShell />;
+export default function IO() {
+  return <InviteToBuilder />;
 }
