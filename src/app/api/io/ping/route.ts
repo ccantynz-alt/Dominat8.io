@@ -1,13 +1,27 @@
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+import { NextResponse } from "next/server";
 
-export async function GET() {
-  return new Response("PONG: 
-D8_IO_API_014B_20260206_203526
-\n", {
+type Body = {
+  ok: boolean;
+  route: string;
+  stamp: string;
+  git: string;
+  now: string;
+};
+
+export async function GET(): Promise<Response> {
+  const body: Body = {
+    ok: true,
+    route: "ping",
+    stamp: "D8_IO_HARD_FIX_043_20260207_063410",
+    git: "b63657f9b701877e2bb682535314d30de6af35fa",
+    now: new Date().toISOString(),
+  };
+
+  return NextResponse.json(body, {
     status: 200,
-    headers: { "content-type": "text/plain; charset=utf-8", "x-d8-proof": "
-D8_IO_API_014B_20260206_203526
-" }
+    headers: {
+      "X-D8-Proof": "D8_IO_HARD_FIX_043_20260207_063410",
+      "Cache-Control": "no-store, max-age=0",
+    },
   });
 }
