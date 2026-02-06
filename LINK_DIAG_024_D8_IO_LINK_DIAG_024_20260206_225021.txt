@@ -1,0 +1,52 @@
+=== LINK DIAG 024 (D8_IO_LINK_DIAG_024_20260206_225021) ===
+Repo: C:\Temp\FARMS\Dominat8.io-clone
+Now: 2026-02-06T22:50:21.5476677+13:00
+
+=== vercel --version ===
+Vercel CLI 50.5.0
+50.5.0
+EXIT=0
+
+=== vercel whoami ===
+Vercel CLI 50.5.0
+ccantynz-9622
+EXIT=0
+
+=== vercel link --yes ===
+Vercel CLI 50.5.0
+Loading scopesΓÇª
+Searching for existing projectsΓÇª
+Local settings detected in vercel.json:
+- Build Command: npm run build
+- Framework: nextjs
+- Install Command: npm install
+Merging default Project Settings for Next.js. Previously listed overrides are prioritized.
+> Auto-detected Project Settings for Next.js
+System.Management.Automation.RemoteException
+Error: Project names can be up to 100 characters long and must be lowercase. They can include letters, digits, and the following characters: '.', '_', '-'. However, they cannot contain the sequence '---'. (400)
+Learn More: https://vercel.com/docs/projects/overview#project-name
+EXIT=1
+
+=== vercel project ls ===
+Vercel CLI 50.5.0
+Fetching projects in craig-cantys-projects
+> Projects found under craig-cantys-projects  [1s]
+System.Management.Automation.RemoteException
+  Project Name               Latest Production URL                                               Updated   Node Version   
+  dominat8com                https://www.dominat8.com                                            1h        24.x           
+  hibiscus-to-airport        https://www.hibiscustoairport.co.nz                                 2h        24.x           
+  hibiscus-to-airport2       https://hibiscus-to-airport2-craig-cantys-projects.vercel.app       2h        24.x           
+  hibiscus-to-airport1       https://hibiscus-to-airport1-craig-cantys-projects.vercel.app       2h        24.x           
+  hibiscus-to-airport-crr3   https://hibiscus-to-airport-crr3-craig-cantys-projects.vercel.app   2h        24.x           
+  dominat8io                 https://dominat8io-craig-cantys-projects.vercel.app                 2h        20.x           
+  dominat8-engine            https://dominat8-engine.vercel.app                                  1d        24.x           
+  d8com-emergency            --                                                                  2d        24.x           
+  frontend                   https://frontend-craig-cantys-projects.vercel.app                   9d        24.x           
+System.Management.Automation.RemoteException
+EXIT=0
+
+=== vercel env ls (optional) ===
+Vercel CLI 50.5.0
+Error: Your codebase isnΓÇÖt linked to a project on Vercel. Run `vercel link` to begin.
+EXIT=1
+
