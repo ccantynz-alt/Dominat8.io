@@ -7,7 +7,7 @@ You then replace it using the matching BOOTSTRAP file (full copy/paste).
 ---
 
 ## HOW TO USE (NOVICE SAFE)
-1. Look at next build
+1. Look at Vercel build error or broken behavior.
 2. Identify the file path (example: app/api/projects/[projectId]/publish/route.ts).
 3. Open the matching BOOTSTRAP file.
 4. Copy everything.
@@ -103,7 +103,7 @@ No patching. No guessing.
 - Replaces live:
   - `lib/stripe.ts`
 - Use when:
-  - next build
+  - Vercel build fails with Stripe apiVersion type error
   - Checkout sessions fail to create
   - Upgrade link missing
 

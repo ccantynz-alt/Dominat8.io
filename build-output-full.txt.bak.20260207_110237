@@ -69,7 +69,7 @@ https://my-saas-app-5eyw-4wlblg5rl-craig-cantys-projects.vercel.app> [debug] [20
 > [debug] [2026-01-24T00:27:13.642Z] Spinner invoked (Building: Retrieving list of deployment files...) with a 0ms delay
 > [debug] [2026-01-24T00:27:13.642Z] Spinner invoked (Building: Skipping build cache, deployment was triggered without cache.) with a 0ms delay
 > [debug] [2026-01-24T00:27:13.642Z] Spinner invoked (Building: Downloading 328 deployment files...) with a 0ms delay
-> [debug] [2026-01-24T00:27:15.712Z] Spinner invoked (Building: Running "next build
+> [debug] [2026-01-24T00:27:15.712Z] Spinner invoked (Building: Running "vercel build") with a 0ms delay
 > [debug] [2026-01-24T00:27:15.712Z] Spinner invoked (Building: Vercel CLI 50.4.10) with a 0ms delay
 > [debug] [2026-01-24T00:27:15.712Z] Spinner invoked (Building: Running "install" command: `npm install --legacy-peer-deps`...) with a 0ms delay
 > [debug] [2026-01-24T00:27:17.789Z] Spinner invoked (Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported) with a 0ms delay

@@ -1,30 +1,22 @@
-export const dynamic = "force-dynamic";
+import { NextResponse } from 'next/server';
 
-type Body = {
-  ok: boolean;
-  stamp: string;
-  git: string;
-  now: string;
-  kind: "state";
-};
+type Json = Record<string, unknown>;
 
-function json(body: Body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
+export async function GET(): Promise<NextResponse<Json>> {
+  const payload: Json = {
+    ok: true,
+    service: 'io',
+    route: 'state',
+    ts: Date.now(),
+    env: {
+      nodeEnv: process.env.NODE_ENV ?? null
+    }
+  };
+
+  return NextResponse.json(payload, {
+    status: 200,
     headers: {
-      "content-type": "application/json; charset=utf-8",
-      "x-d8-proof": body.stamp
+      'X-D8-Proof': 'MONSTER_046_20260207_105254'
     }
   });
-}
-
-export async function GET() {
-  const body: Body = {
-    ok: true,
-    stamp: "D8_IO_API_state_046_20260207_090306",
-    git: process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "unknown",
-    now: new Date().toISOString(),
-    kind: "state"
-  };
-  return json(body, 200);
 }

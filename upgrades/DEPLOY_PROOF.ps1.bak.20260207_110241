@@ -1,4 +1,4 @@
-Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 function Fail([string]$m) { throw "ERROR: $m" }
@@ -152,6 +152,6 @@ $mDomain = GetMarker "https://www.dominat8.com/"
 Info "LIVE vercel.app marker: $mVercel"
 Info "LIVE domain     marker: $mDomain"
 Warn "Expected marker (new): $buildId"
-Warn "If live marker is still old, next build
+Warn "If live marker is still old, Vercel build is still running or failed. Check Vercel build logs for the latest commit hash."
 
 Ok "DEPLOY_PROOF script completed."
