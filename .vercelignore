@@ -1,4 +1,7 @@
-deploy.zip
-
-# Ensure client wrapper files are NOT excluded:
-!src/app/_client/**
+# COMMANDO MINIMAL .vercelignore (STAMP: D8_IO_DEPLOY_FIX_20260206_140942)
+# Do NOT ignore source or package files.
+node_modules
+.next
+.git
+.vscode
+*.log
