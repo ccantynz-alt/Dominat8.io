@@ -1,27 +1,31 @@
 import { NextResponse } from "next/server";
 
-type Body = {
+export const dynamic = "force-dynamic";
+
+type IoBody = {
   ok: boolean;
-  route: string;
   stamp: string;
   git: string;
   now: string;
 };
 
-export async function GET(): Promise<Response> {
-  const body: Body = {
+function makeBody(): IoBody {
+  const git =
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
+    "unknown";
+  return {
     ok: true,
-    route: "health",
-    stamp: "D8_IO_HARD_FIX_043_20260207_063410",
-    git: "b63657f9b701877e2bb682535314d30de6af35fa",
+    stamp: "D8_IO_PR_FIX_044_20260207_070340",
+    git,
     now: new Date().toISOString(),
   };
+}
 
-  return NextResponse.json(body, {
-    status: 200,
-    headers: {
-      "X-D8-Proof": "D8_IO_HARD_FIX_043_20260207_063410",
-      "Cache-Control": "no-store, max-age=0",
-    },
-  });
+export async function GET() {
+  const body: IoBody = makeBody();
+  const res = NextResponse.json(body, { status: 200 });
+  res.headers.set("X-D8-Proof", body.stamp);
+  res.headers.set("Cache-Control", "no-store, max-age=0");
+  return res;
 }
