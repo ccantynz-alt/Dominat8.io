@@ -1,19 +1,30 @@
-import { NextResponse } from "next/server";
-
 export const dynamic = "force-dynamic";
 
+type Body = {
+  ok: boolean;
+  stamp: string;
+  git: string;
+  now: string;
+  kind: "state";
+};
+
+function json(body: Body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "x-d8-proof": body.stamp
+    }
+  });
+}
+
 export async function GET() {
-  const body = {
+  const body: Body = {
     ok: true,
-    stamp: "D8_IO_PR_FIX_044_20260207_070340",
+    stamp: "D8_IO_API_state_046_20260207_090306",
+    git: process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "unknown",
     now: new Date().toISOString(),
-    env: {
-      vercel: !!process.env.VERCEL,
-      commit: process.env.VERCEL_GIT_COMMIT_SHA || null,
-    },
+    kind: "state"
   };
-  const res = NextResponse.json(body, { status: 200 });
-  res.headers.set("X-D8-Proof", body.stamp);
-  res.headers.set("Cache-Control", "no-store, max-age=0");
-  return res;
+  return json(body, 200);
 }
