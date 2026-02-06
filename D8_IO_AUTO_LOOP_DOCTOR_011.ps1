@@ -1,5 +1,5 @@
-# D8_IO_AUTO_LOOP_DOCTOR_011.ps1
-# Minimal IO health loop. Prints GREEN when /api/io/health is live.
+# D8_IO_AUTO_LOOP_DOCTOR_011.ps1 (PS 5.1 SAFE)
+# Watches https://dominat8.io/api/io/health and prints GREEN when live.
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -29,7 +29,7 @@ while ($true) {
       $first = ($hdrs -split "(`r`n|`n)")[0]
       if ($first -match "HTTP\/\d+\.\d+\s+(\d{3})") { $code = [int]$Matches[1] }
 
-      $proof = $null
+      $proof = ""
       foreach ($line in ($hdrs -split "(`r`n|`n)")) {
         if ($line -match "^(x-d8-proof)\s*:\s*(.+)$") { $proof = $Matches[2].Trim() }
       }
@@ -39,7 +39,7 @@ while ($true) {
       if ($code -eq 200 -and $jsonOk -and $proof) {
         Write-Host ("GREEN {0} proof={1}" -f (Get-Date -Format "HH:mm:ss"), $proof) -ForegroundColor Green
       } else {
-        Write-Host ("RED   {0} http={1} ok={2} proof={3}" -f (Get-Date -Format "HH:mm:ss"), $code, $jsonOk, ($proof ?? "")) -ForegroundColor Red
+        Write-Host ("RED   {0} http={1} ok={2} proof={3}" -f (Get-Date -Format "HH:mm:ss"), $code, $jsonOk, $proof) -ForegroundColor Red
       }
     }
   } catch {
