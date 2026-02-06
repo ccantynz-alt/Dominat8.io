@@ -1,5 +1,5 @@
-# COMMANDO MINIMAL .vercelignore (STAMP: D8_IO_DEPLOY_FIX_20260206_140942)
-# Do NOT ignore source or package files.
+# COMMANDO MINIMAL .vercelignore (STAMP: D8_IO_0MS_FIX_20260206_141128)
+# Keep source + config. Ignore only heavy/generated.
 node_modules
 .next
 .git
