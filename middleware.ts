@@ -1,98 +1,52 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+const STAMP = 'D8_IO_MEGA_LAUNCH_20260206_151108';
 
 /**
- * D8_IO_MIDDLEWARE_SINGLE_SOURCE_V1_20260205
- *
- * Rules:
- * - dominat8.io + www.dominat8.io => TV lock (rewrite everything to /io), except allowlist + protected paths
- * - staging.dominat8.io => bypass TV lock
- *   - and force "/" -> "/live" so you SEE A WEBSITE immediately
+ * MEGA LAUNCH middleware:
+ * - /io + staging paths MUST NOT be TV-locked.
+ * - Add no-cache headers so you never fight stale HTML again.
+ * - Keep everything else untouched.
  */
-
-const PROD_HOSTS = new Set(["dominat8.io", "www.dominat8.io"]);
-const STAGING_HOST = "staging.dominat8.io";
-
-// Keep these reachable everywhere (proof endpoints, health, static)
-const ALLOW_PREFIXES: string[] = [
-  "/api/__d8__/stamp",
-  "/api/__d8__/where",
-  "/api/__d8__/proof",
-  "/stamp",
-  "/healthz",
-  "/robots.txt",
-  "/sitemap.xml",
-  "/favicon.ico",
-  "/live" // our heartbeat page
-];
-
-// Do NOT rewrite these; let app handle auth/logic
-const PROTECTED_PREFIXES: string[] = [
-  "/admin",
-  "/cockpit",
-  "/agents",
-  "/api/agents",
-  "/api/engine",
-  "/api/admin",
-  "/api/cockpit",
-  "/tv",
-  "/api/tv"
-];
-
-function startsWithAny(pathname: string, prefixes: string[]): boolean {
-  for (const p of prefixes) {
-    if (pathname === p) return true;
-    if (pathname.startsWith(p + "/")) return true;
-    if (pathname.startsWith(p)) return true;
-  }
-  return false;
-}
-
-function getHost(req: NextRequest): string {
-  const h =
-    req.headers.get("x-forwarded-host") ||
-    req.headers.get("host") ||
-    "";
-  return h.toString().trim().toLowerCase();
-}
-
 export function middleware(req: NextRequest) {
   const url = req.nextUrl;
-  const pathname = (url.pathname || "/").toString();
-  const host = getHost(req);
+  const p = url.pathname || '/';
 
-  // Always allow Next internals + static
-  if (pathname.startsWith("/_next/")) return NextResponse.next();
-  if (pathname.startsWith("/assets/")) return NextResponse.next();
+  const isBypass =
+    p === '/io' ||
+    p.startsWith('/io/') ||
+    p === '/staging' ||
+    p.startsWith('/staging/') ||
+    p === '/_stage' ||
+    p.startsWith('/_stage/') ||
+    p === '/_stage/io' ||
+    p.startsWith('/_stage/io/');
 
-  // Always allow proof/public endpoints and protected paths
-  if (startsWithAny(pathname, ALLOW_PREFIXES)) return NextResponse.next();
-  if (startsWithAny(pathname, PROTECTED_PREFIXES)) return NextResponse.next();
+  // Always bypass for /io + staging paths
+  if (isBypass) {
+    const res = NextResponse.next();
 
-  // ===== STAGING BYPASS =====
-  if (host === STAGING_HOST) {
-    // Fastest "I SEE A WEBSITE" win: force staging root to /live
-    if (pathname === "/") {
-      const u = req.nextUrl.clone();
-      u.pathname = "/live";
-      return NextResponse.rewrite(u);
-    }
-    // Otherwise: allow normal routing on staging
-    return NextResponse.next();
+    // Proof header
+    res.headers.set('x-d8-proof', STAMP);
+
+    // Nuclear no-cache
+    res.headers.set('cache-control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.headers.set('pragma', 'no-cache');
+    res.headers.set('expires', '0');
+
+    return res;
   }
 
-  // ===== PROD TV LOCK =====
-  // For dominat8.io + www, rewrite everything to /io (TV shell architecture)
-  if (PROD_HOSTS.has(host)) {
-    const u = req.nextUrl.clone();
-    u.pathname = "/io";
-    return NextResponse.rewrite(u);
-  }
-
-  // Default behavior for any other host: DO NOT surprise-route; just pass through.
-  return NextResponse.next();
+  // Default: do nothing (preserve existing behavior)
+  const res = NextResponse.next();
+  res.headers.set('x-d8-proof', STAMP);
+  return res;
 }
 
 export const config = {
-  matcher: "/:path*",
+  matcher: [
+    // Run for app routes, but ignore Next internals/static
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
+  ],
 };
