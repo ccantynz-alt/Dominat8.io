@@ -1,6 +1,6 @@
 export default function IOPage() {
   const stamp = process.env.NEXT_PUBLIC_BUILD_STAMP || "NO_STAMP";
-  const sha = process.env.NEXT_PUBLIC_BUILD_SHA || "NO_SHA";
+  const sha = process.env.NEXT_PUBLIC_BUILD_SHA || process.env.NEXT_PUBLIC_BUILD_COMMIT || "NO_SHA";
 
   return (
     <main style={{ padding: 24, fontFamily: "system-ui" }}>
