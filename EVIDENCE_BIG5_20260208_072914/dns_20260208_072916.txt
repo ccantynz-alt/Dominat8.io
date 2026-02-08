@@ -1,0 +1,8 @@
+Non-authoritative answer:
+
+Server:  dns.google
+Address:  8.8.8.8
+
+dominat8.io	nameserver = ns2.vercel-dns.com
+dominat8.io	nameserver = ns1.vercel-dns.com
+
