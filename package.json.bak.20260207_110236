@@ -1,0 +1,43 @@
+{
+  "name": "my-saas-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "guard:protected": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/guard-protected-paths.ps1",
+    "ci:build": "npm run build",
+    "ci:protected": "node scripts/protected-paths-check.mjs"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^5.7.0",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^25.2.0",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "@vercel/blob": "^2.0.1",
+    "@vercel/kv": "^2.0.0",
+    "adm-zip": "^0.5.10",
+    "autoprefixer": "^10.4.24",
+    "next": "14.2.5",
+    "openai": "^4.0.0",
+    "postcss": "^8.5.6",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "stripe": "^14.0.0",
+    "typescript": "^5.9.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "14.2.5",
+    "tailwindcss": "^4.1.18"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
