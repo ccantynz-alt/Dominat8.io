@@ -1,0 +1,13 @@
+name: D8 Protected Paths Baseline (Agent)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Protected paths workflow baseline present."
