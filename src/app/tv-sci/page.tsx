@@ -1,17 +1,9 @@
-﻿export default function Page() {
+export default function Page() {
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#020617',
-      color: 'white',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: 48,
-      fontWeight: 800,
-      fontFamily: 'sans-serif'
-    }}>
-      TV SCI LIVE
-    </div>
-  )
+    <main style={{ padding: 24, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial" }}>
+      <h1>/tv-sci</h1>
+      <p>Stamp: TV_SCI_OK</p>
+      <p><a href="/tv">Go to /tv</a></p>
+    </main>
+  );
 }

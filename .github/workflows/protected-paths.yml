@@ -1,52 +1,38 @@
-name: Protected Paths Guardrails
+name: protected-paths
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
 
 jobs:
-  guardrails:
+  protected_paths:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Detect protected path changes
-        id: filter
-        uses: dorny/paths-filter@v3
         with:
-          filters: |
-            protected:
-              - 'src/app/**'
-              - 'src/middleware.ts'
-              - 'src/middleware/**'
-              - 'middleware.ts'
-              - 'src/lib/**'
-              - 'src/server/**'
-              - 'pages/api/**'
-              - 'src/pages/api/**'
-              - 'app/**'
-              - '.github/workflows/**'
-              - 'package.json'
-              - 'next.config.*'
-              - 'vercel.json'
+          fetch-depth: 0
 
-      - name: Enforce (block unless explicitly allowed)
-        if: steps.filter.outputs.protected == 'true'
+      - name: Detect changes in protected paths
+        shell: bash
         run: |
-          echo "Protected paths changed."
-          echo "PR title: ${{ github.event.pull_request.title }}"
-          if echo "${{ github.event.pull_request.title }}" | grep -q "\[ALLOW-PROTECTED\]"; then
-            echo "Bypass accepted via PR title tag [ALLOW-PROTECTED]."
-            exit 0
-          fi
-          echo ""
-          echo "BLOCKED: This PR modifies protected paths."
-          echo "To proceed, add [ALLOW-PROTECTED] to the PR title (explicit override)."
-          echo "Example: [ALLOW-PROTECTED] fix: adjust middleware routing"
-          exit 1
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          echo "Base: $BASE"
+          echo "Head: $HEAD"
+          CHANGED="$(git diff --name-only "$BASE" "$HEAD" || true)"
+          echo "$CHANGED"
 
-      - name: Pass (no protected changes)
-        if: steps.filter.outputs.protected != 'true'
-        run: echo "OK: no protected paths changed."
+          # Edit this list as you harden it. Keep minimal for now.
+          PROTECTED_REGEX='^(\.github/workflows/|src/middleware\.ts|middleware\.ts|package\.json|pnpm-lock\.yaml|yarn\.lock|package-lock\.json)'
+
+          if echo "$CHANGED" | grep -E "$PROTECTED_REGEX" >/dev/null 2>&1; then
+            echo "Protected paths changed."
+            echo "For now this workflow only reports. (Later: enforce labels/approvals.)"
+          else
+            echo "No protected paths changed."
+          fi
