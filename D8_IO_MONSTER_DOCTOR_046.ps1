@@ -1,0 +1,218 @@
+#requires -Version 5.1
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+function Ok($m){ Write-Host ("OK   {0}" -f $m) -ForegroundColor Green }
+function Info($m){ Write-Host ("INFO {0}" -f $m) -ForegroundColor Cyan }
+function Warn($m){ Write-Host ("WARN {0}" -f $m) -ForegroundColor Yellow }
+function Fail($m){ Write-Host ("FAIL {0}" -f $m) -ForegroundColor Red }
+
+function New-Utf8NoBomEncoding { New-Object System.Text.UTF8Encoding($false) }
+function Write-Utf8NoBom {
+  param([Parameter(Mandatory=$true)][string]$Path,[Parameter(Mandatory=$true)][string]$Content)
+  $enc = New-Utf8NoBomEncoding
+  $dir = Split-Path -Parent $Path
+  if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+  [System.IO.File]::WriteAllText($Path, $Content, $enc)
+}
+function Backup-File {
+  param([Parameter(Mandatory=$true)][string]$Path)
+  if (-not (Test-Path -LiteralPath $Path)) { return }
+  $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
+  $bak = "$Path.bak.$ts"
+  Copy-Item -LiteralPath $Path -Destination $bak -Force
+  Ok ("Backup: {0}" -f $bak)
+}
+
+function Cmd-Exists($name){
+  try { [void](Get-Command $name -ErrorAction Stop); return $true } catch { return $false }
+}
+
+function Run($label, $cmd){
+  Info $label
+  & cmd.exe /c $cmd
+  if ($LASTEXITCODE -ne 0) { throw ("Command failed (exit {0}): {1}" -f $LASTEXITCODE, $cmd) }
+}
+
+# -----------------------
+# 046 — MONSTER DOCTOR
+# -----------------------
+$RepoRoot = (Get-Location).Path
+Ok ("PWD: {0}" -f $RepoRoot)
+
+if (-not (Test-Path -LiteralPath ".\.git")) { throw "Not a git repo root." }
+if (-not (Test-Path -LiteralPath ".\package.json")) { throw "package.json missing." }
+
+# 1) Create doctor branch
+$ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
+$branch = "doctor/monster-046-$ts"
+
+Run "Fetch remotes" "git fetch --all --prune"
+Run "Create branch" ("git checkout -b {0}" -f $branch)
+
+# 2) Remove pages/tv.tsx conflict if present
+$pagesTv = Join-Path $RepoRoot "pages\tv.tsx"
+if (Test-Path -LiteralPath $pagesTv) {
+  Backup-File -Path $pagesTv
+  Remove-Item -LiteralPath $pagesTv -Force
+  Ok "Removed pages\tv.tsx to avoid pages/ vs app/ tv conflict."
+}
+
+# 3) Rewrite strict API routes (io/health, io/ping, io/state)
+$healthPath = Join-Path $RepoRoot "src\app\api\io\health\route.ts"
+$pingPath   = Join-Path $RepoRoot "src\app\api\io\ping\route.ts"
+$statePath  = Join-Path $RepoRoot "src\app\api\io\state\route.ts"
+
+# backup if exist
+Backup-File -Path $healthPath
+Backup-File -Path $pingPath
+Backup-File -Path $statePath
+
+$proof = "X-D8-Proof"
+$proofVal = ("MONSTER_046_{0}" -f $ts)
+
+$health = @"
+import { NextResponse } from 'next/server';
+
+type Json = Record<string, unknown>;
+
+export async function GET(): Promise<NextResponse<Json>> {
+  const payload: Json = {
+    ok: true,
+    service: 'io',
+    route: 'health',
+    ts: Date.now()
+  };
+
+  return NextResponse.json(payload, {
+    status: 200,
+    headers: {
+      '$proof': '$proofVal'
+    }
+  });
+}
+"@
+
+$ping = @"
+import { NextResponse } from 'next/server';
+
+type Json = Record<string, unknown>;
+
+export async function GET(): Promise<NextResponse<Json>> {
+  const payload: Json = {
+    ok: true,
+    service: 'io',
+    route: 'ping',
+    ts: Date.now()
+  };
+
+  return NextResponse.json(payload, {
+    status: 200,
+    headers: {
+      '$proof': '$proofVal'
+    }
+  });
+}
+"@
+
+$state = @"
+import { NextResponse } from 'next/server';
+
+type Json = Record<string, unknown>;
+
+export async function GET(): Promise<NextResponse<Json>> {
+  const payload: Json = {
+    ok: true,
+    service: 'io',
+    route: 'state',
+    ts: Date.now(),
+    env: {
+      nodeEnv: process.env.NODE_ENV ?? null
+    }
+  };
+
+  return NextResponse.json(payload, {
+    status: 200,
+    headers: {
+      '$proof': '$proofVal'
+    }
+  });
+}
+"@
+
+Write-Utf8NoBom -Path $healthPath -Content $health
+Write-Utf8NoBom -Path $pingPath   -Content $ping
+Write-Utf8NoBom -Path $statePath  -Content $state
+
+Ok "Rewrote io API routes with strict typing + proof header."
+
+# 4) Fix unterminated stamp strings in src/app/io/page.tsx (conservative)
+$ioPage = Join-Path $RepoRoot "src\app\io\page.tsx"
+if (Test-Path -LiteralPath $ioPage) {
+  Backup-File -Path $ioPage
+  $txt = Get-Content -LiteralPath $ioPage -Raw
+
+  # If file contains a multiline template literal assigned to STAMP/BUILD_STAMP, replace with single-line safe constant.
+  # This is intentionally conservative: only replaces if it sees STAMP and a backtick.
+  if ($txt -match "(STAMP|BUILD_STAMP)" -and $txt -match "`"") {
+    $safeStamp = ("const BUILD_STAMP = ""D8_IO_BUILD_{0}"";" -f $ts)
+    # remove any existing const BUILD_STAMP/const STAMP lines (basic), then insert a safe one near top
+    $txt2 = $txt `
+      -replace "(?ms)^\s*const\s+(BUILD_STAMP|STAMP)\s*=\s*`".*?`";\s*$", "" `
+      -replace "(?ms)^\s*const\s+(BUILD_STAMP|STAMP)\s*=\s*['""][^'""]*['""]\s*;\s*$", ""
+
+    if ($txt2 -ne $txt) {
+      # insert after 'use client' if present, otherwise top
+      if ($txt2 -match "(?ms)^\s*'use client'\s*;\s*$") {
+        $txt2 = $txt2 -replace "(?ms)^\s*'use client'\s*;\s*$", ("'use client';`r`n`r`n" + $safeStamp)
+      } else {
+        $txt2 = $safeStamp + "`r`n`r`n" + $txt2
+      }
+      Write-Utf8NoBom -Path $ioPage -Content $txt2
+      Ok "Normalized io page STAMP/BUILD_STAMP to a single-line safe constant."
+    } else {
+      Ok "io page contained STAMP markers but no matching replace pattern; left as-is."
+    }
+  } else {
+    Ok "io page has no risky multiline STAMP template literal; left as-is."
+  }
+} else {
+  Warn "src/app/io/page.tsx not found; skipping stamp fix."
+}
+
+# 5) Local build proof
+if (Test-Path -LiteralPath ".\package-lock.json") {
+  $installCmd = "npm ci"
+} else {
+  $installCmd = "npm install"
+}
+Run "Install deps ($installCmd)" $installCmd
+Run "Local build" "npm run build"
+
+# 6) Commit + push
+Run "Git status" "git status"
+Run "Commit" "git add -A && git commit -m ""MONSTER_DOCTOR_046: fix io routes + remove tv conflict + stamp safety"""
+Run "Push" ("git push -u origin {0}" -f $branch)
+
+# 7) Create PR if gh exists
+if (Cmd-Exists "gh") {
+  try {
+    Info "Creating PR via GitHub CLI..."
+    $prUrl = & gh pr create --base main --head $branch --title "MONSTER_DOCTOR_046: Stabilize build baseline" --body "Automated doctor PR to establish first green baseline for agent repair loop. Includes strict API route typing fixes and removes tv pages/app conflict."
+    if ($prUrl) {
+      Ok ("PR_URL: {0}" -f $prUrl)
+      Write-Host ("PR_URL: {0}" -f $prUrl)
+    } else {
+      Warn "gh pr create returned empty output."
+      Write-Host "PR_URL: (not created automatically)"
+    }
+  } catch {
+    Warn ("gh pr create failed: {0}" -f $_.Exception.Message)
+    Write-Host "PR_URL: (gh failed - create PR manually on GitHub)"
+  }
+} else {
+  Warn "gh not installed. Create PR manually in GitHub."
+  Write-Host "PR_URL: (manual)"
+}
+
+Ok "DONE"
