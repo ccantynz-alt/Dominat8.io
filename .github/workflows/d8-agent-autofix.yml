@@ -1,0 +1,51 @@
+name: d8-agent-autofix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - doctor/**
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PowerShell
+        uses: PowerShell/PowerShell@v1
+
+      - name: Run agent autofix
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File tools/agents/D8_AGENT_AUTOFIX.ps1 -RepoRoot $PWD
+
+      - name: Create PR if changes
+        id: pr
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "d8-agent"
+            git config user.email "d8-agent@users.noreply.github.com"
+            BR="agent/autofix-$(date +%Y%m%d-%H%M%S)"
+            git checkout -b "$BR"
+            git add -A
+            git commit -m "agent: autofix tv routes + middleware + hygiene"
+            git push --set-upstream origin "$BR"
+
+            # Create PR (GitHub CLI is available on hosted runners)
+            gh pr create --title "agent: autofix tv routes + middleware + hygiene" --body "Automated fixes from d8-agent-autofix workflow." --base main --head "$BR"
+          else
+            echo "No changes to PR."
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}

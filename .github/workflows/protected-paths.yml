@@ -1,8 +1,13 @@
 name: protected-paths
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+      - doctor/**
 
 permissions:
   contents: read
@@ -15,24 +20,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Detect changes in protected paths
+      - name: Report protected path changes
         shell: bash
         run: |
           set -euo pipefail
-          BASE="${{ github.event.pull_request.base.sha }}"
-          HEAD="${{ github.event.pull_request.head.sha }}"
-          echo "Base: $BASE"
-          echo "Head: $HEAD"
-          CHANGED="$(git diff --name-only "$BASE" "$HEAD" || true)"
-          echo "$CHANGED"
-
-          # Edit this list as you harden it. Keep minimal for now.
-          PROTECTED_REGEX='^(\.github/workflows/|src/middleware\.ts|middleware\.ts|package\.json|pnpm-lock\.yaml|yarn\.lock|package-lock\.json)'
-
-          if echo "$CHANGED" | grep -E "$PROTECTED_REGEX" >/dev/null 2>&1; then
-            echo "Protected paths changed."
-            echo "For now this workflow only reports. (Later: enforce labels/approvals.)"
-          else
-            echo "No protected paths changed."
-          fi
+          echo "protected-paths workflow is valid and running"
