@@ -1,7 +1,17 @@
-export default function Page() {
+﻿export default function Page() {
   return (
-    <div style={{padding:40,fontSize:32}}>
-      TV SCI — ROUTE OK
+    <div style={{
+      minHeight: '100vh',
+      background: '#020617',
+      color: 'white',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: 48,
+      fontWeight: 800,
+      fontFamily: 'sans-serif'
+    }}>
+      TV SCI LIVE
     </div>
   )
 }
