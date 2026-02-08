@@ -1,0 +1,29 @@
+name: 047B Self-Heal PR Loop
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  self_heal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run 047B doctor (stub)
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          echo "Running PowerShell doctor..."
+          pwsh -NoProfile -File tools/doctor/D8_SELF_HEAL_047B.ps1 -RepoRoot "${{ github.workspace }}" -Repo "ccantynz-alt/Dominat8.io"
