@@ -1,11 +1,11 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // D8_TV_BYPASS_FORCE_DEPLOY_011
   if (
-    pathname === '/tv' || pathname.startsWith('/tv/') ||
+    pathname === '/tv' || pathname.startsWith('/tv/') || pathname.startsWith('/tv-') ||
     pathname === '/api/tv' || pathname.startsWith('/api/tv/') ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
@@ -23,3 +23,4 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: '/:path*',
 };
+
