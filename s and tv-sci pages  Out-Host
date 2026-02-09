@@ -1,0 +1,67 @@
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m6[m[36m:[m * Dev-only by default (prod opt-in via NEXT_PUBLIC_D8_TV[1;31m=[m1)
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m11[m[36m:[mtype AnyObj [1;31m=[m Record<string, any>;
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m13[m[36m:[mtype ApiResult [1;31m=[m {
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m22[m[36m:[mtype Channel [1;31m=[m 'deploy' | 'agents' | 'kv' | 'routes';
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m29[m[36m:[m  const t0 [1;31m=[m Date.now();
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m31[m[36m:[m    const r [1;31m=[m await fetch(url, { cache: 'no-store' });
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m32[m[36m:[m    const ms [1;31m=[m Date.now() - t0;
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m33[m[36m:[m    const ct [1;31m=[m (r.headers.get('content-type') || '').toLowerCase();
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m34[m[36m:[m    let data: AnyObj | undefined [1;31m=[m undefined;
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m37[m[36m:[m      data [1;31m=[m await r.json();
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m39[m[36m:[m      const text [1;31m=[m await r.text();
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m40[m[36m:[m      data [1;31m=[m { text };
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m45[m[36m:[m    const ms [1;31m=[m Date.now() - t0;
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m51[m[36m:[m  const t0 [1;31m=[m Date.now();
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m53[m[36m:[m    const r [1;31m=[m await fetch(url, { cache: 'no-store' });
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m54[m[36m:[m    const ms [1;31m=[m Date.now() - t0;
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m57[m[36m:[m    const ms [1;31m=[m Date.now() - t0;
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m65[m[36m:[m      className[1;31m=[m"d8-chip"
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m66[m[36m:[m      style[1;31m=[m{{
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m73[m[36m:[m        style[1;31m=[m{{
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m84[m[36m:[mfunction Tab(props: { id: Channel; current: Channel; label: string; onClick: (id: Channel) [1;31m=[m> void }) {
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m85[m[36m:[m  const active [1;31m=[m props.current [1;31m=[m[1;31m=[m[1;31m=[m props.id;
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m88[m[36m:[m      className[1;31m=[m{"d8-btn " + (active ? "d8-btn--solid" : "d8-btn--ghost")}
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m89[m[36m:[m      style[1;31m=[m{{
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m96[m[36m:[m      onClick[1;31m=[m{() [1;31m=[m> props.onClick(props.id)}
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m97[m[36m:[m      type[1;31m=[m"button"
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m106[m[36m:[m    <div style[1;31m=[m{{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12 }}>
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m107[m[36m:[m      <div style[1;31m=[m{{ opacity: 0.65 }}>{props.k}</div>
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m108[m[36m:[m      <div style[1;31m=[m{{ opacity: 0.95, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, ""Liberation Mono"", ""Courier New"", monospace' }}>
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m116[m[36m:[m  const enabled [1;31m=[m
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m117[m[36m:[m    (process.env.NEXT_PUBLIC_D8_TV [1;31m=[m[1;31m=[m[1;31m=[m '1') ||
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m118[m[36m:[m    (process.env.NODE_ENV ![1;31m=[m[1;31m=[m 'production');
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m120[m[36m:[m  const [open, setOpen] [1;31m=[m React.useState(true);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m121[m[36m:[m  const [ch, setCh] [1;31m=[m React.useState<Channel>('deploy');
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m123[m[36m:[m  const [stamp, setStamp] [1;31m=[m React.useState<ApiResult | null>(null);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m124[m[36m:[m  const [where, setWhere] [1;31m=[m React.useState<ApiResult | null>(null);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m125[m[36m:[m  const [proof, setProof] [1;31m=[m React.useState<ApiResult | null>(null);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m126[m[36m:[m  const [kv, setKv] [1;31m=[m React.useState<ApiResult | null>(null);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m128[m[36m:[m  const [agents, setAgents] [1;31m=[m React.useState<ApiResult[]>([]);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m129[m[36m:[m  const [routes, setRoutes] [1;31m=[m React.useState<ApiResult[]>([]);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m130[m[36m:[m  const [tick, setTick] [1;31m=[m React.useState(0);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m132[m[36m:[m  React.useEffect(() [1;31m=[m> {
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m135[m[36m:[m    let alive [1;31m=[m true;
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m138[m[36m:[m      const ts [1;31m=[m Math.floor(Date.now() / 1000);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m139[m[36m:[m      const s [1;31m=[m await getJson(`/api/__d8__/stamp?ts[1;31m=[m${ts}`);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m140[m[36m:[m      const w [1;31m=[m await getJson(`/api/__d8__/where?ts[1;31m=[m${ts}`);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m141[m[36m:[m      const p [1;31m=[m await getJson(`/api/__d8__/proof?ts[1;31m=[m${ts}`);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m142[m[36m:[m      const k [1;31m=[m await getJson(`/api/__d8__/kv?ts[1;31m=[m${ts}`);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m149[m[36m:[m      setTick((x) [1;31m=[m> x + 1);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m152[m[36m:[m    pullCore().catch(() [1;31m=[m> {});
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m153[m[36m:[m    const t [1;31m=[m setInterval(() [1;31m=[m> pullCore().catch(() [1;31m=[m> {}), 5000);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m155[m[36m:[m    return () [1;31m=[m> { alive [1;31m=[m false; clearInterval(t); };
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m158[m[36m:[m  const refreshAgents [1;31m=[m React.useCallback(async () [1;31m=[m> {
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m159[m[36m:[m    const probes [1;31m=[m [
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m167[m[36m:[m    const ts [1;31m=[m Math.floor(Date.now() / 1000);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m168[m[36m:[m    const out: ApiResult[] [1;31m=[m [];
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m170[m[36m:[m      const r [1;31m=[m await probe(`${u}ts[1;31m=[m${ts}`);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m176[m[36m:[m  const refreshRoutes [1;31m=[m React.useCallback(async () [1;31m=[m> {
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m177[m[36m:[m    const checks [1;31m=[m [
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m187[m[36m:[m    const ts [1;31m=[m Math.floor(Date.now() / 1000);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m188[m[36m:[m    const out: ApiResult[] [1;31m=[m [];
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m190[m[36m:[m      const r [1;31m=[m await probe(`${u}ts[1;31m=[m${ts}`);
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m196[m[36m:[m  React.useEffect(() [1;31m=[m> {
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m198[m[36m:[m    if (ch [1;31m=[m[1;31m=[m[1;31m=[m 'agents' && agents.length [1;31m=[m[1;31m=[m[1;31m=[m 0) { refreshAgents().catch(() [1;31m=[m> {}); }
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m199[m[36m:[m    if (ch [1;31m=[m[1;31m=[m[1;31m=[m 'routes' && routes.length [1;31m=[m[1;31m=[m[1;31m=[m 0) { refreshRoutes().catch(() [1;31m=[m> {}); }
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m204[m[36m:[m  const okCount [1;31m=[m [stamp, where, proof, kv].filter((x) [1;31m=[m> x && x.ok).length;
+[35msrc/app/_client/D8TV.tsx[m[36m:[m[32m208[m

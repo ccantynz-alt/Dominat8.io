@@ -1,0 +1,34 @@
+build	Build (capture log)	∩╗┐2026-02-08T19:57:35.5171868Z ##[group]Run set -o pipefail
+build	Build (capture log)	2026-02-08T19:57:35.5172223Z [36;1mset -o pipefail[0m
+build	Build (capture log)	2026-02-08T19:57:35.5172492Z [36;1mnpm run build 2>&1 | tee build.log[0m
+build	Build (capture log)	2026-02-08T19:57:35.5204005Z shell: /usr/bin/bash -e {0}
+build	Build (capture log)	2026-02-08T19:57:35.5204261Z ##[endgroup]
+build	Build (capture log)	2026-02-08T19:57:35.6507384Z 
+build	Build (capture log)	2026-02-08T19:57:35.6507784Z > my-saas-app@0.1.0 build
+build	Build (capture log)	2026-02-08T19:57:35.6508317Z > next build
+build	Build (capture log)	2026-02-08T19:57:35.6508479Z 
+build	Build (capture log)	2026-02-08T19:57:36.1357991Z ΓÜá No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+build	Build (capture log)	2026-02-08T19:57:36.1480151Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+build	Build (capture log)	2026-02-08T19:57:36.1481649Z This information is used to shape Next.js' roadmap and prioritize features.
+build	Build (capture log)	2026-02-08T19:57:36.1483342Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+build	Build (capture log)	2026-02-08T19:57:36.1484514Z https://nextjs.org/telemetry
+build	Build (capture log)	2026-02-08T19:57:36.1484940Z 
+build	Build (capture log)	2026-02-08T19:57:36.2008085Z   Γû▓ Next.js 14.2.5
+build	Build (capture log)	2026-02-08T19:57:36.2008628Z   - Environments: .env.production
+build	Build (capture log)	2026-02-08T19:57:36.2009546Z 
+build	Build (capture log)	2026-02-08T19:57:36.2554557Z    Creating an optimized production build ...
+build	Build (capture log)	2026-02-08T19:57:47.5307475Z  Γ£ô Compiled successfully
+build	Build (capture log)	2026-02-08T19:57:47.5317371Z    Linting and checking validity of types ...
+build	Build (capture log)	2026-02-08T19:57:52.8077386Z Failed to compile.
+build	Build (capture log)	2026-02-08T19:57:52.8077739Z 
+build	Build (capture log)	2026-02-08T19:57:52.8078126Z ./src/app/tv-enterprise/page.tsx:6:21
+build	Build (capture log)	2026-02-08T19:57:52.8078610Z Type error: '>' expected.
+build	Build (capture log)	2026-02-08T19:57:52.8078866Z 
+build	Build (capture log)	2026-02-08T19:57:52.8079838Z [0m [90m 4 |[39m       [33m<[39m[33mh1[39m[33m>[39m[33m/[39mtv[33m-[39menterprise[33m<[39m[33m/[39m[33mh1[39m[33m>[39m[0m
+build	Build (capture log)	2026-02-08T19:57:52.8081114Z [0m [90m 5 |[39m       [33m<[39m[33mp[39m[33m>[39m[33mStamp[39m[33m:[39m [33mTV_ENTERPRISE_OK[39m[33m<[39m[33m/[39m[33mp[39m[33m>[39m[0m
+build	Build (capture log)	2026-02-08T19:57:52.8083122Z [0m[31m[1m>[22m[39m[90m 6 |[39m       [33m<[39m[33mp[39m[33m>[39m[33m<[39m[33ma[39m href[33m=[39m[32m""[39m[33m/[39mtv[32m""[39m[33m>[39m[33mGo[39m to [33m/[39mtv[33m<[39m[33m/[39m[33ma[39m[33m>[39m[33m<[39m[33m/[39m[33mp[39m[33m>[39m[0m
+build	Build (capture log)	2026-02-08T19:57:52.8084176Z [0m [90m   |[39m                     [31m[1m^[22m[39m[0m
+build	Build (capture log)	2026-02-08T19:57:52.8084693Z [0m [90m 7 |[39m     [33m<[39m[33m/[39m[33mmain[39m[33m>[39m[0m
+build	Build (capture log)	2026-02-08T19:57:52.8085099Z [0m [90m 8 |[39m   )[33m;[39m[0m
+build	Build (capture log)	2026-02-08T19:57:52.8085389Z [0m [90m 9 |[39m }[0m
+build	Build (capture log)	2026-02-08T19:57:52.8633626Z ##[error]Process completed with exit code 1.

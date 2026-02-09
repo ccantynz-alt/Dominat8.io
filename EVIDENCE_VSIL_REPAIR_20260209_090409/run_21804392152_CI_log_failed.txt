@@ -1,0 +1,33 @@
+build	Build	∩╗┐2026-02-08T19:57:36.3697927Z ##[group]Run npm run build
+build	Build	2026-02-08T19:57:36.3698192Z [36;1mnpm run build[0m
+build	Build	2026-02-08T19:57:36.3729764Z shell: /usr/bin/bash -e {0}
+build	Build	2026-02-08T19:57:36.3730008Z ##[endgroup]
+build	Build	2026-02-08T19:57:36.4790778Z 
+build	Build	2026-02-08T19:57:36.4791143Z > my-saas-app@0.1.0 build
+build	Build	2026-02-08T19:57:36.4791608Z > next build
+build	Build	2026-02-08T19:57:36.4791939Z 
+build	Build	2026-02-08T19:57:36.9560802Z ΓÜá No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+build	Build	2026-02-08T19:57:36.9659878Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+build	Build	2026-02-08T19:57:36.9663890Z This information is used to shape Next.js' roadmap and prioritize features.
+build	Build	2026-02-08T19:57:36.9666200Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+build	Build	2026-02-08T19:57:36.9667617Z https://nextjs.org/telemetry
+build	Build	2026-02-08T19:57:36.9667930Z 
+build	Build	2026-02-08T19:57:37.0166833Z   Γû▓ Next.js 14.2.5
+build	Build	2026-02-08T19:57:37.0167769Z   - Environments: .env.production
+build	Build	2026-02-08T19:57:37.0169058Z 
+build	Build	2026-02-08T19:57:37.0844070Z    Creating an optimized production build ...
+build	Build	2026-02-08T19:57:48.3315395Z  Γ£ô Compiled successfully
+build	Build	2026-02-08T19:57:48.3324212Z    Linting and checking validity of types ...
+build	Build	2026-02-08T19:57:53.5172106Z Failed to compile.
+build	Build	2026-02-08T19:57:53.5172757Z 
+build	Build	2026-02-08T19:57:53.5173194Z ./src/app/tv-enterprise/page.tsx:6:21
+build	Build	2026-02-08T19:57:53.5173687Z Type error: '>' expected.
+build	Build	2026-02-08T19:57:53.5173923Z 
+build	Build	2026-02-08T19:57:53.5175202Z [0m [90m 4 |[39m       [33m<[39m[33mh1[39m[33m>[39m[33m/[39mtv[33m-[39menterprise[33m<[39m[33m/[39m[33mh1[39m[33m>[39m[0m
+build	Build	2026-02-08T19:57:53.5176965Z [0m [90m 5 |[39m       [33m<[39m[33mp[39m[33m>[39m[33mStamp[39m[33m:[39m [33mTV_ENTERPRISE_OK[39m[33m<[39m[33m/[39m[33mp[39m[33m>[39m[0m
+build	Build	2026-02-08T19:57:53.5179544Z [0m[31m[1m>[22m[39m[90m 6 |[39m       [33m<[39m[33mp[39m[33m>[39m[33m<[39m[33ma[39m href[33m=[39m[32m""[39m[33m/[39mtv[32m""[39m[33m>[39m[33mGo[39m to [33m/[39mtv[33m<[39m[33m/[39m[33ma[39m[33m>[39m[33m<[39m[33m/[39m[33mp[39m[33m>[39m[0m
+build	Build	2026-02-08T19:57:53.5181594Z [0m [90m   |[39m                     [31m[1m^[22m[39m[0m
+build	Build	2026-02-08T19:57:53.5182455Z [0m [90m 7 |[39m     [33m<[39m[33m/[39m[33mmain[39m[33m>[39m[0m
+build	Build	2026-02-08T19:57:53.5182871Z [0m [90m 8 |[39m   )[33m;[39m[0m
+build	Build	2026-02-08T19:57:53.5183208Z [0m [90m 9 |[39m }[0m
+build	Build	2026-02-08T19:57:53.5695186Z ##[error]Process completed with exit code 1.
