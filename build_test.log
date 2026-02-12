@@ -1,0 +1,44 @@
+
+> my-saas-app@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.5
+  - Environments: .env.production
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/6) ...
+   Generating static pages (1/6) 
+   Generating static pages (2/6) 
+   Generating static pages (4/6) 
+ ✓ Generating static pages (6/6)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                               Size     First Load JS
+┌ ƒ /                                     137 B          87.2 kB
+├ ○ /_not-found                           871 B            88 kB
+└ ○ /tv                                   2.48 kB        89.6 kB
++ First Load JS shared by all             87.1 kB
+  ├ chunks/23-c61e312c20c04c5e.js         31.5 kB
+  ├ chunks/fd9d1056-b6e16a5f15b47ad4.js   53.6 kB
+  └ other shared chunks (total)           1.92 kB
+
+Route (pages)                             Size     First Load JS
+┌ ƒ /api/__d8__/env                       0 B            79.3 kB
+├ ƒ /api/__d8__/stamp                     0 B            79.3 kB
+├ ƒ /api/__health__                       0 B            79.3 kB
+├ ƒ /api/__where__/dxl-auth-check         0 B            79.3 kB
+└ ○ /io                                   1.31 kB        80.7 kB
++ First Load JS shared by all             79.3 kB
+  ├ chunks/framework-750de41200abbb28.js  45.2 kB
+  ├ chunks/main-49671aa471b99af5.js       32.3 kB
+  └ other shared chunks (total)           1.89 kB
+
+ƒ Middleware                              27 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
