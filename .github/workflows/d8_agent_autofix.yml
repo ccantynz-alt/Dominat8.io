@@ -121,7 +121,7 @@ patch = ""
 if "choices" in data and len(data["choices"]) > 0:
   patch = data["choices"][0]["message"]["content"].strip()
 else:
-  print("OpenAI did not return a valid response. Raw output follows:\n")
+  print("OpenAI response missing required choices array or content field. Raw output follows:\n")
   print(json.dumps(data, indent=2))
   sys.exit(2)
 
