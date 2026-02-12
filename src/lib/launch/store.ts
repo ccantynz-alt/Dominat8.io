@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type Json = any;
 const memory: Record<string, { v: Json; at: number }> = {};
 function env(name: string) { return process.env[name] || ""; }
