@@ -84,7 +84,7 @@ jobs:
           npm i -g vercel@latest
 
           # Deploy to staging (preview)
-          DEPLOY_URL=$(vercel deploy --token=$VERCEL_TOKEN --yes 2>&1 \
+          DEPLOY_URL=$(vercel deploy --token="$VERCEL_TOKEN" --yes 2>&1 \
             | grep -o 'https://[^[:space:]]*')
 
           if [ -z "$DEPLOY_URL" ]; then
@@ -131,7 +131,7 @@ jobs:
           npm i -g vercel@latest
 
           # Deploy to production
-          DEPLOY_URL=$(vercel deploy --prod --token=$VERCEL_TOKEN --yes \
+          DEPLOY_URL=$(vercel deploy --prod --token="$VERCEL_TOKEN" --yes \
             2>&1 | grep -o 'https://[^[:space:]]*')
 
           if [ -z "$DEPLOY_URL" ]; then
@@ -186,7 +186,7 @@ jobs:
           git checkout "$PREV_COMMIT"
 
           # Deploy previous version to production
-          vercel deploy --prod --token=$VERCEL_TOKEN --yes
+          vercel deploy --prod --token="$VERCEL_TOKEN" --yes
 
           echo "✅ Rollback complete"
 
