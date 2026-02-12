@@ -23,6 +23,7 @@ yarn-error.log*
 # misc
 .DS_Store
 _modules
+*.tsbuildinfo
 
 # vercel
 
