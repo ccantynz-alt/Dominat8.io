@@ -66,13 +66,14 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           echo "🚀 Deploying to staging..."
-          
+
           # Install Vercel CLI if needed
           npm i -g vercel@latest
-          
+
           # Deploy to staging (preview)
-          DEPLOY_URL=$(vercel deploy --token=$VERCEL_TOKEN --yes 2>&1 | grep -o 'https://[^[:space:]]*')
-          
+          DEPLOY_URL=$(vercel deploy --token=$VERCEL_TOKEN --yes 2>&1 \
+            | grep -o 'https://[^[:space:]]*')
+
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "✅ Staging deployment complete: $DEPLOY_URL"
 
@@ -106,13 +107,14 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           echo "🚀 Deploying to production..."
-          
+
           # Install Vercel CLI if needed
           npm i -g vercel@latest
-          
+
           # Deploy to production
-          DEPLOY_URL=$(vercel deploy --prod --token=$VERCEL_TOKEN --yes 2>&1 | grep -o 'https://[^[:space:]]*')
-          
+          DEPLOY_URL=$(vercel deploy --prod --token=$VERCEL_TOKEN --yes \
+            2>&1 | grep -o 'https://[^[:space:]]*')
+
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "✅ Production deployment complete: $DEPLOY_URL"
 
@@ -146,19 +148,19 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           echo "🔄 Rolling back production deployment..."
-          
+
           # Install Vercel CLI if needed
           npm i -g vercel@latest
-          
+
           # Get previous commit
           PREV_COMMIT=$(git rev-parse HEAD~1)
-          
+
           echo "Rolling back to commit: $PREV_COMMIT"
           git checkout $PREV_COMMIT
-          
+
           # Deploy previous version to production
           vercel deploy --prod --token=$VERCEL_TOKEN --yes
-          
+
           echo "✅ Rollback complete"
 
       - name: Notify Rollback Success
