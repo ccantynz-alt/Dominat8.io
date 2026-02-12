@@ -76,8 +76,9 @@ The `d8_agent_autofix.yml` workflow has been removed as it:
 ### Emergency Rollback
 1. Go to Actions → Deploy to Staging & Production
 2. Click "Run workflow" button
-3. This triggers the rollback job
-4. Previous version will be deployed to production
+3. Select "rollback" from the "Deployment action" dropdown
+4. Click "Run workflow"
+5. The rollback job will deploy the previous version to production
 
 ## Required Secrets
 

@@ -5,6 +5,15 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      action:
+        description: 'Deployment action'
+        required: true
+        type: choice
+        options:
+          - deploy
+          - rollback
+        default: deploy
 
 permissions:
   contents: read
@@ -18,6 +27,10 @@ concurrency:
 jobs:
   # Run CI tests first
   ci-gate:
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' &&
+       github.event.inputs.action == 'deploy')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -74,6 +87,12 @@ jobs:
           DEPLOY_URL=$(vercel deploy --token=$VERCEL_TOKEN --yes 2>&1 \
             | grep -o 'https://[^[:space:]]*')
 
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "❌ Failed to capture deployment URL from Vercel CLI"
+            echo "This might indicate a deployment failure or CLI output change"
+            exit 1
+          fi
+
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "✅ Staging deployment complete: $DEPLOY_URL"
 
@@ -115,6 +134,12 @@ jobs:
           DEPLOY_URL=$(vercel deploy --prod --token=$VERCEL_TOKEN --yes \
             2>&1 | grep -o 'https://[^[:space:]]*')
 
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "❌ Failed to capture deployment URL from Vercel CLI"
+            echo "This might indicate a deployment failure or CLI output change"
+            exit 1
+          fi
+
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "✅ Production deployment complete: $DEPLOY_URL"
 
@@ -131,7 +156,9 @@ jobs:
 
   # Rollback job (manual trigger only)
   rollback:
-    if: github.event_name == 'workflow_dispatch'
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.action == 'rollback'
     runs-on: ubuntu-latest
     environment:
       name: production-rollback
@@ -156,7 +183,7 @@ jobs:
           PREV_COMMIT=$(git rev-parse HEAD~1)
 
           echo "Rolling back to commit: $PREV_COMMIT"
-          git checkout $PREV_COMMIT
+          git checkout "$PREV_COMMIT"
 
           # Deploy previous version to production
           vercel deploy --prod --token=$VERCEL_TOKEN --yes
