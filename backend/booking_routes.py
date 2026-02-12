@@ -35,6 +35,7 @@ from utils import (
     send_urgent_admin_sms
 )
 import stripe
+import openai
 import logging
 
 logger = logging.getLogger(__name__)
@@ -2472,12 +2473,9 @@ class ChatMessage(BaseModel):
 
 @router.post("/chatbot/message")
 async def chatbot_message(data: ChatMessage):
-    """AI Chatbot for answering customer questions about bookings"""
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-        
-        emergent_key = os.environ.get('EMERGENT_LLM_KEY')
-        if not emergent_key:
+        openai_key = os.environ.get('OPENAI_API_KEY')
+        if not openai_key:
             raise HTTPException(status_code=500, detail="AI service not configured")
         
         session_id = data.session_id or str(uuid.uuid4())
@@ -2521,22 +2519,23 @@ CONTACT:
 
 Be helpful, friendly, and concise. If someone asks about pricing, encourage them to use the booking form for an instant quote. For specific booking questions, suggest they proceed with the booking process or contact via email."""
 
-        # Initialize chat
-        chat = LlmChat(
-            api_key=emergent_key,
-            session_id=session_id,
-            system_message=system_message
-        ).with_model("openai", "gpt-4o-mini")
+        from openai import AsyncOpenAI
+        client = AsyncOpenAI(api_key=openai_key)
         
-        # Send message and get response
-        user_message = UserMessage(text=data.message)
-        response = await chat.send_message(user_message)
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": data.message}
+            ]
+        )
+        ai_response = response.choices[0].message.content
         
         return {
-            "response": response,
+            "response": ai_response,
             "session_id": session_id
         }
-        
+
     except Exception as e:
         logger.error(f"Chatbot error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
@@ -2675,12 +2674,9 @@ def reset_session(phone: str):
         del whatsapp_sessions[phone]
 
 async def generate_ai_response(session: WhatsAppSession, user_message: str) -> str:
-    """Use AI to generate contextual responses and extract information"""
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-        
-        emergent_key = os.environ.get('EMERGENT_LLM_KEY')
-        if not emergent_key:
+        openai_key = os.environ.get('OPENAI_API_KEY')
+        if not openai_key:
             return fallback_response(session, user_message)
         
         system_prompt = f"""You are a friendly WhatsApp booking assistant for Hibiscus to Airport, a premium airport shuttle service in Auckland, New Zealand.
@@ -2692,7 +2688,7 @@ COLLECTED INFO SO FAR:
 - Date: {session.date or 'Not provided'}
 - Time: {session.time or 'Not provided'}
 - Passengers: {session.passengers}
-- Pricing: ${session.pricing['totalPrice'] if session.pricing else 'Not calculated'}
+- Pricing: ${session.pricing["totalPrice"] if session.pricing else "Not calculated"}
 
 YOUR TASK:
 1. If state is "greeting": Welcome them warmly and ask for their PICKUP address
@@ -2719,20 +2715,25 @@ At the end of your response, on a NEW LINE, add one of these tags:
 [EXTRACTED_PICKUP: address] or [EXTRACTED_DROPOFF: address] or [EXTRACTED_DATE: YYYY-MM-DD] or [EXTRACTED_TIME: HH:MM] or [EXTRACTED_PASSENGERS: number] or [CONFIRMED] or [RESET] or [NONE]
 """
 
-        chat = LlmChat(
-            api_key=emergent_key,
-            session_id=f"whatsapp_{session.phone}",
-            system_message=system_prompt
-        ).with_model("openai", "gpt-4o-mini")
+        from openai import AsyncOpenAI
+        client = AsyncOpenAI(api_key=openai_key)
         
-        # Add message history context
-        context = "\n".join([f"{'Customer' if m['role']=='user' else 'Assistant'}: {m['content']}" for m in session.messages_history[-6:]])
-        full_message = f"Recent conversation:\n{context}\n\nCustomer's new message: {user_message}"
+        # Build messages including history
+        messages = [{"role": "system", "content": system_prompt}]
+        for m in session.messages_history[-10:]:
+            role = "user" if m["role"] == "user" else "assistant"
+            messages.append({"role": role, "content": m["content"]})
         
-        response = await chat.send_message(UserMessage(text=full_message))
+        messages.append({"role": "user", "content": user_message})
         
-        return response
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages
+        )
+        ai_response = response.choices[0].message.content
         
+        return ai_response
+
     except Exception as e:
         logger.error(f"AI response error: {str(e)}")
         return fallback_response(session, user_message)
