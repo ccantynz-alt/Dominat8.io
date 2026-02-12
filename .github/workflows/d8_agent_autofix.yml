@@ -57,7 +57,7 @@ jobs:
         if: steps.repro.outputs.passed == '1'
         run: exit 0
 
-      - name: Generate patch via OpenAI (Responses API)
+      - name: Generate patch via OpenAI (Chat Completions API)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
@@ -91,12 +91,18 @@ BUILD LOG:
 """.strip()
 
 payload = {
-  "model": "gpt-5.2",
-  "input": prompt
+  "model": "gpt-4o",
+  "messages": [
+    {
+      "role": "user",
+      "content": prompt
+    }
+  ],
+  "temperature": 0.3
 }
 
 req = urllib.request.Request(
-  "https://api.openai.com/v1/responses",
+  "https://api.openai.com/v1/chat/completions",
   data=json.dumps(payload).encode("utf-8"),
   headers={
     "Content-Type": "application/json",
@@ -110,13 +116,14 @@ with urllib.request.urlopen(req, timeout=120) as resp:
 
 data = json.loads(body)
 
-texts = []
-for item in data.get("output", []):
-  for c in item.get("content", []):
-    if c.get("type") == "output_text":
-      texts.append(c.get("text",""))
-
-patch = "\n".join(texts).strip()
+# Extract the patch from the chat completion response
+patch = ""
+if "choices" in data and len(data["choices"]) > 0:
+  patch = data["choices"][0]["message"]["content"].strip()
+else:
+  print("OpenAI did not return a valid response. Raw output follows:\n")
+  print(json.dumps(data, indent=2))
+  sys.exit(2)
 
 # Basic sanity for unified diff
 if not (patch.startswith("diff --git ") or patch.startswith("--- ")):
