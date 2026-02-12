@@ -35,7 +35,6 @@ from utils import (
     send_urgent_admin_sms
 )
 import stripe
-import openai
 import logging
 
 logger = logging.getLogger(__name__)
