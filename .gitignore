@@ -53,3 +53,4 @@ downloads/
 *.bak_*
 *.bak
 builder-workspace-v1/
+tsconfig.tsbuildinfo
