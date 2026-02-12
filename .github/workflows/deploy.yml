@@ -84,12 +84,16 @@ jobs:
           npm i -g vercel@latest
 
           # Deploy to staging (preview)
+          # Note: Using grep to extract URL. If Vercel CLI changes output format,
+          # the error handling below will catch it and fail the deployment.
+          # Alternative: Use --json flag if available in future Vercel versions.
           DEPLOY_URL=$(vercel deploy --token="$VERCEL_TOKEN" --yes 2>&1 \
             | grep -o 'https://[^[:space:]]*')
 
           if [ -z "$DEPLOY_URL" ]; then
             echo "❌ Failed to capture deployment URL from Vercel CLI"
             echo "This might indicate a deployment failure or CLI output change"
+            echo "Consider updating the URL extraction pattern or using --json flag"
             exit 1
           fi
 
@@ -131,12 +135,16 @@ jobs:
           npm i -g vercel@latest
 
           # Deploy to production
+          # Note: Using grep to extract URL. If Vercel CLI changes output format,
+          # the error handling below will catch it and fail the deployment.
+          # Alternative: Use --json flag if available in future Vercel versions.
           DEPLOY_URL=$(vercel deploy --prod --token="$VERCEL_TOKEN" --yes \
             2>&1 | grep -o 'https://[^[:space:]]*')
 
           if [ -z "$DEPLOY_URL" ]; then
             echo "❌ Failed to capture deployment URL from Vercel CLI"
             echo "This might indicate a deployment failure or CLI output change"
+            echo "Consider updating the URL extraction pattern or using --json flag"
             exit 1
           fi
 
