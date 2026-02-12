@@ -1,0 +1,12 @@
+DOMINAT8 STAGING — PROOF 001
+================================
+STAMP: STAGING_PROOF_001_STAMP_2026-02-12_UTC
+WHEN:  2026-02-12T11:36:19.6802434Z
+WHERE: public/engine_proofs/staging-proof-001.txt
+
+Expected companion code:
+- src/app/healthz/route.ts
+- src/app/api/debug/stamp/route.ts
+
+Purpose: Validates staging branch health check and debug endpoints
+Status: Active
