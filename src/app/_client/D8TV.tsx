@@ -157,17 +157,17 @@ export default function D8TV() {
 
   const refreshAgents = React.useCallback(async () => {
     const probes = [
-      '/api/agents/run',
-      '/api/agents/ping',
-      '/api/engine/health',
-      '/api/engine/patch-run',
+      '/api/io/agents/runs',
+      '/api/machine/execute',
+      '/api/machine/guard',
+      '/api/machine/heartbeat',
       '/api/__d8__/stamp',
       '/api/__d8__/proof',
     ];
     const ts = Math.floor(Date.now() / 1000);
     const out: ApiResult[] = [];
     for (const u of probes) {
-      const r = await probe(`${u}ts=${ts}`);
+      const r = await probe(`${u}?ts=${ts}`);
       out.push(r);
     }
     setAgents(out);
@@ -176,18 +176,18 @@ export default function D8TV() {
   const refreshRoutes = React.useCallback(async () => {
     const checks = [
       '/',
-      '/pricing',
-      '/templates',
-      '/gallery',
-      '/admin',
+      '/io',
+      '/tv',
+      '/healthz',
       '/api/__d8__/stamp',
       '/api/__d8__/proof',
       '/api/__d8__/kv',
+      '/api/__health__',
     ];
     const ts = Math.floor(Date.now() / 1000);
     const out: ApiResult[] = [];
     for (const u of checks) {
-      const r = await probe(`${u}ts=${ts}`);
+      const r = await probe(`${u}?ts=${ts}`);
       out.push(r);
     }
     setRoutes(out);
