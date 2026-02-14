@@ -8,7 +8,6 @@ type AnyObj = Record<string, any>;
 
 async function getKvModule(): Promise<any | null> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const mod = await import("@/lib/kv");
     return mod as any;
   } catch {
