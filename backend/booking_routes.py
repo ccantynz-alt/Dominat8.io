@@ -2529,6 +2529,8 @@ Be helpful, friendly, and concise. If someone asks about pricing, encourage them
             ]
         )
         ai_response = response.choices[0].message.content
+        if ai_response is None:
+            ai_response = "I'm having trouble processing your request. Please try again."
         
         return {
             "response": ai_response,
@@ -2730,6 +2732,8 @@ At the end of your response, on a NEW LINE, add one of these tags:
             messages=messages
         )
         ai_response = response.choices[0].message.content
+        if ai_response is None:
+            raise ValueError("OpenAI returned empty content")
         
         return ai_response
 
