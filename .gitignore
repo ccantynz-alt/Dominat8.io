@@ -59,3 +59,5 @@ D8_EVIDENCE/
 **/*.bak.*
 EVIDENCE_*/
 EVIDENCE*/
+# Dominat8 cockpit local store
+.d8_cockpit/
