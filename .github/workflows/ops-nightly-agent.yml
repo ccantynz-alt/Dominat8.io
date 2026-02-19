@@ -1,18 +1,16 @@
-name: d8-agent-autofix
+name: ops-nightly-agent
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - doctor/**
-      - ops/**
-      - main
+  schedule:
+    # 10:30pm NZT (NZDT is UTC+13 in summer) ~= 09:30 UTC
+    - cron: "30 9 * * *"
 
 permissions:
   contents: write
 
 jobs:
-  autofix:
+  nightly:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,13 +18,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run agent autofix
+      - name: Run agent autofix (nightly)
         shell: pwsh
         run: |
           pwsh -NoProfile -ExecutionPolicy Bypass -File tools/agents/D8_AGENT_AUTOFIX.ps1 -RepoRoot $PWD
 
       - name: Commit + push branch (if any changes)
-        id: commitpush
         shell: bash
         run: |
           set -euo pipefail
@@ -39,17 +36,14 @@ jobs:
           git config user.name "d8-agent"
           git config user.email "d8-agent@users.noreply.github.com"
 
-          BR="agent/autofix-$(date +%Y%m%d-%H%M%S)"
+          BR="agent/nightly-$(date +%Y%m%d-%H%M%S)"
           echo "BRANCH_NAME=$BR" >> $GITHUB_ENV
 
           git checkout -b "$BR"
           git add -A
-          git commit -m "agent: autofix tv routes + middleware + hygiene"
+          git commit -m "agent: nightly autofix + health stamps"
           git push --set-upstream origin "$BR"
 
-      # IMPORTANT:
-      # - Creating PRs with GITHUB_TOKEN can be blocked (403) in some org/repo settings.
-      # - Use a PAT secret (fine-grained) instead: D8_AGENT_PAT
       - name: Create PR (best-effort; will NOT fail workflow)
         if: env.NO_CHANGES != '1'
         continue-on-error: true
@@ -69,7 +63,6 @@ jobs:
             const repoInfo = await github.rest.repos.get({ owner, repo });
             const base = repoInfo.data.default_branch || "main";
 
-            // If PR already exists for head->base, do nothing
             const prs = await github.rest.pulls.list({
               owner, repo, state: "open", head: `${owner}:${head}`
             });
@@ -81,8 +74,8 @@ jobs:
 
             const pr = await github.rest.pulls.create({
               owner, repo,
-              title: "agent: autofix tv routes + middleware + hygiene",
-              body:  "Automated fixes from d8-agent-autofix workflow.",
+              title: "agent: nightly autofix + health stamps",
+              body:  "Nightly automated fixes from ops-nightly-agent workflow.",
               head, base
             });
 
