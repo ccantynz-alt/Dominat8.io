@@ -1,0 +1,65 @@
+name: d8-agent-autofix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - doctor/**
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run agent autofix
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File tools/agents/D8_AGENT_AUTOFIX.ps1 -RepoRoot $PWD
+
+      - name: Commit changes (if any)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "NO_CHANGES=1" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          git config user.name "d8-agent"
+          git config user.email "d8-agent@users.noreply.github.com"
+
+          BR="agent/autofix-$(date +%Y%m%d-%H%M%S)"
+          echo "BRANCH_NAME=$BR" >> $GITHUB_ENV
+
+          git checkout -b "$BR"
+          git add -A
+          git commit -m "agent: autofix tv routes + middleware + hygiene"
+          git push --set-upstream origin "$BR"
+
+      - name: Create PR (if changes)
+        if: env.NO_CHANGES != '1'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const head = process.env.BRANCH_NAME;
+            if (!head) { core.setFailed("Missing BRANCH_NAME"); return; }
+            const repoInfo = await github.rest.repos.get({ owner, repo });
+            const base = repoInfo.data.default_branch;
+            const pr = await github.rest.pulls.create({
+              owner, repo,
+              title: "agent: autofix tv routes + middleware + hygiene",
+              body:  "Automated fixes from d8-agent-autofix workflow.",
+              head, base
+            });
+            core.notice(`PR created: ${pr.data.html_url}`);
