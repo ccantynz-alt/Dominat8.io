@@ -1,0 +1,82 @@
+name: ops-nightly-agent
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 10:30pm NZT (NZDT is UTC+13 in summer) ~= 09:30 UTC
+    - cron: "30 9 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run agent autofix (nightly)
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File tools/agents/D8_AGENT_AUTOFIX.ps1 -RepoRoot $PWD
+
+      - name: Commit + push branch (if any changes)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "NO_CHANGES=1" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          git config user.name "d8-agent"
+          git config user.email "d8-agent@users.noreply.github.com"
+
+          BR="agent/nightly-$(date +%Y%m%d-%H%M%S)"
+          echo "BRANCH_NAME=$BR" >> $GITHUB_ENV
+
+          git checkout -b "$BR"
+          git add -A
+          git commit -m "agent: nightly autofix + health stamps"
+          git push --set-upstream origin "$BR"
+
+      - name: Create PR (best-effort; will NOT fail workflow)
+        if: env.NO_CHANGES != '1'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.D8_AGENT_PAT }}
+          script: |
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const head  = process.env.BRANCH_NAME;
+
+            if (!head) {
+              core.notice("No BRANCH_NAME found; skipping PR creation.");
+              return;
+            }
+
+            const repoInfo = await github.rest.repos.get({ owner, repo });
+            const base = repoInfo.data.default_branch || "main";
+
+            const prs = await github.rest.pulls.list({
+              owner, repo, state: "open", head: `${owner}:${head}`
+            });
+
+            if (prs.data && prs.data.length > 0) {
+              core.notice(`PR already exists: ${prs.data[0].html_url}`);
+              return;
+            }
+
+            const pr = await github.rest.pulls.create({
+              owner, repo,
+              title: "agent: nightly autofix + health stamps",
+              body:  "Nightly automated fixes from ops-nightly-agent workflow.",
+              head, base
+            });
+
+            core.notice(`PR created: ${pr.data.html_url}`);

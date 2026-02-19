@@ -1,0 +1,215 @@
+﻿build	UNKNOWN STEP	∩╗┐2026-02-08T10:05:31.8061465Z Current runner version: '2.331.0'
+build	UNKNOWN STEP	2026-02-08T10:05:31.8086177Z ##[group]Runner Image Provisioner
+build	UNKNOWN STEP	2026-02-08T10:05:31.8086921Z Hosted Compute Agent
+build	UNKNOWN STEP	2026-02-08T10:05:31.8087454Z Version: 20260123.484
+build	UNKNOWN STEP	2026-02-08T10:05:31.8088109Z Commit: 6bd6555ca37d84114959e1c76d2c01448ff61c5d
+build	UNKNOWN STEP	2026-02-08T10:05:31.8088802Z Build Date: 2026-01-23T19:41:17Z
+build	UNKNOWN STEP	2026-02-08T10:05:31.8089406Z Worker ID: {c7fc5e99-53ed-4124-bfd4-c891838d8480}
+build	UNKNOWN STEP	2026-02-08T10:05:31.8090160Z Azure Region: eastus
+build	UNKNOWN STEP	2026-02-08T10:05:31.8090935Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:31.8092348Z ##[group]Operating System
+build	UNKNOWN STEP	2026-02-08T10:05:31.8093042Z Ubuntu
+build	UNKNOWN STEP	2026-02-08T10:05:31.8093475Z 24.04.3
+build	UNKNOWN STEP	2026-02-08T10:05:31.8093917Z LTS
+build	UNKNOWN STEP	2026-02-08T10:05:31.8094398Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:31.8094898Z ##[group]Runner Image
+build	UNKNOWN STEP	2026-02-08T10:05:31.8095381Z Image: ubuntu-24.04
+build	UNKNOWN STEP	2026-02-08T10:05:31.8095912Z Version: 20260201.15.1
+build	UNKNOWN STEP	2026-02-08T10:05:31.8097048Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260201.15/images/ubuntu/Ubuntu2404-Readme.md
+build	UNKNOWN STEP	2026-02-08T10:05:31.8098586Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260201.15
+build	UNKNOWN STEP	2026-02-08T10:05:31.8099439Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:31.8100461Z ##[group]GITHUB_TOKEN Permissions
+build	UNKNOWN STEP	2026-02-08T10:05:31.8102911Z Contents: read
+build	UNKNOWN STEP	2026-02-08T10:05:31.8103493Z Metadata: read
+build	UNKNOWN STEP	2026-02-08T10:05:31.8103940Z Packages: read
+build	UNKNOWN STEP	2026-02-08T10:05:31.8104617Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:31.8106895Z Secret source: Actions
+build	UNKNOWN STEP	2026-02-08T10:05:31.8107888Z Prepare workflow directory
+build	UNKNOWN STEP	2026-02-08T10:05:31.8426030Z Prepare all required actions
+build	UNKNOWN STEP	2026-02-08T10:05:31.8462814Z Getting action download info
+build	UNKNOWN STEP	2026-02-08T10:05:32.1259389Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+build	UNKNOWN STEP	2026-02-08T10:05:32.2163553Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+build	UNKNOWN STEP	2026-02-08T10:05:32.4145532Z Complete job name: build
+build	UNKNOWN STEP	2026-02-08T10:05:32.4820028Z ##[group]Run actions/checkout@v4
+build	UNKNOWN STEP	2026-02-08T10:05:32.4821024Z with:
+build	UNKNOWN STEP	2026-02-08T10:05:32.4821468Z   repository: ccantynz-alt/Dominat8.io
+build	UNKNOWN STEP	2026-02-08T10:05:32.4822112Z   token: ***
+build	UNKNOWN STEP	2026-02-08T10:05:32.4822483Z   ssh-strict: true
+build	UNKNOWN STEP	2026-02-08T10:05:32.4822853Z   ssh-user: git
+build	UNKNOWN STEP	2026-02-08T10:05:32.4823270Z   persist-credentials: true
+build	UNKNOWN STEP	2026-02-08T10:05:32.4823705Z   clean: true
+build	UNKNOWN STEP	2026-02-08T10:05:32.4824096Z   sparse-checkout-cone-mode: true
+build	UNKNOWN STEP	2026-02-08T10:05:32.4824556Z   fetch-depth: 1
+build	UNKNOWN STEP	2026-02-08T10:05:32.4824926Z   fetch-tags: false
+build	UNKNOWN STEP	2026-02-08T10:05:32.4825306Z   show-progress: true
+build	UNKNOWN STEP	2026-02-08T10:05:32.4825688Z   lfs: false
+build	UNKNOWN STEP	2026-02-08T10:05:32.4826038Z   submodules: false
+build	UNKNOWN STEP	2026-02-08T10:05:32.4826429Z   set-safe-directory: true
+build	UNKNOWN STEP	2026-02-08T10:05:32.4827140Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:32.5889292Z Syncing repository: ccantynz-alt/Dominat8.io
+build	UNKNOWN STEP	2026-02-08T10:05:32.5891330Z ##[group]Getting Git version info
+build	UNKNOWN STEP	2026-02-08T10:05:32.5892113Z Working directory is '/home/runner/work/Dominat8.io/Dominat8.io'
+build	UNKNOWN STEP	2026-02-08T10:05:32.5893230Z [command]/usr/bin/git version
+build	UNKNOWN STEP	2026-02-08T10:05:32.5970145Z git version 2.52.0
+build	UNKNOWN STEP	2026-02-08T10:05:32.5996345Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:32.6009977Z Temporarily overriding HOME='/home/runner/work/_temp/b6a152af-8d2f-43ed-ade1-628b0fc5c7d6' before making global git config changes
+build	UNKNOWN STEP	2026-02-08T10:05:32.6012237Z Adding repository directory to the temporary git global config as a safe directory
+build	UNKNOWN STEP	2026-02-08T10:05:32.6015138Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Dominat8.io/Dominat8.io
+build	UNKNOWN STEP	2026-02-08T10:05:32.6051425Z Deleting the contents of '/home/runner/work/Dominat8.io/Dominat8.io'
+build	UNKNOWN STEP	2026-02-08T10:05:32.6054828Z ##[group]Initializing the repository
+build	UNKNOWN STEP	2026-02-08T10:05:32.6058729Z [command]/usr/bin/git init /home/runner/work/Dominat8.io/Dominat8.io
+build	UNKNOWN STEP	2026-02-08T10:05:32.6187090Z hint: Using 'master' as the name for the initial branch. This default branch name
+build	UNKNOWN STEP	2026-02-08T10:05:32.6188858Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+build	UNKNOWN STEP	2026-02-08T10:05:32.6190375Z hint: to use in all of your new repositories, which will suppress this warning,
+build	UNKNOWN STEP	2026-02-08T10:05:32.6192018Z hint: call:
+build	UNKNOWN STEP	2026-02-08T10:05:32.6192590Z hint:
+build	UNKNOWN STEP	2026-02-08T10:05:32.6193322Z hint: 	git config --global init.defaultBranch <name>
+build	UNKNOWN STEP	2026-02-08T10:05:32.6194135Z hint:
+build	UNKNOWN STEP	2026-02-08T10:05:32.6194670Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+build	UNKNOWN STEP	2026-02-08T10:05:32.6195563Z hint: 'development'. The just-created branch can be renamed via this command:
+build	UNKNOWN STEP	2026-02-08T10:05:32.6196248Z hint:
+build	UNKNOWN STEP	2026-02-08T10:05:32.6196807Z hint: 	git branch -m <name>
+build	UNKNOWN STEP	2026-02-08T10:05:32.6197462Z hint:
+build	UNKNOWN STEP	2026-02-08T10:05:32.6198047Z hint: Disable this message with "git config set advice.defaultBranchName false"
+build	UNKNOWN STEP	2026-02-08T10:05:32.6199015Z Initialized empty Git repository in /home/runner/work/Dominat8.io/Dominat8.io/.git/
+build	UNKNOWN STEP	2026-02-08T10:05:32.6202644Z [command]/usr/bin/git remote add origin https://github.com/ccantynz-alt/Dominat8.io
+build	UNKNOWN STEP	2026-02-08T10:05:32.6239645Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:32.6240368Z ##[group]Disabling automatic garbage collection
+build	UNKNOWN STEP	2026-02-08T10:05:32.6243836Z [command]/usr/bin/git config --local gc.auto 0
+build	UNKNOWN STEP	2026-02-08T10:05:32.6271211Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:32.6271874Z ##[group]Setting up auth
+build	UNKNOWN STEP	2026-02-08T10:05:32.6277564Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+build	UNKNOWN STEP	2026-02-08T10:05:32.6306645Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+build	UNKNOWN STEP	2026-02-08T10:05:32.6639569Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+build	UNKNOWN STEP	2026-02-08T10:05:32.6667049Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+build	UNKNOWN STEP	2026-02-08T10:05:32.6882134Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+build	UNKNOWN STEP	2026-02-08T10:05:32.6917807Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+build	UNKNOWN STEP	2026-02-08T10:05:32.7133970Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+build	UNKNOWN STEP	2026-02-08T10:05:32.7166252Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:32.7167079Z ##[group]Fetching the repository
+build	UNKNOWN STEP	2026-02-08T10:05:32.7174719Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +ae4b4d49ddc75e6a0393109b67af18a2ed9f40e8:refs/remotes/pull/5/merge
+build	UNKNOWN STEP	2026-02-08T10:05:32.9580087Z From https://github.com/ccantynz-alt/Dominat8.io
+build	UNKNOWN STEP	2026-02-08T10:05:32.9581251Z  * [new ref]         ae4b4d49ddc75e6a0393109b67af18a2ed9f40e8 -> pull/5/merge
+build	UNKNOWN STEP	2026-02-08T10:05:32.9612862Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:32.9613666Z ##[group]Determining the checkout info
+build	UNKNOWN STEP	2026-02-08T10:05:32.9615166Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:32.9620029Z [command]/usr/bin/git sparse-checkout disable
+build	UNKNOWN STEP	2026-02-08T10:05:32.9658074Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+build	UNKNOWN STEP	2026-02-08T10:05:32.9682394Z ##[group]Checking out the ref
+build	UNKNOWN STEP	2026-02-08T10:05:32.9685858Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/5/merge
+build	UNKNOWN STEP	2026-02-08T10:05:33.0232568Z Note: switching to 'refs/remotes/pull/5/merge'.
+build	UNKNOWN STEP	2026-02-08T10:05:33.0233376Z 
+build	UNKNOWN STEP	2026-02-08T10:05:33.0233963Z You are in 'detached HEAD' state. You can look around, make experimental
+build	UNKNOWN STEP	2026-02-08T10:05:33.0235364Z changes and commit them, and you can discard any commits you make in this
+build	UNKNOWN STEP	2026-02-08T10:05:33.0236742Z state without impacting any branches by switching back to a branch.
+build	UNKNOWN STEP	2026-02-08T10:05:33.0237562Z 
+build	UNKNOWN STEP	2026-02-08T10:05:33.0237991Z If you want to create a new branch to retain commits you create, you may
+build	UNKNOWN STEP	2026-02-08T10:05:33.0238812Z do so (now or later) by using -c with the switch command. Example:
+build	UNKNOWN STEP	2026-02-08T10:05:33.0239260Z 
+build	UNKNOWN STEP	2026-02-08T10:05:33.0239491Z   git switch -c <new-branch-name>
+build	UNKNOWN STEP	2026-02-08T10:05:33.0239802Z 
+build	UNKNOWN STEP	2026-02-08T10:05:33.0239989Z Or undo this operation with:
+build	UNKNOWN STEP	2026-02-08T10:05:33.0240766Z 
+build	UNKNOWN STEP	2026-02-08T10:05:33.0240974Z   git switch -
+build	UNKNOWN STEP	2026-02-08T10:05:33.0241216Z 
+build	UNKNOWN STEP	2026-02-08T10:05:33.0241582Z Turn off this advice by setting config variable advice.detachedHead to false
+build	UNKNOWN STEP	2026-02-08T10:05:33.0242448Z 
+build	UNKNOWN STEP	2026-02-08T10:05:33.0243241Z HEAD is now at ae4b4d4 Merge dc5e99bd98652cb0f4bdb66ecebfe421fabbf3c2 into 78ba5f27bd30a2667bccaf4d18c2a2815f84d18f
+build	UNKNOWN STEP	2026-02-08T10:05:33.0245044Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:33.0278373Z [command]/usr/bin/git log -1 --format=%H
+build	UNKNOWN STEP	2026-02-08T10:05:33.0299695Z ae4b4d49ddc75e6a0393109b67af18a2ed9f40e8
+build	UNKNOWN STEP	2026-02-08T10:05:33.0544014Z ##[group]Run actions/setup-node@v4
+build	UNKNOWN STEP	2026-02-08T10:05:33.0544524Z with:
+build	UNKNOWN STEP	2026-02-08T10:05:33.0544866Z   node-version: 20
+build	UNKNOWN STEP	2026-02-08T10:05:33.0545236Z   cache: npm
+build	UNKNOWN STEP	2026-02-08T10:05:33.0545590Z   always-auth: false
+build	UNKNOWN STEP	2026-02-08T10:05:33.0545967Z   check-latest: false
+build	UNKNOWN STEP	2026-02-08T10:05:33.0546497Z   token: ***
+build	UNKNOWN STEP	2026-02-08T10:05:33.0546846Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:33.2307431Z Found in cache @ /opt/hostedtoolcache/node/20.20.0/x64
+build	UNKNOWN STEP	2026-02-08T10:05:33.2314606Z ##[group]Environment details
+build	UNKNOWN STEP	2026-02-08T10:05:33.5554954Z node: v20.20.0
+build	UNKNOWN STEP	2026-02-08T10:05:33.5555407Z npm: 10.8.2
+build	UNKNOWN STEP	2026-02-08T10:05:33.5555624Z yarn: 1.22.22
+build	UNKNOWN STEP	2026-02-08T10:05:33.5556327Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:33.5578214Z [command]/opt/hostedtoolcache/node/20.20.0/x64/bin/npm config get cache
+build	UNKNOWN STEP	2026-02-08T10:05:33.6717743Z /home/runner/.npm
+build	UNKNOWN STEP	2026-02-08T10:05:33.8090985Z Cache hit for: node-cache-Linux-x64-npm-a840a3c6f0d63db7301f6a27ab69e5bc060a2e3db883e2148668bfdf73672d5d
+build	UNKNOWN STEP	2026-02-08T10:05:34.6776552Z Received 154420186 of 154420186 (100.0%), 177.0 MBs/sec
+build	UNKNOWN STEP	2026-02-08T10:05:34.6780094Z Cache Size: ~147 MB (154420186 B)
+build	UNKNOWN STEP	2026-02-08T10:05:34.6806450Z [command]/usr/bin/tar -xf /home/runner/work/_temp/c4513804-af52-47f0-9140-c56bc40676d3/cache.tzst -P -C /home/runner/work/Dominat8.io/Dominat8.io --use-compress-program unzstd
+build	UNKNOWN STEP	2026-02-08T10:05:35.0127353Z Cache restored successfully
+build	UNKNOWN STEP	2026-02-08T10:05:35.0421227Z Cache restored from key: node-cache-Linux-x64-npm-a840a3c6f0d63db7301f6a27ab69e5bc060a2e3db883e2148668bfdf73672d5d
+build	UNKNOWN STEP	2026-02-08T10:05:35.0582996Z ##[group]Run npm ci
+build	UNKNOWN STEP	2026-02-08T10:05:35.0583311Z [36;1mnpm ci[0m
+build	UNKNOWN STEP	2026-02-08T10:05:35.0627307Z shell: /usr/bin/bash -e {0}
+build	UNKNOWN STEP	2026-02-08T10:05:35.0627576Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:38.4375906Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+build	UNKNOWN STEP	2026-02-08T10:05:38.5459128Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+build	UNKNOWN STEP	2026-02-08T10:05:38.5520012Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+build	UNKNOWN STEP	2026-02-08T10:05:38.6343228Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+build	UNKNOWN STEP	2026-02-08T10:05:38.6345073Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+build	UNKNOWN STEP	2026-02-08T10:05:38.6848773Z npm warn deprecated @vercel/kv@2.0.0: Vercel KV is deprecated. If you had an existing KV store, it should have moved to Upstash Redis which you will see under Vercel Integrations. For new projects, install a Redis integration from Vercel Marketplace: https://vercel.com/marketplace?category=storage&search=redis
+build	UNKNOWN STEP	2026-02-08T10:05:38.9147354Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+build	UNKNOWN STEP	2026-02-08T10:05:39.8623252Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+build	UNKNOWN STEP	2026-02-08T10:05:49.3423340Z npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
+build	UNKNOWN STEP	2026-02-08T10:05:49.5194756Z 
+build	UNKNOWN STEP	2026-02-08T10:05:49.5195520Z added 429 packages, and audited 430 packages in 14s
+build	UNKNOWN STEP	2026-02-08T10:05:49.5196138Z 
+build	UNKNOWN STEP	2026-02-08T10:05:49.5196457Z 153 packages are looking for funding
+build	UNKNOWN STEP	2026-02-08T10:05:49.5196960Z   run `npm fund` for details
+build	UNKNOWN STEP	2026-02-08T10:05:49.6567090Z 
+build	UNKNOWN STEP	2026-02-08T10:05:49.6567797Z 4 vulnerabilities (3 high, 1 critical)
+build	UNKNOWN STEP	2026-02-08T10:05:49.6568251Z 
+build	UNKNOWN STEP	2026-02-08T10:05:49.6568784Z To address all issues (including breaking changes), run:
+build	UNKNOWN STEP	2026-02-08T10:05:49.6569411Z   npm audit fix --force
+build	UNKNOWN STEP	2026-02-08T10:05:49.6569678Z 
+build	UNKNOWN STEP	2026-02-08T10:05:49.6569933Z Run `npm audit` for details.
+build	UNKNOWN STEP	2026-02-08T10:05:49.7258100Z ##[group]Run npm run build
+build	UNKNOWN STEP	2026-02-08T10:05:49.7258402Z [36;1mnpm run build[0m
+build	UNKNOWN STEP	2026-02-08T10:05:49.7299708Z shell: /usr/bin/bash -e {0}
+build	UNKNOWN STEP	2026-02-08T10:05:49.7299963Z ##[endgroup]
+build	UNKNOWN STEP	2026-02-08T10:05:49.8450791Z 
+build	UNKNOWN STEP	2026-02-08T10:05:49.8451408Z > my-saas-app@0.1.0 build
+build	UNKNOWN STEP	2026-02-08T10:05:49.8451852Z > next build
+build	UNKNOWN STEP	2026-02-08T10:05:49.8452005Z 
+build	UNKNOWN STEP	2026-02-08T10:05:50.3236951Z ΓÜá No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+build	UNKNOWN STEP	2026-02-08T10:05:50.3341573Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+build	UNKNOWN STEP	2026-02-08T10:05:50.3342890Z This information is used to shape Next.js' roadmap and prioritize features.
+build	UNKNOWN STEP	2026-02-08T10:05:50.3344427Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+build	UNKNOWN STEP	2026-02-08T10:05:50.3345539Z https://nextjs.org/telemetry
+build	UNKNOWN STEP	2026-02-08T10:05:50.3345843Z 
+build	UNKNOWN STEP	2026-02-08T10:05:50.3875514Z   Γû▓ Next.js 14.2.5
+build	UNKNOWN STEP	2026-02-08T10:05:50.3878936Z   - Environments: .env.production
+build	UNKNOWN STEP	2026-02-08T10:05:50.3879954Z 
+build	UNKNOWN STEP	2026-02-08T10:05:50.4544488Z    Creating an optimized production build ...
+build	UNKNOWN STEP	2026-02-08T10:06:01.9051642Z  Γ£ô Compiled successfully
+build	UNKNOWN STEP	2026-02-08T10:06:01.9060898Z    Linting and checking validity of types ...
+build	UNKNOWN STEP	2026-02-08T10:06:07.2970433Z Failed to compile.
+build	UNKNOWN STEP	2026-02-08T10:06:07.2970895Z 
+build	UNKNOWN STEP	2026-02-08T10:06:07.2971534Z ./src/app/tv-enterprise/page.tsx:3:18
+build	UNKNOWN STEP	2026-02-08T10:06:07.2972642Z Type error: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+build	UNKNOWN STEP	2026-02-08T10:06:07.2973401Z 
+build	UNKNOWN STEP	2026-02-08T10:06:07.2974421Z [0m [90m 1 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mPage[39m() {[0m
+build	UNKNOWN STEP	2026-02-08T10:06:07.2975277Z [0m [90m 2 |[39m   [36mreturn[39m ([0m
+build	UNKNOWN STEP	2026-02-08T10:06:07.2978054Z [0m[31m[1m>[22m[39m[90m 3 |[39m     [33m<[39m[33mmain[39m style[33m=[39m{{ padding[33m:[39m [35m24[39m[33m,[39m fontFamily[33m:[39m [32m""[39msystem[33m-[39mui[33m,[39m [33m-[39mapple[33m-[39msystem[33m,[39m [33mSegoe[39m [33mUI[39m[33m,[39m [33mRoboto[39m[33m,[39m [33mArial[39m[32m""[39m }}[33m>[39m[0m
+build	UNKNOWN STEP	2026-02-08T10:06:07.2980125Z [0m [90m   |[39m                  [31m[1m^[22m[39m[0m
+build	UNKNOWN STEP	2026-02-08T10:06:07.2981305Z [0m [90m 4 |[39m       [33m<[39m[33mh1[39m[33m>[39m[33m/[39mtv[33m-[39menterprise[33m<[39m[33m/[39m[33mh1[39m[33m>[39m[0m
+build	UNKNOWN STEP	2026-02-08T10:06:07.2982428Z [0m [90m 5 |[39m       [33m<[39m[33mp[39m[33m>[39m[33mStamp[39m[33m:[39m [33mTV_ENTERPRISE_OK[39m[33m<[39m[33m/[39m[33mp[39m[33m>[39m[0m
+build	UNKNOWN STEP	2026-02-08T10:06:07.2983909Z [0m [90m 6 |[39m       [33m<[39m[33mp[39m[33m>[39m[33m<[39m[33ma[39m href[33m=[39m[32m""[39m[33m/[39mtv[32m""[39m[33m>[39m[33mGo[39m to [33m/[39mtv[33m<[39m[33m/[39m[33ma[39m[33m>[39m[33m<[39m[33m/[39m[33mp[39m[33m>[39m[0m
+build	UNKNOWN STEP	2026-02-08T10:06:07.3603438Z ##[error]Process completed with exit code 1.
+build	UNKNOWN STEP	2026-02-08T10:06:07.3709170Z Post job cleanup.
+build	UNKNOWN STEP	2026-02-08T10:06:07.4666806Z [command]/usr/bin/git version
+build	UNKNOWN STEP	2026-02-08T10:06:07.4704723Z git version 2.52.0
+build	UNKNOWN STEP	2026-02-08T10:06:07.4747839Z Temporarily overriding HOME='/home/runner/work/_temp/5e2604b1-cf2d-448c-8543-ff85b1da5cf6' before making global git config changes
+build	UNKNOWN STEP	2026-02-08T10:06:07.4748938Z Adding repository directory to the temporary git global config as a safe directory
+build	UNKNOWN STEP	2026-02-08T10:06:07.4760968Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Dominat8.io/Dominat8.io
+build	UNKNOWN STEP	2026-02-08T10:06:07.4795537Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+build	UNKNOWN STEP	2026-02-08T10:06:07.4827393Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+build	UNKNOWN STEP	2026-02-08T10:06:07.5059228Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+build	UNKNOWN STEP	2026-02-08T10:06:07.5080885Z http.https://github.com/.extraheader
+build	UNKNOWN STEP	2026-02-08T10:06:07.5093568Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+build	UNKNOWN STEP	2026-02-08T10:06:07.5123705Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+build	UNKNOWN STEP	2026-02-08T10:06:07.5341992Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+build	UNKNOWN STEP	2026-02-08T10:06:07.5371212Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+build	UNKNOWN STEP	2026-02-08T10:06:07.5694412Z Cleaning up orphan processes

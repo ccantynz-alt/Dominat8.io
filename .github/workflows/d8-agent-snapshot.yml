@@ -1,0 +1,24 @@
+name: D8 Repo Snapshot (Agent)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 */6 * * *'  # every 6 hours
+
+permissions:
+  contents: read
+
+jobs:
+  snap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create snapshot tarball
+        run: |
+          set -euo pipefail
+          tar -czf repo_snapshot.tgz . --exclude=.git
+      - name: Upload snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: d8-repo-snapshot
+          path: repo_snapshot.tgz

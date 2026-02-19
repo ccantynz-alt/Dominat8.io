@@ -24,7 +24,7 @@ const KEYS = [
   "NEXTAUTH_SECRET",
   "NEXTAUTH_URL",
 
-  // Vercel build metadata (presence only)
+  // next build
   "VERCEL",
   "VERCEL_ENV",
   "VERCEL_GIT_COMMIT_SHA",

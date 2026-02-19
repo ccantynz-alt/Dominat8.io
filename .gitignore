@@ -53,3 +53,11 @@ downloads/
 *.bak_*
 *.bak
 builder-workspace-v1/
+
+# --- Dominat8 agent noise (autofix) ---
+D8_EVIDENCE/
+**/*.bak.*
+EVIDENCE_*/
+EVIDENCE*/
+# Dominat8 cockpit local store
+.d8_cockpit/

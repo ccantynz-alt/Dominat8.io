@@ -1,0 +1,19 @@
+name: agent-pr
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Smoke
+        run: |
+          echo "agent-pr workflow is valid and running"

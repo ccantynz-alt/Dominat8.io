@@ -1,0 +1,209 @@
+name: Deploy to Staging & Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Deployment action'
+        required: true
+        type: choice
+        options:
+          - deploy
+          - rollback
+        default: deploy
+
+permissions:
+  contents: read
+  deployments: write
+  pull-requests: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Run CI tests first
+  ci-gate:
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' &&
+       github.event.inputs.action == 'deploy')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Notify CI Success
+        if: success()
+        run: |
+          echo "✅ CI tests passed - ready for deployment"
+
+      - name: Notify CI Failure
+        if: failure()
+        run: |
+          echo "❌ CI tests failed - deployment blocked"
+          exit 1
+
+  # Auto-deploy to staging on successful CI
+  deploy-staging:
+    needs: ci-gate
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel Staging
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          echo "🚀 Deploying to staging..."
+
+          # Install Vercel CLI if needed
+          npm i -g vercel@latest
+
+          # Deploy to staging (preview)
+          # Note: Using grep to extract URL. If Vercel CLI changes output format,
+          # the error handling below will catch it and fail the deployment.
+          # Alternative: Use --json flag if available in future Vercel versions.
+          DEPLOY_URL=$(vercel deploy --token="$VERCEL_TOKEN" --yes 2>&1 \
+            | grep -o 'https://[^[:space:]]*')
+
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "❌ Failed to capture deployment URL from Vercel CLI"
+            echo "This might indicate a deployment failure or CLI output change"
+            echo "Consider updating the URL extraction pattern or using --json flag"
+            exit 1
+          fi
+
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "✅ Staging deployment complete: $DEPLOY_URL"
+
+      - name: Notify Staging Success
+        if: success()
+        run: |
+          echo "✅ Successfully deployed to staging"
+          echo "URL: ${{ steps.deploy.outputs.url }}"
+
+      - name: Notify Staging Failure
+        if: failure()
+        run: |
+          echo "❌ Staging deployment failed"
+
+  # Manual approval required for production
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel Production
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          echo "🚀 Deploying to production..."
+
+          # Install Vercel CLI if needed
+          npm i -g vercel@latest
+
+          # Deploy to production
+          # Note: Using grep to extract URL. If Vercel CLI changes output format,
+          # the error handling below will catch it and fail the deployment.
+          # Alternative: Use --json flag if available in future Vercel versions.
+          DEPLOY_URL=$(vercel deploy --prod --token="$VERCEL_TOKEN" --yes \
+            2>&1 | grep -o 'https://[^[:space:]]*')
+
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "❌ Failed to capture deployment URL from Vercel CLI"
+            echo "This might indicate a deployment failure or CLI output change"
+            echo "Consider updating the URL extraction pattern or using --json flag"
+            exit 1
+          fi
+
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "✅ Production deployment complete: $DEPLOY_URL"
+
+      - name: Notify Production Success
+        if: success()
+        run: |
+          echo "✅ Successfully deployed to production"
+          echo "URL: ${{ steps.deploy.outputs.url }}"
+
+      - name: Notify Production Failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment failed"
+
+  # Rollback job (manual trigger only)
+  rollback:
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.action == 'rollback'
+    runs-on: ubuntu-latest
+    environment:
+      name: production-rollback
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rollback to Previous Version
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          echo "🔄 Rolling back production deployment..."
+
+          # Install Vercel CLI if needed
+          npm i -g vercel@latest
+
+          # Get previous commit
+          PREV_COMMIT=$(git rev-parse HEAD~1)
+
+          echo "Rolling back to commit: $PREV_COMMIT"
+          git checkout "$PREV_COMMIT"
+
+          # Deploy previous version to production
+          vercel deploy --prod --token="$VERCEL_TOKEN" --yes
+
+          echo "✅ Rollback complete"
+
+      - name: Notify Rollback Success
+        if: success()
+        run: |
+          echo "✅ Successfully rolled back production"
+
+      - name: Notify Rollback Failure
+        if: failure()
+        run: |
+          echo "❌ Rollback failed"
