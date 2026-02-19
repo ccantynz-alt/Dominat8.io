@@ -32,7 +32,7 @@ export default function AgentRunsPanel(props: AgentRunsPanelProps) {
       </div>
 
       <div style={{ opacity: 0.8, fontSize: 13, lineHeight: 1.4 }}>
-        Stub component installed to fix: <code>Module not found: Can't resolve '../widgets/AgentRunsPanel'</code>
+        Stub component installed to fix: <code>Module not found: can&apos;t resolve &apos;../widgets/AgentRunsPanel&apos;</code>
       </div>
 
       <div style={{ marginTop: 10, opacity: 0.75, fontSize: 12 }}>
@@ -45,3 +45,4 @@ export default function AgentRunsPanel(props: AgentRunsPanelProps) {
     </div>
   );
 }
+

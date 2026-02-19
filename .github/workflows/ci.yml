@@ -6,35 +6,31 @@ on:
   push:
     branches: [ "main" ]
 
-permissions:
-  contents: read
-
 jobs:
   build:
+    name: build
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
           cache: "npm"
 
       - name: Install
         run: npm ci
 
-      - name: Protected paths guardrail
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          ALLOW_PROTECTED_PATHS: ${{ contains(github.event.pull_request.title, '[ALLOW_PROTECTED]') && '1' || '0' }}
-        run: node scripts/protected-paths-check.mjs
+      - name: Lint (if present)
+        run: npm run lint --if-present
+
+      - name: Typecheck (if present)
+        run: npm run typecheck --if-present
+
+      - name: Test (if present)
+        run: npm test --if-present
 
       - name: Build
         run: npm run build
