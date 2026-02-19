@@ -1,0 +1,4 @@
+pr_url=https://github.com/ccantynz-alt/Dominat8.io/pull/5
+head_ref=agent/autofix-20260208-100149
+base_ref=main
+head_sha=f1297cb4e27e85e6da31972e5fa333024cb59272

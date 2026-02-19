@@ -1,0 +1,33 @@
+build	Build (typecheck included)	∩╗┐2026-02-08T19:57:36.5038998Z ##[group]Run npm run build
+build	Build (typecheck included)	2026-02-08T19:57:36.5039292Z [36;1mnpm run build[0m
+build	Build (typecheck included)	2026-02-08T19:57:36.5071211Z shell: /usr/bin/bash -e {0}
+build	Build (typecheck included)	2026-02-08T19:57:36.5071457Z ##[endgroup]
+build	Build (typecheck included)	2026-02-08T19:57:36.6203071Z 
+build	Build (typecheck included)	2026-02-08T19:57:36.6203684Z > my-saas-app@0.1.0 build
+build	Build (typecheck included)	2026-02-08T19:57:36.6204171Z > next build
+build	Build (typecheck included)	2026-02-08T19:57:36.6204378Z 
+build	Build (typecheck included)	2026-02-08T19:57:37.1027645Z ΓÜá No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+build	Build (typecheck included)	2026-02-08T19:57:37.1142104Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+build	Build (typecheck included)	2026-02-08T19:57:37.1143882Z This information is used to shape Next.js' roadmap and prioritize features.
+build	Build (typecheck included)	2026-02-08T19:57:37.1146034Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+build	Build (typecheck included)	2026-02-08T19:57:37.1146695Z https://nextjs.org/telemetry
+build	Build (typecheck included)	2026-02-08T19:57:37.1146872Z 
+build	Build (typecheck included)	2026-02-08T19:57:37.1653278Z   Γû▓ Next.js 14.2.5
+build	Build (typecheck included)	2026-02-08T19:57:37.1653928Z   - Environments: .env.production
+build	Build (typecheck included)	2026-02-08T19:57:37.1654769Z 
+build	Build (typecheck included)	2026-02-08T19:57:37.2375269Z    Creating an optimized production build ...
+build	Build (typecheck included)	2026-02-08T19:57:48.5652491Z  Γ£ô Compiled successfully
+build	Build (typecheck included)	2026-02-08T19:57:48.5662158Z    Linting and checking validity of types ...
+build	Build (typecheck included)	2026-02-08T19:57:53.7764606Z Failed to compile.
+build	Build (typecheck included)	2026-02-08T19:57:53.7764985Z 
+build	Build (typecheck included)	2026-02-08T19:57:53.7766715Z ./src/app/tv-enterprise/page.tsx:6:21
+build	Build (typecheck included)	2026-02-08T19:57:53.7768151Z Type error: '>' expected.
+build	Build (typecheck included)	2026-02-08T19:57:53.7768418Z 
+build	Build (typecheck included)	2026-02-08T19:57:53.7769656Z [0m [90m 4 |[39m       [33m<[39m[33mh1[39m[33m>[39m[33m/[39mtv[33m-[39menterprise[33m<[39m[33m/[39m[33mh1[39m[33m>[39m[0m
+build	Build (typecheck included)	2026-02-08T19:57:53.7770981Z [0m [90m 5 |[39m       [33m<[39m[33mp[39m[33m>[39m[33mStamp[39m[33m:[39m [33mTV_ENTERPRISE_OK[39m[33m<[39m[33m/[39m[33mp[39m[33m>[39m[0m
+build	Build (typecheck included)	2026-02-08T19:57:53.7773144Z [0m[31m[1m>[22m[39m[90m 6 |[39m       [33m<[39m[33mp[39m[33m>[39m[33m<[39m[33ma[39m href[33m=[39m[32m""[39m[33m/[39mtv[32m""[39m[33m>[39m[33mGo[39m to [33m/[39mtv[33m<[39m[33m/[39m[33ma[39m[33m>[39m[33m<[39m[33m/[39m[33mp[39m[33m>[39m[0m
+build	Build (typecheck included)	2026-02-08T19:57:53.7774504Z [0m [90m   |[39m                     [31m[1m^[22m[39m[0m
+build	Build (typecheck included)	2026-02-08T19:57:53.7775222Z [0m [90m 7 |[39m     [33m<[39m[33m/[39m[33mmain[39m[33m>[39m[0m
+build	Build (typecheck included)	2026-02-08T19:57:53.7775827Z [0m [90m 8 |[39m   )[33m;[39m[0m
+build	Build (typecheck included)	2026-02-08T19:57:53.7776249Z [0m [90m 9 |[39m }[0m
+build	Build (typecheck included)	2026-02-08T19:57:53.8306550Z ##[error]Process completed with exit code 1.

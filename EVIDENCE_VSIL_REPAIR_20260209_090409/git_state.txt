@@ -1,0 +1,2 @@
+branch=agent/autofix-20260208-100149
+sha=f1297cb4e27e85e6da31972e5fa333024cb59272
