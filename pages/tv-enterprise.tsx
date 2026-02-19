@@ -11,7 +11,7 @@ export default function Page() {
       padding: 40
     }}>
       <div style={{textAlign:'center'}}>
-        <div style={{fontSize: 52, fontWeight: 900}}>TV ENTERPRISE â€</div>
+        <div style={{fontSize: 52, fontWeight: 900}}>TV ENTERPRISE —</div>
         <div style={{marginTop: 14, fontSize: 14, opacity: 0.85}}>STAMP_TV_ROUTES_007_20260208_211257</div>
       </div>
     </div>
