@@ -1,4 +1,0 @@
-Installation complete.
-If you want to use this version, type:
-
-nvm use 20.20.0

@@ -1,3 +1,0 @@
-﻿C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\pages\projects\index.tsx
-C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\pages\projects\[projectId]\finish-my-site.tsx
-C:\Users\ccant\Downloads\my-saas-app-main\my-saas-app-main\pages\projects\[projectId]\terminal.tsx

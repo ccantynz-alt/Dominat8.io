@@ -53,3 +53,15 @@ downloads/
 *.bak_*
 *.bak
 builder-workspace-v1/
+
+# Agent/automation artifacts
+*.ps1
+agent_logs/
+patch_logs/
+bundle_logs/
+_auto_logs/
+build-output*.txt
+vercel-build-output.txt
+vercel-deploy-log.txt
+LOCK_GREEN_*
+_render_nuke_out_*
