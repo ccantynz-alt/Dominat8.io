@@ -29,7 +29,12 @@ export async function POST(req: NextRequest) {
     return new Response("Prompt required", { status: 400 });
   }
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return new Response("OpenAI API key not configured", { status: 500 });
+  }
+
+  const openai = new OpenAI({ apiKey });
 
   const userMessage = [
     `Build a complete website for: ${prompt.trim()}`,
