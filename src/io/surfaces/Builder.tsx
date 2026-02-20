@@ -237,6 +237,7 @@ export function Builder() {
   const isBuilding = state === "generating";
   const isDone = state === "done";
   const isIdle = state === "idle";
+  const isError = state === "error";
 
   return (
     <div className="d8b-root">
@@ -406,6 +407,27 @@ export function Builder() {
           /* ── Generating start state ── */
           <div className="d8b-generating-screen">
             <GeneratingAnimation progress={progress} />
+          </div>
+        ) : isError ? (
+          /* ── Error state ── */
+          <div className="d8b-error-screen">
+            <div className="d8b-error-content">
+              <div className="d8b-error-icon">⚠️</div>
+              <h2 className="d8b-error-title">Generation failed</h2>
+              <p className="d8b-error-message">
+                Something went wrong while building your site. Please try again.
+              </p>
+              <button
+                className="d8b-error-retry-btn"
+                onClick={() => {
+                  reset();
+                  generate();
+                }}
+                type="button"
+              >
+                🔄 Retry
+              </button>
+            </div>
           </div>
         ) : (
           /* ── Preview / Code ── */
@@ -863,6 +885,65 @@ function BuilderStyles() {
       }
       .d8b-gen-label { font-size: 18px; font-weight: 600; color: #fff; }
       .d8b-gen-sub { font-size: 13px; color: rgba(255,255,255,0.4); }
+
+      /* ── Error screen ── */
+      .d8b-error-screen {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+          radial-gradient(800px 600px at 50% 30%, rgba(255,100,100,0.02), transparent 60%),
+          #07090f;
+      }
+      .d8b-error-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        max-width: 400px;
+        padding: 0 24px;
+        text-align: center;
+      }
+      .d8b-error-icon {
+        font-size: 48px;
+        display: block;
+      }
+      .d8b-error-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+      .d8b-error-message {
+        font-size: 15px;
+        color: rgba(255,255,255,0.5);
+        line-height: 1.6;
+        margin: 0 0 8px;
+      }
+      .d8b-error-retry-btn {
+        margin-top: 12px;
+        padding: 12px 24px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,100,100,0.4);
+        background: linear-gradient(180deg, rgba(255,100,100,0.12), rgba(255,100,100,0.05));
+        color: rgba(255,120,120,0.95);
+        font-size: 14px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 140ms ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .d8b-error-retry-btn:hover {
+        background: linear-gradient(180deg, rgba(255,100,100,0.18), rgba(255,100,100,0.08));
+        border-color: rgba(255,100,100,0.6);
+        transform: translateY(-1px);
+      }
 
       /* ── Dots animation ── */
       .d8b-dots { display: inline-flex; gap: 2px; margin-left: 4px; }
