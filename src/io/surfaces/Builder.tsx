@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -241,6 +242,21 @@ export function Builder() {
 
   const placeholder = useTypewriter(EXAMPLE_PROMPTS);
   const { deployments, loaded } = useDeployments();
+  const searchParams = useSearchParams();
+
+  // Pre-fill prompt from URL ?prompt= param (e.g. from /templates)
+  useEffect(() => {
+    const p = searchParams?.get("prompt");
+    if (p && p.trim()) {
+      setPrompt(p.trim());
+      // Remove param from URL without page reload
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("prompt");
+        window.history.replaceState({}, "", url.toString());
+      } catch { /* noop */ }
+    }
+  }, [searchParams]);
 
   // Persist history
   useEffect(() => { saveSites(sites); }, [sites]);
@@ -353,9 +369,9 @@ export function Builder() {
             <span className="d8h-logo-text">Dominat8.io</span>
           </div>
           <nav className="d8h-nav">
+            <a href="/templates" className="d8h-nav-link">Templates</a>
             <a href="/gallery" className="d8h-nav-link">Gallery</a>
             <a href="/pricing" className="d8h-nav-link">Pricing</a>
-            <a href="/tv" className="d8h-nav-link">TV</a>
           </nav>
         </header>
 
