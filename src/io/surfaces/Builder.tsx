@@ -370,11 +370,15 @@ export function Builder() {
       const decoder = new TextDecoder();
       let accumulated = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        setHtml(accumulated);
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulated += decoder.decode(value, { stream: true });
+          setHtml(accumulated);
+        }
+      } finally {
+        reader.releaseLock();
       }
 
       clearInterval(progressTimer);
