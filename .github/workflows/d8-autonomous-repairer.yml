@@ -1,4 +1,4 @@
-name: d8-keep-green
+name: d8-autonomous-repairer
 
 on:
   pull_request:
