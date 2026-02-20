@@ -477,7 +477,12 @@ export function Builder() {
                     >
                       ↓ Download
                     </button>
-                    <button className="d8b-deploy-btn" type="button">
+                    <button 
+                      className="d8b-deploy-btn" 
+                      type="button"
+                      disabled
+                      title="Deploy feature coming soon"
+                    >
                       ⚡ Deploy
                     </button>
                   </>
@@ -1069,9 +1074,13 @@ function BuilderStyles() {
         cursor: pointer;
         transition: all 120ms ease;
       }
-      .d8b-deploy-btn:hover {
+      .d8b-deploy-btn:hover:not(:disabled) {
         border-color: rgba(61,240,255,0.6);
         background: linear-gradient(180deg, rgba(61,240,255,0.22), rgba(61,240,255,0.10));
+      }
+      .d8b-deploy-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
       }
 
       /* ── iframe ── */
