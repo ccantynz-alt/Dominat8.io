@@ -273,6 +273,9 @@ export function Builder() {
   const [sidebarTab, setSidebarTab] = useState<"new" | "history">("new");
   const [showDeploy, setShowDeploy] = useState(false);
   const [shareState, setShareState] = useState<"idle" | "sharing" | "copied" | "error">("idle");
+  const [showRefine, setShowRefine] = useState(false);
+  const [refineInput, setRefineInput] = useState("");
+  const [basePrompt, setBasePrompt] = useState(""); // original prompt before any refinements
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -308,8 +311,9 @@ export function Builder() {
     htmlRef.current = html;
   }, [html]);
 
-  const generate = useCallback(async () => {
-    if (!prompt.trim() || state === "generating") return;
+  const generate = useCallback(async (overridePrompt?: string) => {
+    const activePrompt = overridePrompt ?? prompt;
+    if (!activePrompt.trim() || state === "generating") return;
 
     abortRef.current?.abort();
     abortRef.current = new AbortController();
@@ -331,7 +335,7 @@ export function Builder() {
       const res = await fetch("/api/io/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, industry }),
+        body: JSON.stringify({ prompt: activePrompt, industry }),
         signal: abortRef.current.signal,
       });
 
@@ -356,7 +360,7 @@ export function Builder() {
 
       const site: Site = {
         id: crypto.randomUUID(),
-        prompt,
+        prompt: activePrompt,
         industry,
         html: accumulated,
         createdAt: new Date(),
@@ -390,7 +394,21 @@ export function Builder() {
     setProgress(0);
     setActiveSite(null);
     setShareState("idle");
+    setShowRefine(false);
+    setRefineInput("");
+    setBasePrompt("");
   };
+
+  const handleRefine = useCallback(() => {
+    if (!refineInput.trim() || state === "generating") return;
+    const base = basePrompt || prompt;
+    const refined = `${base}\n\nRefinement: ${refineInput.trim()}`;
+    setPrompt(refined);
+    setBasePrompt(base);
+    setRefineInput("");
+    setShowRefine(false);
+    generate(refined);
+  }, [refineInput, basePrompt, prompt, state, generate]);
 
   const handleShare = useCallback(async () => {
     if (!html || shareState === "sharing") return;
@@ -658,6 +676,44 @@ export function Builder() {
               <button className="d8b-regen-btn" onClick={reset} type="button">
                 ↩ Build another
               </button>
+            )}
+
+            {isDone && (
+              <div className="d8b-refine-section">
+                <button
+                  className={`d8b-refine-toggle ${showRefine ? "d8b-refine-toggle--active" : ""}`}
+                  onClick={() => setShowRefine((v) => !v)}
+                  type="button"
+                >
+                  ✨ Refine design
+                  <span className="d8b-refine-arrow">{showRefine ? "▲" : "▼"}</span>
+                </button>
+                {showRefine && (
+                  <div className="d8b-refine-panel">
+                    <textarea
+                      className="d8b-textarea"
+                      value={refineInput}
+                      onChange={(e) => setRefineInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                          e.preventDefault();
+                          handleRefine();
+                        }
+                      }}
+                      placeholder="e.g. Make it more minimal, use blue tones, add a FAQ section…"
+                      rows={3}
+                    />
+                    <button
+                      className="d8b-refine-btn"
+                      onClick={handleRefine}
+                      disabled={!refineInput.trim()}
+                      type="button"
+                    >
+                      ⚡ Apply refinement
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Stats when done */}
@@ -1692,6 +1748,41 @@ function BuilderStyles() {
         background: rgba(56,248,166,0.08); border: 1px solid rgba(56,248,166,0.25);
         font-size: 13px; font-family: ui-monospace, monospace; color: rgba(56,248,166,0.90);
       }
+
+      /* ── Refine ── */
+      .d8b-refine-section { display: flex; flex-direction: column; gap: 8px; }
+      .d8b-refine-toggle {
+        width: 100%; padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: transparent;
+        color: rgba(255,255,255,0.55);
+        font-size: 13px; font-family: inherit;
+        cursor: pointer; transition: all 120ms ease;
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .d8b-refine-toggle:hover { color: rgba(255,255,255,0.80); border-color: rgba(255,255,255,0.18); }
+      .d8b-refine-toggle--active {
+        border-color: rgba(61,240,255,0.35);
+        background: rgba(61,240,255,0.06);
+        color: rgba(61,240,255,0.85);
+      }
+      .d8b-refine-arrow { font-size: 10px; opacity: 0.6; }
+      .d8b-refine-panel { display: flex; flex-direction: column; gap: 8px; }
+      .d8b-refine-btn {
+        width: 100%; padding: 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(61,240,255,0.35);
+        background: linear-gradient(180deg, rgba(61,240,255,0.10), rgba(61,240,255,0.04));
+        color: rgba(61,240,255,0.90);
+        font-size: 13px; font-weight: 600; font-family: inherit;
+        cursor: pointer; transition: all 120ms ease;
+      }
+      .d8b-refine-btn:hover:not(:disabled) {
+        border-color: rgba(61,240,255,0.55);
+        background: linear-gradient(180deg, rgba(61,240,255,0.16), rgba(61,240,255,0.08));
+      }
+      .d8b-refine-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
       /* ── Mobile ── */
       @media (max-width: 768px) {
