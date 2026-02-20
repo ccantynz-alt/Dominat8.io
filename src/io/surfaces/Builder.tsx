@@ -474,7 +474,7 @@ export function Builder() {
                 <iframe
                   ref={iframeRef}
                   srcDoc={html || "<html><body style='background:#07090f'></body></html>"}
-                  sandbox="allow-scripts allow-same-origin"
+                  sandbox="allow-scripts"
                   className="d8b-iframe"
                   title="Generated website preview"
                 />
