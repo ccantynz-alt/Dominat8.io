@@ -49,6 +49,15 @@ const EXAMPLE_PROMPTS = [
   "A high-end wedding photography studio in Melbourne",
 ];
 
+const VIBES = [
+  { label: "Minimal",   icon: "○", hint: "Ultra-clean, whitespace-heavy. Monochrome with one precise accent. Typography-led, no decoration." },
+  { label: "Bold",      icon: "■", hint: "Maximum visual impact. Oversized type, high-contrast shapes, hero that punches you in the face." },
+  { label: "Luxury",    icon: "◆", hint: "Premium editorial. Dark bg, gold/platinum accents, tight serif display font, vast whitespace." },
+  { label: "Dark",      icon: "◉", hint: "Full dark mode. Neon glowing accents, subtle grid-line bg, cyberpunk-adjacent but professional." },
+  { label: "Playful",   icon: "✦", hint: "Vibrant gradients, rounded friendly shapes, personality-forward. Warm, inviting, energetic." },
+  { label: "Corporate", icon: "▲", hint: "Polished and trustworthy. Blue tones, measured layout, clear hierarchy, enterprise-ready." },
+];
+
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
 function useTypewriter(texts: string[], interval = 4000) {
@@ -276,6 +285,7 @@ export function Builder() {
   const [showRefine, setShowRefine] = useState(false);
   const [refineInput, setRefineInput] = useState("");
   const [basePrompt, setBasePrompt] = useState(""); // original prompt before any refinements
+  const [vibe, setVibe] = useState("");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -335,7 +345,7 @@ export function Builder() {
       const res = await fetch("/api/io/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: activePrompt, industry }),
+        body: JSON.stringify({ prompt: activePrompt, industry, vibe }),
         signal: abortRef.current.signal,
       });
 
@@ -378,7 +388,7 @@ export function Builder() {
         setState("error");
       }
     }
-  }, [prompt, industry, state]);
+  }, [prompt, industry, vibe, state]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -653,6 +663,25 @@ export function Builder() {
                     disabled={isBuilding}
                   >
                     <span>{ind.icon}</span> {ind.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Vibe / Style */}
+            <div className="d8b-field">
+              <label className="d8b-label">Style (optional)</label>
+              <div className="d8b-chips">
+                {VIBES.map((v) => (
+                  <button
+                    key={v.label}
+                    type="button"
+                    className={`d8b-chip ${vibe === v.label ? "d8b-chip--active" : ""}`}
+                    onClick={() => setVibe((prev) => prev === v.label ? "" : v.label)}
+                    disabled={isBuilding}
+                    title={v.hint}
+                  >
+                    <span>{v.icon}</span> {v.label}
                   </button>
                 ))}
               </div>
