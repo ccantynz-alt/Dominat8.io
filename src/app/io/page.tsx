@@ -1,12 +1,12 @@
-import React from "react";
-import IOTVShell from "@/shared/io/IOTVShell";
+import "@/io/styles/io.css";
+import "@/io/styles/io.globals.css";
+import { RocketCockpit } from "@/io/surfaces/RocketCockpit";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function IOPage() {
-  return <IOTVShell />;
-}
-// REPAIR_OWNER_SYNTH_BREAK_TEST
+const PATCH_ID = "IO_ROCKET_COCKPIT_v2_20260220";
 
-// REPAIR_OWNER_SYNTH_BREAK_TEST
+export default function IOPage() {
+  return <RocketCockpit patchId={PATCH_ID} />;
+}

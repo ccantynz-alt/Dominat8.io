@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -14,7 +14,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Default: route everything else to /io (existing architecture)
+  // Root serves the Builder (AI website generator). All other paths → /io cockpit.
+  if (pathname === '/') return NextResponse.next();
   const url = request.nextUrl.clone();
   url.pathname = '/io';
   return NextResponse.rewrite(url);

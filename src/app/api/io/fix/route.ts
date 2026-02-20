@@ -1,0 +1,84 @@
+import { OpenAI } from "openai";
+import { NextRequest } from "next/server";
+
+export const runtime = "edge";
+export const maxDuration = 60;
+
+const FIX_SYSTEM_PROMPT = `You are an elite front-end engineer and UX designer reviewing and repairing an AI-generated website.
+
+Your job: take the existing HTML/CSS/JS and produce an improved version that fixes every issue you can identify.
+
+WHAT TO FIX (check all of these):
+• Layout bugs: elements overflowing, broken at mobile sizes, missing padding, collapsed sections
+• Typography: inconsistent sizes, poor line-height, missing letter-spacing on headings
+• Colour: clashing colours, poor contrast ratios, inconsistent use of brand colour
+• Animations: broken @keyframes, missing prefixes, janky transitions
+• Navigation: hamburger not working, links not smooth-scrolling, nav not fixed on scroll
+• Content: generic placeholder text, "Lorem ipsum", "Your Company Name", "[City]"
+• JavaScript errors: unclosed functions, missing event listeners, broken IntersectionObserver
+• Missing sections: if hero/testimonials/footer are absent, add them
+• Responsiveness: fix any grid/flexbox issues at 320px, 768px, 1280px breakpoints
+• Micro-interactions: add or fix hover states, button scale effects, card lift
+
+OUTPUT RULES:
+• Return ONLY the fixed HTML. No explanation. No markdown. No code fences.
+• Start immediately with <!DOCTYPE html>
+• Preserve the original design intent and brand identity — only fix issues, don't redesign
+• The result must be a complete, self-contained HTML file`;
+
+export async function POST(req: NextRequest) {
+  const { html, prompt } = await req.json();
+
+  if (!html?.trim()) {
+    return new Response("HTML required", { status: 400 });
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return new Response("OpenAI API key not configured", { status: 500 });
+  }
+
+  const openai = new OpenAI({ apiKey });
+
+  const userMessage = [
+    "Fix all issues in this website HTML. Original brief:",
+    prompt ? `"${prompt}"` : "(no brief provided)",
+    "",
+    "Here is the HTML to fix:",
+    html.trim(),
+  ].join("\n");
+
+  const stream = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: FIX_SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
+    ],
+    stream: true,
+    max_tokens: 16000,
+    temperature: 0.30,
+  });
+
+  const encoder = new TextEncoder();
+
+  const readable = new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of stream) {
+          const text = chunk.choices[0]?.delta?.content ?? "";
+          if (text) controller.enqueue(encoder.encode(text));
+        }
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(readable, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": "no-store",
+    },
+  });
+}
