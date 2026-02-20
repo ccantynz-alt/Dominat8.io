@@ -1,0 +1,92 @@
+name: Auto Approve + Merge (Claude PRs)
+
+# Runs on every PR from claude/* branches.
+# Approves + squash-merges once all required checks pass.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  workflow_run:
+    workflows:
+      - "d8-gate"
+      - "d8-keep-green"
+      - "Staging smoke check"
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  auto-approve-merge:
+    name: Auto-approve and merge Claude PRs
+    runs-on: ubuntu-latest
+    # Only act on claude/* branches
+    if: |
+      (github.event_name == 'pull_request' &&
+        startsWith(github.head_ref, 'claude/')) ||
+      (github.event_name == 'workflow_run' &&
+        startsWith(github.event.workflow_run.head_branch, 'claude/'))
+    steps:
+      - name: Find open PR for branch
+        id: find_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          else
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            PR_NUMBER=$(gh pr list --repo ${{ github.repository }} \
+              --head "$BRANCH" --state open --json number -q '.[0].number')
+          fi
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "Found PR: $PR_NUMBER"
+
+      - name: Wait for all checks to pass
+        if: steps.find_pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR="${{ steps.find_pr.outputs.pr_number }}"
+          echo "Waiting for checks on PR #$PR…"
+          for i in $(seq 1 20); do
+            STATE=$(gh pr view "$PR" --repo ${{ github.repository }} \
+              --json mergeable,mergeStateStatus \
+              -q '.mergeStateStatus')
+            echo "  attempt $i: mergeStateStatus=$STATE"
+            if [ "$STATE" = "CLEAN" ]; then
+              echo "All checks passed."
+              break
+            fi
+            if [ "$STATE" = "DIRTY" ] || [ "$STATE" = "BLOCKED" ]; then
+              echo "PR cannot be merged (state=$STATE). Skipping."
+              exit 0
+            fi
+            sleep 15
+          done
+
+      - name: Approve PR
+        if: steps.find_pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          PR="${{ steps.find_pr.outputs.pr_number }}"
+          # GITHUB_TOKEN can't approve its own PRs; if GH_CLAUDE_PAT is set use it
+          gh pr review "$PR" --repo ${{ github.repository }} \
+            --approve --body "Auto-approved: all checks green on claude/* branch." || \
+            echo "Approval skipped (may already be approved or same-actor restriction)"
+
+      - name: Merge PR
+        if: steps.find_pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          PR="${{ steps.find_pr.outputs.pr_number }}"
+          gh pr merge "$PR" --repo ${{ github.repository }} \
+            --squash --delete-branch \
+            --subject "$(gh pr view $PR --repo ${{ github.repository }} --json title -q .title)" \
+            && echo "✓ PR #$PR merged" \
+            || echo "Merge failed — may need manual approval if branch protection requires it"

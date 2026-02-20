@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Shell } from "../ui/Shell";
 import AgentRunsPanel from "../widgets/AgentRunsPanel";
+import { VoiceConsole } from "../widgets/VoiceConsole";
 
 export function RocketCockpit(props: { patchId: string }) {
   return (
@@ -57,6 +58,8 @@ export function RocketCockpit(props: { patchId: string }) {
 
         <div>
           <AgentRunsPanel />
+          <div style={{ height: 12 }} />
+          <VoiceConsole />
           <div style={{ height: 12 }} />
           <div className="card" style={{ padding: 14 }}>
             <div className="kicker">quick actions</div>
