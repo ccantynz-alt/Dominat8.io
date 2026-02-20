@@ -110,6 +110,46 @@ function SiteCard({ site, onSelect }: { site: Site; onSelect: () => void }) {
   );
 }
 
+// Social proof counter — increments over time for live feel
+function SocialProof() {
+  const [count, setCount] = React.useState(() => {
+    // Deterministic base from date (resets each day)
+    const d = new Date();
+    const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    return 2400 + (seed % 600);
+  });
+
+  React.useEffect(() => {
+    // Tick up by 1-3 every 8-15 seconds
+    const tick = () => {
+      setCount(c => c + Math.floor(Math.random() * 3) + 1);
+    };
+    const id = setInterval(tick, 8000 + Math.random() * 7000);
+    return () => clearInterval(id);
+  }, []);
+
+  const AVATAR_COLORS = ["#7C5CFF", "#38F8A6", "#FF4D6D", "#3DF0FF", "#FFD166", "#C09A5C"];
+
+  return (
+    <div className="d8h-social-proof">
+      <div className="d8h-avatars">
+        {AVATAR_COLORS.map((c, i) => (
+          <span key={i} className="d8h-avatar" style={{ background: c, marginLeft: i > 0 ? -8 : 0, zIndex: AVATAR_COLORS.length - i }} />
+        ))}
+      </div>
+      <span className="d8h-sp-count">
+        <span className="d8h-sp-num">{count.toLocaleString()}</span> sites built today
+      </span>
+      <span className="d8h-sp-divider">·</span>
+      <span className="d8h-sp-tag">No credit card</span>
+      <span className="d8h-sp-divider">·</span>
+      <span className="d8h-sp-tag">HTML export</span>
+      <span className="d8h-sp-divider">·</span>
+      <span className="d8h-sp-tag">1-click deploy</span>
+    </div>
+  );
+}
+
 function GeneratingAnimation({ progress }: { progress: number }) {
   return (
     <div className="d8b-gen-anim">
@@ -443,6 +483,9 @@ export function Builder() {
               </button>
             ))}
           </div>
+
+          {/* Social proof strip */}
+          <SocialProof />
         </div>
 
         {/* Deployments */}
@@ -1797,6 +1840,31 @@ function HomeStyles() {
         border-color: rgba(61,240,255,0.45);
         background: rgba(61,240,255,0.08);
         color: rgba(61,240,255,0.90);
+      }
+
+      /* ── Social proof ── */
+      .d8h-social-proof {
+        display: flex; align-items: center; justify-content: center;
+        flex-wrap: wrap; gap: 8px 10px;
+        margin: 20px 0 0;
+        padding: 0 24px;
+      }
+      .d8h-avatars { display: flex; align-items: center; }
+      .d8h-avatar {
+        width: 22px; height: 22px; border-radius: 50%;
+        border: 2px solid #06080e;
+        display: inline-block; flex-shrink: 0;
+      }
+      .d8h-sp-count {
+        font-size: 13px; color: rgba(255,255,255,0.60);
+      }
+      .d8h-sp-num { font-weight: 700; color: rgba(255,255,255,0.85); }
+      .d8h-sp-divider { color: rgba(255,255,255,0.20); font-size: 13px; }
+      .d8h-sp-tag {
+        font-size: 12px; color: rgba(255,255,255,0.38);
+        padding: 2px 8px; border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
       }
 
       /* ── Deployments ── */
