@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "guard:protected": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/guard-protected-paths.ps1",
     "ci:build": "npm run build",
-    "ci:protected": "node scripts/protected-paths-check.mjs"
+    "ci:protected": "node scripts/protected-paths-check.mjs",
+    "heal": "node scripts/heal.mjs",
+    "heal:build": "node scripts/heal.mjs && npm run build"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.7.0",

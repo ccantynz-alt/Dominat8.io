@@ -1,16 +1,16 @@
 # Protected Paths Guardrails (Dominat8)
 
-These guardrails prevent accidental “core” changes from slipping into main.
+These guardrails block PRs that touch only a small set of sensitive paths. Normal feature work (e.g. `src/app/**` UI/routes) is unrestricted so CI passes without a bypass.
 
 ## What is protected
 
-The workflow blocks PRs that modify (examples):
+The workflow blocks PRs that modify:
 
-- `src/app/**` (core UI routes)
-- `middleware.ts` / `src/middleware.ts` (routing / auth / domain handling)
-- API routes (e.g. `pages/api/**`)
-- build config (`package.json`, `next.config.*`, `vercel.json`)
-- CI workflows (`.github/workflows/**`)
+- `src/middleware.ts` and `middleware.ts` (routing / auth / domain)
+- `src/lib/engine/**` (core engine)
+- Billing-related API routes: `src/app/api/stripe/**`, `src/app/api/billing/**`
+
+Everything else (including `src/app/**` pages and most API routes) is **not** protected — no `[ALLOW-PROTECTED]` needed for normal builds.
 
 ## How to intentionally bypass
 
@@ -27,6 +27,6 @@ That is an explicit “I know this is sensitive” override.
 
 ## Why this exists
 
-- Prevents accidental regressions
-- Keeps main stable
-- Makes changes intentional and reviewable
+- Protects routing, engine, and billing from accidental regressions
+- Keeps main stable for sensitive areas only
+- Normal app/feature changes pass CI automatically
