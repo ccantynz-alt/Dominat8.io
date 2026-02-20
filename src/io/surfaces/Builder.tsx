@@ -6,6 +6,15 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 
 type BuildState = "idle" | "generating" | "done" | "error";
 
+type Deployment = {
+  domain: string;
+  desc: string;
+  status: string;
+  pill: string;
+  progress: number;
+  icon: string;
+};
+
 interface Site {
   id: string;
   prompt: string;
@@ -123,6 +132,87 @@ function GeneratingAnimation({ progress }: { progress: number }) {
   );
 }
 
+// ─── Deployments hook ─────────────────────────────────────────────────────────
+
+function useDeployments() {
+  const [deployments, setDeployments] = useState<Deployment[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    async function poll() {
+      try {
+        const res = await fetch("/api/tv/deployments", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (alive && Array.isArray(data.deployments)) {
+          setDeployments(data.deployments);
+          setLoaded(true);
+        }
+      } catch { /* silent */ }
+    }
+    poll();
+    const id = setInterval(poll, 8000);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+
+  return { deployments, loaded };
+}
+
+// ─── Dock icons ───────────────────────────────────────────────────────────────
+
+const DOCK_ITEMS = [
+  { label: "Deploy",    color: "#4A90E2", bg: "rgba(74,144,226,0.18)", icon: "🚀", href: null },
+  { label: "Domains",  color: "#C09A5C", bg: "rgba(192,154,92,0.18)",  icon: "🌐", href: "/io" },
+  { label: "SSL",      color: "#9B7FD4", bg: "rgba(155,127,212,0.18)", icon: "🔒", href: null },
+  { label: "Monitor",  color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "📊", href: "/tv" },
+  { label: "Logs",     color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "💬", href: "/tv" },
+  { label: "Fix",      color: "#F0924A", bg: "rgba(240,146,74,0.18)",  icon: "🔧", href: "/io" },
+  { label: "Automate", color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "⚡", href: "/io" },
+  { label: "Integrate",color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "✏️", href: null },
+  { label: "Settings", color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "⚙️", href: null },
+];
+
+// ─── localStorage history persistence ─────────────────────────────────────────
+
+const LS_KEY = "d8_sites_v1";
+
+function loadSavedSites(): Site[] {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Array<Omit<Site, "createdAt"> & { createdAt: string }>;
+    return parsed.map(s => ({ ...s, createdAt: new Date(s.createdAt) }));
+  } catch { return []; }
+}
+
+function saveSites(sites: Site[]) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(sites)); } catch { /* quota */ }
+}
+
+// ─── Deployment pill color ─────────────────────────────────────────────────────
+
+function pillStyle(pill: string): { color: string; bg: string; border: string } {
+  if (pill === "OK" || pill === "LIVE")
+    return { color: "rgba(56,248,166,0.95)", bg: "rgba(56,248,166,0.12)", border: "rgba(56,248,166,0.30)" };
+  if (pill === "TODO" || pill === "PENDING")
+    return { color: "rgba(255,209,102,0.95)", bg: "rgba(255,209,102,0.12)", border: "rgba(255,209,102,0.30)" };
+  return { color: "rgba(255,255,255,0.60)", bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.14)" };
+}
+
+function barColor(progress: number, status: string): string {
+  if (status === "LIVE" || status === "OK") return "linear-gradient(90deg,#38F8A6,#29E09A)";
+  if (status === "DEPLOYING" || (progress > 60 && progress < 90)) return "linear-gradient(90deg,#F0924A,#E07A38)";
+  return "linear-gradient(90deg,#4A90E2,#6AABF0)";
+}
+
+function deployIcon(icon: string): string {
+  if (icon === "rocket") return "🚀";
+  if (icon === "globe")  return "🌐";
+  if (icon === "bot")    return "🤖";
+  return "⚙️";
+}
+
 // ─── Main Builder ─────────────────────────────────────────────────────────────
 
 export function Builder() {
@@ -132,18 +222,28 @@ export function Builder() {
   const [html, setHtml] = useState("");
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
-  const [sites, setSites] = useState<Site[]>([]);
+  const [sites, setSites] = useState<Site[]>(() => {
+    if (typeof window === "undefined") return [];
+    return loadSavedSites();
+  });
   const [activeSite, setActiveSite] = useState<Site | null>(null);
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [sidebarTab, setSidebarTab] = useState<"new" | "history">("new");
+  const [showDeploy, setShowDeploy] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const startRef = useRef<number>(0);
   const progressRef = useRef<number>(0);
 
   const placeholder = useTypewriter(EXAMPLE_PROMPTS);
+  const { deployments, loaded } = useDeployments();
+
+  // Persist history
+  useEffect(() => { saveSites(sites); }, [sites]);
 
   // Update iframe srcDoc in real time (throttled)
   const htmlRef = useRef("");
@@ -238,6 +338,143 @@ export function Builder() {
   const isDone = state === "done";
   const isIdle = state === "idle";
   const isError = state === "error";
+
+  // ── New home layout (idle, no html) ──────────────────────────────────────
+  if (isIdle && !html) {
+    return (
+      <div className="d8h-root">
+        <HomeStyles />
+
+        {/* Header */}
+        <header className="d8h-header">
+          <div className="d8h-logo">
+            <span className="d8h-logo-mark">D8</span>
+            <span className="d8h-logo-dot" />
+            <span className="d8h-logo-text">Dominat8.io</span>
+          </div>
+          <nav className="d8h-nav">
+            <a href="/gallery" className="d8h-nav-link">Gallery</a>
+            <a href="/pricing" className="d8h-nav-link">Pricing</a>
+            <a href="/tv" className="d8h-nav-link">TV</a>
+          </nav>
+        </header>
+
+        {/* Hero */}
+        <div className="d8h-hero">
+          <h1 className="d8h-title">What would you like to build?</h1>
+          <p className="d8h-sub">No templates, no drag &amp; drop. Just your vision, built fast.</p>
+
+          {/* Prompt row */}
+          <div className="d8h-input-row">
+            <span className="d8h-input-icon">🚀</span>
+            <input
+              ref={inputRef}
+              className="d8h-input"
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
+              placeholder={"Describe your project…"}
+              autoFocus
+            />
+            <button
+              className="d8h-gen-btn"
+              onClick={generate}
+              disabled={!prompt.trim()}
+              type="button"
+            >
+              GENERATE
+            </button>
+          </div>
+
+          {/* Industry chips */}
+          <div className="d8h-chips">
+            {INDUSTRIES.map((ind) => (
+              <button
+                key={ind.label}
+                type="button"
+                className={`d8h-chip ${industry === ind.label ? "d8h-chip--active" : ""}`}
+                onClick={() => setIndustry((prev) => prev === ind.label ? "" : ind.label)}
+              >
+                {ind.icon} {ind.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Deployments */}
+        <section className="d8h-deploys">
+          <div className="d8h-deploys-header">
+            <span className="d8h-deploys-title">Deployments</span>
+            <span className="d8h-deploys-live">
+              <span className="d8h-live-dot" />
+              {loaded ? `${deployments.length} active` : "Loading…"}
+            </span>
+          </div>
+
+          <div className="d8h-deploys-list">
+            {(loaded ? deployments : []).map((dep, i) => {
+              const ps = pillStyle(dep.pill);
+              const bar = barColor(dep.progress, dep.status);
+              return (
+                <div key={i} className="d8h-dep-row">
+                  <span className="d8h-dep-icon">{deployIcon(dep.icon)}</span>
+                  <div className="d8h-dep-info">
+                    <div className="d8h-dep-domain">{dep.domain}</div>
+                    <div className="d8h-dep-desc">{dep.desc}</div>
+                  </div>
+                  <div className="d8h-dep-bar-wrap">
+                    <div className="d8h-dep-bar-track">
+                      <div
+                        className="d8h-dep-bar-fill"
+                        style={{ width: `${dep.progress}%`, background: bar }}
+                      />
+                    </div>
+                    <div className="d8h-dep-pct">{dep.progress}%</div>
+                  </div>
+                  <div className="d8h-dep-status">{dep.status}</div>
+                  <span
+                    className="d8h-dep-pill"
+                    style={{ color: ps.color, background: ps.bg, borderColor: ps.border }}
+                  >
+                    {dep.pill}
+                  </span>
+                </div>
+              );
+            })}
+            {loaded && deployments.length === 0 && (
+              <div className="d8h-deploys-empty">No active deployments</div>
+            )}
+          </div>
+        </section>
+
+        {/* Bottom dock */}
+        <div className="d8h-dock">
+          {DOCK_ITEMS.map((item) => {
+            const style = { "--dock-bg": item.bg, "--dock-color": item.color } as React.CSSProperties;
+            const inner = (
+              <>
+                <span className="d8h-dock-icon">{item.icon}</span>
+                <span className="d8h-dock-label">{item.label}</span>
+              </>
+            );
+            if (item.href) {
+              return (
+                <a key={item.label} href={item.href} className="d8h-dock-btn" title={item.label} style={style}>
+                  {inner}
+                </a>
+              );
+            }
+            return (
+              <button key={item.label} type="button" className="d8h-dock-btn" title={item.label} style={style}>
+                {inner}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="d8b-root">
@@ -445,21 +682,15 @@ export function Builder() {
               </div>
               <div className="d8b-toolbar-right">
                 <div className="d8b-view-toggle">
-                  <button
-                    className={`d8b-view-btn ${viewMode === "preview" ? "d8b-view-btn--active" : ""}`}
-                    onClick={() => setViewMode("preview")}
-                    type="button"
-                  >
-                    Preview
-                  </button>
-                  <button
-                    className={`d8b-view-btn ${viewMode === "code" ? "d8b-view-btn--active" : ""}`}
-                    onClick={() => setViewMode("code")}
-                    type="button"
-                  >
-                    Code
-                  </button>
+                  <button className={`d8b-view-btn ${viewMode === "preview" ? "d8b-view-btn--active" : ""}`} onClick={() => setViewMode("preview")} type="button">Preview</button>
+                  <button className={`d8b-view-btn ${viewMode === "code" ? "d8b-view-btn--active" : ""}`} onClick={() => setViewMode("code")} type="button">Code</button>
                 </div>
+                {viewMode === "preview" && (
+                  <div className="d8b-view-toggle">
+                    <button className={`d8b-view-btn ${device === "desktop" ? "d8b-view-btn--active" : ""}`} onClick={() => setDevice("desktop")} type="button" title="Desktop">🖥</button>
+                    <button className={`d8b-view-btn ${device === "mobile" ? "d8b-view-btn--active" : ""}`} onClick={() => setDevice("mobile")} type="button" title="Mobile">📱</button>
+                  </div>
+                )}
                 {isDone && (
                   <>
                     <button
@@ -477,12 +708,7 @@ export function Builder() {
                     >
                       ↓ Download
                     </button>
-                    <button 
-                      className="d8b-deploy-btn" 
-                      type="button"
-                      disabled
-                      title="Deploy feature coming soon"
-                    >
+                    <button className="d8b-deploy-btn" type="button" onClick={() => setShowDeploy(true)}>
                       ⚡ Deploy
                     </button>
                   </>
@@ -492,19 +718,32 @@ export function Builder() {
 
             {/* Canvas */}
             {viewMode === "preview" ? (
-              <div className="d8b-iframe-wrap">
+              <div className={device === "mobile" ? "d8b-iframe-mobile-wrap" : "d8b-iframe-wrap"}>
                 {isBuilding && progress < 15 && (
                   <div className="d8b-iframe-loader">
                     <GeneratingAnimation progress={progress} />
                   </div>
                 )}
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={html || "<html><body style='background:#07090f'></body></html>"}
-                  sandbox="allow-scripts"
-                  className="d8b-iframe"
-                  title="Generated website preview"
-                />
+                {device === "mobile" ? (
+                  <div className="d8b-phone-frame">
+                    <div className="d8b-phone-notch" />
+                    <iframe
+                      ref={iframeRef}
+                      srcDoc={html || "<html><body style='background:#fff'></body></html>"}
+                      sandbox="allow-scripts"
+                      className="d8b-phone-iframe"
+                      title="Generated website mobile preview"
+                    />
+                  </div>
+                ) : (
+                  <iframe
+                    ref={iframeRef}
+                    srcDoc={html || "<html><body style='background:#07090f'></body></html>"}
+                    sandbox="allow-scripts"
+                    className="d8b-iframe"
+                    title="Generated website preview"
+                  />
+                )}
               </div>
             ) : (
               <div className="d8b-code-wrap">
@@ -521,6 +760,108 @@ export function Builder() {
           </div>
         )}
       </main>
+
+      {/* Deploy modal */}
+      {showDeploy && html && (
+        <DeployModal html={html} prompt={prompt} onClose={() => setShowDeploy(false)} />
+      )}
+    </div>
+  );
+}
+
+// ─── Deploy Modal ─────────────────────────────────────────────────────────────
+
+type DeployStep = "options" | "deploying" | "done";
+
+function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; onClose: () => void }) {
+  const [step, setStep] = useState<DeployStep>("options");
+  const [log, setLog] = useState<string[]>([]);
+
+  function simulateDeploy() {
+    setStep("deploying");
+    setLog([]);
+    const steps = [
+      "Optimising assets…",
+      "Minifying HTML + inline CSS…",
+      "Running SEO checks…",
+      "Generating sitemap.xml…",
+      "Provisioning edge deployment…",
+      "SSL certificate issued…",
+      "✓ Site is live!",
+    ];
+    steps.forEach((msg, i) => {
+      setTimeout(() => {
+        setLog(prev => [...prev, msg]);
+        if (i === steps.length - 1) setStep("done");
+      }, 400 + i * 600);
+    });
+  }
+
+  function download() {
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${prompt.slice(0, 30).replace(/[^a-z0-9]/gi, "-").toLowerCase()}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">
+            {step === "options" && "Deploy your site"}
+            {step === "deploying" && "Deploying…"}
+            {step === "done" && "🎉 Site deployed!"}
+          </div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+
+        {step === "options" && (
+          <div className="d8b-modal-body">
+            <p className="d8b-modal-desc">
+              Your site is ready. Choose how to publish it.
+            </p>
+            <div className="d8b-deploy-options">
+              <button className="d8b-deploy-option" onClick={simulateDeploy} type="button">
+                <span className="d8b-deploy-option-icon">⚡</span>
+                <div>
+                  <div className="d8b-deploy-option-title">Deploy to Dominat8</div>
+                  <div className="d8b-deploy-option-sub">Live URL in seconds · Free subdomain</div>
+                </div>
+              </button>
+              <button className="d8b-deploy-option d8b-deploy-option--ghost" onClick={download} type="button">
+                <span className="d8b-deploy-option-icon">↓</span>
+                <div>
+                  <div className="d8b-deploy-option-title">Download HTML</div>
+                  <div className="d8b-deploy-option-sub">Single file · Host anywhere</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {(step === "deploying" || step === "done") && (
+          <div className="d8b-modal-body">
+            <div className="d8b-deploy-log">
+              {log.map((l, i) => (
+                <div key={i} className={`d8b-deploy-log-line ${l.startsWith("✓") ? "d8b-deploy-log-line--ok" : ""}`}>
+                  <span>{l.startsWith("✓") ? "✓" : "›"}</span> {l.replace("✓ ", "")}
+                </div>
+              ))}
+              {step === "deploying" && <div className="d8b-deploy-cursor">_</div>}
+            </div>
+            {step === "done" && (
+              <div className="d8b-deploy-success">
+                <div className="d8b-deploy-url">dominat8.io/sites/preview</div>
+                <button className="d8b-deploy-btn" onClick={onClose} type="button">Done ✓</button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1139,10 +1480,389 @@ function BuilderStyles() {
         border-radius: 0 2px 2px 0;
       }
 
+      /* ── Mobile device frame ── */
+      .d8b-iframe-mobile-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0a0d18;
+        overflow: hidden;
+        padding: 24px 0 16px;
+      }
+      .d8b-phone-frame {
+        width: 375px;
+        height: calc(100% - 8px);
+        max-height: 780px;
+        border-radius: 40px;
+        border: 8px solid rgba(255,255,255,0.12);
+        background: #000;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.06);
+      }
+      .d8b-phone-notch {
+        position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        width: 100px; height: 26px;
+        background: #000;
+        border-radius: 0 0 18px 18px;
+        z-index: 10;
+      }
+      .d8b-phone-iframe {
+        width: 100%; height: 100%; border: none;
+        border-radius: 32px;
+      }
+
+      /* ── Deploy Modal ── */
+      .d8b-modal-backdrop {
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(0,0,0,0.70);
+        backdrop-filter: blur(6px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 24px;
+      }
+      .d8b-modal {
+        width: min(480px, 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: #0d1020;
+        box-shadow: 0 32px 80px rgba(0,0,0,0.70);
+        overflow: hidden;
+        animation: d8b-modal-in 200ms ease;
+      }
+      @keyframes d8b-modal-in { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+
+      .d8b-modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      .d8b-modal-title { font-size: 16px; font-weight: 700; color: #fff; }
+      .d8b-modal-close {
+        background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 8px; width: 28px; height: 28px;
+        color: rgba(255,255,255,0.60); cursor: pointer; font-size: 12px; font-family: inherit;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .d8b-modal-close:hover { color: #fff; }
+
+      .d8b-modal-body { padding: 20px; }
+      .d8b-modal-desc { font-size: 14px; color: rgba(255,255,255,0.50); margin: 0 0 16px; line-height: 1.5; }
+
+      .d8b-deploy-options { display: flex; flex-direction: column; gap: 10px; }
+      .d8b-deploy-option {
+        display: flex; align-items: center; gap: 14px;
+        padding: 14px 16px; border-radius: 14px;
+        border: 1px solid rgba(61,240,255,0.30);
+        background: rgba(61,240,255,0.06);
+        color: rgba(255,255,255,0.90);
+        text-align: left; cursor: pointer; font-family: inherit;
+        transition: all 140ms ease;
+      }
+      .d8b-deploy-option:hover { border-color: rgba(61,240,255,0.55); background: rgba(61,240,255,0.10); }
+      .d8b-deploy-option--ghost { border-color: rgba(255,255,255,0.10); background: rgba(255,255,255,0.03); }
+      .d8b-deploy-option--ghost:hover { border-color: rgba(255,255,255,0.20); background: rgba(255,255,255,0.06); }
+      .d8b-deploy-option-icon { font-size: 20px; flex-shrink: 0; }
+      .d8b-deploy-option-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+      .d8b-deploy-option-sub { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+      .d8b-deploy-log {
+        background: #070a10; border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.07);
+        padding: 14px 16px; min-height: 160px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px; line-height: 1.8;
+        display: flex; flex-direction: column; gap: 2px;
+      }
+      .d8b-deploy-log-line { color: rgba(255,255,255,0.65); }
+      .d8b-deploy-log-line--ok { color: rgba(56,248,166,0.90); }
+      .d8b-deploy-cursor { animation: d8b-blink 1s step-end infinite; color: rgba(61,240,255,0.8); }
+
+      .d8b-deploy-success { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
+      .d8b-deploy-url {
+        flex: 1; padding: 10px 14px; border-radius: 10px;
+        background: rgba(56,248,166,0.08); border: 1px solid rgba(56,248,166,0.25);
+        font-size: 13px; font-family: ui-monospace, monospace; color: rgba(56,248,166,0.90);
+      }
+
       /* ── Mobile ── */
       @media (max-width: 768px) {
         .d8b-sidebar { width: 260px; min-width: 260px; }
         .d8b-splash-title { font-size: 32px; }
+      }
+    `}</style>
+  );
+}
+
+// ─── Home Styles ──────────────────────────────────────────────────────────────
+
+function HomeStyles() {
+  return (
+    <style>{`
+      .d8h-root {
+        min-height: 100vh;
+        width: 100%;
+        background:
+          radial-gradient(900px 600px at 15% 10%, rgba(61,240,255,0.04), transparent 60%),
+          radial-gradient(700px 500px at 85% 5%, rgba(124,92,255,0.05), transparent 60%),
+          #06080e;
+        color: #e9eef7;
+        font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 100px;
+      }
+
+      /* ── Header ── */
+      .d8h-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 28px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+      .d8h-logo { display: flex; align-items: center; gap: 7px; }
+      .d8h-logo-mark {
+        font-size: 17px; font-weight: 800;
+        color: #fff; letter-spacing: -0.04em;
+      }
+      .d8h-logo-dot {
+        width: 5px; height: 5px; border-radius: 50%;
+        background: rgba(61,240,255,0.7);
+      }
+      .d8h-logo-text {
+        font-size: 13px; font-weight: 500;
+        color: rgba(255,255,255,0.45); letter-spacing: 0.01em;
+      }
+      .d8h-nav { display: flex; gap: 6px; }
+      .d8h-nav-link {
+        padding: 6px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.04);
+        color: rgba(255,255,255,0.55);
+        font-size: 12px;
+        text-decoration: none;
+        transition: all 120ms ease;
+      }
+      .d8h-nav-link:hover { color: #fff; border-color: rgba(255,255,255,0.20); }
+
+      /* ── Hero ── */
+      .d8h-hero {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 64px 24px 40px;
+        gap: 20px;
+      }
+      .d8h-title {
+        margin: 0;
+        font-size: clamp(36px, 6vw, 62px);
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: -0.04em;
+        text-align: center;
+        line-height: 1.05;
+      }
+      .d8h-sub {
+        margin: 0;
+        font-size: 16px;
+        color: rgba(255,255,255,0.40);
+        text-align: center;
+        letter-spacing: -0.01em;
+      }
+
+      /* ── Input row ── */
+      .d8h-input-row {
+        display: flex;
+        align-items: center;
+        width: min(720px, 100%);
+        background: rgba(255,255,255,0.055);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 16px;
+        padding: 6px 6px 6px 16px;
+        gap: 10px;
+        transition: border-color 140ms ease;
+      }
+      .d8h-input-row:focus-within {
+        border-color: rgba(255,255,255,0.22);
+      }
+      .d8h-input-icon { font-size: 18px; flex-shrink: 0; }
+      .d8h-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #fff;
+        font-size: 15px;
+        font-family: inherit;
+        letter-spacing: -0.01em;
+        min-width: 0;
+      }
+      .d8h-input::placeholder { color: rgba(255,255,255,0.30); }
+      .d8h-gen-btn {
+        flex-shrink: 0;
+        padding: 11px 22px;
+        border-radius: 11px;
+        border: none;
+        background: linear-gradient(135deg, #00C97A, #00B36B);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        font-family: inherit;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        transition: all 140ms ease;
+        box-shadow: 0 2px 12px rgba(0,201,122,0.35);
+      }
+      .d8h-gen-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #00DD88, #00C47A);
+        box-shadow: 0 4px 18px rgba(0,201,122,0.50);
+        transform: translateY(-1px);
+      }
+      .d8h-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+
+      /* ── Industry chips ── */
+      .d8h-chips {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+        width: min(720px, 100%);
+      }
+      .d8h-chip {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.03);
+        color: rgba(255,255,255,0.45);
+        font-size: 12px; font-family: inherit;
+        cursor: pointer; transition: all 120ms ease;
+      }
+      .d8h-chip:hover { border-color: rgba(255,255,255,0.20); color: rgba(255,255,255,0.80); }
+      .d8h-chip--active {
+        border-color: rgba(61,240,255,0.45);
+        background: rgba(61,240,255,0.08);
+        color: rgba(61,240,255,0.90);
+      }
+
+      /* ── Deployments ── */
+      .d8h-deploys {
+        width: min(800px, 100%);
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .d8h-deploys-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 0 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        margin-bottom: 10px;
+      }
+      .d8h-deploys-title {
+        font-size: 13px; font-weight: 600;
+        color: rgba(255,255,255,0.55);
+        text-transform: uppercase; letter-spacing: 0.08em;
+      }
+      .d8h-deploys-live {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 12px; color: rgba(255,255,255,0.40);
+      }
+      .d8h-live-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: #38F8A6;
+        animation: d8h-blink 2s ease-in-out infinite;
+      }
+      @keyframes d8h-blink { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+      .d8h-deploys-list { display: flex; flex-direction: column; gap: 8px; }
+      .d8h-dep-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        transition: background 140ms ease;
+      }
+      .d8h-dep-row:hover { background: rgba(255,255,255,0.05); }
+      .d8h-dep-icon { font-size: 18px; flex-shrink: 0; }
+      .d8h-dep-info { flex: 1; min-width: 0; }
+      .d8h-dep-domain {
+        font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.88);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .d8h-dep-desc {
+        font-size: 11px; color: rgba(255,255,255,0.40);
+        margin-top: 2px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .d8h-dep-bar-wrap {
+        display: flex; align-items: center; gap: 8px;
+        flex-shrink: 0; width: 140px;
+      }
+      .d8h-dep-bar-track {
+        flex: 1; height: 5px; border-radius: 999px;
+        background: rgba(255,255,255,0.08); overflow: hidden;
+      }
+      .d8h-dep-bar-fill {
+        height: 100%; border-radius: 999px;
+        transition: width 600ms ease;
+      }
+      .d8h-dep-pct { font-size: 11px; color: rgba(255,255,255,0.45); flex-shrink: 0; width: 30px; text-align: right; }
+      .d8h-dep-status { font-size: 11px; color: rgba(255,255,255,0.45); flex-shrink: 0; width: 70px; text-align: center; }
+      .d8h-dep-pill {
+        display: inline-flex; align-items: center;
+        padding: 4px 10px; border-radius: 999px;
+        border: 1px solid; font-size: 11px; font-weight: 600;
+        letter-spacing: 0.04em; flex-shrink: 0;
+      }
+      .d8h-deploys-empty {
+        font-size: 13px; color: rgba(255,255,255,0.30);
+        text-align: center; padding: 20px 0;
+      }
+
+      /* ── Bottom dock ── */
+      .d8h-dock {
+        position: fixed;
+        bottom: 20px; left: 50%; transform: translateX(-50%);
+        display: flex; gap: 6px; align-items: center;
+        padding: 8px 10px;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(8,10,18,0.80);
+        backdrop-filter: blur(16px);
+        z-index: 100;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.55);
+      }
+      .d8h-dock-btn {
+        display: flex; flex-direction: column; align-items: center;
+        gap: 3px; padding: 8px 10px;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        background: var(--dock-bg, rgba(255,255,255,0.06));
+        color: rgba(255,255,255,0.75);
+        cursor: pointer; transition: all 140ms ease;
+        min-width: 52px;
+        text-decoration: none;
+      }
+      .d8h-dock-btn:hover {
+        border-color: rgba(255,255,255,0.14);
+        background: rgba(255,255,255,0.10);
+        transform: translateY(-2px);
+      }
+      .d8h-dock-icon { font-size: 17px; }
+      .d8h-dock-label {
+        font-size: 9px; font-family: inherit;
+        color: rgba(255,255,255,0.45);
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+
+      @media (max-width: 640px) {
+        .d8h-title { font-size: 32px; }
+        .d8h-dock { gap: 3px; padding: 6px 8px; }
+        .d8h-dock-btn { min-width: 40px; padding: 6px 6px; }
+        .d8h-dock-label { display: none; }
       }
     `}</style>
   );

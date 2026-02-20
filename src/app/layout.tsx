@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body style={{ margin: 0, padding: 0, overflow: "hidden" }}>{children}</body>
+      <body style={{ margin: 0, padding: 0 }}>{children}</body>
     </html>
   );
 }
