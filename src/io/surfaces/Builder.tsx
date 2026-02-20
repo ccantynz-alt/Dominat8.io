@@ -302,6 +302,12 @@ export function Builder() {
   const startRef = useRef<number>(0);
   const progressRef = useRef<number>(0);
 
+  // Abort any in-flight generation when the component unmounts
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
   const placeholder = useTypewriter(EXAMPLE_PROMPTS);
   const { deployments, loaded } = useDeployments();
   const searchParams = useSearchParams();
