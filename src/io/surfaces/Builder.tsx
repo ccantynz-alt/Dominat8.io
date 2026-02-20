@@ -568,7 +568,7 @@ export function Builder() {
             />
             <button
               className="d8h-gen-btn"
-              onClick={generate}
+              onClick={() => generate()}
               disabled={!prompt.trim()}
               type="button"
             >
@@ -768,7 +768,7 @@ export function Builder() {
             {/* Generate button */}
             <button
               className={`d8b-generate-btn ${isBuilding ? "d8b-generate-btn--building" : ""}`}
-              onClick={isBuilding ? reset : generate}
+              onClick={isBuilding ? reset : () => generate()}
               disabled={!prompt.trim() && !isBuilding}
               type="button"
             >
