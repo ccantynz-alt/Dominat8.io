@@ -232,6 +232,7 @@ export function Builder() {
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [sidebarTab, setSidebarTab] = useState<"new" | "history">("new");
   const [showDeploy, setShowDeploy] = useState(false);
+  const [shareState, setShareState] = useState<"idle" | "sharing" | "copied" | "error">("idle");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -348,7 +349,33 @@ export function Builder() {
     setHtml("");
     setProgress(0);
     setActiveSite(null);
+    setShareState("idle");
   };
+
+  const handleShare = useCallback(async () => {
+    if (!html || shareState === "sharing") return;
+    setShareState("sharing");
+    try {
+      const res = await fetch("/api/sites/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html, prompt }),
+      });
+      const data = await res.json();
+      if (data.ok && data.shareUrl) {
+        const fullUrl = `${window.location.origin}${data.shareUrl}`;
+        await navigator.clipboard.writeText(fullUrl);
+        setShareState("copied");
+        setTimeout(() => setShareState("idle"), 3000);
+      } else {
+        setShareState("error");
+        setTimeout(() => setShareState("idle"), 3000);
+      }
+    } catch {
+      setShareState("error");
+      setTimeout(() => setShareState("idle"), 3000);
+    }
+  }, [html, prompt, shareState]);
 
   const isBuilding = state === "generating";
   const isDone = state === "done";
@@ -390,7 +417,7 @@ export function Builder() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
-              placeholder={"Describe your project…"}
+              placeholder={placeholder || "Describe your project…"}
               autoFocus
             />
             <button
@@ -709,6 +736,15 @@ export function Builder() {
                 )}
                 {isDone && (
                   <>
+                    <button
+                      className="d8b-action-btn"
+                      onClick={handleShare}
+                      type="button"
+                      title="Copy shareable link"
+                      style={shareState === "copied" ? { color: "#38F8A6", borderColor: "rgba(56,248,166,0.30)" } : shareState === "error" ? { color: "#FF4D6D" } : {}}
+                    >
+                      {shareState === "sharing" ? "⏳ Sharing…" : shareState === "copied" ? "✓ Link copied!" : shareState === "error" ? "✕ Share failed" : "↗ Share"}
+                    </button>
                     <button
                       className="d8b-action-btn"
                       onClick={() => {

@@ -77,16 +77,23 @@ THIS IS THE STANDARD: If someone opened this website, they would assume it cost 
 ═══════════════════════════════════════════`;
 
 const INDUSTRY_HINTS: Record<string, string> = {
-  Restaurant: "Use deep burgundy or rich terracotta as brand colour. Food photography placeholder with warm overlay. Menu section with pricing.",
-  "Law Firm": "Navy + gold colour scheme. Authority and trust. Case results stats. Practice areas. Partner profiles.",
-  SaaS: "Electric blue or violet. Dashboard screenshot mockup in hero. Feature comparison table. Pricing tiers.",
-  "Real Estate": "Charcoal + warm gold. Property listings grid. Search bar in hero. Agent profiles.",
-  Fitness: "High-contrast black + neon (lime or orange). Bold before/after. Class schedule. Membership pricing.",
-  "E-commerce": "Clean white + strong brand accent. Product hero. Featured products grid. Trust badges.",
-  Portfolio: "Dark minimal. Full-screen project showcase. About section with skills. Contact form.",
-  Medical: "Clean white + teal. Trust and empathy. Services. Doctor profiles. Book appointment CTA.",
-  Agency: "Bold, creative, memorable. Case studies. Client logos. Team grid. Process steps.",
-  Construction: "Industrial charcoal + orange. Project portfolio. Services. Safety certifications. Quote form.",
+  Restaurant: "Use deep burgundy or rich terracotta. Food photography placeholder with warm overlay. Menu section with dish names and pricing. Reservation form.",
+  "Law Firm": "Navy + gold. Authority and trust. Case results stats. Practice areas with icons. Partner bio cards.",
+  Legal: "Navy + gold. Authority and trust. Case results stats. Practice areas with icons. Partner bio cards.",
+  SaaS: "Electric blue or violet. Dashboard screenshot mockup in hero. Feature comparison table. 3-tier pricing cards with highlights.",
+  "Real Estate": "Charcoal + warm gold. Property listings grid with price badges. Search bar in hero. Agent profiles with credentials.",
+  Fitness: "High-contrast black + neon (lime or orange). Bold transformation results. Class schedule grid. Membership pricing table.",
+  "E-commerce": "Clean white + strong brand accent. Product hero with lifestyle image placeholder. Featured products grid. Trust badges and reviews.",
+  Portfolio: "Dark minimal. Full-screen project showcase with hover effects. Skills grid. Case study previews.",
+  Medical: "Clean white + teal. Trust, empathy, and expertise. Services with icons. Doctor profiles. Online booking CTA.",
+  Healthcare: "Clean white + teal or sky blue. Calm, reassuring, professional. Patient services. Provider profiles. Appointment booking.",
+  Agency: "Bold and creative. Case studies grid. Client logos strip. Team faces. Step-by-step process.",
+  Business: "Clean, professional, authoritative. Services grid. Client logos. Results stats. Clear CTA.",
+  Construction: "Industrial charcoal + orange/yellow safety accent. Project portfolio grid. Services. Certifications strip. Quote form.",
+  Education: "Bright, optimistic, empowering. Course highlights. Success stats. Student testimonials. Enrollment CTA.",
+  Travel: "Dreamy, aspirational, full-bleed destination photography placeholder. Package highlights. Experience cards. Book now CTA.",
+  Hospitality: "Warm, luxurious, experiential. Room/venue photography placeholder. Amenities. Guest reviews. Reservation form.",
+  Technology: "Dark, futuristic, precise. Product/dashboard mockup. Feature highlights. Integration logos. Free trial CTA.",
 };
 
 export async function POST(req: NextRequest) {
