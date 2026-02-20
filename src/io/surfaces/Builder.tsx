@@ -369,12 +369,23 @@ export function Builder() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
+      const throttleMs = 100;
+      let lastFlush = Date.now();
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulated += decoder.decode(value, { stream: true });
+          const now = Date.now();
+          if (now - lastFlush >= throttleMs) {
+            setHtml(accumulated);
+            lastFlush = now;
+          }
+        }
         setHtml(accumulated);
+      } finally {
+        reader.releaseLock();
       }
 
       clearInterval(progressTimer);
@@ -488,11 +499,22 @@ export function Builder() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
+      const throttleMs = 100;
+      let lastFlush = Date.now();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulated += decoder.decode(value, { stream: true });
+          const now = Date.now();
+          if (now - lastFlush >= throttleMs) {
+            setHtml(accumulated);
+            lastFlush = now;
+          }
+        }
         setHtml(accumulated);
+      } finally {
+        reader.releaseLock();
       }
       clearInterval(progressTimer);
       setProgress(100);
@@ -726,12 +748,13 @@ export function Builder() {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={placeholder + "|"}
+                placeholder={placeholder || "Describe your project…"}
+                aria-label="Describe your website"
                 rows={5}
                 disabled={isBuilding}
                 autoFocus
               />
-              <div className="d8b-hint">⌘ + Enter to generate</div>
+              <div className="d8b-hint">⌘ / Ctrl + Enter to generate</div>
             </div>
 
             {/* Industry */}

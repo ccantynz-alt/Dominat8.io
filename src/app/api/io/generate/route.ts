@@ -2,7 +2,7 @@ import { OpenAI } from "openai";
 import { NextRequest } from "next/server";
 
 export const runtime = "edge";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const SYSTEM_PROMPT = `You are an elite creative director and principal front-end engineer at the world's most award-winning digital studio. Your work has won Webby Awards, FWA Site of the Day, and CSS Design Awards. You build websites that make people stop scrolling and say "wow".
 
@@ -121,12 +121,33 @@ const VIBE_HINTS: Record<string, string> = {
   Corporate: "STYLE: Enterprise professional. Conservative blue palette. Measured, structured layout. Clear visual hierarchy. Trust signals prominent. Could appear in a Fortune 500 annual report.",
 };
 
-export async function POST(req: NextRequest) {
-  const { prompt, industry, vibe } = await req.json();
+const VALID_INDUSTRIES = new Set(Object.keys(INDUSTRY_HINTS));
+const MAX_PROMPT_LENGTH = 1000;
 
-  if (!prompt?.trim()) {
+export async function POST(req: NextRequest) {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(
+      JSON.stringify({ error: "Invalid JSON in request body" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const { prompt, industry, vibe } = (body as { prompt?: string; industry?: string; vibe?: string }) ?? {};
+
+  const trimmedPrompt = prompt?.trim() ?? "";
+  if (!trimmedPrompt) {
     return new Response("Prompt required", { status: 400 });
   }
+
+  if (trimmedPrompt.length > MAX_PROMPT_LENGTH) {
+    return new Response(`Prompt must be ${MAX_PROMPT_LENGTH} characters or fewer`, { status: 400 });
+  }
+
+  // Validate industry against known list to prevent prompt injection
+  const safeIndustry = industry && VALID_INDUSTRIES.has(industry) ? industry : undefined;
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -135,8 +156,8 @@ export async function POST(req: NextRequest) {
 
   const openai = new OpenAI({ apiKey });
 
-  const industryHint = industry && INDUSTRY_HINTS[industry]
-    ? `\nINDUSTRY GUIDANCE: ${INDUSTRY_HINTS[industry]}`
+  const industryHint = safeIndustry && INDUSTRY_HINTS[safeIndustry]
+    ? `\nINDUSTRY GUIDANCE: ${INDUSTRY_HINTS[safeIndustry]}`
     : "";
 
   const vibeHint = vibe && VIBE_HINTS[vibe]
@@ -144,10 +165,10 @@ export async function POST(req: NextRequest) {
     : "";
 
   const userMessage = [
-    `Build a world-class website for: ${prompt.trim()}`,
+    `Build a world-class website for: ${trimmedPrompt}`,
     industryHint,
     vibeHint,
-    industry ? `Industry category: ${industry}` : "",
+    safeIndustry ? `Industry category: ${safeIndustry}` : "",
     "",
     "This website must be so visually stunning it wins a Webby Award.",
     "Invent real, specific, compelling content — zero lorem ipsum, zero generic placeholders.",
@@ -156,16 +177,25 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
-  const stream = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userMessage },
-    ],
-    stream: true,
-    max_tokens: 16000,
-    temperature: 0.80,
-  });
+  let stream: Awaited<ReturnType<typeof openai.chat.completions.create>>;
+  try {
+    stream = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userMessage },
+      ],
+      stream: true,
+      max_tokens: 16000,
+      temperature: 0.80,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "OpenAI API error";
+    return new Response(JSON.stringify({ error: message }), {
+      status: 502,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   const encoder = new TextEncoder();
 
