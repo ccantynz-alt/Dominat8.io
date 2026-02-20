@@ -445,7 +445,7 @@ export function Builder() {
         {/* Hero */}
         <div className="d8h-hero">
           <h1 className="d8h-title">What would you like to build?</h1>
-          <p className="d8h-sub">No templates, no drag &amp; drop. Just your vision, built fast.</p>
+          <p className="d8h-sub">Describe your business. Your site appears in seconds.</p>
 
           {/* Prompt row */}
           <div className="d8h-input-row">
@@ -533,6 +533,19 @@ export function Builder() {
             )}
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className="d8h-footer">
+          <div className="d8h-footer-links">
+            <a href="/templates" className="d8h-footer-link">Templates</a>
+            <a href="/gallery" className="d8h-footer-link">Gallery</a>
+            <a href="/pricing" className="d8h-footer-link">Pricing</a>
+            <a href="/about" className="d8h-footer-link">About</a>
+            <a href="/privacy" className="d8h-footer-link">Privacy</a>
+            <a href="/terms" className="d8h-footer-link">Terms</a>
+          </div>
+          <div className="d8h-footer-copy">© {new Date().getFullYear()} Dominat8.io · Built with AI</div>
+        </footer>
 
         {/* Bottom dock */}
         <div className="d8h-dock">
@@ -1976,6 +1989,26 @@ function HomeStyles() {
         color: rgba(255,255,255,0.45);
         letter-spacing: 0.03em;
         white-space: nowrap;
+      }
+
+      /* ── Footer ── */
+      .d8h-footer {
+        text-align: center;
+        padding: 32px 24px 100px;
+        margin-top: 24px;
+      }
+      .d8h-footer-links {
+        display: flex; flex-wrap: wrap;
+        align-items: center; justify-content: center;
+        gap: 4px 18px; margin-bottom: 12px;
+      }
+      .d8h-footer-link {
+        font-size: 13px; color: rgba(255,255,255,0.32);
+        text-decoration: none; transition: color 140ms ease;
+      }
+      .d8h-footer-link:hover { color: rgba(255,255,255,0.65); }
+      .d8h-footer-copy {
+        font-size: 12px; color: rgba(255,255,255,0.18);
       }
 
       @media (max-width: 640px) {
