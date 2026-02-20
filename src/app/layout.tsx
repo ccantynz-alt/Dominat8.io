@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     description: "Describe your business. Our AI builds a complete, professional website in under 30 seconds. No templates. No drag and drop.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Dominat8.io — AI Website Builder",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Dominat8.io — AI Website Builder",
     description: "Build a world-class website in seconds. Just describe your business.",
-    images: ["/og-image.png"],
+    images: ["/opengraph-image"],
     creator: "@dominat8io",
   },
   robots: {
