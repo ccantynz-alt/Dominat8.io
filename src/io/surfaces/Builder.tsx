@@ -286,6 +286,14 @@ export function Builder() {
   const [refineInput, setRefineInput] = useState("");
   const [basePrompt, setBasePrompt] = useState(""); // original prompt before any refinements
   const [vibe, setVibe] = useState("");
+  const [fixState, setFixState] = useState<"idle" | "fixing">("idle");
+  const [showSeo, setShowSeo] = useState(false);
+  const [seoState, setSeoState] = useState<"idle" | "scanning" | "done" | "error">("idle");
+  const [seoData, setSeoData] = useState<{
+    score: number; grade: string; summary: string;
+    issues: { severity: string; category: string; message: string; fix: string }[];
+    strengths: string[];
+  } | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -407,6 +415,10 @@ export function Builder() {
     setShowRefine(false);
     setRefineInput("");
     setBasePrompt("");
+    setFixState("idle");
+    setShowSeo(false);
+    setSeoState("idle");
+    setSeoData(null);
   };
 
   const handleRefine = useCallback(() => {
@@ -444,6 +456,72 @@ export function Builder() {
       setTimeout(() => setShareState("idle"), 3000);
     }
   }, [html, prompt, shareState]);
+
+  const handleFix = useCallback(async () => {
+    if (fixState === "fixing") return;
+    const sourceHtml = activeSite?.html || html;
+    if (!sourceHtml) return;
+    setFixState("fixing");
+    setState("generating");
+    setHtml("");
+    setProgress(0);
+    setActiveSite(null);
+    startRef.current = Date.now();
+    progressRef.current = 0;
+    const progressTimer = setInterval(() => {
+      progressRef.current = Math.min(progressRef.current + Math.random() * 3, 94);
+      setProgress(progressRef.current);
+    }, 300);
+    try {
+      const res = await fetch("/api/io/fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: sourceHtml, prompt }),
+      });
+      if (!res.ok || !res.body) throw new Error("Fix failed");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += decoder.decode(value, { stream: true });
+        setHtml(accumulated);
+      }
+      clearInterval(progressTimer);
+      setProgress(100);
+      const dur = Date.now() - startRef.current;
+      setDurationMs(dur);
+      const site: Site = { id: crypto.randomUUID(), prompt: `[Fixed] ${prompt}`, industry, html: accumulated, createdAt: new Date(), durationMs: dur };
+      setSites((prev) => [site, ...prev]);
+      setActiveSite(site);
+      setState("done");
+    } catch {
+      clearInterval(progressTimer);
+      setState("error");
+    } finally {
+      setFixState("idle");
+    }
+  }, [fixState, activeSite, html, prompt, industry]);
+
+  const handleSeo = useCallback(async () => {
+    if (seoState === "scanning" || !html) return;
+    setSeoState("scanning");
+    setShowSeo(true);
+    setSeoData(null);
+    try {
+      const res = await fetch("/api/io/seo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html }),
+      });
+      const data = await res.json();
+      setSeoData(data);
+      setSeoState("done");
+    } catch {
+      setSeoState("error");
+    }
+  }, [seoState, html]);
 
   const isBuilding = state === "generating";
   const isDone = state === "done";
@@ -741,6 +819,74 @@ export function Builder() {
                       ⚡ Apply refinement
                     </button>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Fix + SEO agents */}
+            {isDone && (
+              <div className="d8b-agent-row">
+                <button
+                  className={`d8b-agent-btn ${fixState === "fixing" ? "d8b-agent-btn--loading" : ""}`}
+                  onClick={handleFix}
+                  disabled={fixState === "fixing"}
+                  type="button"
+                  title="Auto-detect and fix layout, content, and code issues"
+                >
+                  {fixState === "fixing" ? "⏳ Fixing…" : "🔧 Fix issues"}
+                </button>
+                <button
+                  className={`d8b-agent-btn ${showSeo ? "d8b-agent-btn--active" : ""} ${seoState === "scanning" ? "d8b-agent-btn--loading" : ""}`}
+                  onClick={handleSeo}
+                  disabled={seoState === "scanning"}
+                  type="button"
+                  title="Scan the generated site for SEO issues"
+                >
+                  {seoState === "scanning" ? "⏳ Scanning…" : "📊 SEO scan"}
+                </button>
+              </div>
+            )}
+
+            {/* SEO results panel */}
+            {showSeo && (
+              <div className="d8b-seo-panel">
+                {seoState === "scanning" && (
+                  <div className="d8b-seo-loading">Analysing SEO…</div>
+                )}
+                {seoState === "error" && (
+                  <div className="d8b-seo-loading" style={{ color: "rgba(255,100,100,0.8)" }}>Scan failed. Try again.</div>
+                )}
+                {seoState === "done" && seoData && (
+                  <>
+                    <div className="d8b-seo-score-row">
+                      <span className="d8b-seo-score" style={{ color: seoData.score >= 80 ? "rgba(56,248,166,0.9)" : seoData.score >= 60 ? "rgba(255,209,102,0.9)" : "rgba(255,100,100,0.85)" }}>
+                        {seoData.score}
+                      </span>
+                      <div>
+                        <div className="d8b-seo-grade" style={{ color: seoData.score >= 80 ? "rgba(56,248,166,0.75)" : seoData.score >= 60 ? "rgba(255,209,102,0.75)" : "rgba(255,100,100,0.75)" }}>
+                          Grade {seoData.grade}
+                        </div>
+                        <div className="d8b-seo-summary">{seoData.summary}</div>
+                      </div>
+                    </div>
+                    {(seoData.strengths ?? []).length > 0 && (
+                      <div className="d8b-seo-strengths">
+                        {seoData.strengths.slice(0, 3).map((s, i) => (
+                          <div key={i} className="d8b-seo-strength">✓ {s}</div>
+                        ))}
+                      </div>
+                    )}
+                    {(seoData.issues ?? []).length > 0 && (
+                      <div className="d8b-seo-issues">
+                        {seoData.issues.map((issue, i) => (
+                          <div key={i} className={`d8b-seo-issue d8b-seo-issue--${issue.severity}`}>
+                            <div className="d8b-seo-issue-msg">{issue.message}</div>
+                            <div className="d8b-seo-issue-fix">{issue.fix}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -1812,6 +1958,46 @@ function BuilderStyles() {
         background: linear-gradient(180deg, rgba(61,240,255,0.16), rgba(61,240,255,0.08));
       }
       .d8b-refine-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+      /* ── Agent row ── */
+      .d8b-agent-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .d8b-agent-btn {
+        padding: 9px 10px; border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.04);
+        color: rgba(255,255,255,0.60);
+        font-size: 12px; font-family: inherit; font-weight: 500;
+        cursor: pointer; transition: all 120ms ease;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .d8b-agent-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.18); }
+      .d8b-agent-btn--active { border-color: rgba(61,240,255,0.35); background: rgba(61,240,255,0.06); color: rgba(61,240,255,0.85); }
+      .d8b-agent-btn--loading { opacity: 0.6; cursor: not-allowed; }
+      .d8b-agent-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      /* ── SEO panel ── */
+      .d8b-seo-panel {
+        border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.02); padding: 14px;
+        display: flex; flex-direction: column; gap: 12px;
+      }
+      .d8b-seo-loading { font-size: 12px; color: rgba(255,255,255,0.45); text-align: center; padding: 8px 0; }
+      .d8b-seo-score-row { display: flex; align-items: center; gap: 12px; }
+      .d8b-seo-score { font-size: 36px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; flex-shrink: 0; }
+      .d8b-seo-grade { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 3px; }
+      .d8b-seo-summary { font-size: 11px; color: rgba(255,255,255,0.50); line-height: 1.5; }
+      .d8b-seo-strengths { display: flex; flex-direction: column; gap: 4px; }
+      .d8b-seo-strength { font-size: 11px; color: rgba(56,248,166,0.75); line-height: 1.5; }
+      .d8b-seo-issues { display: flex; flex-direction: column; gap: 8px; }
+      .d8b-seo-issue {
+        padding: 8px 10px; border-radius: 8px;
+        border-left: 2px solid rgba(255,255,255,0.15);
+      }
+      .d8b-seo-issue--critical { border-left-color: rgba(255,80,80,0.70); background: rgba(255,80,80,0.05); }
+      .d8b-seo-issue--warning  { border-left-color: rgba(255,180,50,0.70); background: rgba(255,180,50,0.05); }
+      .d8b-seo-issue--info     { border-left-color: rgba(61,240,255,0.40); background: rgba(61,240,255,0.04); }
+      .d8b-seo-issue-msg { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.80); margin-bottom: 3px; }
+      .d8b-seo-issue-fix { font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.5; }
 
       /* ── Mobile ── */
       @media (max-width: 768px) {
