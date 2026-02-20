@@ -233,29 +233,10 @@ export function RocketCockpit(props: { patchId: string }) {
         <DomainOnboardingPanel />
       </div>
 
-        <div>
-          <AgentRunsPanel />
-          <div style={{ height: 12 }} />
-          <VoiceConsole />
-          <div style={{ height: 12 }} />
-          <div className="card" style={{ padding: 14 }}>
-            <div className="kicker">quick actions</div>
-            <div className="list">
-              <div className="row">
-                <div><div className="t">Create Patch Capsule</div><div className="m">Bundle change + verification + rollback</div></div>
-                <span className="badge warn">CTRL</span>
-              </div>
-              <div className="row">
-                <div><div className="t">Run Agent Set</div><div className="m">SEO + Sitemap + Content pipeline</div></div>
-                <span className="badge hot">RUN</span>
-              </div>
-              <div className="row">
-                <div><div className="t">Domain Onboarding</div><div className="m">DNS verification + SSL provisioning</div></div>
-                <span className="badge">DNS</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Row 3 — Voice Console + Quick Actions */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 14 }}>
+        <VoiceConsole />
+        <QuickActionsPanel />
       </div>
     </Shell>
   );
