@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
+import { HomeSections } from "./HomeSections";
 
 // ─── Anonymous usage tracking (localStorage, 3 free generations) ──────────────
 
@@ -172,7 +173,19 @@ function SocialProof() {
   );
 }
 
+const GEN_STAGES = [
+  { threshold: 0,  label: "Parsing your brief",       sub: "Extracting structure, tone, and intent…" },
+  { threshold: 18, label: "Designing the layout",      sub: "Mapping sections, hierarchy, and flow…" },
+  { threshold: 38, label: "Crafting your content",     sub: "Writing headings, copy, and CTAs…" },
+  { threshold: 62, label: "Building components",       sub: "Assembling navigation, cards, and forms…" },
+  { threshold: 80, label: "Polishing the output",      sub: "SEO tags, metadata, and mobile layout…" },
+  { threshold: 96, label: "Wrapping up",               sub: "Final checks and clean code output…" },
+];
+
 function GeneratingAnimation({ progress }: { progress: number }) {
+  const stage = GEN_STAGES.slice().reverse().find(s => progress >= s.threshold) ?? GEN_STAGES[0];
+  const circ = 2 * Math.PI * 34;
+
   return (
     <div className="d8b-gen-anim">
       <div className="d8b-gen-ring">
@@ -181,16 +194,34 @@ function GeneratingAnimation({ progress }: { progress: number }) {
           <circle
             cx="40" cy="40" r="34"
             className="d8b-gen-arc"
-            strokeDasharray={`${2 * Math.PI * 34}`}
-            strokeDashoffset={`${2 * Math.PI * 34 * (1 - progress / 100)}`}
+            strokeDasharray={`${circ}`}
+            strokeDashoffset={`${circ * (1 - progress / 100)}`}
           />
         </svg>
         <span className="d8b-gen-pct">{Math.round(progress)}%</span>
       </div>
-      <div className="d8b-gen-label">
-        Building your site<Dots />
+
+      {/* Stage pills */}
+      <div className="d8b-gen-stages">
+        {GEN_STAGES.map((s, i) => {
+          const done = progress > s.threshold + 17;
+          const active = stage.label === s.label;
+          return (
+            <div
+              key={i}
+              className={`d8b-gen-stage-pill ${active ? "d8b-gen-stage-pill--active" : ""} ${done ? "d8b-gen-stage-pill--done" : ""}`}
+            >
+              <span className="d8b-gen-stage-check">{done ? "✓" : active ? "○" : "·"}</span>
+              <span>{s.label}</span>
+            </div>
+          );
+        })}
       </div>
-      <div className="d8b-gen-sub">AI is crafting your design in real time</div>
+
+      <div className="d8b-gen-label">
+        {stage.label}<Dots />
+      </div>
+      <div className="d8b-gen-sub">{stage.sub}</div>
     </div>
   );
 }
@@ -639,11 +670,15 @@ export function Builder() {
 
         {/* Hero */}
         <div className="d8h-hero">
-          <div className="d8h-eyebrow">✦ AI Website Builder</div>
-          <h1 className="d8h-title">What would you like to{" "}
-            <span className="d8h-title-accent">build?</span>
+          <div className="d8h-eyebrow">
+            <span className="d8h-eyebrow-dot" />
+            The world&apos;s fastest AI website builder
+          </div>
+          <h1 className="d8h-title">
+            One sentence.<br />
+            <span className="d8h-title-accent">A complete website.</span>
           </h1>
-          <p className="d8h-sub">Describe your business. Your site appears in seconds.</p>
+          <p className="d8h-sub">Describe your business. Watch a full, professional site appear in under 30 seconds — no templates, no drag and drop.</p>
 
           {/* Prompt row */}
           <div className="d8h-input-row">
@@ -731,6 +766,9 @@ export function Builder() {
             )}
           </div>
         </section>
+
+        {/* Enhanced homepage sections */}
+        <HomeSections />
 
         {/* Footer */}
         <footer className="d8h-footer">
@@ -1720,6 +1758,44 @@ function BuilderStyles() {
       .d8b-gen-label { font-size: 18px; font-weight: 600; color: #fff; }
       .d8b-gen-sub { font-size: 13px; color: rgba(255,255,255,0.4); }
 
+      /* ── Gen stage pills ── */
+      .d8b-gen-stages {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+        max-width: 280px;
+        margin: 4px 0 8px;
+      }
+      .d8b-gen-stage-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        font-size: 11px;
+        color: rgba(255,255,255,0.28);
+        transition: all 200ms ease;
+      }
+      .d8b-gen-stage-pill--active {
+        border-color: rgba(61,240,255,0.30);
+        background: rgba(61,240,255,0.07);
+        color: rgba(61,240,255,0.85);
+      }
+      .d8b-gen-stage-pill--done {
+        color: rgba(56,248,166,0.55);
+        border-color: rgba(56,248,166,0.15);
+        background: rgba(56,248,166,0.04);
+      }
+      .d8b-gen-stage-check {
+        font-size: 10px;
+        width: 14px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+
       /* ── Error screen ── */
       .d8b-error-screen {
         flex: 1;
@@ -2188,6 +2264,19 @@ function HomeStyles() {
         overflow-x: hidden;
       }
 
+      /* ── Subtle dot grid overlay ── */
+      .d8h-root::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background-image: radial-gradient(rgba(255,255,255,0.055) 1px, transparent 1px);
+        background-size: 28px 28px;
+        mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
+        -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
+      }
+
       /* ── Animated ambient background ── */
       .d8h-bg {
         position: fixed; inset: 0;
@@ -2312,37 +2401,50 @@ function HomeStyles() {
         position: relative; z-index: 1;
       }
       .d8h-eyebrow {
-        display: inline-flex; align-items: center; gap: 7px;
-        padding: 5px 16px; border-radius: 999px;
-        border: 1px solid rgba(61,240,255,0.25);
-        background: rgba(61,240,255,0.06);
-        color: rgba(61,240,255,0.80);
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 6px 18px; border-radius: 999px;
+        border: 1px solid rgba(61,240,255,0.22);
+        background: rgba(61,240,255,0.05);
+        color: rgba(61,240,255,0.75);
         font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
         text-transform: uppercase;
+        box-shadow: 0 0 24px rgba(61,240,255,0.06);
+      }
+      .d8h-eyebrow-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: rgba(61,240,255,0.80);
+        box-shadow: 0 0 8px rgba(61,240,255,0.60);
+        flex-shrink: 0;
+        animation: d8h-dot-pulse 2.5s ease-in-out infinite;
+      }
+      @keyframes d8h-dot-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
       }
       .d8h-title {
         margin: 0;
-        font-size: clamp(38px, 6vw, 66px);
+        font-size: clamp(42px, 6.5vw, 74px);
         font-weight: 800;
         color: #fff;
         letter-spacing: -0.04em;
         text-align: center;
-        line-height: 1.05;
+        line-height: 1.04;
       }
       .d8h-title-accent {
         background: linear-gradient(95deg, #3DF0FF 0%, #38F8A6 55%, #00D47A 100%);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
+        position: relative;
       }
       .d8h-sub {
         margin: 0;
-        font-size: 16px;
-        color: rgba(255,255,255,0.38);
+        font-size: 17px;
+        color: rgba(255,255,255,0.40);
         text-align: center;
         letter-spacing: -0.01em;
-        max-width: 480px;
-        line-height: 1.55;
+        max-width: 520px;
+        line-height: 1.60;
       }
 
       /* ── Input row ── */
