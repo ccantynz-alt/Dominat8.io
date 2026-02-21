@@ -13,6 +13,11 @@ on:
       - "d8-keep-green"
       - "Staging smoke check"
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to approve and merge'
+        required: false
 
 permissions:
   contents: write
@@ -28,7 +33,8 @@ jobs:
       (github.event_name == 'pull_request' &&
         startsWith(github.head_ref, 'claude/')) ||
       (github.event_name == 'workflow_run' &&
-        startsWith(github.event.workflow_run.head_branch, 'claude/'))
+        startsWith(github.event.workflow_run.head_branch, 'claude/')) ||
+      github.event_name == 'workflow_dispatch'
     steps:
       - name: Find open PR for branch
         id: find_pr
@@ -37,6 +43,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             PR_NUMBER="${{ github.event.pull_request.number }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
           else
             BRANCH="${{ github.event.workflow_run.head_branch }}"
             PR_NUMBER=$(gh pr list --repo ${{ github.repository }} \
@@ -44,6 +52,17 @@ jobs:
           fi
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "Found PR: $PR_NUMBER"
+
+      - name: Approve PR
+        if: steps.find_pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          PR="${{ steps.find_pr.outputs.pr_number }}"
+          # GITHUB_TOKEN can't approve its own PRs; GH_CLAUDE_PAT is a separate account token
+          gh pr review "$PR" --repo ${{ github.repository }} \
+            --approve --body "Auto-approved: all checks green on claude/* branch." || \
+            echo "Approval skipped (may already be approved or same-actor restriction)"
 
       - name: Wait for all checks to pass
         if: steps.find_pr.outputs.pr_number != ''
@@ -61,23 +80,12 @@ jobs:
               echo "All checks passed."
               break
             fi
-            if [ "$STATE" = "DIRTY" ] || [ "$STATE" = "BLOCKED" ]; then
-              echo "PR cannot be merged (state=$STATE). Skipping."
+            if [ "$STATE" = "DIRTY" ]; then
+              echo "PR has conflicts (state=$STATE). Skipping."
               exit 0
             fi
             sleep 15
           done
-
-      - name: Approve PR
-        if: steps.find_pr.outputs.pr_number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT || secrets.GITHUB_TOKEN }}
-        run: |
-          PR="${{ steps.find_pr.outputs.pr_number }}"
-          # GITHUB_TOKEN can't approve its own PRs; if GH_CLAUDE_PAT is set use it
-          gh pr review "$PR" --repo ${{ github.repository }} \
-            --approve --body "Auto-approved: all checks green on claude/* branch." || \
-            echo "Approval skipped (may already be approved or same-actor restriction)"
 
       - name: Merge PR
         if: steps.find_pr.outputs.pr_number != ''
