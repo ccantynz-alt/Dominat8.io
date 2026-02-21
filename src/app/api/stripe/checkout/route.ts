@@ -6,7 +6,7 @@ import { kv } from "@vercel/kv";
 export const runtime = "nodejs";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2023-10-16",
 });
 
 // Map plan names to Stripe Price IDs (set in env vars)
