@@ -211,7 +211,7 @@ function GeneratingAnimation({ progress }: { progress: number }) {
               key={i}
               className={`d8b-gen-stage-pill ${active ? "d8b-gen-stage-pill--active" : ""} ${done ? "d8b-gen-stage-pill--done" : ""}`}
             >
-              <span className="d8b-gen-stage-check">{done ? "✓" : active ? "·" : "·"}</span>
+              <span className="d8b-gen-stage-check">{done ? "✓" : active ? "○" : "·"}</span>
               <span>{s.label}</span>
             </div>
           );
