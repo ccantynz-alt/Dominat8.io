@@ -2,6 +2,19 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
+
+// ─── Anonymous usage tracking (localStorage, 3 free generations) ──────────────
+
+const ANON_KEY = "d8_anon_v1";
+const ANON_LIMIT = 3;
+
+function getAnonCount(): number {
+  try { return typeof window !== "undefined" ? parseInt(localStorage.getItem(ANON_KEY) ?? "0", 10) || 0 : 0; } catch { return 0; }
+}
+function incrementAnonCount(): void {
+  try { if (typeof window !== "undefined") localStorage.setItem(ANON_KEY, String(getAnonCount() + 1)); } catch { /* quota */ }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -294,6 +307,12 @@ export function Builder() {
     issues: { severity: string; category: string; message: string; fix: string }[];
     strengths: string[];
   } | null>(null);
+  const [errorCode, setErrorCode] = useState<"quota" | "auth" | "generic" | null>(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showAnonLimit, setShowAnonLimit] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+
+  const { isSignedIn } = useUser();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -313,17 +332,25 @@ export function Builder() {
   const searchParams = useSearchParams();
 
   // Pre-fill prompt from URL ?prompt= param (e.g. from /templates)
+  // Also detect ?payment=success return from Stripe
   useEffect(() => {
     const p = searchParams?.get("prompt");
     if (p && p.trim()) {
       setPrompt(p.trim());
-      // Remove param from URL without page reload
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("prompt");
-        window.history.replaceState({}, "", url.toString());
-      } catch { /* noop */ }
     }
+    const payment = searchParams?.get("payment");
+    const plan = searchParams?.get("plan");
+    if (payment === "success") {
+      setPaymentSuccess(plan ?? "pro");
+    }
+    // Clean params from URL
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("prompt");
+      url.searchParams.delete("payment");
+      url.searchParams.delete("plan");
+      window.history.replaceState({}, "", url.toString());
+    } catch { /* noop */ }
   }, [searchParams]);
 
   // Persist history
@@ -339,10 +366,20 @@ export function Builder() {
     const activePrompt = overridePrompt ?? prompt;
     if (!activePrompt.trim() || state === "generating") return;
 
+    // Anonymous limit check (client-side honesty gate)
+    if (!isSignedIn) {
+      if (getAnonCount() >= ANON_LIMIT) {
+        setShowAnonLimit(true);
+        return;
+      }
+    }
+
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
     setState("generating");
+    setErrorCode(null);
+    setErrorMsg("");
     setHtml("");
     setProgress(0);
     setActiveSite(null);
@@ -363,7 +400,19 @@ export function Builder() {
         signal: abortRef.current.signal,
       });
 
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      if (!res.ok) {
+        let code: "quota" | "auth" | "generic" = "generic";
+        let msg = `Error ${res.status}. Please try again.`;
+        try {
+          const errData = await res.json() as { error?: string; code?: string };
+          if (errData.error) msg = errData.error;
+          if (res.status === 429) code = "quota";
+          else if (res.status === 401) code = "auth";
+        } catch { /* no JSON body */ }
+        setErrorCode(code);
+        setErrorMsg(msg);
+        throw new Error(msg);
+      }
       if (!res.body) throw new Error("No response body");
 
       const reader = res.body.getReader();
@@ -398,15 +447,19 @@ export function Builder() {
       setSites((prev) => [site, ...prev]);
       setActiveSite(site);
       setState("done");
+      // Track anonymous usage client-side
+      if (!isSignedIn) incrementAnonCount();
     } catch (err: unknown) {
       clearInterval(progressTimer);
       if (err instanceof Error && err.name === "AbortError") {
         setState("idle");
       } else {
+        if (!errorCode) setErrorCode("generic");
+        if (!errorMsg) setErrorMsg("Something went wrong. Please try again.");
         setState("error");
       }
     }
-  }, [prompt, industry, vibe, state]);
+  }, [prompt, industry, vibe, state, isSignedIn]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -429,6 +482,9 @@ export function Builder() {
     setShowSeo(false);
     setSeoState("idle");
     setSeoData(null);
+    setErrorCode(null);
+    setErrorMsg("");
+    setShowAnonLimit(false);
   };
 
   const handleRefine = useCallback(() => {
@@ -544,6 +600,22 @@ export function Builder() {
       <div className="d8h-root">
         <HomeStyles />
 
+        {/* Ambient animated background */}
+        <div className="d8h-bg" aria-hidden="true">
+          <div className="d8h-bg-a" />
+          <div className="d8h-bg-b" />
+          <div className="d8h-bg-c" />
+        </div>
+
+        {/* Payment success banner */}
+        {paymentSuccess && (
+          <div className="d8h-payment-banner">
+            <span>🎉</span>
+            <span>Welcome to the <strong>{paymentSuccess}</strong> plan — your quota has been updated!</span>
+            <button type="button" className="d8h-payment-dismiss" onClick={() => setPaymentSuccess(null)}>✕</button>
+          </div>
+        )}
+
         {/* Header */}
         <header className="d8h-header">
           <div className="d8h-logo">
@@ -555,12 +627,22 @@ export function Builder() {
             <a href="/templates" className="d8h-nav-link">Templates</a>
             <a href="/gallery" className="d8h-nav-link">Gallery</a>
             <a href="/pricing" className="d8h-nav-link">Pricing</a>
+            {isSignedIn ? (
+              <UserButton afterSignOutUrl="/" />
+            ) : (
+              <SignInButton mode="redirect">
+                <button type="button" className="d8h-nav-signin">Sign in</button>
+              </SignInButton>
+            )}
           </nav>
         </header>
 
         {/* Hero */}
         <div className="d8h-hero">
-          <h1 className="d8h-title">What would you like to build?</h1>
+          <div className="d8h-eyebrow">✦ AI Website Builder</div>
+          <h1 className="d8h-title">What would you like to{" "}
+            <span className="d8h-title-accent">build?</span>
+          </h1>
           <p className="d8h-sub">Describe your business. Your site appears in seconds.</p>
 
           {/* Prompt row */}
@@ -687,6 +769,44 @@ export function Builder() {
             );
           })}
         </div>
+
+      {/* Anon limit modal — inside root so fixed positioning works correctly */}
+      {showAnonLimit && (
+        <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setShowAnonLimit(false); }}>
+          <div className="d8b-modal">
+            <div className="d8b-modal-header">
+              <div className="d8b-modal-title">You've used your 3 free generations</div>
+              <button className="d8b-modal-close" onClick={() => setShowAnonLimit(false)} type="button">✕</button>
+            </div>
+            <div className="d8b-modal-body">
+              <p className="d8b-modal-desc">Create a free account to keep building. No credit card required.</p>
+              <div className="d8b-deploy-options">
+                <a href="/sign-up" className="d8b-deploy-option" style={{ textDecoration: "none" }}>
+                  <span className="d8b-deploy-option-icon">✨</span>
+                  <div>
+                    <div className="d8b-deploy-option-title">Sign up free</div>
+                    <div className="d8b-deploy-option-sub">Free account · No card needed</div>
+                  </div>
+                </a>
+                <a href="/sign-in" className="d8b-deploy-option d8b-deploy-option--ghost" style={{ textDecoration: "none" }}>
+                  <span className="d8b-deploy-option-icon">→</span>
+                  <div>
+                    <div className="d8b-deploy-option-title">Sign in</div>
+                    <div className="d8b-deploy-option-sub">Already have an account</div>
+                  </div>
+                </a>
+                <a href="/pricing" className="d8b-deploy-option d8b-deploy-option--ghost" style={{ textDecoration: "none" }}>
+                  <span className="d8b-deploy-option-icon">⚡</span>
+                  <div>
+                    <div className="d8b-deploy-option-title">See all plans</div>
+                    <div className="d8b-deploy-option-sub">Starter $9/mo · 20 generations</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     );
   }
@@ -989,21 +1109,40 @@ export function Builder() {
           /* ── Error state ── */
           <div className="d8b-error-screen">
             <div className="d8b-error-content">
-              <div className="d8b-error-icon">⚠️</div>
-              <h2 className="d8b-error-title">Generation failed</h2>
-              <p className="d8b-error-message">
-                Something went wrong while building your site. Please try again.
-              </p>
-              <button
-                className="d8b-error-retry-btn"
-                onClick={() => {
-                  reset();
-                  generate();
-                }}
-                type="button"
-              >
-                🔄 Retry
-              </button>
+              {errorCode === "quota" ? (
+                <>
+                  <div className="d8b-error-icon">⚡</div>
+                  <h2 className="d8b-error-title">Monthly limit reached</h2>
+                  <p className="d8b-error-message">{errorMsg}</p>
+                  <div className="d8b-error-actions">
+                    <a href="/pricing" className="d8b-error-upgrade-btn">View plans →</a>
+                    <button className="d8b-error-retry-btn" onClick={reset} type="button">← Back</button>
+                  </div>
+                </>
+              ) : errorCode === "auth" ? (
+                <>
+                  <div className="d8b-error-icon">🔒</div>
+                  <h2 className="d8b-error-title">Sign in to continue</h2>
+                  <p className="d8b-error-message">Create a free account to generate websites.</p>
+                  <div className="d8b-error-actions">
+                    <a href="/sign-up" className="d8b-error-upgrade-btn">Sign up free →</a>
+                    <a href="/sign-in" className="d8b-error-retry-btn" style={{ textDecoration: "none" }}>Sign in</a>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="d8b-error-icon">⚠️</div>
+                  <h2 className="d8b-error-title">Generation failed</h2>
+                  <p className="d8b-error-message">{errorMsg || "Something went wrong. Please try again."}</p>
+                  <button
+                    className="d8b-error-retry-btn"
+                    onClick={() => { reset(); generate(); }}
+                    type="button"
+                  >
+                    🔄 Retry
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -1640,6 +1779,19 @@ function BuilderStyles() {
         transform: translateY(-1px);
       }
 
+      /* ── Error actions (quota/auth states) ── */
+      .d8b-error-actions {
+        display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center;
+      }
+      .d8b-error-upgrade-btn {
+        padding: 12px 24px; border-radius: 10px;
+        background: linear-gradient(135deg, #00C97A, #00B36B);
+        color: #fff; font-size: 14px; font-weight: 700;
+        text-decoration: none; cursor: pointer;
+        transition: all 140ms ease;
+      }
+      .d8b-error-upgrade-btn:hover { background: linear-gradient(135deg, #00DD8A, #00C47A); transform: translateY(-1px); }
+
       /* ── Dots animation ── */
       .d8b-dots { display: inline-flex; gap: 2px; margin-left: 4px; }
       .d8b-dots span {
@@ -2026,24 +2178,84 @@ function HomeStyles() {
       .d8h-root {
         min-height: 100vh;
         width: 100%;
-        background:
-          radial-gradient(900px 600px at 15% 10%, rgba(61,240,255,0.04), transparent 60%),
-          radial-gradient(700px 500px at 85% 5%, rgba(124,92,255,0.05), transparent 60%),
-          #06080e;
+        background: #06080e;
         color: #e9eef7;
         font-family: 'Outfit', 'Inter', system-ui, sans-serif;
         display: flex;
         flex-direction: column;
         padding-bottom: 100px;
+        position: relative;
+        overflow-x: hidden;
       }
+
+      /* ── Animated ambient background ── */
+      .d8h-bg {
+        position: fixed; inset: 0;
+        pointer-events: none; z-index: 0; overflow: hidden;
+      }
+      .d8h-bg-a {
+        position: absolute;
+        width: 800px; height: 600px;
+        top: -200px; left: -150px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(61,240,255,0.055) 0%, transparent 70%);
+        animation: d8h-drift-a 22s ease-in-out infinite;
+      }
+      .d8h-bg-b {
+        position: absolute;
+        width: 700px; height: 500px;
+        top: 100px; right: -200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0,201,122,0.045) 0%, transparent 70%);
+        animation: d8h-drift-b 28s ease-in-out infinite;
+      }
+      .d8h-bg-c {
+        position: absolute;
+        width: 500px; height: 400px;
+        bottom: -100px; left: 30%;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(124,92,255,0.025) 0%, transparent 70%);
+        animation: d8h-drift-a 35s ease-in-out infinite reverse;
+      }
+      @keyframes d8h-drift-a {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(60px, 40px) scale(1.05); }
+        66% { transform: translate(-40px, 60px) scale(0.97); }
+      }
+      @keyframes d8h-drift-b {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(-70px, -30px) scale(1.08); }
+        66% { transform: translate(50px, 50px) scale(0.95); }
+      }
+
+      /* ── Payment success banner ── */
+      .d8h-payment-banner {
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        padding: 11px 20px;
+        background: rgba(56,248,166,0.10);
+        border-bottom: 1px solid rgba(56,248,166,0.25);
+        font-size: 13px; color: rgba(56,248,166,0.90);
+        position: relative;
+      }
+      .d8h-payment-dismiss {
+        position: absolute; right: 14px;
+        background: none; border: none; cursor: pointer;
+        color: rgba(56,248,166,0.60); font-size: 14px; line-height: 1;
+        padding: 0; font-family: inherit;
+      }
+      .d8h-payment-dismiss:hover { color: rgba(56,248,166,0.90); }
 
       /* ── Header ── */
       .d8h-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 18px 28px;
+        padding: 16px 28px;
         border-bottom: 1px solid rgba(255,255,255,0.06);
+        position: sticky; top: 0; z-index: 50;
+        background: rgba(6,8,14,0.75);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
       }
       .d8h-logo { display: flex; align-items: center; gap: 7px; }
       .d8h-logo-mark {
@@ -2052,13 +2264,32 @@ function HomeStyles() {
       }
       .d8h-logo-dot {
         width: 5px; height: 5px; border-radius: 50%;
-        background: rgba(61,240,255,0.7);
+        background: rgba(61,240,255,0.8);
+        box-shadow: 0 0 6px rgba(61,240,255,0.5);
+        animation: d8h-dot-pulse 3s ease-in-out infinite;
+      }
+      @keyframes d8h-dot-pulse {
+        0%, 100% { opacity: 0.75; box-shadow: 0 0 4px rgba(61,240,255,0.4); }
+        50% { opacity: 1; box-shadow: 0 0 10px rgba(61,240,255,0.75); }
       }
       .d8h-logo-text {
         font-size: 13px; font-weight: 500;
         color: rgba(255,255,255,0.45); letter-spacing: 0.01em;
       }
-      .d8h-nav { display: flex; gap: 6px; }
+      .d8h-nav { display: flex; gap: 6px; align-items: center; }
+      .d8h-nav-signin {
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(0,201,122,0.35);
+        background: rgba(0,201,122,0.10);
+        color: rgba(0,220,140,0.90);
+        font-size: 12px; font-weight: 600; font-family: inherit;
+        cursor: pointer; transition: all 140ms ease;
+      }
+      .d8h-nav-signin:hover {
+        background: rgba(0,201,122,0.18);
+        border-color: rgba(0,201,122,0.55);
+      }
       .d8h-nav-link {
         padding: 6px 14px;
         border-radius: 999px;
@@ -2076,24 +2307,42 @@ function HomeStyles() {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 64px 24px 40px;
-        gap: 20px;
+        padding: 72px 24px 40px;
+        gap: 22px;
+        position: relative; z-index: 1;
+      }
+      .d8h-eyebrow {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 5px 16px; border-radius: 999px;
+        border: 1px solid rgba(61,240,255,0.25);
+        background: rgba(61,240,255,0.06);
+        color: rgba(61,240,255,0.80);
+        font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+        text-transform: uppercase;
       }
       .d8h-title {
         margin: 0;
-        font-size: clamp(36px, 6vw, 62px);
+        font-size: clamp(38px, 6vw, 66px);
         font-weight: 800;
         color: #fff;
         letter-spacing: -0.04em;
         text-align: center;
         line-height: 1.05;
       }
+      .d8h-title-accent {
+        background: linear-gradient(95deg, #3DF0FF 0%, #38F8A6 55%, #00D47A 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
       .d8h-sub {
         margin: 0;
         font-size: 16px;
-        color: rgba(255,255,255,0.40);
+        color: rgba(255,255,255,0.38);
         text-align: center;
         letter-spacing: -0.01em;
+        max-width: 480px;
+        line-height: 1.55;
       }
 
       /* ── Input row ── */
@@ -2109,7 +2358,8 @@ function HomeStyles() {
         transition: border-color 140ms ease;
       }
       .d8h-input-row:focus-within {
-        border-color: rgba(255,255,255,0.22);
+        border-color: rgba(61,240,255,0.30);
+        box-shadow: 0 0 0 3px rgba(61,240,255,0.07), 0 6px 24px rgba(0,0,0,0.35);
       }
       .d8h-input-icon { font-size: 18px; flex-shrink: 0; }
       .d8h-input {
@@ -2201,6 +2451,7 @@ function HomeStyles() {
         width: min(800px, 100%);
         margin: 0 auto;
         padding: 0 24px;
+        position: relative; z-index: 1;
       }
       .d8h-deploys-header {
         display: flex; align-items: center; justify-content: space-between;
@@ -2231,9 +2482,14 @@ function HomeStyles() {
         border-radius: 14px;
         border: 1px solid rgba(255,255,255,0.08);
         background: rgba(255,255,255,0.03);
-        transition: background 140ms ease;
+        transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.20);
       }
-      .d8h-dep-row:hover { background: rgba(255,255,255,0.05); }
+      .d8h-dep-row:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.12);
+        box-shadow: 0 4px 18px rgba(0,0,0,0.30);
+      }
       .d8h-dep-icon { font-size: 18px; flex-shrink: 0; }
       .d8h-dep-info { flex: 1; min-width: 0; }
       .d8h-dep-domain {
@@ -2278,10 +2534,13 @@ function HomeStyles() {
         padding: 8px 10px;
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(8,10,18,0.80);
-        backdrop-filter: blur(16px);
+        background: rgba(8,10,18,0.85);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
         z-index: 100;
-        box-shadow: 0 8px 40px rgba(0,0,0,0.55);
+        box-shadow:
+          0 8px 40px rgba(0,0,0,0.60),
+          0 1px 0 rgba(255,255,255,0.08) inset;
       }
       .d8h-dock-btn {
         display: flex; flex-direction: column; align-items: center;

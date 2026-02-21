@@ -1,1 +1,40 @@
-<installed earlier>
+name: D8 Ops Agent — Prod Guard
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: d8-ops-prod-guard
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Run ops guard agent
+        env:
+          OPS_BASE_URL: ${{ vars.OPS_BASE_URL || 'https://www.dominat8.com' }}
+          OPS_DOMAINS: ${{ vars.OPS_DOMAINS || 'dominat8.com,www.dominat8.com' }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+        run: node scripts/ops/ops-guard-agent.mjs

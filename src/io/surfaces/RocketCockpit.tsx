@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Shell } from "../ui/Shell";
 import AgentRunsPanel from "../widgets/AgentRunsPanel";
+import { VoiceConsole } from "../widgets/VoiceConsole";
 
 // ─── Patch Capsule Panel ───────────────────────────────────────────────────────
 
@@ -232,8 +233,9 @@ export function RocketCockpit(props: { patchId: string }) {
         <DomainOnboardingPanel />
       </div>
 
-      {/* Row 3 */}
-      <div style={{ marginTop: 14 }}>
+      {/* Row 3 — Voice Console + Quick Actions */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 14 }}>
+        <VoiceConsole />
         <QuickActionsPanel />
       </div>
     </Shell>
