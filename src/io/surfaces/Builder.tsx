@@ -302,6 +302,12 @@ export function Builder() {
   const startRef = useRef<number>(0);
   const progressRef = useRef<number>(0);
 
+  // Abort any in-flight generation when the component unmounts
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
   const placeholder = useTypewriter(EXAMPLE_PROMPTS);
   const { deployments, loaded } = useDeployments();
   const searchParams = useSearchParams();
@@ -364,11 +370,15 @@ export function Builder() {
       const decoder = new TextDecoder();
       let accumulated = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        setHtml(accumulated);
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulated += decoder.decode(value, { stream: true });
+          setHtml(accumulated);
+        }
+      } finally {
+        reader.releaseLock();
       }
 
       clearInterval(progressTimer);
