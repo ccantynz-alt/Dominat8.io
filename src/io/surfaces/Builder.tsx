@@ -600,6 +600,13 @@ export function Builder() {
       <div className="d8h-root">
         <HomeStyles />
 
+        {/* Ambient animated background */}
+        <div className="d8h-bg" aria-hidden="true">
+          <div className="d8h-bg-a" />
+          <div className="d8h-bg-b" />
+          <div className="d8h-bg-c" />
+        </div>
+
         {/* Payment success banner */}
         {paymentSuccess && (
           <div className="d8h-payment-banner">
@@ -632,7 +639,10 @@ export function Builder() {
 
         {/* Hero */}
         <div className="d8h-hero">
-          <h1 className="d8h-title">What would you like to build?</h1>
+          <div className="d8h-eyebrow">✦ AI Website Builder</div>
+          <h1 className="d8h-title">What would you like to{" "}
+            <span className="d8h-title-accent">build?</span>
+          </h1>
           <p className="d8h-sub">Describe your business. Your site appears in seconds.</p>
 
           {/* Prompt row */}
@@ -2168,15 +2178,54 @@ function HomeStyles() {
       .d8h-root {
         min-height: 100vh;
         width: 100%;
-        background:
-          radial-gradient(900px 600px at 15% 10%, rgba(61,240,255,0.04), transparent 60%),
-          radial-gradient(700px 500px at 85% 5%, rgba(124,92,255,0.05), transparent 60%),
-          #06080e;
+        background: #06080e;
         color: #e9eef7;
         font-family: 'Outfit', 'Inter', system-ui, sans-serif;
         display: flex;
         flex-direction: column;
         padding-bottom: 100px;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* ── Animated ambient background ── */
+      .d8h-bg {
+        position: fixed; inset: 0;
+        pointer-events: none; z-index: 0; overflow: hidden;
+      }
+      .d8h-bg-a {
+        position: absolute;
+        width: 800px; height: 600px;
+        top: -200px; left: -150px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(61,240,255,0.055) 0%, transparent 70%);
+        animation: d8h-drift-a 22s ease-in-out infinite;
+      }
+      .d8h-bg-b {
+        position: absolute;
+        width: 700px; height: 500px;
+        top: 100px; right: -200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0,201,122,0.045) 0%, transparent 70%);
+        animation: d8h-drift-b 28s ease-in-out infinite;
+      }
+      .d8h-bg-c {
+        position: absolute;
+        width: 500px; height: 400px;
+        bottom: -100px; left: 30%;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(124,92,255,0.025) 0%, transparent 70%);
+        animation: d8h-drift-a 35s ease-in-out infinite reverse;
+      }
+      @keyframes d8h-drift-a {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(60px, 40px) scale(1.05); }
+        66% { transform: translate(-40px, 60px) scale(0.97); }
+      }
+      @keyframes d8h-drift-b {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(-70px, -30px) scale(1.08); }
+        66% { transform: translate(50px, 50px) scale(0.95); }
       }
 
       /* ── Payment success banner ── */
@@ -2201,8 +2250,12 @@ function HomeStyles() {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 18px 28px;
+        padding: 16px 28px;
         border-bottom: 1px solid rgba(255,255,255,0.06);
+        position: sticky; top: 0; z-index: 50;
+        background: rgba(6,8,14,0.75);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
       }
       .d8h-logo { display: flex; align-items: center; gap: 7px; }
       .d8h-logo-mark {
@@ -2211,7 +2264,13 @@ function HomeStyles() {
       }
       .d8h-logo-dot {
         width: 5px; height: 5px; border-radius: 50%;
-        background: rgba(61,240,255,0.7);
+        background: rgba(61,240,255,0.8);
+        box-shadow: 0 0 6px rgba(61,240,255,0.5);
+        animation: d8h-dot-pulse 3s ease-in-out infinite;
+      }
+      @keyframes d8h-dot-pulse {
+        0%, 100% { opacity: 0.75; box-shadow: 0 0 4px rgba(61,240,255,0.4); }
+        50% { opacity: 1; box-shadow: 0 0 10px rgba(61,240,255,0.75); }
       }
       .d8h-logo-text {
         font-size: 13px; font-weight: 500;
@@ -2248,24 +2307,42 @@ function HomeStyles() {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 64px 24px 40px;
-        gap: 20px;
+        padding: 72px 24px 40px;
+        gap: 22px;
+        position: relative; z-index: 1;
+      }
+      .d8h-eyebrow {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 5px 16px; border-radius: 999px;
+        border: 1px solid rgba(61,240,255,0.25);
+        background: rgba(61,240,255,0.06);
+        color: rgba(61,240,255,0.80);
+        font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+        text-transform: uppercase;
       }
       .d8h-title {
         margin: 0;
-        font-size: clamp(36px, 6vw, 62px);
+        font-size: clamp(38px, 6vw, 66px);
         font-weight: 800;
         color: #fff;
         letter-spacing: -0.04em;
         text-align: center;
         line-height: 1.05;
       }
+      .d8h-title-accent {
+        background: linear-gradient(95deg, #3DF0FF 0%, #38F8A6 55%, #00D47A 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
       .d8h-sub {
         margin: 0;
         font-size: 16px;
-        color: rgba(255,255,255,0.40);
+        color: rgba(255,255,255,0.38);
         text-align: center;
         letter-spacing: -0.01em;
+        max-width: 480px;
+        line-height: 1.55;
       }
 
       /* ── Input row ── */
@@ -2281,7 +2358,8 @@ function HomeStyles() {
         transition: border-color 140ms ease;
       }
       .d8h-input-row:focus-within {
-        border-color: rgba(255,255,255,0.22);
+        border-color: rgba(61,240,255,0.30);
+        box-shadow: 0 0 0 3px rgba(61,240,255,0.07), 0 6px 24px rgba(0,0,0,0.35);
       }
       .d8h-input-icon { font-size: 18px; flex-shrink: 0; }
       .d8h-input {
@@ -2373,6 +2451,7 @@ function HomeStyles() {
         width: min(800px, 100%);
         margin: 0 auto;
         padding: 0 24px;
+        position: relative; z-index: 1;
       }
       .d8h-deploys-header {
         display: flex; align-items: center; justify-content: space-between;
@@ -2403,9 +2482,14 @@ function HomeStyles() {
         border-radius: 14px;
         border: 1px solid rgba(255,255,255,0.08);
         background: rgba(255,255,255,0.03);
-        transition: background 140ms ease;
+        transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.20);
       }
-      .d8h-dep-row:hover { background: rgba(255,255,255,0.05); }
+      .d8h-dep-row:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.12);
+        box-shadow: 0 4px 18px rgba(0,0,0,0.30);
+      }
       .d8h-dep-icon { font-size: 18px; flex-shrink: 0; }
       .d8h-dep-info { flex: 1; min-width: 0; }
       .d8h-dep-domain {
@@ -2450,10 +2534,13 @@ function HomeStyles() {
         padding: 8px 10px;
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(8,10,18,0.80);
-        backdrop-filter: blur(16px);
+        background: rgba(8,10,18,0.85);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
         z-index: 100;
-        box-shadow: 0 8px 40px rgba(0,0,0,0.55);
+        box-shadow:
+          0 8px 40px rgba(0,0,0,0.60),
+          0 1px 0 rgba(255,255,255,0.08) inset;
       }
       .d8h-dock-btn {
         display: flex; flex-direction: column; align-items: center;
