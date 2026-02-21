@@ -2,6 +2,19 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
+
+// ─── Anonymous usage tracking (localStorage, 3 free generations) ──────────────
+
+const ANON_KEY = "d8_anon_v1";
+const ANON_LIMIT = 3;
+
+function getAnonCount(): number {
+  try { return parseInt(localStorage.getItem(ANON_KEY) ?? "0", 10) || 0; } catch { return 0; }
+}
+function incrementAnonCount(): void {
+  try { localStorage.setItem(ANON_KEY, String(getAnonCount() + 1)); } catch { /* quota */ }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -294,6 +307,12 @@ export function Builder() {
     issues: { severity: string; category: string; message: string; fix: string }[];
     strengths: string[];
   } | null>(null);
+  const [errorCode, setErrorCode] = useState<"quota" | "auth" | "generic" | null>(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showAnonLimit, setShowAnonLimit] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+
+  const { isSignedIn } = useUser();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -313,17 +332,25 @@ export function Builder() {
   const searchParams = useSearchParams();
 
   // Pre-fill prompt from URL ?prompt= param (e.g. from /templates)
+  // Also detect ?payment=success return from Stripe
   useEffect(() => {
     const p = searchParams?.get("prompt");
     if (p && p.trim()) {
       setPrompt(p.trim());
-      // Remove param from URL without page reload
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("prompt");
-        window.history.replaceState({}, "", url.toString());
-      } catch { /* noop */ }
     }
+    const payment = searchParams?.get("payment");
+    const plan = searchParams?.get("plan");
+    if (payment === "success") {
+      setPaymentSuccess(plan ?? "pro");
+    }
+    // Clean params from URL
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("prompt");
+      url.searchParams.delete("payment");
+      url.searchParams.delete("plan");
+      window.history.replaceState({}, "", url.toString());
+    } catch { /* noop */ }
   }, [searchParams]);
 
   // Persist history
@@ -339,10 +366,20 @@ export function Builder() {
     const activePrompt = overridePrompt ?? prompt;
     if (!activePrompt.trim() || state === "generating") return;
 
+    // Anonymous limit check (client-side honesty gate)
+    if (!isSignedIn) {
+      if (getAnonCount() >= ANON_LIMIT) {
+        setShowAnonLimit(true);
+        return;
+      }
+    }
+
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
     setState("generating");
+    setErrorCode(null);
+    setErrorMsg("");
     setHtml("");
     setProgress(0);
     setActiveSite(null);
@@ -363,7 +400,19 @@ export function Builder() {
         signal: abortRef.current.signal,
       });
 
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      if (!res.ok) {
+        let code: "quota" | "auth" | "generic" = "generic";
+        let msg = `Error ${res.status}. Please try again.`;
+        try {
+          const errData = await res.json() as { error?: string; code?: string };
+          if (errData.error) msg = errData.error;
+          if (res.status === 429) code = "quota";
+          else if (res.status === 401) code = "auth";
+        } catch { /* no JSON body */ }
+        setErrorCode(code);
+        setErrorMsg(msg);
+        throw new Error(msg);
+      }
       if (!res.body) throw new Error("No response body");
 
       const reader = res.body.getReader();
@@ -398,15 +447,19 @@ export function Builder() {
       setSites((prev) => [site, ...prev]);
       setActiveSite(site);
       setState("done");
+      // Track anonymous usage client-side
+      if (!isSignedIn) incrementAnonCount();
     } catch (err: unknown) {
       clearInterval(progressTimer);
       if (err instanceof Error && err.name === "AbortError") {
         setState("idle");
       } else {
+        if (!errorCode) setErrorCode("generic");
+        if (!errorMsg) setErrorMsg("Something went wrong. Please try again.");
         setState("error");
       }
     }
-  }, [prompt, industry, vibe, state]);
+  }, [prompt, industry, vibe, state, isSignedIn, errorCode, errorMsg]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -429,6 +482,9 @@ export function Builder() {
     setShowSeo(false);
     setSeoState("idle");
     setSeoData(null);
+    setErrorCode(null);
+    setErrorMsg("");
+    setShowAnonLimit(false);
   };
 
   const handleRefine = useCallback(() => {
@@ -544,6 +600,15 @@ export function Builder() {
       <div className="d8h-root">
         <HomeStyles />
 
+        {/* Payment success banner */}
+        {paymentSuccess && (
+          <div className="d8h-payment-banner">
+            <span>🎉</span>
+            <span>Welcome to the <strong>{paymentSuccess}</strong> plan — your quota has been updated!</span>
+            <button type="button" className="d8h-payment-dismiss" onClick={() => setPaymentSuccess(null)}>✕</button>
+          </div>
+        )}
+
         {/* Header */}
         <header className="d8h-header">
           <div className="d8h-logo">
@@ -555,6 +620,13 @@ export function Builder() {
             <a href="/templates" className="d8h-nav-link">Templates</a>
             <a href="/gallery" className="d8h-nav-link">Gallery</a>
             <a href="/pricing" className="d8h-nav-link">Pricing</a>
+            {isSignedIn ? (
+              <UserButton afterSignOutUrl="/" />
+            ) : (
+              <SignInButton mode="redirect">
+                <button type="button" className="d8h-nav-signin">Sign in</button>
+              </SignInButton>
+            )}
           </nav>
         </header>
 
@@ -687,6 +759,44 @@ export function Builder() {
             );
           })}
         </div>
+
+      {/* Anon limit modal — inside root so fixed positioning works correctly */}
+      {showAnonLimit && (
+        <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setShowAnonLimit(false); }}>
+          <div className="d8b-modal">
+            <div className="d8b-modal-header">
+              <div className="d8b-modal-title">You've used your 3 free generations</div>
+              <button className="d8b-modal-close" onClick={() => setShowAnonLimit(false)} type="button">✕</button>
+            </div>
+            <div className="d8b-modal-body">
+              <p className="d8b-modal-desc">Create a free account to keep building. No credit card required.</p>
+              <div className="d8b-deploy-options">
+                <a href="/sign-up" className="d8b-deploy-option" style={{ textDecoration: "none" }}>
+                  <span className="d8b-deploy-option-icon">✨</span>
+                  <div>
+                    <div className="d8b-deploy-option-title">Sign up free</div>
+                    <div className="d8b-deploy-option-sub">Free account · No card needed</div>
+                  </div>
+                </a>
+                <a href="/sign-in" className="d8b-deploy-option d8b-deploy-option--ghost" style={{ textDecoration: "none" }}>
+                  <span className="d8b-deploy-option-icon">→</span>
+                  <div>
+                    <div className="d8b-deploy-option-title">Sign in</div>
+                    <div className="d8b-deploy-option-sub">Already have an account</div>
+                  </div>
+                </a>
+                <a href="/pricing" className="d8b-deploy-option d8b-deploy-option--ghost" style={{ textDecoration: "none" }}>
+                  <span className="d8b-deploy-option-icon">⚡</span>
+                  <div>
+                    <div className="d8b-deploy-option-title">See all plans</div>
+                    <div className="d8b-deploy-option-sub">Starter $9/mo · 20 generations</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     );
   }
@@ -989,21 +1099,40 @@ export function Builder() {
           /* ── Error state ── */
           <div className="d8b-error-screen">
             <div className="d8b-error-content">
-              <div className="d8b-error-icon">⚠️</div>
-              <h2 className="d8b-error-title">Generation failed</h2>
-              <p className="d8b-error-message">
-                Something went wrong while building your site. Please try again.
-              </p>
-              <button
-                className="d8b-error-retry-btn"
-                onClick={() => {
-                  reset();
-                  generate();
-                }}
-                type="button"
-              >
-                🔄 Retry
-              </button>
+              {errorCode === "quota" ? (
+                <>
+                  <div className="d8b-error-icon">⚡</div>
+                  <h2 className="d8b-error-title">Monthly limit reached</h2>
+                  <p className="d8b-error-message">{errorMsg}</p>
+                  <div className="d8b-error-actions">
+                    <a href="/pricing" className="d8b-error-upgrade-btn">View plans →</a>
+                    <button className="d8b-error-retry-btn" onClick={reset} type="button">← Back</button>
+                  </div>
+                </>
+              ) : errorCode === "auth" ? (
+                <>
+                  <div className="d8b-error-icon">🔒</div>
+                  <h2 className="d8b-error-title">Sign in to continue</h2>
+                  <p className="d8b-error-message">Create a free account to generate websites.</p>
+                  <div className="d8b-error-actions">
+                    <a href="/sign-up" className="d8b-error-upgrade-btn">Sign up free →</a>
+                    <a href="/sign-in" className="d8b-error-retry-btn" style={{ textDecoration: "none" }}>Sign in</a>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="d8b-error-icon">⚠️</div>
+                  <h2 className="d8b-error-title">Generation failed</h2>
+                  <p className="d8b-error-message">{errorMsg || "Something went wrong. Please try again."}</p>
+                  <button
+                    className="d8b-error-retry-btn"
+                    onClick={() => { reset(); generate(); }}
+                    type="button"
+                  >
+                    🔄 Retry
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -1640,6 +1769,19 @@ function BuilderStyles() {
         transform: translateY(-1px);
       }
 
+      /* ── Error actions (quota/auth states) ── */
+      .d8b-error-actions {
+        display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center;
+      }
+      .d8b-error-upgrade-btn {
+        padding: 12px 24px; border-radius: 10px;
+        background: linear-gradient(135deg, #00C97A, #00B36B);
+        color: #fff; font-size: 14px; font-weight: 700;
+        text-decoration: none; cursor: pointer;
+        transition: all 140ms ease;
+      }
+      .d8b-error-upgrade-btn:hover { background: linear-gradient(135deg, #00DD8A, #00C47A); transform: translateY(-1px); }
+
       /* ── Dots animation ── */
       .d8b-dots { display: inline-flex; gap: 2px; margin-left: 4px; }
       .d8b-dots span {
@@ -2037,6 +2179,23 @@ function HomeStyles() {
         padding-bottom: 100px;
       }
 
+      /* ── Payment success banner ── */
+      .d8h-payment-banner {
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        padding: 11px 20px;
+        background: rgba(56,248,166,0.10);
+        border-bottom: 1px solid rgba(56,248,166,0.25);
+        font-size: 13px; color: rgba(56,248,166,0.90);
+        position: relative;
+      }
+      .d8h-payment-dismiss {
+        position: absolute; right: 14px;
+        background: none; border: none; cursor: pointer;
+        color: rgba(56,248,166,0.60); font-size: 14px; line-height: 1;
+        padding: 0; font-family: inherit;
+      }
+      .d8h-payment-dismiss:hover { color: rgba(56,248,166,0.90); }
+
       /* ── Header ── */
       .d8h-header {
         display: flex;
@@ -2058,7 +2217,20 @@ function HomeStyles() {
         font-size: 13px; font-weight: 500;
         color: rgba(255,255,255,0.45); letter-spacing: 0.01em;
       }
-      .d8h-nav { display: flex; gap: 6px; }
+      .d8h-nav { display: flex; gap: 6px; align-items: center; }
+      .d8h-nav-signin {
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(0,201,122,0.35);
+        background: rgba(0,201,122,0.10);
+        color: rgba(0,220,140,0.90);
+        font-size: 12px; font-weight: 600; font-family: inherit;
+        cursor: pointer; transition: all 140ms ease;
+      }
+      .d8h-nav-signin:hover {
+        background: rgba(0,201,122,0.18);
+        border-color: rgba(0,201,122,0.55);
+      }
       .d8h-nav-link {
         padding: 6px 14px;
         border-radius: 999px;
