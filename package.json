@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^5.7.0",
+    "@react-three/drei": "^8.20.2",
+    "@react-three/fiber": "^8.18.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.2.0",
     "@types/react": "^19.2.10",
@@ -24,6 +26,7 @@
     "@vercel/kv": "^2.0.0",
     "adm-zip": "^0.5.10",
     "autoprefixer": "^10.4.24",
+    "framer-motion": "^12.34.3",
     "next": "14.2.5",
     "openai": "^4.0.0",
     "postcss": "^8.5.6",
