@@ -1,0 +1,148 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import GoldFogPageLayout from "@/components/GoldFogPageLayout";
+
+export default function DomainPage() {
+  const [domain, setDomain] = useState("");
+  const [siteId, setSiteId] = useState("");
+  const [mySites, setMySites] = useState<{ id: string; desc: string }[]>([]);
+  const [step, setStep] = useState<"idle" | "challenge" | "verifying" | "verified">("idle");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/tv/deployments", { cache: "no-store" });
+        const data = await res.json();
+        if (alive && data.deployments?.length) {
+          setMySites(
+            data.deployments.map((d: { domain: string; desc: string }) => {
+              const id = d.domain.split("/s/")[1]?.split("?")[0] ?? "";
+              return { id, desc: d.desc || id };
+            })
+          );
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const d = domain.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0];
+
+  async function requestChallenge() {
+    if (!d || !siteId.trim()) {
+      setError("Enter domain and site ID (e.g. from a share link: /s/abc123 → abc123)");
+      return;
+    }
+    setError("");
+    setMessage("");
+    try {
+      const res = await fetch("/api/domains/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: d, siteId: siteId.trim() }),
+      });
+      const data = await res.json();
+      if (data.ok && data.instructions) {
+        setMessage(data.instructions);
+        setStep("challenge");
+      } else {
+        setError(data.error || "Failed to create challenge");
+      }
+    } catch {
+      setError("Network error");
+    }
+  }
+
+  async function verify() {
+    if (!d || !siteId.trim()) return;
+    setError("");
+    setStep("verifying");
+    try {
+      const res = await fetch("/api/domains/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: d, siteId: siteId.trim() }),
+      });
+      const data = await res.json();
+      if (data.verified) {
+        setMessage(`Verified. Add CNAME: ${d} → cname.vercel-dns.com (or your host).`);
+        setStep("verified");
+      } else {
+        setError(data.error || "Verification failed. DNS may take a few minutes.");
+        setStep("challenge");
+      }
+    } catch {
+      setError("Network error");
+      setStep("challenge");
+    }
+  }
+
+  return (
+    <GoldFogPageLayout title="Domain">
+      <div className="gold-fog-card">
+        <p className="gold-fog-muted" style={{ marginBottom: 20 }}>
+          Add a custom domain and verify ownership with a TXT record. Then point your domain to Dominat8.
+        </p>
+        <div style={{ marginBottom: 16 }}>
+          <label className="gold-fog-label">Domain</label>
+          <input
+            className="gold-fog-input"
+            type="text"
+            placeholder="mysite.com"
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+          />
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <label className="gold-fog-label">Site</label>
+          {mySites.length > 0 ? (
+            <select
+              className="gold-fog-input"
+              value={siteId}
+              onChange={(e) => setSiteId(e.target.value)}
+              style={{ width: "100%", cursor: "pointer" }}
+            >
+              <option value="">Select a site…</option>
+              {mySites.map((s) => (
+                <option key={s.id} value={s.id}>{s.desc.slice(0, 50)} — {s.id}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className="gold-fog-input"
+              type="text"
+              placeholder="Site ID from share link /s/xxxxx"
+              value={siteId}
+              onChange={(e) => setSiteId(e.target.value)}
+            />
+          )}
+        </div>
+        {step === "idle" && (
+          <button type="button" className="gold-fog-btn" onClick={requestChallenge}>
+            Get verification record
+          </button>
+        )}
+        {(step === "challenge" || step === "verifying") && (
+          <>
+            <div style={{ padding: 14, background: "rgba(0,0,0,0.2)", borderRadius: 8, marginBottom: 16, fontFamily: "ui-monospace, monospace", fontSize: 13 }}>
+              {message}
+            </div>
+            <button type="button" className="gold-fog-btn" onClick={verify} disabled={step === "verifying"}>
+              {step === "verifying" ? "Checking…" : "Verify DNS"}
+            </button>
+          </>
+        )}
+        {step === "verified" && (
+          <div style={{ padding: 14, background: "rgba(56,248,166,0.08)", borderRadius: 8, color: "rgba(56,248,166,0.9)" }}>
+            {message}
+          </div>
+        )}
+        {error && <p style={{ color: "rgba(255,100,100,0.9)", marginTop: 12, fontSize: 14 }}>{error}</p>}
+      </div>
+    </GoldFogPageLayout>
+  );
+}

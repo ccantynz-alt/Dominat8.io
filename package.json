@@ -12,7 +12,9 @@
     "ci:build": "npm run build",
     "ci:protected": "node scripts/protected-paths-check.mjs",
     "heal": "node scripts/heal.mjs",
-    "heal:build": "node scripts/heal.mjs && npm run build"
+    "heal:build": "node scripts/heal.mjs && npm run build",
+    "overnight": "node scripts/overnight-run.mjs",
+    "auto-improve": "node scripts/auto-improve.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.7.0",

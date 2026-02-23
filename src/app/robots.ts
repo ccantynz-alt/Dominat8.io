@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/templates", "/gallery", "/pricing"],
-        disallow: ["/api/", "/io/", "/tv/"],
+        allow: ["/", "/templates", "/gallery", "/pricing", "/about", "/privacy", "/terms"],
+        disallow: ["/api/", "/io/", "/cockpit/", "/tv/", "/sign-in", "/sign-up"],
       },
     ],
     sitemap: "https://dominat8.io/sitemap.xml",

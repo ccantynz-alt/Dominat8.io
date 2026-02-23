@@ -1,13 +1,13 @@
-﻿// src/lib/marketing/copy.ts
+// src/lib/marketing/copy.ts
 export const BRAND = {
   name: "Dominat8",
-  domain: "dominat8.com",
-  url: "https://www.dominat8.com",
-  tagline: "AI website automation builder",
+  domain: "dominat8.io",
+  url: "https://dominat8.io",
+  tagline: "The AI website builder that ships. Describe it. We build it. You publish.",
 };
 
 export const CTA = {
-  primary: { label: "Generate my site", href: "/preview/marketing" },
+  primary: { label: "Build my site", href: "/" },
   secondary: { label: "View templates", href: "/templates" },
   tertiary: { label: "Pricing", href: "/pricing" },
 };
