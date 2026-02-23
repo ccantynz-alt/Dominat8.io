@@ -557,8 +557,14 @@ export function Builder() {
 
       if (!res.ok) {
         const body = await res.text();
-        const msg = body?.trim() || `API error: ${res.status}`;
-        setErrorMessage(msg);
+        // Never show raw HTML (e.g. Next.js 404 page) as the error message
+        const isHtml = body?.trim().startsWith("<!") || (body?.includes("</html>") ?? false);
+        const raw = body?.trim() || "";
+        const msg = isHtml
+          ? `Server error (${res.status}). The generate API may be unavailable — check that the app is running and /api/io/generate exists.`
+          : (raw || `API error: ${res.status}`);
+        const displayMsg = msg.length > 500 ? `${msg.slice(0, 497)}…` : msg;
+        setErrorMessage(displayMsg);
         throw new Error(msg);
       }
       if (!res.body) {
