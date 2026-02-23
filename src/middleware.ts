@@ -1,3 +1,4 @@
+import { clerkMiddleware } from '@clerk/nextjs';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Exact paths served directly (not rewritten to /io)
