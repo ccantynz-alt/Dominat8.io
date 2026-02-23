@@ -1,3 +1,5 @@
+import { CheckoutButton } from "./CheckoutButton";
+
 export const metadata = {
   title: "Pricing — Dominat8.io",
   description: "Start free. Scale as you grow. No credit card required.",
@@ -6,6 +8,7 @@ export const metadata = {
 const PLANS = [
   {
     name: "Free",
+    planId: "free",
     price: "$0",
     period: "forever",
     desc: "Try it out, no card needed",
@@ -27,6 +30,7 @@ const PLANS = [
   },
   {
     name: "Starter",
+    planId: "starter",
     price: "$9",
     period: "per month",
     desc: "For individuals & side projects",
@@ -50,6 +54,7 @@ const PLANS = [
   },
   {
     name: "Pro",
+    planId: "pro",
     price: "$29",
     period: "per month",
     desc: "For freelancers & growing businesses",
@@ -76,6 +81,7 @@ const PLANS = [
   },
   {
     name: "Agency",
+    planId: "agency",
     price: "$99",
     period: "per month",
     desc: "For teams & high-volume builders",
@@ -184,15 +190,17 @@ export default function PricingPage() {
               <span style={{ fontSize: 13, color: "rgba(255,255,255,0.38)" }}>/ {plan.period}</span>
             </div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginBottom: 18, lineHeight: 1.4 }}>{plan.desc}</div>
-            <a href="/" style={{
-              display: "block", textAlign: "center", padding: "11px 0",
-              borderRadius: 11, border: `1px solid ${plan.accentBtnBorder}`,
-              background: plan.accentBtn, color: plan.accentBtnColor,
-              fontSize: 12, fontWeight: 600, textDecoration: "none",
-              marginBottom: 18,
-            }}>
-              {plan.cta}
-            </a>
+            <CheckoutButton
+              plan={plan.planId}
+              label={plan.cta}
+              style={{
+                display: "block", width: "100%", textAlign: "center", padding: "11px 0",
+                borderRadius: 11, border: `1px solid ${plan.accentBtnBorder}`,
+                background: plan.accentBtn, color: plan.accentBtnColor,
+                fontSize: 12, fontWeight: 600, textDecoration: "none",
+                marginBottom: 18, cursor: "pointer",
+              }}
+            />
             <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
               {plan.features.map((f) => (
                 <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 7, fontSize: 12, color: "rgba(255,255,255,0.72)", lineHeight: 1.4 }}>
