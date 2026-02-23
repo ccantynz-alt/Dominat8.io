@@ -9,15 +9,15 @@ import * as THREE from "three";
 const COCKPIT_LINKS = [
   { href: "/", label: "Home" },
   { href: "/io", label: "Cockpit" },
-  { href: "/io/deploy", label: "Deploy" },
-  { href: "/io/domain", label: "Domain" },
-  { href: "/io/ssl", label: "SSL" },
-  { href: "/io/monitor", label: "Monitor" },
-  { href: "/io/logs", label: "Logs" },
-  { href: "/io/fix", label: "Fix" },
-  { href: "/io/animate", label: "Animate" },
-  { href: "/io/integrate", label: "Integrate" },
-  { href: "/io/settings", label: "Settings" },
+  { href: "/cockpit/deploy", label: "Deploy" },
+  { href: "/cockpit/domain", label: "Domain" },
+  { href: "/cockpit/ssl", label: "SSL" },
+  { href: "/cockpit/monitor", label: "Monitor" },
+  { href: "/cockpit/logs", label: "Logs" },
+  { href: "/cockpit/fix", label: "Fix" },
+  { href: "/cockpit/animate", label: "Animate" },
+  { href: "/cockpit/integrate", label: "Integrate" },
+  { href: "/cockpit/settings", label: "Settings" },
 ] as const;
 
 export default function GoldFogPageLayout({

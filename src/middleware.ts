@@ -1,12 +1,20 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { kv } from '@vercel/kv';
 import { NextRequest, NextResponse } from 'next/server';
 
 const MAIN_HOSTS = new Set(['dominat8.io', 'www.dominat8.io', 'localhost']);
 
+// Builder and cockpit require sign-in
+const isProtectedRoute = createRouteMatcher([
+  '/',
+  '/io',
+  '/io/(.*)',
+  '/cockpit',
+  '/cockpit/(.*)',
+]);
+
 // Exact paths served directly (not rewritten to /io)
 const DIRECT_PATHS = new Set([
-  "/",
   "/pricing",
   "/about",
   "/gallery",
@@ -43,7 +51,7 @@ function shouldPassThrough(pathname: string): boolean {
   return DIRECT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-export default clerkMiddleware(async (_auth, request: NextRequest) => {
+export default clerkMiddleware(async (auth, request: NextRequest) => {
   const host = request.headers.get('host') || '';
   const hostname = host.replace(/:\d+$/, '');
 
@@ -60,9 +68,15 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
   }
 
   const { pathname } = request.nextUrl;
+
+  // Protect builder and cockpit — redirect to sign-in if not authenticated
+  if (isProtectedRoute(request)) {
+    await (await auth()).protect();
+  }
+
   if (shouldPassThrough(pathname)) return NextResponse.next();
 
-  // Root serves the Builder (AI website generator). All other paths → /io cockpit.
+  // Root serves the Builder. All other paths → /io cockpit.
   if (pathname === '/') return NextResponse.next();
   const url = request.nextUrl.clone();
   url.pathname = "/io";

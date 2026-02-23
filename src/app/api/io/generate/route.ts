@@ -1,8 +1,17 @@
 import { OpenAI } from "openai";
+import { auth } from "@clerk/nextjs/server";
+import { kv } from "@vercel/kv";
 import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 export const maxDuration = 60;
+
+const MONTHLY_LIMITS: Record<string, number> = {
+  free: 3,
+  starter: 20,
+  pro: 100,
+  agency: 500,
+};
 
 const SYSTEM_PROMPT = `You are an elite creative director and principal front-end engineer at the world's most award-winning digital studio. Your work has won Webby Awards, FWA Site of the Day, and CSS Design Awards. You build websites that make people stop scrolling and say "wow".
 
@@ -122,6 +131,11 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response("Sign in to generate sites", { status: 401 });
+  }
+
   const { prompt, industry, vibe } = await req.json();
 
   if (!prompt?.trim()) {
@@ -131,6 +145,18 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return new Response("OpenAI API key not configured", { status: 500 });
+  }
+
+  const plan = (await kv.get<string>(`user:${userId}:plan`)) ?? "free";
+  const limit = MONTHLY_LIMITS[plan] ?? MONTHLY_LIMITS.free;
+  const now = new Date();
+  const monthKey = `user:${userId}:usage:${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  const usage = (await kv.get<number>(monthKey)) ?? 0;
+  if (usage >= limit) {
+    return new Response(
+      `Monthly generation limit reached (${limit} for ${plan}). Upgrade or wait until next month.`,
+      { status: 429 }
+    );
   }
 
   const openai = new OpenAI({ apiKey });
@@ -186,6 +212,10 @@ export async function POST(req: NextRequest) {
           if (text) controller.enqueue(encoder.encode(text));
         }
       } finally {
+        try {
+          await kv.incr(monthKey);
+          await kv.expire(monthKey, 60 * 60 * 24 * 32);
+        } catch { /* non-fatal */ }
         controller.close();
       }
     },
