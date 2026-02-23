@@ -1,8 +1,48 @@
 import { OpenAI } from "openai";
+import { auth } from "@clerk/nextjs/server";
+import { kv } from "@vercel/kv";
 import { NextRequest } from "next/server";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const maxDuration = 60;
+
+const DAILY_QUOTA: Record<string, number> = {
+  agency: Infinity,
+  pro: 100,
+  starter: 30,
+  free: 10,
+};
+
+const QUOTA_TTL_SECONDS = 26 * 60 * 60; // 26 h — ensures expiry rolls over each UTC day
+
+async function checkAndIncrementQuota(userId: string): Promise<{ allowed: boolean; remaining: number }> {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const quotaKey = `generate:quota:${userId}:${today}`;
+
+  let plan = "free";
+  try {
+    const stored = await kv.get<string>(`user:${userId}:plan`);
+    if (stored) plan = stored;
+  } catch {
+    // KV unavailable — allow in dev
+    return { allowed: true, remaining: -1 };
+  }
+
+  const limit = DAILY_QUOTA[plan] ?? DAILY_QUOTA.free;
+  if (!isFinite(limit)) return { allowed: true, remaining: -1 };
+
+  let count = 0;
+  try {
+    count = await kv.incr(quotaKey);
+    if (count === 1) {
+      await kv.expire(quotaKey, QUOTA_TTL_SECONDS);
+    }
+  } catch {
+    return { allowed: true, remaining: -1 };
+  }
+
+  return { allowed: count <= limit, remaining: Math.max(0, limit - count) };
+}
 
 const SYSTEM_PROMPT = `You are an elite creative director and principal front-end engineer at the world's most award-winning digital studio. Your work has won Webby Awards, FWA Site of the Day, and CSS Design Awards. You build websites that make people stop scrolling and say "wow".
 
@@ -122,6 +162,16 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const quota = await checkAndIncrementQuota(userId);
+  if (!quota.allowed) {
+    return new Response("Daily generation limit reached. Upgrade your plan for more.", { status: 429 });
+  }
+
   const { prompt, industry, vibe } = await req.json();
 
   if (!prompt?.trim()) {
