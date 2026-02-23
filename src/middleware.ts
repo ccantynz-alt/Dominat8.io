@@ -34,6 +34,7 @@ const DIRECT_PREFIXES = [
   "/_next/",
   "/s/",
   "/tv/",
+  "/io/",
 ];
 
 function shouldPassThrough(pathname: string): boolean {
