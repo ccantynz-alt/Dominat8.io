@@ -13,7 +13,28 @@
   --muted: rgba(255, 255, 255, 0.72);
   --muted-2: rgba(255, 255, 255, 0.6);
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --gold-primary: #FFD700;
+  --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+  --gold-glow: 0 0 20px rgba(191, 149, 63, 0.4);
+  --accent-gold: linear-gradient(90deg, #BF953F, #FCF6BA, #B38728);
+  --gold-glow: 0 0 15px rgba(251, 245, 183, 0.3);
 }
+
+.progress-fill {
+  background: var(--accent-gold) !important;
+  box-shadow: var(--gold-glow);
+}
+
+.icon-active {
+  filter: drop-shadow(0 0 8px #FFD700) sepia(100%) saturate(300%) hue-rotate(5deg);
+}
+
+
+.body-gold-background {
+    background: var(--gold-gradient);
+    color: #333;
+}
+
 
 /* =========================
    RESET / BASE
@@ -242,5 +263,96 @@ h3 {
   to {
     transform: rotate(360deg);
   }
+}
+
+.gold-card {
+  background: rgba(20, 20, 20, 0.6); /* Darker base for gold to pop */
+  backdrop-filter: blur(25px);
+  border: 1px solid transparent;
+  border-image: var(--gold-gradient) 1; /* This gives you a metallic border */
+  box-shadow: var(--gold-glow);
+  position: relative;
+}
+
+/* Add a shimmering gold shine effect */
+.gold-card::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+  transform: rotate(45deg);
+  transition: 0.5s;
+}
+
+.gold-card:hover::after {
+  left: 100%; /* Shimmer sweeps across the card on hover */
+}
+
+.search-input {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+.dock-container {
+  position: fixed;
+  bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  z-index: 100;
+}
+
+.glass-dock {
+  display: flex;
+  gap: 15px;
+  padding: 10px 25px;
+  background: rgba(15, 15, 15, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.dock-item {
+  width: 55px;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  position: relative;
+}
+
+/* The 2030 "Pop Up" Effect */
+.dock-item:hover {
+  transform: translateY(-15px) scale(1.2);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2); /* Subtle Gold Glow */
+}
+
+/* Gold Active State */
+.active-gold {
+  background: linear-gradient(135deg, rgba(191, 149, 63, 0.2), rgba(252, 246, 186, 0.2));
+  border: 1px solid #FFD700;
+}
+
+/* Tooltip Label */
+.dock-item::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -40px;
+  font-size: 12px;
+  color: #FFD700;
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.dock-item:hover::after {
+  opacity: 1;
 }
 

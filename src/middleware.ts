@@ -1,5 +1,5 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { clerkMiddleware } from '@clerk/nextjs';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Exact paths served directly (not rewritten to /io)
 const DIRECT_PATHS = new Set([
@@ -33,7 +33,8 @@ export default clerkMiddleware((_auth, request: NextRequest) => {
   const { pathname } = request.nextUrl;
   if (shouldPassThrough(pathname)) return NextResponse.next();
 
-  // Everything else (e.g. /some-slug) → /io admin cockpit
+  // Root serves the Builder (AI website generator). All other paths → /io cockpit.
+  if (pathname === '/') return NextResponse.next();
   const url = request.nextUrl.clone();
   url.pathname = "/io";
   return NextResponse.rewrite(url);

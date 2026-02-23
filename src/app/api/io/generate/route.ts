@@ -1,83 +1,8 @@
 import { OpenAI } from "openai";
-import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 export const maxDuration = 60;
-
-// ── Plan limits ────────────────────────────────────────────────────────────────
-
-const PLAN_LIMITS: Record<string, number> = {
-  free: 3,
-  starter: 20,
-  pro: 100,
-  agency: 500,
-};
-
-// Raw KV REST calls (edge-compatible — no Node.js require)
-async function kvGet(key: string): Promise<string | null> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return null;
-  try {
-    const res = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json() as { result?: string | null };
-    return data.result ?? null;
-  } catch { return null; }
-}
-
-async function kvIncr(key: string): Promise<number> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return 0;
-  try {
-    const res = await fetch(`${url}/incr/${encodeURIComponent(key)}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json() as { result?: number };
-    return data.result ?? 0;
-  } catch { return 0; }
-}
-
-async function kvExpire(key: string, seconds: number): Promise<void> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return;
-  try {
-    await fetch(`${url}/expire/${encodeURIComponent(key)}/${seconds}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  } catch { /* silent */ }
-}
-
-async function checkUsage(userId: string): Promise<{
-  allowed: boolean;
-  plan: string;
-  usage: number;
-  limit: number;
-}> {
-  const planRaw = await kvGet(`user:${userId}:plan`);
-  const plan = ["starter", "pro", "agency"].includes(planRaw ?? "") ? planRaw! : "free";
-  const limit = PLAN_LIMITS[plan] ?? 3;
-
-  const month = new Date().toISOString().slice(0, 7); // "2026-02"
-  const usageKey = `usage:${userId}:${month}`;
-  const usageRaw = await kvGet(usageKey);
-  const usage = parseInt(usageRaw ?? "0", 10) || 0;
-
-  if (usage >= limit) {
-    return { allowed: false, plan, usage, limit };
-  }
-
-  const newUsage = await kvIncr(usageKey);
-  await kvExpire(usageKey, 60 * 60 * 24 * 35); // 35-day TTL
-
-  return { allowed: true, plan, usage: newUsage, limit };
-}
 
 const SYSTEM_PROMPT = `You are an elite creative director and principal front-end engineer at the world's most award-winning digital studio. Your work has won Webby Awards, FWA Site of the Day, and CSS Design Awards. You build websites that make people stop scrolling and say "wow".
 
@@ -207,28 +132,6 @@ export async function POST(req: NextRequest) {
   if (!apiKey) {
     return new Response("OpenAI API key not configured", { status: 500 });
   }
-
-  // ── Auth + quota check ────────────────────────────────────────────────────
-  const { userId } = auth();
-
-  if (userId) {
-    // Authenticated: enforce monthly quota
-    const { allowed, plan, usage, limit } = await checkUsage(userId);
-    if (!allowed) {
-      return new Response(
-        JSON.stringify({
-          error: `Monthly limit reached. You've used ${usage}/${limit} generations on the ${plan} plan.`,
-          code: "QUOTA_EXCEEDED",
-          plan,
-          usage,
-          limit,
-        }),
-        { status: 429, headers: { "Content-Type": "application/json" } }
-      );
-    }
-  }
-  // Unauthenticated users get 3 free generations tracked client-side (localStorage).
-  // ─────────────────────────────────────────────────────────────────────────
 
   const openai = new OpenAI({ apiKey });
 

@@ -1,0 +1,53 @@
+---
+description: How to continue the Dominat8 build in the same style as the Claude branch (complete-website-designs)
+alwaysApply: true
+---
+
+# Dominat8 Build Continuity
+
+Use this when continuing work on the Dominat8.io AI website builder so the build stays consistent with the existing design and conventions.
+
+## What This Project Is
+
+- **Dominat8**: AI that generates a **complete, single-page website** as one self-contained HTML file from a user prompt + industry.
+- **Flow**: User enters prompt + industry → streaming generation via `/api/io/generate` → preview in iframe → optional deploy.
+- **Branch context**: `claude/complete-website-designs-YqxQ4` introduced Phase 1 real AI builder, security fixes, and error handling. Continue in that vein.
+
+## Key Paths
+
+- **Builder UI**: `src/io/surfaces/Builder.tsx` — main builder (industries, prompts, typewriter, preview iframe, deploy).
+- **App entry**: `src/app/page.tsx` renders `<Builder />`; `src/app/io/page.tsx` renders TV shell (`IOTVShell`).
+- **Generation API**: `src/app/api/io/generate/route.ts` — edge, streaming, single HTML output.
+- **Middleware**: `src/middleware.ts` — routes and TV/api bypass; avoid breaking host/rewrite behavior.
+
+## Generation Contract (Do Not Weaken)
+
+The generate route’s system prompt defines the product. Output must remain:
+
+- **Single self-contained HTML** — no markdown, no external CSS except Google Fonts, minimal inline JS.
+- **Sections required**: Nav, Hero (headline + CTA), Features/Services (3–6), Social proof or Stats, CTA section, Footer.
+- **Quality bar**: Premium, modern, on-brand; real placeholder content (no Lorem ipsum); hand-crafted feel; strong typography and contrast.
+- **SEO**: `<title>`, `<meta name="description">`, Open Graph tags.
+
+When changing the generator: preserve these rules; only tighten or add optional enhancements.
+
+## Conventions to Preserve
+
+- **Security**: Iframe that shows generated HTML must use a strict sandbox. Do **not** add `allow-same-origin` together with `allow-scripts` (XSS risk). Validate `OPENAI_API_KEY` before using the OpenAI client.
+- **Errors**: Generation failures must surface in the UI (no blank screen). Deploy button must have a real `onClick` handler and clear behavior.
+- **Recovery**: Critical paths have BOOTSTRAP copies under `BOOTSTRAP/`; see `BOOTSTRAP/MANIFEST.md`. Fixes: replace the broken file with the BOOTSTRAP version (full replace, no patching).
+- **Protected paths**: `docs/PROTECTED_PATHS.md` — avoid changing core routes/config without `[ALLOW-PROTECTED]` in the PR title when intentional.
+- **Agents**: `agents/` hold spec modules (creative-director, conversion, SEO, proof, motion, etc.). Wiring is via API and KV; keep agent outputs and keys consistent.
+
+## Stack
+
+- Next.js (App Router), React, TypeScript.
+- Generation: OpenAI (e.g. gpt-4o), streaming.
+- Styling: Tailwind where used; generated sites are inline CSS in HTML.
+
+## How to “Build Like Claude” Here
+
+- Prefer small, focused commits and clear fix descriptions (e.g. “Fix: Error state has no UI when API generation fails”).
+- Keep the bar: premium output, safe iframe, visible errors, working deploy.
+- When adding features, align with existing patterns in `Builder.tsx` and the generate route (industries, prompts, streaming, state).
+- Do not remove or relax security measures added in the Claude branch (sandbox, API key checks).
