@@ -156,7 +156,9 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
-  const stream = await openai.chat.completions.create({
+  let stream;
+  try {
+    stream = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
@@ -166,6 +168,13 @@ export async function POST(req: NextRequest) {
     max_tokens: 16000,
     temperature: 0.80,
   });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isRateLimit = msg.includes("rate") || msg.includes("429");
+    const isAuth = msg.includes("API key") || msg.includes("401") || msg.includes("Incorrect API key");
+    const status = isAuth ? 401 : isRateLimit ? 429 : 500;
+    return new Response(msg, { status });
+  }
 
   const encoder = new TextEncoder();
 

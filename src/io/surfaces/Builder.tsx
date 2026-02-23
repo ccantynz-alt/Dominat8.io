@@ -105,14 +105,14 @@ function useSpeechRecognition({ onTranscript }: { onTranscript: (text: string) =
     recognition.interimResults = false;
     recognition.lang = "en-US";
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: Event & { results: SpeechRecognitionResultList }) => {
       const transcript = event.results[0][0].transcript;
       onTranscript(transcript);
       setIsListening(false);
     };
 
-    recognition.onerror = (event) => {
-      console.error("Speech recognition error", event.error);
+    recognition.onerror = (event: Event & { error?: string }) => {
+      console.error("Speech recognition error", (event as { error?: string }).error);
       setIsListening(false);
     };
 
@@ -187,35 +187,55 @@ function SiteCard({ site, onSelect }: { site: Site; onSelect: () => void }) {
   );
 }
 
-// Social proof counter — increments over time for live feel
+// Social proof — monitor + sites built today
+const SITE_PREVIEWS = [
+  { bar: "rgba(212,175,55,0.5)", body: "linear-gradient(180deg, rgba(212,175,55,0.08), rgba(26,15,0,0.5))", accent: "#D4AF37" },
+  { bar: "rgba(56,189,248,0.4)", body: "linear-gradient(180deg, rgba(56,189,248,0.06), rgba(26,15,0,0.5))", accent: "#38BDF8" },
+  { bar: "rgba(56,201,164,0.4)", body: "linear-gradient(180deg, rgba(56,201,164,0.06), rgba(26,15,0,0.5))", accent: "#38C9A4" },
+  { bar: "rgba(240,146,74,0.4)", body: "linear-gradient(180deg, rgba(240,146,74,0.06), rgba(26,15,0,0.5))", accent: "#F0924A" },
+  { bar: "rgba(124,92,255,0.4)", body: "linear-gradient(180deg, rgba(124,92,255,0.06), rgba(26,15,0,0.5))", accent: "#7C5CFF" },
+];
+
 function SocialProof() {
   const [count, setCount] = React.useState(() => {
-    // Deterministic base from date (resets each day)
     const d = new Date();
     const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
     return 2400 + (seed % 600);
   });
+  const [siteIndex, setSiteIndex] = React.useState(0);
+  const preview = SITE_PREVIEWS[siteIndex % SITE_PREVIEWS.length];
 
   React.useEffect(() => {
-    // Tick up by 1-3 every 8-15 seconds
-    const tick = () => {
-      setCount(c => c + Math.floor(Math.random() * 3) + 1);
-    };
+    const tick = () => setCount(c => c + Math.floor(Math.random() * 3) + 1);
     const id = setInterval(tick, 8000 + Math.random() * 7000);
     return () => clearInterval(id);
   }, []);
 
+  React.useEffect(() => {
+    const rot = setInterval(() => setSiteIndex(i => i + 1), 4000);
+    return () => clearInterval(rot);
+  }, []);
+
   return (
     <div className="d8h-social-proof">
-      <span className="d8h-sp-count">
-        <span className="d8h-sp-num">{count.toLocaleString()}</span> sites built today
-      </span>
-      <span className="d8h-sp-divider">·</span>
-      <span className="d8h-sp-tag">No credit card</span>
-      <span className="d8h-sp-divider">·</span>
-      <span className="d8h-sp-tag">HTML export</span>
-      <span className="d8h-sp-divider">·</span>
-      <span className="d8h-sp-tag">1-click deploy</span>
+      <div className="d8h-sp-monitor" aria-hidden>
+        <div className="d8h-sp-monitor-frame">
+          <div className="d8h-sp-monitor-screen">
+            <div className="d8h-sp-monitor-bar" style={{ background: preview.bar }} />
+            <div className="d8h-sp-monitor-body" style={{ background: preview.body }}>
+              <div className="d8h-sp-monitor-hero" style={{ background: preview.accent }} />
+              <div className="d8h-sp-monitor-cards">
+                <span /><span /><span />
+              </div>
+            </div>
+          </div>
+          <div className="d8h-sp-monitor-stand" />
+        </div>
+      </div>
+      <div className="d8h-sp-stat-wrap">
+        <span className="d8h-sp-stat">{count.toLocaleString()}</span>
+        <span className="d8h-sp-label">sites built today</span>
+      </div>
     </div>
   );
 }
@@ -413,6 +433,7 @@ export function Builder() {
     issues: { severity: string; category: string; message: string; fix: string }[];
     strengths: string[];
   } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -534,8 +555,16 @@ export function Builder() {
         signal: abortRef.current.signal,
       });
 
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
-      if (!res.body) throw new Error("No response body");
+      if (!res.ok) {
+        const body = await res.text();
+        const msg = body?.trim() || `API error: ${res.status}`;
+        setErrorMessage(msg);
+        throw new Error(msg);
+      }
+      if (!res.body) {
+        setErrorMessage("No response body");
+        throw new Error("No response body");
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -574,6 +603,8 @@ export function Builder() {
       if (err instanceof Error && err.name === "AbortError") {
         setState("idle");
       } else {
+        const msg = err instanceof Error ? err.message : "Network or stream error. Check your connection.";
+        setErrorMessage(msg);
         setState("error");
       }
     }
@@ -589,6 +620,7 @@ export function Builder() {
   const reset = () => {
     abortRef.current?.abort();
     setState("idle");
+    setErrorMessage(null);
     setHtml("");
     setProgress(0);
     setActiveSite(null);
@@ -733,8 +765,6 @@ export function Builder() {
             <span className="d8h-logo-text">Dominat8.io</span>
           </div>
           <nav className="d8h-nav">
-            <a href="/templates" className="d8h-nav-link">Templates</a>
-            <a href="/gallery" className="d8h-nav-link">Gallery</a>
             <a href="/pricing" className="d8h-nav-link">Pricing</a>
           </nav>
         </header>
@@ -776,22 +806,6 @@ export function Builder() {
             </button>
           </div>
 
-          {/* Industry chips */}
-          <div className="d8h-chips">
-            {INDUSTRIES.map((ind) => (
-              <button
-                key={ind.label}
-                type="button"
-                className={`d8h-chip ${industry === ind.label ? "d8h-chip--active" : ""}`}
-                onClick={() => setIndustry((prev) => prev === ind.label ? "" : ind.label)}
-              >
-                {ind.icon} {ind.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Social proof strip */}
-          <SocialProof />
         </div>
 
         {/* Deployments */}
@@ -840,21 +854,12 @@ export function Builder() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="d8h-footer">
-          <div className="d8h-footer-links">
-            <a href="/templates" className="d8h-footer-link">Templates</a>
-            <a href="/gallery" className="d8h-footer-link">Gallery</a>
-            <a href="/pricing" className="d8h-footer-link">Pricing</a>
-            <a href="/about" className="d8h-footer-link">About</a>
-            <a href="/privacy" className="d8h-footer-link">Privacy</a>
-            <a href="/terms" className="d8h-footer-link">Terms</a>
+        {/* Bottom bar: sites built (left), dock (center), links (right) — all aligned */}
+        <div className="d8h-bottom-bar">
+          <div className="d8h-bottom-left">
+            <SocialProof />
           </div>
-          <div className="d8h-footer-copy">© {new Date().getFullYear()} Dominat8.io · Built with AI</div>
-        </footer>
-
-        {/* Bottom dock — full-width glass bar */}
-        <div className="d8h-dock-bar">
+          <div className="d8h-dock-bar">
           <div className="d8h-dock-glass">
             {DOCK_ITEMS.map((item) => {
               const isActive = item.label === "Settings";
@@ -874,6 +879,14 @@ export function Builder() {
                 </div>
               );
             })}
+          </div>
+        </div>
+          <div className="d8h-bottom-right">
+            <a href="/pricing" className="d8h-footer-link">Pricing</a>
+            <a href="/about" className="d8h-footer-link">About</a>
+            <a href="/privacy" className="d8h-footer-link">Privacy</a>
+            <a href="/terms" className="d8h-footer-link">Terms</a>
+            <span className="d8h-footer-copy">© {new Date().getFullYear()} Dominat8.io</span>
           </div>
         </div>
         </div>
@@ -1184,7 +1197,7 @@ export function Builder() {
               <div className="d8b-error-icon">⚠️</div>
               <h2 className="d8b-error-title">Generation failed</h2>
               <p className="d8b-error-message">
-                Something went wrong while building your site. Please try again.
+                {errorMessage || "Something went wrong while building your site. Please try again."}
               </p>
               <button
                 className="d8b-error-retry-btn"
@@ -1318,25 +1331,92 @@ type DeployStep = "options" | "deploying" | "done";
 function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; onClose: () => void }) {
   const [step, setStep] = useState<DeployStep>("options");
   const [log, setLog] = useState<string[]>([]);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [siteId, setSiteId] = useState<string | null>(null);
+  const [domainInput, setDomainInput] = useState("");
+  const [domainStep, setDomainStep] = useState<"idle" | "challenge" | "verifying" | "verified">("idle");
+  const [domainInstructions, setDomainInstructions] = useState("");
 
-  function simulateDeploy() {
+  async function doDeploy() {
     setStep("deploying");
     setLog([]);
-    const steps = [
-      "Optimising assets…",
-      "Minifying HTML + inline CSS…",
-      "Running SEO checks…",
-      "Generating sitemap.xml…",
-      "Provisioning edge deployment…",
-      "SSL certificate issued…",
-      "✓ Site is live!",
-    ];
-    steps.forEach((msg, i) => {
-      setTimeout(() => {
-        setLog(prev => [...prev, msg]);
-        if (i === steps.length - 1) setStep("done");
-      }, 400 + i * 600);
-    });
+    setShareUrl(null);
+    setSiteId(null);
+
+    const addLog = (msg: string) => setLog((prev) => [...prev, msg]);
+
+    addLog("Saving your site…");
+    try {
+      const res = await fetch("/api/sites/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html, prompt }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        addLog(data?.error || "Save failed");
+        addLog("Try downloading HTML instead.");
+        setStep("options");
+        return;
+      }
+
+      addLog("✓ Site saved");
+      addLog("Provisioning live URL…");
+      addLog("✓ Site is live!");
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      setShareUrl(data.shareUrl ? `${origin}${data.shareUrl}` : null);
+      setSiteId(data.id ?? null);
+      setStep("done");
+    } catch {
+      addLog("Network error. Try again.");
+      setStep("options");
+    }
+  }
+
+  async function requestDomainChallenge() {
+    const d = domainInput.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0];
+    if (!d || !siteId) return;
+    setDomainStep("challenge");
+    try {
+      const res = await fetch("/api/domains/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: d, siteId }),
+      });
+      const data = await res.json();
+      if (data.ok && data.instructions) {
+        setDomainInstructions(data.instructions);
+      } else {
+        setDomainInstructions(data.error || "Failed to create challenge");
+      }
+    } catch {
+      setDomainInstructions("Network error");
+    }
+  }
+
+  async function verifyDomain() {
+    const d = domainInput.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0];
+    if (!d || !siteId) return;
+    setDomainStep("verifying");
+    try {
+      const res = await fetch("/api/domains/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: d, siteId }),
+      });
+      const data = await res.json();
+      if (data.verified) {
+        setDomainInstructions(`✓ Verified! Add a CNAME: ${d} → cname.vercel-dns.com (or your hosting provider).`);
+        setDomainStep("verified");
+      } else {
+        setDomainInstructions(data.error || "Verification failed. DNS may take a few minutes.");
+        setDomainStep("challenge");
+      }
+    } catch {
+      setDomainInstructions("Network error");
+      setDomainStep("challenge");
+    }
   }
 
   function download() {
@@ -1367,7 +1447,7 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
               Your site is ready. Choose how to publish it.
             </p>
             <div className="d8b-deploy-options">
-              <button className="d8b-deploy-option" onClick={simulateDeploy} type="button">
+              <button className="d8b-deploy-option" onClick={doDeploy} type="button">
                 <span className="d8b-deploy-option-icon">⚡</span>
                 <div>
                   <div className="d8b-deploy-option-title">Deploy to Dominat8</div>
@@ -1397,7 +1477,62 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
             </div>
             {step === "done" && (
               <div className="d8b-deploy-success">
-                <div className="d8b-deploy-url">dominat8.io/sites/preview</div>
+                {shareUrl && (
+                  <div className="d8b-deploy-url-row">
+                    <div className="d8b-deploy-url">{shareUrl}</div>
+                    <button
+                      className="d8b-deploy-copy"
+                      type="button"
+                      onClick={() => { navigator.clipboard.writeText(shareUrl); }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                )}
+                {siteId && (
+                  <div className="d8b-domain-section">
+                    <div className="d8b-domain-title">Add custom domain</div>
+                    {domainStep === "idle" && (
+                      <div className="d8b-domain-row">
+                        <input
+                          className="d8b-domain-input"
+                          type="text"
+                          placeholder="mysite.com"
+                          value={domainInput}
+                          onChange={(e) => setDomainInput(e.target.value)}
+                        />
+                        <button className="d8b-domain-btn" type="button" onClick={requestDomainChallenge}>
+                          Verify ownership
+                        </button>
+                      </div>
+                    )}
+                    {(domainStep === "challenge" || domainStep === "verifying") && (
+                      <>
+                        <div className="d8b-domain-instructions">{domainInstructions}</div>
+                        <div className="d8b-domain-row">
+                          <button
+                            className="d8b-domain-btn"
+                            type="button"
+                            disabled={domainStep === "verifying"}
+                            onClick={verifyDomain}
+                          >
+                            {domainStep === "verifying" ? "Checking…" : "Verify"}
+                          </button>
+                          <button
+                            className="d8b-domain-btn d8b-domain-btn--ghost"
+                            type="button"
+                            onClick={() => { setDomainStep("idle"); setDomainInstructions(""); }}
+                          >
+                            Back
+                          </button>
+                        </div>
+                      </>
+                    )}
+                    {domainStep === "verified" && (
+                      <div className="d8b-domain-instructions d8b-domain-instructions--ok">{domainInstructions}</div>
+                    )}
+                  </div>
+                )}
                 <button className="d8b-deploy-btn" onClick={onClose} type="button">Done ✓</button>
               </div>
             )}
@@ -2120,12 +2255,41 @@ function BuilderStyles() {
       .d8b-deploy-log-line--ok { color: rgba(56,248,166,0.90); }
       .d8b-deploy-cursor { animation: d8b-blink 1s step-end infinite; color: rgba(61,240,255,0.8); }
 
-      .d8b-deploy-success { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
+      .d8b-deploy-success { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+      .d8b-deploy-url-row { display: flex; align-items: center; gap: 10px; }
       .d8b-deploy-url {
         flex: 1; padding: 10px 14px; border-radius: 10px;
         background: rgba(56,248,166,0.08); border: 1px solid rgba(56,248,166,0.25);
         font-size: 13px; font-family: ui-monospace, monospace; color: rgba(56,248,166,0.90);
       }
+      .d8b-deploy-copy {
+        padding: 10px 16px; border-radius: 10px;
+        border: 1px solid rgba(56,248,166,0.35); background: rgba(56,248,166,0.10);
+        color: rgba(56,248,166,0.95); font-size: 13px; font-weight: 600; cursor: pointer;
+        transition: all 120ms ease;
+      }
+      .d8b-deploy-copy:hover { background: rgba(56,248,166,0.18); }
+
+      .d8b-domain-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+      .d8b-domain-title { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+      .d8b-domain-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+      .d8b-domain-input {
+        flex: 1; padding: 10px 14px; border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+        color: #fff; font-size: 13px;
+      }
+      .d8b-domain-btn {
+        padding: 10px 16px; border-radius: 10px;
+        border: 1px solid rgba(61,240,255,0.35); background: rgba(61,240,255,0.1);
+        color: rgba(61,240,255,0.95); font-size: 13px; font-weight: 600; cursor: pointer;
+      }
+      .d8b-domain-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+      .d8b-domain-btn--ghost { background: transparent; border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
+      .d8b-domain-instructions {
+        font-size: 12px; color: rgba(255,255,255,0.6); padding: 10px; border-radius: 8px;
+        background: rgba(0,0,0,0.2); font-family: ui-monospace, monospace; word-break: break-all;
+      }
+      .d8b-domain-instructions--ok { color: rgba(56,248,166,0.9); }
 
       /* ── Refine ── */
       .d8b-refine-section { display: flex; flex-direction: column; gap: 8px; }
@@ -2272,19 +2436,17 @@ function HomeStyles() {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 80px 32px 56px;
-        gap: 32px;
+        padding: 96px 32px 64px;
+        gap: 36px;
       }
       .d8h-title {
         margin: 0;
-        font-size: clamp(36px, 6vw, 62px);
+        font-size: clamp(40px, 7vw, 72px);
         font-weight: 800;
-        line-height: 1.1;
-        font-weight: 800;
+        line-height: 1.08;
         color: #fff;
         letter-spacing: -0.04em;
         text-align: center;
-        line-height: 1.05;
       }
       .d8h-sub {
         margin: 0;
@@ -2414,28 +2576,76 @@ function HomeStyles() {
 
       /* ── Social proof ── */
       .d8h-social-proof {
-        display: flex; align-items: center; justify-content: center;
-        flex-wrap: wrap; gap: 8px 10px;
-        margin: 20px 0 0;
-        padding: 0 24px;
+        display: flex; align-items: center; justify-content: flex-start;
+        gap: 20px;
+        padding: 0;
       }
-      .d8h-sp-count {
-        font-size: 13px; color: rgba(255,255,255,0.60);
+      .d8h-sp-monitor {
+        flex-shrink: 0;
       }
-      .d8h-sp-num { font-weight: 700; color: rgba(255,255,255,0.85); }
-      .d8h-sp-divider { color: rgba(255,255,255,0.20); font-size: 13px; }
-      .d8h-sp-tag {
-        font-size: 12px; color: rgba(255,255,255,0.38);
-        padding: 2px 8px; border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.03);
+      .d8h-sp-monitor-frame {
+        display: flex; flex-direction: column; align-items: center;
+      }
+      .d8h-sp-monitor-screen {
+        width: 72px; height: 46px;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 2px solid rgba(212,175,55,0.3);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+      }
+      .d8h-sp-monitor-bar {
+        height: 6px;
+        transition: background 800ms ease;
+      }
+      .d8h-sp-monitor-body {
+        flex: 1;
+        height: 38px;
+        transition: background 800ms ease;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 4px;
+      }
+      .d8h-sp-monitor-hero {
+        height: 8px;
+        border-radius: 2px;
+        opacity: 0.5;
+        transition: background 800ms ease;
+      }
+      .d8h-sp-monitor-cards {
+        display: flex; gap: 3px;
+      }
+      .d8h-sp-monitor-cards span {
+        flex: 1;
+        height: 6px;
+        border-radius: 2px;
+        background: rgba(255,255,255,0.08);
+      }
+      .d8h-sp-monitor-stand {
+        width: 16px; height: 6px;
+        margin-top: 2px;
+        border-radius: 0 0 4px 4px;
+        background: rgba(212,175,55,0.2);
+      }
+      .d8h-sp-stat-wrap {
+        display: flex; align-items: baseline; gap: 8px;
+      }
+      .d8h-sp-stat {
+        font-size: 18px; font-weight: 600;
+        color: rgba(212,175,55,0.95);
+        letter-spacing: 0.02em;
+      }
+      .d8h-sp-label {
+        font-size: 14px; font-weight: 400;
+        color: rgba(255,255,255,0.45);
+        letter-spacing: 0.01em;
       }
 
       /* ── Deployments ── */
       .d8h-deploys {
         width: min(800px, 100%);
         margin: 0 auto;
-        padding: 0 24px;
+        padding: 0 24px 140px;
       }
       .d8h-deploys-header {
         display: flex; align-items: center; justify-content: space-between;
@@ -2505,14 +2715,45 @@ function HomeStyles() {
         text-align: center; padding: 20px 0;
       }
 
-      /* ── Bottom dock: glass bar (fog shows through) ── */
-      .d8h-dock-bar {
+      /* ── Bottom bar: left (sites built), center (dock), right (links) ── */
+      .d8h-bottom-bar {
         position: fixed;
         bottom: 0; left: 0; right: 0;
-        display: flex; justify-content: center;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
         padding: 16px 24px 24px;
         z-index: 100;
         pointer-events: none;
+      }
+      .d8h-bottom-bar > * { pointer-events: auto; }
+      .d8h-bottom-left {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        min-width: 0;
+      }
+      .d8h-bottom-right {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px 16px;
+        flex-wrap: wrap;
+      }
+      .d8h-bottom-right .d8h-footer-link {
+        font-size: 12px; color: rgba(255,255,255,0.4);
+        text-decoration: none; transition: color 140ms ease;
+      }
+      .d8h-bottom-right .d8h-footer-link:hover { color: rgba(255,255,255,0.75); }
+      .d8h-bottom-right .d8h-footer-copy {
+        font-size: 11px; color: rgba(255,255,255,0.22);
+        margin-left: 12px;
+      }
+      .d8h-dock-bar {
+        flex-shrink: 0;
+        display: flex; justify-content: center;
       }
       .d8h-dock-glass {
         pointer-events: auto;
@@ -2564,24 +2805,6 @@ function HomeStyles() {
       }
 
       /* ── Footer ── */
-      .d8h-footer {
-        text-align: center;
-        padding: 32px 24px 100px;
-        margin-top: 24px;
-      }
-      .d8h-footer-links {
-        display: flex; flex-wrap: wrap;
-        align-items: center; justify-content: center;
-        gap: 4px 18px; margin-bottom: 12px;
-      }
-      .d8h-footer-link {
-        font-size: 13px; color: rgba(255,255,255,0.32);
-        text-decoration: none; transition: color 140ms ease;
-      }
-      .d8h-footer-link:hover { color: rgba(255,255,255,0.65); }
-      .d8h-footer-copy {
-        font-size: 12px; color: rgba(255,255,255,0.18);
-      }
 
       @media (max-width: 640px) {
         .d8h-title { font-size: 32px; }

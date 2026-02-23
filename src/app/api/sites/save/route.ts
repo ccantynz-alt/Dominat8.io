@@ -37,6 +37,12 @@ export async function POST(req: NextRequest) {
     // Store metadata in KV
     await kv.set(`site:${id}`, meta, { ex: 60 * 60 * 24 * 90 }); // 90 days TTL
 
+    // Append to recent deployments list (for TV / cockpit)
+    try {
+      await kv.lpush("deployments:recent", id);
+      await kv.ltrim("deployments:recent", 0, 99);
+    } catch { /* non-fatal */ }
+
     return NextResponse.json({
       ok: true,
       id,
