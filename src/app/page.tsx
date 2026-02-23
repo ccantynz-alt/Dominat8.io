@@ -1,3 +1,4 @@
+import { Builder } from "@/io/surfaces/Builder";
 import FuturisticLandingPage from "./FuturisticLandingPage";
 
 export const metadata = {
@@ -6,5 +7,6 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <FuturisticLandingPage />;
+  // To show the splash screen again, swap to: return <FuturisticLandingPage />;
+  return <Builder />;
 }

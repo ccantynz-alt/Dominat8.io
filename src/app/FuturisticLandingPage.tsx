@@ -46,13 +46,10 @@ const FuturisticLandingPage = () => {
       }}
     >
       <div
+        className="gold-card"
         style={{
-          background: "rgba(255, 255, 255, 0.1)",
-          backdropFilter: "blur(10px)",
-          borderRadius: "10px",
           padding: "40px",
           textAlign: "center",
-          color: "white",
         }}
       >
         <h1 style={{ fontSize: "3rem", marginBottom: "20px" }}>

@@ -86,6 +86,51 @@ function useTypewriter(texts: string[], interval = 4000) {
   return displayed;
 }
 
+function useSpeechRecognition({ onTranscript }: { onTranscript: (text: string) => void }) {
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("Speech recognition not supported");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      onTranscript(transcript);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+  }, [onTranscript]);
+
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  return { isListening, startListening };
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Dots() {
@@ -211,11 +256,19 @@ function useDeployments() {
 
 // ─── Dock icons ───────────────────────────────────────────────────────────────
 
-const DOCK_ITEMS = [
-  { label: "Deploy",    color: "#4A90E2", bg: "rgba(74,144,226,0.18)", icon: "🚀", href: null },
+interface DockItem {
+  label: string;
+  color: string;
+  bg: string;
+  icon: React.ReactNode;
+  href: string | null;
+}
+
+const DOCK_ITEMS: DockItem[] = [
+  { label: "Deploy",    color: "#4A90E2", bg: "rgba(74,144,226,0.18)", icon: <span className="icon-active">🚀</span>, href: null },
   { label: "Domains",  color: "#C09A5C", bg: "rgba(192,154,92,0.18)",  icon: "🌐", href: "/io" },
   { label: "SSL",      color: "#9B7FD4", bg: "rgba(155,127,212,0.18)", icon: "🔒", href: null },
-  { label: "Monitor",  color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "📊", href: "/tv" },
+  { label: "Monitor",  color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: <span className="icon-active">📊</span>, href: "/tv" },
   { label: "Logs",     color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "💬", href: "/tv" },
   { label: "Fix",      color: "#F0924A", bg: "rgba(240,146,74,0.18)",  icon: "🔧", href: "/io" },
   { label: "Automate", color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "⚡", href: "/io" },
@@ -308,9 +361,32 @@ export function Builder() {
       abortRef.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    const dashboard = document.querySelector('.main-interface-container');
+    if (!dashboard) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const xAxis = (window.innerWidth / 2 - e.pageX) / 40;
+      const yAxis = (window.innerHeight / 2 - e.pageY) / 40;
+      (dashboard as HTMLElement).style.transform = `perspective(1000px) rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
   const placeholder = useTypewriter(EXAMPLE_PROMPTS);
   const { deployments, loaded } = useDeployments();
   const searchParams = useSearchParams();
+  const { isListening, startListening } = useSpeechRecognition({
+    onTranscript: (text) => {
+      setPrompt(text);
+    },
+  });
 
   // Pre-fill prompt from URL ?prompt= param (e.g. from /templates)
   useEffect(() => {
@@ -568,7 +644,7 @@ export function Builder() {
             <span className="d8h-input-icon">🚀</span>
             <input
               ref={inputRef}
-              className="d8h-input"
+              className="d8h-input search-input"
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -583,6 +659,14 @@ export function Builder() {
               type="button"
             >
               GENERATE
+            </button>
+            <button
+              className="d8h-mic-btn"
+              onClick={startListening}
+              disabled={isListening}
+              type="button"
+            >
+              {isListening ? "Listening..." : "🎤"}
             </button>
           </div>
 
@@ -664,35 +748,28 @@ export function Builder() {
         </footer>
 
         {/* Bottom dock */}
-        <div className="d8h-dock">
-          {DOCK_ITEMS.map((item) => {
-            const style = { "--dock-bg": item.bg, "--dock-color": item.color } as React.CSSProperties;
-            const inner = (
-              <>
-                <span className="d8h-dock-icon">{item.icon}</span>
-                <span className="d8h-dock-label">{item.label}</span>
-              </>
-            );
-            if (item.href) {
+        <div className="dock-container">
+          <div className="glass-dock">
+            {DOCK_ITEMS.map((item) => {
+              const isActive = item.label === "Settings";
               return (
-                <a key={item.label} href={item.href} className="d8h-dock-btn" title={item.label} style={style}>
-                  {inner}
-                </a>
+                <div
+                  key={item.label}
+                  className={`dock-item ${isActive ? "active-gold" : ""}`}
+                  data-label={item.label}
+                >
+                  {item.icon}
+                </div>
               );
-            }
-            return (
-              <button key={item.label} type="button" className="d8h-dock-btn" title={item.label} style={style}>
-                {inner}
-              </button>
-            );
-          })}
+            })}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="d8b-root">
+    <div className="d8b-root main-interface-container">
       <BuilderStyles />
 
       {/* ── Sidebar ── */}
@@ -1103,7 +1180,7 @@ export function Builder() {
             {/* Progress bar */}
             {isBuilding && (
               <div className="d8b-progress-bar">
-                <div className="d8b-progress-fill" style={{ width: `${progress}%` }} />
+                <div className="d8b-progress-fill progress-fill" style={{ width: `${progress}%` }} />
               </div>
             )}
           </div>
@@ -2145,6 +2222,25 @@ function HomeStyles() {
         transform: translateY(-1px);
       }
       .d8h-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+
+      .d8h-mic-btn {
+        flex-shrink: 0;
+        padding: 11px;
+        border-radius: 11px;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 140ms ease;
+      }
+      .d8h-mic-btn:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.15);
+      }
+      .d8h-mic-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
 
       /* ── Industry chips ── */
       .d8h-chips {

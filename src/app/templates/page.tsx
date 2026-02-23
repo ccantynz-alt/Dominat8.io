@@ -2,6 +2,13 @@
 
 import * as React from "react";
 
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 type Template = {
   name: string;
   category: string;
@@ -79,6 +86,39 @@ const CATEGORIES = ["All", ...Array.from(new Set(TEMPLATES.map(t => t.category))
 export default function TemplatesPage() {
   const [active, setActive] = React.useState("All");
   const [search, setSearch] = React.useState("");
+  const [isRecording, setIsRecording] = React.useState(false);
+
+  const handleVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setSearch(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      setIsRecording(false);
+    };
+
+    recognition.start();
+  };
 
   const filtered = TEMPLATES.filter(t => {
     const matchCat = active === "All" || t.category === active;
@@ -121,7 +161,7 @@ export default function TemplatesPage() {
         </p>
 
         {/* Search */}
-        <div style={{ maxWidth: 400, margin: "0 auto" }}>
+        <div style={{ maxWidth: 400, margin: "0 auto", position: "relative" }}>
           <input
             type="text"
             placeholder="Search templates…"
@@ -129,7 +169,7 @@ export default function TemplatesPage() {
             onChange={e => setSearch(e.target.value)}
             style={{
               width: "100%",
-              padding: "10px 16px",
+              padding: "10px 40px 10px 16px",
               borderRadius: 12,
               border: "1px solid rgba(255,255,255,0.12)",
               background: "rgba(255,255,255,0.05)",
@@ -139,6 +179,30 @@ export default function TemplatesPage() {
               boxSizing: "border-box",
             }}
           />
+          <button
+            onClick={handleVoiceSearch}
+            style={{
+              position: "absolute",
+              right: 10,
+              top: "50%",
+              transform: "translateY(-50%)",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: isRecording ? "#3DF0FF" : "rgba(255,255,255,0.4)",
+            }}
+            title="Search by voice"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d={isRecording ? "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" : "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"}/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+            </svg>
+          </button>
         </div>
       </div>
 
