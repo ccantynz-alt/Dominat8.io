@@ -2519,11 +2519,11 @@ function HomeStyles() {
         gap: 4px;
         width: min(900px, 100%);
         padding: 10px 20px 12px;
-        background: rgba(12,10,8,0.72);
-        backdrop-filter: blur(24px) saturate(140%);
-        border: 1px solid rgba(212,175,55,0.18);
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 -1px 0 rgba(212,175,55,0.12) inset, inset 0 1px 0 rgba(255,255,255,0.04);
+        background: rgba(26,15,0,0.25);
+        backdrop-filter: blur(20px) saturate(120%);
+        border: 1px solid rgba(212,175,55,0.12);
+        border-radius: 20px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
       }
       .d8h-dock-item {
         display: flex;
@@ -2531,21 +2531,21 @@ function HomeStyles() {
         align-items: center;
         gap: 4px;
         padding: 8px 12px 6px;
-        border-radius: 10px;
+        border-radius: 12px;
         border: 1px solid transparent;
-        color: rgba(255,255,255,0.6);
+        color: rgba(255,255,255,0.5);
         text-decoration: none;
         cursor: pointer;
-        transition: all 160ms ease;
+        transition: all 180ms ease;
       }
       .d8h-dock-item:hover {
-        background: rgba(212,175,55,0.1);
-        border-color: rgba(212,175,55,0.25);
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(212,175,55,0.2);
         color: rgba(255,255,255,0.9);
       }
       .d8h-dock-item--active {
-        background: rgba(212,175,55,0.12);
-        border-color: rgba(212,175,55,0.3);
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(212,175,55,0.25);
         color: rgba(255,255,255,0.95);
       }
       .dock-icon-svg { display: inline-flex; align-items: center; justify-content: center; }
