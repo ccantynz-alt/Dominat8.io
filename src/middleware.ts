@@ -35,6 +35,7 @@ const DIRECT_PREFIXES = [
   "/s/",
   "/tv/",
   "/io/",
+  "/cockpit/",
 ];
 
 function shouldPassThrough(pathname: string): boolean {
