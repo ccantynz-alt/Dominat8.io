@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import FOG from "vanta/dist/vanta.fog.min";
+import * as THREE from "three";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -354,6 +356,8 @@ export function Builder() {
   const abortRef = useRef<AbortController | null>(null);
   const startRef = useRef<number>(0);
   const progressRef = useRef<number>(0);
+  const vantaRef = useRef<HTMLDivElement>(null);
+  const [vantaEffect, setVantaEffect] = useState<ReturnType<typeof FOG> | null>(null);
 
   // Abort any in-flight generation when the component unmounts
   useEffect(() => {
@@ -361,6 +365,33 @@ export function Builder() {
       abortRef.current?.abort();
     };
   }, []);
+
+  // Gold fog background (Vanta)
+  useEffect(() => {
+    if (!vantaEffect && vantaRef.current) {
+      setVantaEffect(
+        FOG({
+          el: vantaRef.current,
+          THREE: THREE,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.0,
+          minWidth: 200.0,
+          highlightColor: 0xffe066,
+          midtoneColor: 0xe6a23c,
+          lowlightColor: 0x8b6914,
+          baseColor: 0x1a0f00,
+          blurFactor: 0.5,
+          speed: 1.5,
+          zoom: 0.5,
+        })
+      );
+    }
+    return () => {
+      if (vantaEffect) vantaEffect.destroy();
+    };
+  }, [vantaEffect]);
 
   useEffect(() => {
     const dashboard = document.querySelector('.main-interface-container');
@@ -614,10 +645,20 @@ export function Builder() {
   const isIdle = state === "idle";
   const isError = state === "error";
 
+  // ── Fog background (always present) ───────────────────────────────────────
+  const fogLayer = (
+    <div
+      ref={vantaRef}
+      style={{ position: "fixed", inset: 0, zIndex: 0 }}
+    />
+  );
+
   // ── New home layout (idle, no html) ──────────────────────────────────────
   if (isIdle && !html) {
     return (
-      <div className="d8h-root">
+      <>
+        {fogLayer}
+        <div className="d8h-root d8h-root--fog" style={{ position: "relative", zIndex: 1 }}>
         <HomeStyles />
 
         {/* Header */}
@@ -764,12 +805,15 @@ export function Builder() {
             })}
           </div>
         </div>
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="d8b-root main-interface-container">
+    <>
+      {fogLayer}
+      <div className="d8b-root main-interface-container" style={{ position: "relative", zIndex: 1 }}>
       <BuilderStyles />
 
       {/* ── Sidebar ── */}
@@ -1192,6 +1236,7 @@ export function Builder() {
         <DeployModal html={html} prompt={prompt} onClose={() => setShowDeploy(false)} />
       )}
     </div>
+    </>
   );
 }
 
@@ -2112,6 +2157,9 @@ function HomeStyles() {
         display: flex;
         flex-direction: column;
         padding-bottom: 100px;
+      }
+      .d8h-root--fog {
+        background: transparent;
       }
 
       /* ── Header ── */
