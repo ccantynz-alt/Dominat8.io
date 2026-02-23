@@ -143,6 +143,27 @@ function Dots() {
   );
 }
 
+function InputLeadIcon() {
+  return (
+    <span className="d8h-input-icon" aria-hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3v18M5 12l14 0M3 8l6 4 6-4" />
+      </svg>
+    </span>
+  );
+}
+
+function MicIcon({ listening }: { listening: boolean }) {
+  return (
+    <span className={`d8h-mic-icon ${listening ? "d8h-mic-icon--active" : ""}`} aria-hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
+      </svg>
+    </span>
+  );
+}
+
 function SiteCard({ site, onSelect }: { site: Site; onSelect: () => void }) {
   const age = Math.round((Date.now() - site.createdAt.getTime()) / 1000);
   const ageStr = age < 60 ? `${age}s ago` : `${Math.round(age / 60)}m ago`;
@@ -682,7 +703,7 @@ export function Builder() {
 
           {/* Prompt row */}
           <div className="d8h-input-row">
-            <span className="d8h-input-icon">🚀</span>
+            <InputLeadIcon />
             <input
               ref={inputRef}
               className="d8h-input search-input"
@@ -702,12 +723,13 @@ export function Builder() {
               GENERATE
             </button>
             <button
-              className="d8h-mic-btn"
+              className={`d8h-mic-btn ${isListening ? "d8h-mic-btn--listening" : ""}`}
               onClick={startListening}
               disabled={isListening}
               type="button"
+              title={isListening ? "Listening…" : "Voice input"}
             >
-              {isListening ? "Listening..." : "🎤"}
+              <MicIcon listening={isListening} />
             </button>
           </div>
 
@@ -2177,7 +2199,7 @@ function HomeStyles() {
       }
       .d8h-logo-dot {
         width: 5px; height: 5px; border-radius: 50%;
-        background: rgba(61,240,255,0.7);
+        background: rgba(212,175,55,0.85);
       }
       .d8h-logo-text {
         font-size: 13px; font-weight: 500;
@@ -2234,9 +2256,15 @@ function HomeStyles() {
         transition: border-color 140ms ease;
       }
       .d8h-input-row:focus-within {
-        border-color: rgba(255,255,255,0.22);
+        border-color: rgba(212,175,55,0.35);
       }
-      .d8h-input-icon { font-size: 18px; flex-shrink: 0; }
+      .d8h-input-icon {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(212,175,55,0.7);
+      }
       .d8h-input {
         flex: 1;
         background: transparent;
@@ -2254,40 +2282,57 @@ function HomeStyles() {
         padding: 11px 22px;
         border-radius: 11px;
         border: none;
-        background: linear-gradient(135deg, #00C97A, #00B36B);
-        color: #fff;
+        background: linear-gradient(135deg, #D4AF37, #B8962E);
+        color: #0c0a06;
         font-size: 13px;
         font-weight: 700;
         font-family: inherit;
         letter-spacing: 0.06em;
         cursor: pointer;
         transition: all 140ms ease;
-        box-shadow: 0 2px 12px rgba(0,201,122,0.35);
+        box-shadow: 0 2px 12px rgba(212,175,55,0.35);
       }
       .d8h-gen-btn:hover:not(:disabled) {
-        background: linear-gradient(135deg, #00DD88, #00C47A);
-        box-shadow: 0 4px 18px rgba(0,201,122,0.50);
+        background: linear-gradient(135deg, #E5C04A, #C9A63C);
+        box-shadow: 0 4px 18px rgba(212,175,55,0.45);
         transform: translateY(-1px);
       }
-      .d8h-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+      .d8h-gen-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
 
       .d8h-mic-btn {
         flex-shrink: 0;
-        padding: 11px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
         border-radius: 11px;
-        border: none;
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        font-size: 15px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.75);
         cursor: pointer;
         transition: all 140ms ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
       .d8h-mic-btn:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(212,175,55,0.12);
+        border-color: rgba(212,175,55,0.35);
+        color: rgba(255,255,255,0.95);
       }
+      .d8h-mic-btn--listening {
+        background: rgba(212,80,80,0.15);
+        border-color: rgba(212,80,80,0.4);
+        color: #e8a0a0;
+      }
+      .d8h-mic-btn--listening .d8h-mic-icon { animation: d8h-mic-pulse 1.2s ease-in-out infinite; }
       .d8h-mic-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+      }
+      .d8h-mic-icon { display: inline-flex; align-items: center; justify-content: center; }
+      @keyframes d8h-mic-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
       }
 
       /* ── Industry chips ── */
@@ -2310,9 +2355,9 @@ function HomeStyles() {
       }
       .d8h-chip:hover { border-color: rgba(255,255,255,0.20); color: rgba(255,255,255,0.80); }
       .d8h-chip--active {
-        border-color: rgba(61,240,255,0.45);
-        background: rgba(61,240,255,0.08);
-        color: rgba(61,240,255,0.90);
+        border-color: rgba(212,175,55,0.5);
+        background: rgba(212,175,55,0.12);
+        color: rgba(255,255,255,0.95);
       }
 
       /* ── Social proof ── */
@@ -2363,7 +2408,7 @@ function HomeStyles() {
       }
       .d8h-live-dot {
         width: 6px; height: 6px; border-radius: 50%;
-        background: #38F8A6;
+        background: #D4AF37;
         animation: d8h-blink 2s ease-in-out infinite;
       }
       @keyframes d8h-blink { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
