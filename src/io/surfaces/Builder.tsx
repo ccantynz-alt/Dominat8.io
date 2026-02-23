@@ -351,15 +351,15 @@ interface DockItem {
 }
 
 const DOCK_ITEMS: DockItem[] = [
-  { label: "Deploy",    href: null },
-  { label: "Domains",   href: "/io" },
-  { label: "SSL",       href: null },
-  { label: "Monitor",   href: "/tv" },
-  { label: "Logs",      href: "/tv" },
-  { label: "Fix",       href: "/io" },
-  { label: "Automate",  href: "/io" },
-  { label: "Integrate", href: null },
-  { label: "Settings",  href: null },
+  { label: "Deploy",    href: "/deploy" },
+  { label: "Domains",   href: "/domain" },
+  { label: "SSL",       href: "/ssl" },
+  { label: "Monitor",   href: "/monitor" },
+  { label: "Logs",      href: "/logs" },
+  { label: "Fix",       href: "/fix" },
+  { label: "Automate",  href: "/animate" },
+  { label: "Integrate", href: "/integrate" },
+  { label: "Settings",  href: "/settings" },
 ];
 
 // ─── localStorage history persistence ─────────────────────────────────────────

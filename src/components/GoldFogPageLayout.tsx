@@ -114,6 +114,20 @@ export default function GoldFogPageLayout({
         .gold-fog-main { flex: 1; padding: 32px 40px 48px; overflow: auto; }
         .gold-fog-page-title { font-size: clamp(28px, 4vw, 36px); font-weight: 800; letter-spacing: -0.04em; color: #fff; margin: 0 0 24px; }
         .gold-fog-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+        .gold-fog-btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid rgba(212,175,55,0.4); background: rgba(212,175,55,0.12); color: rgba(212,175,55,0.95); text-decoration: none; transition: all 0.15s ease; }
+        .gold-fog-btn:hover { background: rgba(212,175,55,0.2); border-color: rgba(212,175,55,0.6); }
+        .gold-fog-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .gold-fog-btn--secondary { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+        .gold-fog-btn--secondary:hover { background: rgba(255,255,255,0.1); }
+        .gold-fog-input, .gold-fog-textarea { width: 100%; max-width: 480px; padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.25); color: #fff; font-size: 14px; font-family: inherit; }
+        .gold-fog-textarea { min-height: 120px; resize: vertical; }
+        .gold-fog-input::placeholder, .gold-fog-textarea::placeholder { color: rgba(255,255,255,0.35); }
+        .gold-fog-label { display: block; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+        .gold-fog-row-list { list-style: none; margin: 0; padding: 0; }
+        .gold-fog-row-list li { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; margin-bottom: 8px; }
+        .gold-fog-row-list a { color: rgba(212,175,55,0.9); text-decoration: none; font-weight: 500; }
+        .gold-fog-row-list a:hover { text-decoration: underline; }
+        .gold-fog-muted { color: rgba(255,255,255,0.5); font-size: 14px; }
       `}} />
     </>
   );
