@@ -105,13 +105,13 @@ function useSpeechRecognition({ onTranscript }: { onTranscript: (text: string) =
     recognition.interimResults = false;
     recognition.lang = "en-US";
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
       onTranscript(transcript);
       setIsListening(false);
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error("Speech recognition error", event.error);
       setIsListening(false);
     };
@@ -382,7 +382,7 @@ function deployIcon(icon: string): string {
   return "⚙️";
 }
 
-// ─── Main Builder ─────────────────────────────────────────────────────────────
+// ─── Main Builder ─────────────────────────���───────────────────────────────────
 
 export function Builder() {
   const [prompt, setPrompt] = useState("");
