@@ -110,9 +110,9 @@ export default function TemplatesPage() {
         }
 
         // Update the UI in real-time
-        document.getElementById('interim-text')!.innerHTML = interimTranscript;
+        document.getElementById('interim-text')!.textContent = interimTranscript;
         if (finalTranscript) {
-          document.getElementById('final-text')!.innerHTML = finalTranscript;
+          document.getElementById('final-text')!.textContent = finalTranscript;
           
           const transcript = finalTranscript.toLowerCase().trim();
           console.log("Voice Command Received:", transcript);
@@ -135,8 +135,8 @@ export default function TemplatesPage() {
 
           // Clear subtitles after a few seconds of inactivity
           setTimeout(() => {
-            document.getElementById('interim-text')!.innerHTML = "";
-            document.getElementById('final-text')!.innerHTML = "";
+            document.getElementById('interim-text')!.textContent = "";
+            document.getElementById('final-text')!.textContent = "";
           }, 3000);
         }
       };
@@ -147,7 +147,7 @@ export default function TemplatesPage() {
 
       recognition.onend = () => {
         setIsRecording(false);
-        document.getElementById('final-text')!.innerHTML = '';
+        document.getElementById('final-text')!.textContent = '';
       };
       
       recognition.onerror = (event: any) => {
