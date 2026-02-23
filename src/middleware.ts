@@ -15,6 +15,15 @@ const DIRECT_PATHS = new Set([
   "/terms",
   "/tv",
   "/healthz",
+  "/deploy",
+  "/domain",
+  "/ssl",
+  "/monitor",
+  "/logs",
+  "/fix",
+  "/animate",
+  "/integrate",
+  "/settings",
 ]);
 
 // Path prefixes served directly
