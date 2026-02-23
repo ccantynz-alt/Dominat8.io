@@ -103,7 +103,7 @@ BUILD LOG:
 """.strip()
 
 payload = {{
-    "model": "claude-sonnet-4-6",
+    "model": "claude-opus-4-5",
     "max_tokens": 4096,
     "messages": [
         {{"role": "user", "content": prompt}}
@@ -125,8 +125,17 @@ try:
     with urllib.request.urlopen(req, timeout=120) as resp:
         body = json.loads(resp.read().decode("utf-8"))
 except urllib.error.HTTPError as e:
-    print(f"Claude API error {e.code}: {e.read().decode()}")
+    err_body = e.read().decode()
+    print(f"Anthropic API HTTP {e.code} error while calling /v1/messages: {err_body}")
+    # Treat billing/quota errors as non-fatal — skip AI tier gracefully
+    if e.code in (402, 429) or "insufficient" in err_body.lower() or "billing" in err_body.lower():
+        print("Skipping AI tier due to billing/quota issue. Manual fix required.")
+        sys.exit(0)
     sys.exit(1)
+except urllib.error.URLError as e:
+    print(f"Anthropic API network error while calling /v1/messages: {e.reason}")
+    print("Skipping AI tier due to network issue.")
+    sys.exit(0)
 
 patch = ""
 for block in body.get("content", []):
