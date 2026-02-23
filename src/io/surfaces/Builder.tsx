@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import FOG from "vanta/dist/vanta.fog.min";
+import * as THREE from "three";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -141,6 +143,27 @@ function Dots() {
   );
 }
 
+function InputLeadIcon() {
+  return (
+    <span className="d8h-input-icon" aria-hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3v18M5 12l14 0M3 8l6 4 6-4" />
+      </svg>
+    </span>
+  );
+}
+
+function MicIcon({ listening }: { listening: boolean }) {
+  return (
+    <span className={`d8h-mic-icon ${listening ? "d8h-mic-icon--active" : ""}`} aria-hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
+      </svg>
+    </span>
+  );
+}
+
 function SiteCard({ site, onSelect }: { site: Site; onSelect: () => void }) {
   const age = Math.round((Date.now() - site.createdAt.getTime()) / 1000);
   const ageStr = age < 60 ? `${age}s ago` : `${Math.round(age / 60)}m ago`;
@@ -182,15 +205,8 @@ function SocialProof() {
     return () => clearInterval(id);
   }, []);
 
-  const AVATAR_COLORS = ["#7C5CFF", "#38F8A6", "#FF4D6D", "#3DF0FF", "#FFD166", "#C09A5C"];
-
   return (
     <div className="d8h-social-proof">
-      <div className="d8h-avatars">
-        {AVATAR_COLORS.map((c, i) => (
-          <span key={i} className="d8h-avatar" style={{ background: c, marginLeft: i > 0 ? -8 : 0, zIndex: AVATAR_COLORS.length - i }} />
-        ))}
-      </div>
       <span className="d8h-sp-count">
         <span className="d8h-sp-num">{count.toLocaleString()}</span> sites built today
       </span>
@@ -254,26 +270,76 @@ function useDeployments() {
   return { deployments, loaded };
 }
 
-// ─── Dock icons ───────────────────────────────────────────────────────────────
+// ─── Dock icons (SVG) ─────────────────────────────────────────────────────────
+
+function DockIcon({ name }: { name: string }) {
+  const w = 20; const h = 20;
+  const stroke = "currentColor"; const sw = 1.5;
+  const svgs: Record<string, React.ReactNode> = {
+    Deploy: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" />
+      </svg>
+    ),
+    Domains: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+    ),
+    SSL: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+    ),
+    Monitor: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><path d="M8 21h8M12 17v4" />
+      </svg>
+    ),
+    Logs: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+    Fix: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg>
+    ),
+    Automate: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
+    ),
+    Integrate: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+      </svg>
+    ),
+    Settings: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+    ),
+  };
+  return <span className="dock-icon-svg">{svgs[name] ?? null}</span>;
+}
 
 interface DockItem {
   label: string;
-  color: string;
-  bg: string;
-  icon: React.ReactNode;
   href: string | null;
 }
 
 const DOCK_ITEMS: DockItem[] = [
-  { label: "Deploy",    color: "#4A90E2", bg: "rgba(74,144,226,0.18)", icon: <span className="icon-active">🚀</span>, href: null },
-  { label: "Domains",  color: "#C09A5C", bg: "rgba(192,154,92,0.18)",  icon: "🌐", href: "/io" },
-  { label: "SSL",      color: "#9B7FD4", bg: "rgba(155,127,212,0.18)", icon: "🔒", href: null },
-  { label: "Monitor",  color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: <span className="icon-active">📊</span>, href: "/tv" },
-  { label: "Logs",     color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "💬", href: "/tv" },
-  { label: "Fix",      color: "#F0924A", bg: "rgba(240,146,74,0.18)",  icon: "🔧", href: "/io" },
-  { label: "Automate", color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "⚡", href: "/io" },
-  { label: "Integrate",color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "✏️", href: null },
-  { label: "Settings", color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "⚙️", href: null },
+  { label: "Deploy",    href: null },
+  { label: "Domains",   href: "/io" },
+  { label: "SSL",       href: null },
+  { label: "Monitor",   href: "/tv" },
+  { label: "Logs",      href: "/tv" },
+  { label: "Fix",       href: "/io" },
+  { label: "Automate",  href: "/io" },
+  { label: "Integrate", href: null },
+  { label: "Settings",  href: null },
 ];
 
 // ─── localStorage history persistence ─────────────────────────────────────────
@@ -354,6 +420,8 @@ export function Builder() {
   const abortRef = useRef<AbortController | null>(null);
   const startRef = useRef<number>(0);
   const progressRef = useRef<number>(0);
+  const vantaRef = useRef<HTMLDivElement>(null);
+  const [vantaEffect, setVantaEffect] = useState<ReturnType<typeof FOG> | null>(null);
 
   // Abort any in-flight generation when the component unmounts
   useEffect(() => {
@@ -361,6 +429,33 @@ export function Builder() {
       abortRef.current?.abort();
     };
   }, []);
+
+  // Gold fog background (Vanta)
+  useEffect(() => {
+    if (!vantaEffect && vantaRef.current) {
+      setVantaEffect(
+        FOG({
+          el: vantaRef.current,
+          THREE: THREE,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.0,
+          minWidth: 200.0,
+          highlightColor: 0xffe066,
+          midtoneColor: 0xe6a23c,
+          lowlightColor: 0x8b6914,
+          baseColor: 0x1a0f00,
+          blurFactor: 0.5,
+          speed: 1.5,
+          zoom: 0.5,
+        })
+      );
+    }
+    return () => {
+      if (vantaEffect) vantaEffect.destroy();
+    };
+  }, [vantaEffect]);
 
   useEffect(() => {
     const dashboard = document.querySelector('.main-interface-container');
@@ -614,10 +709,20 @@ export function Builder() {
   const isIdle = state === "idle";
   const isError = state === "error";
 
+  // ── Fog background (always present) ───────────────────────────────────────
+  const fogLayer = (
+    <div
+      ref={vantaRef}
+      style={{ position: "fixed", inset: 0, zIndex: 0 }}
+    />
+  );
+
   // ── New home layout (idle, no html) ──────────────────────────────────────
   if (isIdle && !html) {
     return (
-      <div className="d8h-root">
+      <>
+        {fogLayer}
+        <div className="d8h-root d8h-root--fog" style={{ position: "relative", zIndex: 1 }}>
         <HomeStyles />
 
         {/* Header */}
@@ -641,7 +746,7 @@ export function Builder() {
 
           {/* Prompt row */}
           <div className="d8h-input-row">
-            <span className="d8h-input-icon">🚀</span>
+            <InputLeadIcon />
             <input
               ref={inputRef}
               className="d8h-input search-input"
@@ -661,12 +766,13 @@ export function Builder() {
               GENERATE
             </button>
             <button
-              className="d8h-mic-btn"
+              className={`d8h-mic-btn ${isListening ? "d8h-mic-btn--listening" : ""}`}
               onClick={startListening}
               disabled={isListening}
               type="button"
+              title={isListening ? "Listening…" : "Voice input"}
             >
-              {isListening ? "Listening..." : "🎤"}
+              <MicIcon listening={isListening} />
             </button>
           </div>
 
@@ -747,29 +853,38 @@ export function Builder() {
           <div className="d8h-footer-copy">© {new Date().getFullYear()} Dominat8.io · Built with AI</div>
         </footer>
 
-        {/* Bottom dock */}
-        <div className="dock-container">
-          <div className="glass-dock">
+        {/* Bottom dock — full-width glass bar */}
+        <div className="d8h-dock-bar">
+          <div className="d8h-dock-glass">
             {DOCK_ITEMS.map((item) => {
               const isActive = item.label === "Settings";
-              return (
-                <div
-                  key={item.label}
-                  className={`dock-item ${isActive ? "active-gold" : ""}`}
-                  data-label={item.label}
-                >
-                  {item.icon}
+              const content = (
+                <>
+                  <DockIcon name={item.label} />
+                  <span className="d8h-dock-label">{item.label}</span>
+                </>
+              );
+              return item.href ? (
+                <a key={item.label} href={item.href} className={`d8h-dock-item ${isActive ? "d8h-dock-item--active" : ""}`} data-label={item.label}>
+                  {content}
+                </a>
+              ) : (
+                <div key={item.label} className={`d8h-dock-item ${isActive ? "d8h-dock-item--active" : ""}`} data-label={item.label} role="button" tabIndex={0}>
+                  {content}
                 </div>
               );
             })}
           </div>
         </div>
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="d8b-root main-interface-container">
+    <>
+      {fogLayer}
+      <div className="d8b-root main-interface-container" style={{ position: "relative", zIndex: 1 }}>
       <BuilderStyles />
 
       {/* ── Sidebar ── */}
@@ -1192,6 +1307,7 @@ export function Builder() {
         <DeployModal html={html} prompt={prompt} onClose={() => setShowDeploy(false)} />
       )}
     </div>
+    </>
   );
 }
 
@@ -2113,6 +2229,9 @@ function HomeStyles() {
         flex-direction: column;
         padding-bottom: 100px;
       }
+      .d8h-root--fog {
+        background: transparent;
+      }
 
       /* ── Header ── */
       .d8h-header {
@@ -2129,7 +2248,7 @@ function HomeStyles() {
       }
       .d8h-logo-dot {
         width: 5px; height: 5px; border-radius: 50%;
-        background: rgba(61,240,255,0.7);
+        background: rgba(212,175,55,0.85);
       }
       .d8h-logo-text {
         font-size: 13px; font-weight: 500;
@@ -2186,9 +2305,15 @@ function HomeStyles() {
         transition: border-color 140ms ease;
       }
       .d8h-input-row:focus-within {
-        border-color: rgba(255,255,255,0.22);
+        border-color: rgba(212,175,55,0.35);
       }
-      .d8h-input-icon { font-size: 18px; flex-shrink: 0; }
+      .d8h-input-icon {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(212,175,55,0.7);
+      }
       .d8h-input {
         flex: 1;
         background: transparent;
@@ -2206,40 +2331,57 @@ function HomeStyles() {
         padding: 11px 22px;
         border-radius: 11px;
         border: none;
-        background: linear-gradient(135deg, #00C97A, #00B36B);
-        color: #fff;
+        background: linear-gradient(135deg, #D4AF37, #B8962E);
+        color: #0c0a06;
         font-size: 13px;
         font-weight: 700;
         font-family: inherit;
         letter-spacing: 0.06em;
         cursor: pointer;
         transition: all 140ms ease;
-        box-shadow: 0 2px 12px rgba(0,201,122,0.35);
+        box-shadow: 0 2px 12px rgba(212,175,55,0.35);
       }
       .d8h-gen-btn:hover:not(:disabled) {
-        background: linear-gradient(135deg, #00DD88, #00C47A);
-        box-shadow: 0 4px 18px rgba(0,201,122,0.50);
+        background: linear-gradient(135deg, #E5C04A, #C9A63C);
+        box-shadow: 0 4px 18px rgba(212,175,55,0.45);
         transform: translateY(-1px);
       }
-      .d8h-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+      .d8h-gen-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
 
       .d8h-mic-btn {
         flex-shrink: 0;
-        padding: 11px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
         border-radius: 11px;
-        border: none;
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        font-size: 15px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.75);
         cursor: pointer;
         transition: all 140ms ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
       .d8h-mic-btn:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(212,175,55,0.12);
+        border-color: rgba(212,175,55,0.35);
+        color: rgba(255,255,255,0.95);
       }
+      .d8h-mic-btn--listening {
+        background: rgba(212,80,80,0.15);
+        border-color: rgba(212,80,80,0.4);
+        color: #e8a0a0;
+      }
+      .d8h-mic-btn--listening .d8h-mic-icon { animation: d8h-mic-pulse 1.2s ease-in-out infinite; }
       .d8h-mic-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+      }
+      .d8h-mic-icon { display: inline-flex; align-items: center; justify-content: center; }
+      @keyframes d8h-mic-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
       }
 
       /* ── Industry chips ── */
@@ -2262,9 +2404,9 @@ function HomeStyles() {
       }
       .d8h-chip:hover { border-color: rgba(255,255,255,0.20); color: rgba(255,255,255,0.80); }
       .d8h-chip--active {
-        border-color: rgba(61,240,255,0.45);
-        background: rgba(61,240,255,0.08);
-        color: rgba(61,240,255,0.90);
+        border-color: rgba(212,175,55,0.5);
+        background: rgba(212,175,55,0.12);
+        color: rgba(255,255,255,0.95);
       }
 
       /* ── Social proof ── */
@@ -2273,12 +2415,6 @@ function HomeStyles() {
         flex-wrap: wrap; gap: 8px 10px;
         margin: 20px 0 0;
         padding: 0 24px;
-      }
-      .d8h-avatars { display: flex; align-items: center; }
-      .d8h-avatar {
-        width: 22px; height: 22px; border-radius: 50%;
-        border: 2px solid #06080e;
-        display: inline-block; flex-shrink: 0;
       }
       .d8h-sp-count {
         font-size: 13px; color: rgba(255,255,255,0.60);
@@ -2315,7 +2451,7 @@ function HomeStyles() {
       }
       .d8h-live-dot {
         width: 6px; height: 6px; border-radius: 50%;
-        background: #38F8A6;
+        background: #D4AF37;
         animation: d8h-blink 2s ease-in-out infinite;
       }
       @keyframes d8h-blink { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
@@ -2366,40 +2502,57 @@ function HomeStyles() {
         text-align: center; padding: 20px 0;
       }
 
-      /* ── Bottom dock ── */
-      .d8h-dock {
+      /* ── Bottom dock: full-width glass bar ── */
+      .d8h-dock-bar {
         position: fixed;
-        bottom: 20px; left: 50%; transform: translateX(-50%);
-        display: flex; gap: 6px; align-items: center;
-        padding: 8px 10px;
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(8,10,18,0.80);
-        backdrop-filter: blur(16px);
+        bottom: 0; left: 0; right: 0;
+        display: flex; justify-content: center;
+        padding: 16px 24px 24px;
         z-index: 100;
-        box-shadow: 0 8px 40px rgba(0,0,0,0.55);
+        pointer-events: none;
       }
-      .d8h-dock-btn {
-        display: flex; flex-direction: column; align-items: center;
-        gap: 3px; padding: 8px 10px;
+      .d8h-dock-glass {
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: min(900px, 100%);
+        padding: 10px 20px 12px;
+        background: rgba(26,15,0,0.25);
+        backdrop-filter: blur(20px) saturate(120%);
+        border: 1px solid rgba(212,175,55,0.12);
+        border-radius: 20px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
+      }
+      .d8h-dock-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 12px 6px;
         border-radius: 12px;
         border: 1px solid transparent;
-        background: var(--dock-bg, rgba(255,255,255,0.06));
-        color: rgba(255,255,255,0.75);
-        cursor: pointer; transition: all 140ms ease;
-        min-width: 52px;
+        color: rgba(255,255,255,0.5);
         text-decoration: none;
+        cursor: pointer;
+        transition: all 180ms ease;
       }
-      .d8h-dock-btn:hover {
-        border-color: rgba(255,255,255,0.14);
-        background: rgba(255,255,255,0.10);
-        transform: translateY(-2px);
+      .d8h-dock-item:hover {
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(212,175,55,0.2);
+        color: rgba(255,255,255,0.9);
       }
-      .d8h-dock-icon { font-size: 17px; }
+      .d8h-dock-item--active {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(212,175,55,0.25);
+        color: rgba(255,255,255,0.95);
+      }
+      .dock-icon-svg { display: inline-flex; align-items: center; justify-content: center; }
       .d8h-dock-label {
-        font-size: 9px; font-family: inherit;
-        color: rgba(255,255,255,0.45);
-        letter-spacing: 0.03em;
+        font-size: 10px; font-family: inherit; font-weight: 500;
+        color: inherit;
+        letter-spacing: 0.02em;
         white-space: nowrap;
       }
 
@@ -2425,8 +2578,8 @@ function HomeStyles() {
 
       @media (max-width: 640px) {
         .d8h-title { font-size: 32px; }
-        .d8h-dock { gap: 3px; padding: 6px 8px; }
-        .d8h-dock-btn { min-width: 40px; padding: 6px 6px; }
+        .d8h-dock-glass { gap: 2px; padding: 8px 12px 10px; }
+        .d8h-dock-item { padding: 6px 8px 4px; }
         .d8h-dock-label { display: none; }
       }
     `}</style>
