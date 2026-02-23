@@ -1,26 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+// Exact paths served directly (not rewritten to /io)
+const DIRECT_PATHS = new Set([
+  "/",
+  "/pricing",
+  "/about",
+  "/gallery",
+  "/templates",
+  "/privacy",
+  "/terms",
+  "/tv",
+  "/healthz",
+]);
 
-  // D8_TV_BYPASS_FORCE_DEPLOY_011
-  if (
-    pathname === '/tv' || pathname.startsWith('/tv/') ||
-    pathname === '/api/tv' || pathname.startsWith('/api/tv/') ||
-    pathname.startsWith('/api/') ||
-    pathname.startsWith('/_next/') ||
-    pathname === '/favicon.ico'
-  ) {
-    return NextResponse.next();
-  }
+// Path prefixes served directly
+const DIRECT_PREFIXES = [
+  "/sign-in",
+  "/sign-up",
+  "/api/",
+  "/_next/",
+  "/s/",
+  "/tv/",
+];
+
+function shouldPassThrough(pathname: string): boolean {
+  if (DIRECT_PATHS.has(pathname)) return true;
+  return DIRECT_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+export default clerkMiddleware((_auth, request: NextRequest) => {
+  const { pathname } = request.nextUrl;
+  if (shouldPassThrough(pathname)) return NextResponse.next();
 
   // Root serves the Builder (AI website generator). All other paths → /io cockpit.
   if (pathname === '/') return NextResponse.next();
   const url = request.nextUrl.clone();
-  url.pathname = '/io';
+  url.pathname = "/io";
   return NextResponse.rewrite(url);
-}
+});
 
 export const config = {
-  matcher: '/:path*',
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
 };
