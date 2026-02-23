@@ -2272,12 +2272,14 @@ function HomeStyles() {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 64px 24px 40px;
-        gap: 20px;
+        padding: 80px 32px 56px;
+        gap: 32px;
       }
       .d8h-title {
         margin: 0;
         font-size: clamp(36px, 6vw, 62px);
+        font-weight: 800;
+        line-height: 1.1;
         font-weight: 800;
         color: #fff;
         letter-spacing: -0.04em;
@@ -2287,6 +2289,7 @@ function HomeStyles() {
       .d8h-sub {
         margin: 0;
         font-size: 16px;
+        max-width: 420px;
         color: rgba(255,255,255,0.40);
         text-align: center;
         letter-spacing: -0.01em;
