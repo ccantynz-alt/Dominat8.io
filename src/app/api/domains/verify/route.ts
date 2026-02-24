@@ -1,11 +1,8 @@
 import { kv } from "@vercel/kv";
 import { NextRequest, NextResponse } from "next/server";
+import { normalizeDomain } from "@/lib/domains/dns";
 
 export const runtime = "nodejs";
-
-function normalizeDomain(domain: string): string {
-  return domain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
-}
 
 async function lookupTXT(hostname: string): Promise<string> {
   try {

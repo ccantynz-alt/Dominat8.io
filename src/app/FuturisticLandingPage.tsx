@@ -5,8 +5,8 @@ import FOG from "vanta/dist/vanta.fog.min";
 import * as THREE from "three";
 
 const FuturisticLandingPage = () => {
-  const [vantaEffect, setVantaEffect] = useState(null);
-  const vantaRef = useRef(null);
+  const [vantaEffect, setVantaEffect] = useState<ReturnType<typeof FOG> | null>(null);
+  const vantaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!vantaEffect) {
