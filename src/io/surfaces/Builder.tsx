@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import FOG from "vanta/dist/vanta.fog.min";
 import * as THREE from "three";
 import AquariumBackground from "@/components/AquariumBackground";
+import { useSpeechRecognition } from "@/io/hooks/useSpeechRecognition";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,51 +88,6 @@ function useTypewriter(texts: string[], interval = 4000) {
   }, [charIdx, index, texts]);
 
   return displayed;
-}
-
-function useSpeechRecognition({ onTranscript }: { onTranscript: (text: string) => void }) {
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn("Speech recognition not supported");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event: Event & { results: SpeechRecognitionResultList }) => {
-      const transcript = event.results[0][0].transcript;
-      onTranscript(transcript);
-      setIsListening(false);
-    };
-
-    recognition.onerror = (event: Event & { error?: string }) => {
-      console.error("Speech recognition error", (event as { error?: string }).error);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognitionRef.current = recognition;
-  }, [onTranscript]);
-
-  const startListening = () => {
-    if (recognitionRef.current && !isListening) {
-      recognitionRef.current.start();
-      setIsListening(true);
-    }
-  };
-
-  return { isListening, startListening };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
