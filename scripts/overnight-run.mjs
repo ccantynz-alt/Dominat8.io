@@ -106,15 +106,15 @@ function oneRun() {
   log("========== Dominat8 overnight run ==========");
 
   // 1. Self-heal (deterministic fixes)
-  log("[1/6] Heal...");
+  log("[1/7] Heal...");
   run("node scripts/heal.mjs");
 
   // 2. Doctor (diagnostics only; does not fix, just reports)
-  log("[2/6] Doctor...");
+  log("[2/7] Doctor...");
   run("node scripts/doctor.mjs", { silent: true });
 
   // 3. Typecheck
-  log("[3/6] Typecheck...");
+  log("[3/7] Typecheck...");
   const typecheckOk = run("npm run typecheck", { silent: false });
   if (!typecheckOk) {
     log("Typecheck failed. Continuing anyway; build may fail.");

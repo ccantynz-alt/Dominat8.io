@@ -12,7 +12,7 @@ type DnsResponse = {
   Answer?: Array<{ name: string; type: number; TTL?: number; data: string }>;
 };
 
-function normalizeDomain(input: string): string {
+export function normalizeDomain(input: string): string {
   const d = (input || "").trim().toLowerCase();
   return d.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/\.$/, "");
 }

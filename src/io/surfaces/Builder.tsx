@@ -6,6 +6,13 @@ import FOG from "vanta/dist/vanta.fog.min";
 import * as THREE from "three";
 import AquariumBackground from "@/components/AquariumBackground";
 
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type BuildState = "idle" | "generating" | "done" | "error";
@@ -91,7 +98,7 @@ function useTypewriter(texts: string[], interval = 4000) {
 
 function useSpeechRecognition({ onTranscript }: { onTranscript: (text: string) => void }) {
   const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

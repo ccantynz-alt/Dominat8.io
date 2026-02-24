@@ -32,11 +32,6 @@ const DIRECT_PATHS = new Set([
   "/animate",
   "/integrate",
   "/settings",
-  // Metadata / static assets (Next.js app router)
-  "/icon",
-  "/apple-icon",
-  "/opengraph-image",
-  "/twitter-image",
 ]);
 
 // Path prefixes served directly (cockpit is protected below, not passed through)

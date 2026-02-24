@@ -15,9 +15,8 @@
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   --gold-primary: #FFD700;
   --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
-  --gold-glow: 0 0 20px rgba(191, 149, 63, 0.4);
-  --accent-gold: linear-gradient(90deg, #BF953F, #FCF6BA, #B38728);
   --gold-glow: 0 0 15px rgba(251, 245, 183, 0.3);
+  --accent-gold: linear-gradient(90deg, #BF953F, #FCF6BA, #B38728);
 }
 
 .progress-fill {
