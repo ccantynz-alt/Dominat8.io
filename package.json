@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^5.7.5",
-    "@react-three/drei": "^8.20.2",
-    "@react-three/fiber": "^8.18.0",
+    "@react-three/drei": "^10.0.0",
+    "@react-three/fiber": "^9.0.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.2.0",
     "@types/react": "^19.2.10",
