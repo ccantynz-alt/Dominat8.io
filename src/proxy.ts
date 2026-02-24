@@ -89,6 +89,18 @@ const clerkHandler = clerkMiddleware(async (auth, request: NextRequest) => {
   }
 
   const { pathname } = request.nextUrl;
+  const adminKey = process.env.ADMIN_API_KEY?.trim() || "";
+  
+  // Check protected routes: require admin key OR Clerk authentication
+  if (startsWithAny(pathname, PROTECTED_PREFIXES)) {
+    if (!adminKey) {
+      // No admin key configured - check Clerk auth for protected routes
+      const { userId } = await auth();
+      if (!userId) {
+        return new NextResponse("Unauthorized", { status: 401 });
+      }
+    }
+  }
 
   if (shouldPassThrough(pathname)) return NextResponse.next();
 
@@ -107,15 +119,22 @@ export function proxy(request: NextRequest, event: NextFetchEvent) {
 
   if (startsWithAny(pathname, PROTECTED_PREFIXES)) {
     const adminKey = process.env.ADMIN_API_KEY?.trim() || "";
-    if (!adminKey) return clerkHandler(request, event);
-    const hdr =
-      request.headers.get("x-admin-key") ||
-      request.headers.get("x-d8-admin-key") ||
-      request.headers.get("x-dom-admin-key") ||
-      "";
-    const q = request.nextUrl.searchParams.get("admin_key") || "";
-    if (hdr === adminKey || q === adminKey) return clerkHandler(request, event);
-    return new NextResponse("Unauthorized", { status: 401 });
+    // If admin key is configured, require it before passing to clerkHandler
+    if (adminKey) {
+      const hdr =
+        request.headers.get("x-admin-key") ||
+        request.headers.get("x-d8-admin-key") ||
+        request.headers.get("x-dom-admin-key") ||
+        "";
+      const q = request.nextUrl.searchParams.get("admin_key") || "";
+      if (hdr !== adminKey && q !== adminKey) {
+        return new NextResponse("Unauthorized", { status: 401 });
+      }
+    }
+    // If no admin key or admin key valid, pass to clerkHandler which will:
+    // 1. Check Clerk auth if no admin key was configured
+    // 2. Set up auth context for route handlers
+    return clerkHandler(request, event);
   }
 
   return clerkHandler(request, event);
