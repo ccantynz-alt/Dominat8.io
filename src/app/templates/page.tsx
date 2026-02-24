@@ -88,6 +88,8 @@ export default function TemplatesPage() {
   const [search, setSearch] = React.useState("");
   const [isRecording, setIsRecording] = React.useState(false);
   const recognitionRef = React.useRef<any>(null);
+  const interimTextRef = React.useRef<HTMLDivElement>(null);
+  const finalTextRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -110,9 +112,9 @@ export default function TemplatesPage() {
         }
 
         // Update the UI in real-time
-        document.getElementById('interim-text')!.innerHTML = interimTranscript;
+        if (interimTextRef.current) interimTextRef.current.textContent = interimTranscript;
         if (finalTranscript) {
-          document.getElementById('final-text')!.innerHTML = finalTranscript;
+          if (finalTextRef.current) finalTextRef.current.textContent = finalTranscript;
           
           const transcript = finalTranscript.toLowerCase().trim();
           console.log("Voice Command Received:", transcript);
@@ -135,8 +137,8 @@ export default function TemplatesPage() {
 
           // Clear subtitles after a few seconds of inactivity
           setTimeout(() => {
-            document.getElementById('interim-text')!.innerHTML = "";
-            document.getElementById('final-text')!.innerHTML = "";
+            if (interimTextRef.current) interimTextRef.current.textContent = "";
+            if (finalTextRef.current) finalTextRef.current.textContent = "";
           }, 3000);
         }
       };
@@ -147,7 +149,7 @@ export default function TemplatesPage() {
 
       recognition.onend = () => {
         setIsRecording(false);
-        document.getElementById('final-text')!.innerHTML = '';
+        if (finalTextRef.current) finalTextRef.current.textContent = '';
       };
       
       recognition.onerror = (event: any) => {
@@ -258,8 +260,8 @@ export default function TemplatesPage() {
           </button>
         </div>
         <div id="subtitle-container" className="subtitle-overlay">
-          <div id="interim-text" className="interim"></div>
-          <div id="final-text" className="final"></div>
+          <div ref={interimTextRef} className="interim"></div>
+          <div ref={finalTextRef} className="final"></div>
         </div>
       </div>
 
