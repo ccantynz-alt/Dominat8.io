@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { kvGet, kvSet, proofEnvelope } from "./store";
 export type AplRunMode = "plan" | "apply";
 export type AplRunRequest = { projectId?: string; mode?: AplRunMode; goal?: string; };

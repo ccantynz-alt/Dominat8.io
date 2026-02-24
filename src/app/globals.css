@@ -1,72 +1,37 @@
-@import "./_styles/obsidian.css";
 /* =========================================================
-   D8_NO_PURPLE_CORE_v1_20260131
-   Absolute neutral premium dark theme
+   D8 Global Theme
+   Neutral premium dark — no purple
    ========================================================= */
 
 :root {
-  /* Core surfaces */
-  --bg-0: #07090f;
-  --bg-1: #0b0f1a;
-  --bg-2: #11162a;
-
-  /* Text */
+  --bg-0: #04060e;
+  --bg-1: #080b16;
+  --bg-2: #0d1120;
   --fg-0: #ffffff;
   --fg-1: #d7dbea;
   --fg-2: #9aa3c7;
-
-  /* Accent â€” HARD LOCK (NO PURPLE) */
-  --accent: #e5e7eb;         /* neutral light */
-  --primary: #e5e7eb;
-  --ring: rgba(255,255,255,0.25);
-
-  /* Kill glows */
-  --glow: transparent;
-  --glow-soft: transparent;
-  --glow-strong: transparent;
-
-  /* Borders */
   --border-subtle: rgba(255,255,255,0.08);
   --border-strong: rgba(255,255,255,0.16);
 }
 
-/* HARD NUKE ANY PURPLE GRADIENTS */
-body,
-main {
-  background:
-    radial-gradient(1200px 800px at 50% -20%, rgba(255,255,255,0.04), transparent 60%),
-    linear-gradient(180deg, var(--bg-0), var(--bg-1) 40%, var(--bg-2));
+/* Base background */
+body {
+  background: var(--bg-0);
   color: var(--fg-1);
+  margin: 0;
+  padding: 0;
 }
 
-/* Remove purple shadows / focus rings globally */
-*,
-*::before,
-*::after {
-  box-shadow: none !important;
-}
-
-/* Neutral focus (no purple ring) */
+/* Neutral focus ring */
 :focus-visible {
   outline: 2px solid rgba(255,255,255,0.35);
   outline-offset: 2px;
 }
 
-/* Kill Tailwind purple utilities if they slipped through */
+/* Kill any Tailwind purple utilities that slip through */
 [class*="purple"],
 [class*="violet"],
 [class*="fuchsia"] {
   background: none !important;
   color: inherit !important;
-}
-
-/* Debug proof */
-html::after {
-  content: "D8_NO_PURPLE_CORE_v1";
-  position: fixed;
-  bottom: 6px;
-  right: 10px;
-  font-size: 10px;
-  opacity: 0.35;
-  pointer-events: none;
 }

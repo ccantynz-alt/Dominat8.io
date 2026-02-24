@@ -1,3 +1,4 @@
+# Superseded by ci.yml — one build per PR to main. Disabled to avoid duplicate runs.
 name: d8-gate
 
 on:
@@ -8,6 +9,7 @@ on:
 
 jobs:
   build:
+    if: false
     name: build
     runs-on: ubuntu-latest
     timeout-minutes: 20
