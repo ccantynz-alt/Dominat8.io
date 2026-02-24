@@ -1,17 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import FOG from "vanta/dist/vanta.fog.min";
 import * as THREE from "three";
 
 const FuturisticLandingPage = () => {
-  const [vantaEffect, setVantaEffect] = useState(null);
+  const vantaEffect = useRef<any>(null);
   const vantaRef = useRef(null);
 
   useEffect(() => {
-    if (!vantaEffect) {
-      setVantaEffect(
-        FOG({
+    if (!vantaEffect.current) {
+      vantaEffect.current = FOG({
           el: vantaRef.current,
           THREE: THREE,
           mouseControls: true,
@@ -26,13 +25,12 @@ const FuturisticLandingPage = () => {
           blurFactor: 0.5,
           speed: 1.5,
           zoom: 0.5,
-        })
-      );
+        });
     }
     return () => {
-      if (vantaEffect) (vantaEffect as any).destroy();
+      if (vantaEffect.current) vantaEffect.current.destroy();
     };
-  }, [vantaEffect]);
+  }, []);
 
   return (
     <div
