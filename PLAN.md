@@ -1,5 +1,29 @@
-# Dominat8 2030-Standard AI Website Builder - Strategic Plan
+# Dominat8 2030-Standard AI Website Builder – Platform Upgrade & Strategic Plan
 
+## PR Overview
+
+**Title:** End-to-end platform upgrade (Next.js 16, React 19) with cockpit, voice, verification, and automation
+
+**Scope of changes (high level):**
+- Upgrade core framework dependencies (e.g., Next.js 14 → 16, React 18 → 19) to align with the 2030-standard architecture.
+- Refactor layout/auth flows, including removal of `ClerkProvider` from the main layout in favor of a more modular authentication strategy.
+- Introduce new cockpit pages and management surfaces that operationalize the Core Engine, Cinematic UI, and Marketing Monster phases described below.
+- Implement advanced background effects and cinematic visuals consistent with the “Obsidian” and “Cloud” themes.
+- Add browser-based voice recognition/command capabilities to improve agent interaction and UX.
+- Implement domain verification and related safeguards to support reliable multi-domain deployments (e.g., Dominat8.io and Dominat8.com).
+- Extend build and deployment automation scripts to support self-healing, diagnostics, and high deployment success rates.
+
+**Why these changes are being made:**
+- To move the Dominat8 platform toward a “Gold Medal” 2030-standard builder that outperforms competitors like Lovable on resilience, UX, and automation.
+- To unify the technical stack around the latest stable framework versions, reducing technical debt and enabling new capabilities (streaming, edge, improved concurrency).
+- To provide the necessary cockpit, visualization, and marketing tooling that makes the three strategic phases below (Core Engine, Cinematic UI, Marketing Monster) executable in practice.
+
+**Testing & validation (current state):**
+- Dependency upgrade smoke tests: application builds locally and on CI; core routes render without runtime errors.
+- Manual UI verification on primary cockpit and marketing pages across modern Chromium-based browsers and mobile viewport widths.
+- Basic auth and routing checks after removal of `ClerkProvider` from layout (sign-in/sign-out flows, protected routes).
+- Sanity checks for background effects and voice recognition to ensure they do not block interaction or critical flows.
+- Deployment pipeline dry-runs to validate new automation scripts on non-production environments.
 This document outlines the strategic build plan for Dominat8.io and Dominat8.com, focusing on achieving a "Gold Medal" standard and surpassing competitors like Lovable through autonomous AI capabilities and cutting-edge design. The build is broken down into three core phases, each with specific technical checkpoints and variables.
 
 ## Phase 1: Core Engine (Self-Healing)
