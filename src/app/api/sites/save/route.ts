@@ -1,5 +1,6 @@
 import { put } from "@vercel/blob";
 import { kv } from "@vercel/kv";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -9,9 +10,15 @@ type SavedSiteMeta = {
   prompt: string;
   blobUrl: string;
   createdAt: string;
+  userId?: string;
 };
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Sign in to save and share sites" }, { status: 401 });
+  }
+
   try {
     const { html, prompt } = await req.json() as { html: string; prompt: string };
 
@@ -32,10 +39,17 @@ export async function POST(req: NextRequest) {
       prompt: prompt?.slice(0, 200) ?? "",
       blobUrl: blob.url,
       createdAt: new Date().toISOString(),
+      userId,
     };
 
     // Store metadata in KV
     await kv.set(`site:${id}`, meta, { ex: 60 * 60 * 24 * 90 }); // 90 days TTL
+
+    // Append to this user's recent deployments (for TV / cockpit)
+    try {
+      await kv.lpush(`user:${userId}:deployments:recent`, id);
+      await kv.ltrim(`user:${userId}:deployments:recent`, 0, 99);
+    } catch { /* non-fatal */ }
 
     return NextResponse.json({
       ok: true,
