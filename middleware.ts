@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES: string[] = ["/admin","/cockpit","/agents","/api/agents","/api/engine","/api/admin","/api/cockpit"];
-const ALLOW_PREFIXES: string[] = ["/api/__d8__/stamp","/stamp","/healthz","/robots.txt","/sitemap.xml","/favicon.ico"];
+// Cockpit is protected by Clerk (sign-in) in src/middleware.ts — do not require admin key here
+const PROTECTED_PREFIXES: string[] = ["/admin","/agents","/api/agents","/api/engine","/api/admin"];
+const ALLOW_PREFIXES: string[] = ["/api/__d8__/stamp","/stamp","/healthz","/robots.txt","/sitemap.xml","/favicon.ico","/icon","/apple-icon","/opengraph-image","/twitter-image"];
 
 function startsWithAny(pathname: string, prefixes: string[]): boolean {
   for (const p of prefixes) {
@@ -43,11 +44,9 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/cockpit/:path*",
     "/agents/:path*",
     "/api/agents/:path*",
     "/api/engine/:path*",
-    "/api/admin/:path*",
-    "/api/cockpit/:path*"
+    "/api/admin/:path*"
   ]
 };
