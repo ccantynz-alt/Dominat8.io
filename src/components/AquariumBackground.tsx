@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -175,36 +175,39 @@ function AquariumScene() {
   );
 }
 
+const gradientStyle = {
+  position: "fixed" as const,
+  inset: 0,
+  zIndex: 0,
+  overflow: "hidden" as const,
+  background: "linear-gradient(180deg, #020a12 0%, #041a28 30%, #052535 60%, #030d14 100%)",
+};
+
 export default function AquariumBackground() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
-    <div
-      className="aquarium-bg"
-      aria-hidden
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 0,
-        overflow: "hidden",
-        background: "linear-gradient(180deg, #020a12 0%, #041a28 30%, #052535 60%, #030d14 100%)",
-      }}
-    >
-      <Canvas
-        camera={{
-          position: [0, 0, 6],
-          fov: 55,
-          near: 0.1,
-          far: 20,
-        }}
-        gl={{
-          antialias: true,
-          alpha: false,
-          powerPreference: "high-performance",
-        }}
-        dpr={[1, 2]}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <AquariumScene />
-      </Canvas>
+    <div className="aquarium-bg" aria-hidden style={gradientStyle}>
+      {mounted && (
+        <Canvas
+          camera={{
+            position: [0, 0, 6],
+            fov: 55,
+            near: 0.1,
+            far: 20,
+          }}
+          gl={{
+            antialias: true,
+            alpha: false,
+            powerPreference: "high-performance",
+          }}
+          dpr={[1, 2]}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <AquariumScene />
+        </Canvas>
+      )}
     </div>
   );
 }

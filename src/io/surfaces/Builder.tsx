@@ -1,10 +1,15 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import FOG from "vanta/dist/vanta.fog.min";
 import * as THREE from "three";
-import AquariumBackground from "@/components/AquariumBackground";
+
+const AquariumBackground = dynamic(
+  () => import("@/components/AquariumBackground"),
+  { ssr: false }
+);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
