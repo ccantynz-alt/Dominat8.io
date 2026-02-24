@@ -490,7 +490,7 @@ export function Builder() {
     return () => {
       if (vantaEffect) vantaEffect.destroy();
     };
-  }, [vantaEffect, backgroundMode]);
+  }, [backgroundMode]);
 
   useEffect(() => {
     const dashboard = document.querySelector('.main-interface-container');
