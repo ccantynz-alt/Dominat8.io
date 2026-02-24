@@ -1,9 +1,20 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { kv } from '@vercel/kv';
+import { NextRequest, NextResponse } from 'next/server';
+
+const MAIN_HOSTS = new Set(['dominat8.io', 'www.dominat8.io', 'localhost']);
+
+// Builder and cockpit require sign-in
+const isProtectedRoute = createRouteMatcher([
+  '/',
+  '/io',
+  '/io/(.*)',
+  '/cockpit',
+  '/cockpit/(.*)',
+]);
 
 // Exact paths served directly (not rewritten to /io)
 const DIRECT_PATHS = new Set([
-  "/",
   "/pricing",
   "/about",
   "/gallery",
@@ -12,9 +23,23 @@ const DIRECT_PATHS = new Set([
   "/terms",
   "/tv",
   "/healthz",
+  "/deploy",
+  "/domain",
+  "/ssl",
+  "/monitor",
+  "/logs",
+  "/fix",
+  "/animate",
+  "/integrate",
+  "/settings",
+  // Metadata / static assets (Next.js app router)
+  "/icon",
+  "/apple-icon",
+  "/opengraph-image",
+  "/twitter-image",
 ]);
 
-// Path prefixes served directly
+// Path prefixes served directly (cockpit is protected below, not passed through)
 const DIRECT_PREFIXES = [
   "/sign-in",
   "/sign-up",
@@ -22,6 +47,7 @@ const DIRECT_PREFIXES = [
   "/_next/",
   "/s/",
   "/tv/",
+  "/io/",
 ];
 
 function shouldPassThrough(pathname: string): boolean {
@@ -29,16 +55,42 @@ function shouldPassThrough(pathname: string): boolean {
   return DIRECT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-export default clerkMiddleware((_auth, request: NextRequest) => {
+export default clerkMiddleware(async (auth, request: NextRequest) => {
+  const host = request.headers.get('host') || '';
+  const hostname = host.replace(/:\d+$/, '');
+
+  // Custom domain serving: verified domains rewrite to /s/[siteId]
+  if (!MAIN_HOSTS.has(hostname) && !hostname.endsWith('.vercel.app')) {
+    try {
+      const siteId = await kv.get<string>(`domain:verified:${hostname}`);
+      if (siteId) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/s/${siteId}`;
+        return NextResponse.rewrite(url);
+      }
+    } catch { /* KV unavailable, fall through */ }
+  }
+
   const { pathname } = request.nextUrl;
+
+  // Let icon and metadata routes through first — no auth, no rewrite (browsers/crawlers hit these without cookies)
   if (shouldPassThrough(pathname)) return NextResponse.next();
 
-  // Everything else (e.g. /some-slug) → /io admin cockpit
+  // Protect builder and cockpit — redirect to sign-in if not authenticated
+  if (isProtectedRoute(request)) {
+    await (await auth()).protect();
+  }
+
+  // Root serves the Builder. Cockpit paths serve as-is. All other paths → /io.
+  if (pathname === '/') return NextResponse.next();
+  if (pathname.startsWith('/cockpit')) return NextResponse.next();
   const url = request.nextUrl.clone();
   url.pathname = "/io";
   return NextResponse.rewrite(url);
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
+  // Exclude static assets and metadata routes so they never hit Clerk (avoids any auth/redirect)
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico|icon|apple-icon|opengraph-image|twitter-image).*)"],
 };

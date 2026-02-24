@@ -17,3 +17,7 @@
 1. Branch builds locally: `npm ci && npm run build`
 2. No conflicting routes (e.g. only one of `pages/X` or `app/X` for the same path)
 3. Merge → wait for Vercel to finish → check live URL
+
+## If Vercel says ".next was not found at .../github/.next"
+
+The build succeeded but Vercel is looking in the wrong place. **Fix:** In Vercel → Project Settings → General → **Root Directory**: set to **empty** (or `.`) so the app root is the repo root. Leave **Output Directory** empty so Next.js uses `.next`. Save and redeploy.

@@ -4,6 +4,11 @@ import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dominat8.io"),
+  icons: {
+    icon: "/api/icon",
+    shortcut: "/api/icon",
+    apple: "/api/icon",
+  },
   title: {
     default: "Dominat8.io — AI Website Builder",
     template: "%s — Dominat8.io",
@@ -21,7 +26,7 @@ export const metadata: Metadata = {
     description: "Describe your business. Our AI builds a complete, professional website in under 30 seconds. No templates. No drag and drop.",
     images: [
       {
-        url: "/opengraph-image",
+        url: "/api/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Dominat8.io — AI Website Builder",
@@ -32,7 +37,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Dominat8.io — AI Website Builder",
     description: "Build a world-class website in seconds. Just describe your business.",
-    images: ["/opengraph-image"],
+    images: ["/api/opengraph-image"],
     creator: "@dominat8io",
   },
   robots: {
@@ -50,18 +55,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <head>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-            rel="stylesheet"
-          />
-        </head>
-        <body style={{ margin: 0, padding: 0 }}>{children}</body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>{children}</body>
+    </html>
   );
 }
