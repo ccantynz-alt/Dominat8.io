@@ -512,10 +512,12 @@ export function Builder() {
   const placeholder = useTypewriter(EXAMPLE_PROMPTS);
   const { deployments, loaded } = useDeployments();
   const searchParams = useSearchParams();
+  const handleTranscript = useCallback((text: string) => {
+    setPrompt(text);
+  }, []);
+
   const { isListening, startListening } = useSpeechRecognition({
-    onTranscript: (text) => {
-      setPrompt(text);
-    },
+    onTranscript: handleTranscript,
   });
 
   // Pre-fill prompt from URL ?prompt= param (e.g. from /templates)
