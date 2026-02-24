@@ -13,7 +13,10 @@
     "ci:protected": "node scripts/protected-paths-check.mjs",
     "heal": "node scripts/heal.mjs",
     "heal:build": "node scripts/heal.mjs && npm run build",
+    "finish-build": "node scripts/finish-build.mjs",
+    "finish-build:no-lint": "node scripts/finish-build.mjs --skip-lint",
     "overnight": "node scripts/overnight-run.mjs",
+    "finish:1h": "node scripts/run-one-hour.mjs",
     "auto-improve": "node scripts/auto-improve.mjs"
   },
   "dependencies": {

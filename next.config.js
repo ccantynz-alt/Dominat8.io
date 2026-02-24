@@ -3,6 +3,13 @@ const nextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  async rewrites() {
+    // Icon/metadata file conventions can 404 when both app/ and src/app exist; serve from API routes instead
+    return [
+      { source: "/icon", destination: "/api/icon" },
+      { source: "/opengraph-image", destination: "/api/opengraph-image" },
+    ];
+  },
   async headers() {
     return [
       {

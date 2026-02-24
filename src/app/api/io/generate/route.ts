@@ -131,33 +131,47 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return new Response("Sign in to generate sites", { status: 401 });
-  }
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return new Response("Sign in to generate sites", { status: 401 });
+    }
 
-  const { prompt, industry, vibe } = await req.json();
+    let body: { prompt?: string; industry?: string; vibe?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response("Invalid JSON body", { status: 400 });
+    }
+    const { prompt, industry, vibe } = body;
 
-  if (!prompt?.trim()) {
-    return new Response("Prompt required", { status: 400 });
-  }
+    if (!prompt?.trim()) {
+      return new Response("Prompt required", { status: 400 });
+    }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return new Response("OpenAI API key not configured", { status: 500 });
-  }
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return new Response("OpenAI API key not configured. Add OPENAI_API_KEY to .env.local.", { status: 500 });
+    }
 
-  const plan = (await kv.get<string>(`user:${userId}:plan`)) ?? "free";
-  const limit = MONTHLY_LIMITS[plan] ?? MONTHLY_LIMITS.free;
-  const now = new Date();
-  const monthKey = `user:${userId}:usage:${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-  const usage = (await kv.get<number>(monthKey)) ?? 0;
-  if (usage >= limit) {
-    return new Response(
-      `Monthly generation limit reached (${limit} for ${plan}). Upgrade or wait until next month.`,
-      { status: 429 }
-    );
-  }
+    let plan = "free";
+    let usage = 0;
+    let limit = MONTHLY_LIMITS.free;
+    const now = new Date();
+    const monthKey = `user:${userId}:usage:${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+    try {
+      plan = (await kv.get<string>(`user:${userId}:plan`)) ?? "free";
+      limit = MONTHLY_LIMITS[plan] ?? MONTHLY_LIMITS.free;
+      usage = (await kv.get<number>(monthKey)) ?? 0;
+      if (usage >= limit) {
+        return new Response(
+          `Monthly generation limit reached (${limit} for ${plan}). Upgrade or wait until next month.`,
+          { status: 429 }
+        );
+      }
+    } catch {
+      /* KV unavailable (e.g. local dev): allow generation, skip usage tracking */
+    }
 
   const openai = new OpenAI({ apiKey });
 
@@ -228,4 +242,8 @@ export async function POST(req: NextRequest) {
       "Cache-Control": "no-store",
     },
   });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(`Generate failed: ${msg}`, { status: 500 });
+  }
 }
