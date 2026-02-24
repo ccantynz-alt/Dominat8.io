@@ -217,6 +217,15 @@ export async function POST(req: NextRequest) {
     return new Response(msg, { status });
   }
 
+  // Increment usage counter before streaming begins so that aborting the stream
+  // mid-way still counts against the user's monthly limit.
+  if (monthKey) {
+    try {
+      await kv.incr(monthKey);
+      await kv.expire(monthKey, 60 * 60 * 24 * 32);
+    } catch { /* non-fatal */ }
+  }
+
   const encoder = new TextEncoder();
 
   const readable = new ReadableStream({
@@ -227,12 +236,6 @@ export async function POST(req: NextRequest) {
           if (text) controller.enqueue(encoder.encode(text));
         }
       } finally {
-        if (monthKey) {
-          try {
-            await kv.incr(monthKey);
-            await kv.expire(monthKey, 60 * 60 * 24 * 32);
-          } catch { /* non-fatal */ }
-        }
         controller.close();
       }
     },
