@@ -1,5 +1,7 @@
 # Finish the site — overnight & one-shot
 
+**First time setting up?** See [SETUP-NOVICE.md](./SETUP-NOVICE.md) for install, env, and run.
+
 ## One-shot (run now)
 
 ```bash
