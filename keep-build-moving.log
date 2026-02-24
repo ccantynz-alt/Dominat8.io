@@ -1,0 +1,78 @@
+2026-02-24T09:40:43.514Z Keep-build-moving started. Log: C:\Users\ccant\dominat8.io\keep-build-moving.log
+2026-02-24T09:40:43.522Z CLEAN_NEXT=false SKIP_LINT=false SKIP_SMOKE=true
+2026-02-24T09:40:43.525Z ========== Keep build moving ==========
+2026-02-24T09:40:43.526Z [0/8] Clean skipped (set CLEAN_NEXT=1 to clean .next).
+2026-02-24T09:40:43.528Z [1/8] Heal...
+2026-02-24T09:40:44.405Z [2/8] Doctor...
+2026-02-24T09:41:22.052Z [3/8] Typecheck...
+2026-02-24T09:41:39.275Z Typecheck failed. Continuing.
+2026-02-24T09:41:39.277Z [4/8] Lint...
+2026-02-24T09:41:40.576Z FAIL: npm run lint Command failed: npm run lint
+2026-02-24T09:41:40.578Z Lint had issues. Continuing.
+2026-02-24T09:41:40.579Z [5/8] Auto-improve...
+2026-02-24T09:41:41.730Z [6/8] Build...
+2026-02-24T09:41:59.970Z Build failed. Re-heal and retry...
+2026-02-24T09:42:24.196Z Build compiled successfully (exit 1 - treating as OK).
+2026-02-24T09:42:24.198Z Build OK.
+2026-02-24T09:42:24.198Z [7/8] Smoke skipped (SKIP_SMOKE=1).
+2026-02-24T09:42:24.199Z [8/8] Done. Full log: C:\Users\ccant\dominat8.io\keep-build-moving.log
+2026-02-24T11:04:47.295Z Keep-build-moving started. Log: C:\Users\ccant\dominat8.io\keep-build-moving.log
+2026-02-24T11:04:47.297Z CLEAN_NEXT=false SKIP_LINT=false SKIP_SMOKE=false
+2026-02-24T11:04:47.299Z ========== Keep build moving ==========
+2026-02-24T11:04:47.300Z [0/8] Clean skipped (set CLEAN_NEXT=1 to clean .next).
+2026-02-24T11:04:47.301Z [1/8] Heal...
+2026-02-24T11:04:47.580Z [2/8] Doctor...
+2026-02-24T11:05:07.729Z [3/8] Typecheck...
+2026-02-24T11:05:15.261Z FAIL: npm run typecheck Command failed: npm run typecheck
+2026-02-24T11:05:15.263Z Typecheck failed. Continuing.
+2026-02-24T11:05:15.264Z [4/8] Lint...
+2026-02-24T11:05:16.131Z FAIL: npm run lint Command failed: npm run lint
+2026-02-24T11:05:16.132Z Lint had issues. Continuing.
+2026-02-24T11:05:16.133Z [5/8] Auto-improve...
+2026-02-24T11:05:16.953Z [6/8] Build...
+2026-02-24T11:05:35.826Z Build compiled successfully (exit 1 - treating as OK).
+2026-02-24T11:05:35.827Z Build OK.
+2026-02-24T11:05:35.828Z [7/8] Smoke http://localhost:3000
+2026-02-24T11:05:35.908Z   OK 200 /
+2026-02-24T11:05:43.727Z   OK 200 /pricing
+2026-02-24T11:05:45.421Z   OK 200 /templates
+2026-02-24T11:05:46.842Z   OK 200 /gallery
+2026-02-24T11:05:48.382Z   OK 200 /about
+2026-02-24T11:05:48.748Z   OK 200 /icon
+2026-02-24T11:05:48.844Z   FAIL 404 /api/icon
+2026-02-24T11:05:49.898Z   OK 200 /opengraph-image
+2026-02-24T11:05:49.994Z   OK 200 /cockpit/settings
+2026-02-24T11:05:50.044Z   FAIL 404 /healthz
+2026-02-24T11:05:50.640Z   OK 200 /api/__health__
+2026-02-24T11:05:50.847Z   OK 200 /api/__d8__/stamp
+2026-02-24T11:05:50.848Z Smoke: 2 failed: /api/icon, /healthz
+2026-02-24T11:05:50.849Z [8/8] Done. Full log: C:\Users\ccant\dominat8.io\keep-build-moving.log
+2026-02-24T11:10:50.987Z Keep-build-moving started. Log: C:\Users\ccant\dominat8.io\keep-build-moving.log
+2026-02-24T11:10:50.990Z CLEAN_NEXT=false SKIP_LINT=false SKIP_SMOKE=false
+2026-02-24T11:10:50.991Z ========== Keep build moving ==========
+2026-02-24T11:10:50.992Z [0/8] Clean skipped (set CLEAN_NEXT=1 to clean .next).
+2026-02-24T11:10:50.992Z [1/8] Heal...
+2026-02-24T11:10:51.194Z [2/8] Doctor...
+2026-02-24T11:11:07.918Z [3/8] Typecheck...
+2026-02-24T11:11:15.581Z Typecheck failed. Continuing.
+2026-02-24T11:11:15.582Z [4/8] Lint...
+2026-02-24T11:11:16.281Z FAIL: npm run lint Command failed: npm run lint
+2026-02-24T11:11:16.281Z Lint had issues. Continuing.
+2026-02-24T11:11:16.282Z [5/8] Auto-improve...
+2026-02-24T11:11:17.151Z [6/8] Build...
+2026-02-24T11:11:36.536Z Build OK.
+2026-02-24T11:11:36.536Z [7/8] Smoke http://localhost:3000
+2026-02-24T11:11:36.620Z   OK 200 /
+2026-02-24T11:11:36.731Z   OK 200 /pricing
+2026-02-24T11:11:36.846Z   OK 200 /templates
+2026-02-24T11:11:36.917Z   OK 200 /gallery
+2026-02-24T11:11:37.079Z   OK 200 /about
+2026-02-24T11:11:37.197Z   OK 200 /icon
+2026-02-24T11:11:38.672Z   OK 200 /api/icon
+2026-02-24T11:11:39.665Z   OK 200 /opengraph-image
+2026-02-24T11:11:39.745Z   OK 200 /cockpit/settings
+2026-02-24T11:11:42.021Z   OK 200 /healthz
+2026-02-24T11:11:42.050Z   OK 200 /api/__health__
+2026-02-24T11:11:42.069Z   OK 200 /api/__d8__/stamp
+2026-02-24T11:11:42.070Z Smoke: all 12 OK.
+2026-02-24T11:11:42.071Z [8/8] Done. Full log: C:\Users\ccant\dominat8.io\keep-build-moving.log

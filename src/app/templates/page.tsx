@@ -2,6 +2,13 @@
 
 import * as React from "react";
 
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 type Template = {
   name: string;
   category: string;
@@ -79,6 +86,102 @@ const CATEGORIES = ["All", ...Array.from(new Set(TEMPLATES.map(t => t.category))
 export default function TemplatesPage() {
   const [active, setActive] = React.useState("All");
   const [search, setSearch] = React.useState("");
+  const [isRecording, setIsRecording] = React.useState(false);
+  const recognitionRef = React.useRef<any>(null);
+
+  React.useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.lang = 'en-US';
+      recognition.interimResults = true;
+
+      recognition.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        // Update the UI in real-time
+        document.getElementById('interim-text')!.innerHTML = interimTranscript;
+        if (finalTranscript) {
+          document.getElementById('final-text')!.innerHTML = finalTranscript;
+          
+          const transcript = finalTranscript.toLowerCase().trim();
+          console.log("Voice Command Received:", transcript);
+
+          if (transcript.includes("go gold")) {
+            document.body.classList.add("gold-theme");
+            speakResponse("Initializing Gold Interface.");
+          } else if (transcript.includes("center everything")) {
+            const hero = document.querySelector('.main-hero') as HTMLElement;
+            if(hero) {
+              hero.style.margin = "0 auto";
+            }
+            speakResponse("Layout balanced.");
+          } else if (transcript.includes("deploy project")) {
+            startDeploymentAnimation();
+            speakResponse("Deploying to production.");
+          } else {
+            setSearch(transcript);
+          }
+
+          // Clear subtitles after a few seconds of inactivity
+          setTimeout(() => {
+            document.getElementById('interim-text')!.innerHTML = "";
+            document.getElementById('final-text')!.innerHTML = "";
+          }, 3000);
+        }
+      };
+      
+      recognition.onstart = () => {
+        setIsRecording(true);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+        document.getElementById('final-text')!.innerHTML = '';
+      };
+      
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const toggleVoice = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+    } else {
+      if (!recognitionRef.current) {
+        alert("Speech recognition is not supported in this browser.");
+        return;
+      }
+      recognitionRef.current?.start();
+    }
+  };
+
+  const speakResponse = (text: string) => {
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.rate = 1.1;
+    msg.pitch = 1.2;
+    window.speechSynthesis.speak(msg);
+  }
+
+  const startDeploymentAnimation = () => {
+    console.log("Starting deployment animation...");
+    // In a real implementation, you would trigger progress bars or other UI elements.
+  }
 
   const filtered = TEMPLATES.filter(t => {
     const matchCat = active === "All" || t.category === active;
@@ -109,7 +212,7 @@ export default function TemplatesPage() {
       </nav>
 
       {/* Hero */}
-      <div style={{ textAlign: "center", padding: "56px 24px 36px" }}>
+      <div className="main-hero" style={{ textAlign: "center", padding: "56px 24px 36px" }}>
         <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(61,240,255,0.25)", background: "rgba(61,240,255,0.06)", color: "rgba(61,240,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
           TEMPLATES
         </div>
@@ -121,15 +224,15 @@ export default function TemplatesPage() {
         </p>
 
         {/* Search */}
-        <div style={{ maxWidth: 400, margin: "0 auto" }}>
+        <div style={{ maxWidth: 400, margin: "0 auto", position: "relative" }}>
           <input
             type="text"
-            placeholder="Search templates…"
+            placeholder="Search templates… or give a command"
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
               width: "100%",
-              padding: "10px 16px",
+              padding: "10px 40px 10px 16px",
               borderRadius: 12,
               border: "1px solid rgba(255,255,255,0.12)",
               background: "rgba(255,255,255,0.05)",
@@ -139,6 +242,24 @@ export default function TemplatesPage() {
               boxSizing: "border-box",
             }}
           />
+          <button
+            onClick={toggleVoice}
+            className={`mic-btn ${isRecording ? "listening" : ""}`}
+            title={isRecording ? "Stop listening" : "Start listening"}
+            style={{
+              color: isRecording ? "#3DF0FF" : "rgba(255,255,255,0.4)",
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d={isRecording ? "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" : "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"}/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+            </svg>
+          </button>
+        </div>
+        <div id="subtitle-container" className="subtitle-overlay">
+          <div id="interim-text" className="interim"></div>
+          <div id="final-text" className="final"></div>
         </div>
       </div>
 
@@ -241,6 +362,70 @@ export default function TemplatesPage() {
         }
         input::placeholder { color: rgba(255,255,255,0.25); }
         button:hover { opacity: 0.85; }
+        .gold-theme {
+          background: linear-gradient(135deg, #FFD700, #DAA520);
+          color: #333;
+          transition: all 0.5s ease;
+        }
+        .mic-btn {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 40px; 
+          height: 40px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          cursor: pointer;
+          transition: 0.4s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* Pulsing "Listening" State */
+        .mic-btn.listening {
+          border-color: #FFD700;
+          box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+          animation: pulse-gold 1.5s infinite;
+        }
+
+        @keyframes pulse-gold {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+        .subtitle-overlay {
+          position: fixed;
+          bottom: 120px; /* Sits above your dock */
+          left: 50%;
+          transform: translateX(-50%);
+          width: 80%;
+          max-width: 600px;
+          padding: 15px 25px;
+          background: rgba(15, 15, 15, 0.4);
+          backdrop-filter: blur(12px) saturate(180%); /* Pro glass effect */
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+          text-align: center;
+          z-index: 200;
+          pointer-events: none; /* User can click through it */
+        }
+
+        .interim {
+          color: rgba(255, 255, 255, 0.5); /* Dimmer text for in-progress words */
+          font-style: italic;
+          font-size: 1.1rem;
+        }
+
+        .final {
+          color: #FFD700; /* Gold for confirmed commands */
+          font-weight: bold;
+          font-size: 1.3rem;
+          margin-top: 5px;
+          text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
       `}</style>
     </main>
   );

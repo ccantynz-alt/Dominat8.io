@@ -1,0 +1,31 @@
+---
+description: Clerk + Next.js App Router — use only current patterns (proxy.ts, clerkMiddleware, ClerkProvider)
+alwaysApply: false
+globs: **/*.{ts,tsx}
+---
+
+# Clerk + Next.js App Router
+
+When editing auth, layout, or request protection, follow the **current** Clerk + Next.js App Router approach only.
+
+## Do
+
+- Use **`clerkMiddleware()`** from `@clerk/nextjs/server` in **`src/proxy.ts`** (Next.js 16: proxy replaces deprecated middleware).
+- Wrap the app with **`<ClerkProvider>`** in the root layout (`src/app/layout.tsx`).
+- Use Clerk components from `@clerk/nextjs`: `<SignInButton>`, `<SignUpButton>`, `<UserButton>`, `<SignedIn>`, `<SignedOut>`, `<SignIn>`, `<SignUp>`.
+- Use server APIs from `@clerk/nextjs/server`: `auth()`, `currentUser()` (with `async/await`).
+- Reference **App Router** paths: `app/` or `src/app/` (page.tsx, layout.tsx, route handlers).
+- Store real keys only in **`.env.local`**; use **placeholders** (e.g. `YOUR_PUBLISHABLE_KEY`) in docs or snippets. Ensure `.gitignore` excludes `.env*`.
+
+## Do not
+
+- Do **not** use `authMiddleware()` — it is replaced by **`clerkMiddleware()`**.
+- Do **not** suggest `_app.tsx` or Pages Router sign-in/sign-up under `pages/`.
+- Do **not** reference deprecated env patterns; use the ones in `.env.example`.
+- Do **not** write real API keys into code, markdown, or tracked files.
+
+## This project
+
+- **Proxy**: `src/proxy.ts` — contains `clerkMiddleware()` plus custom logic (admin protection, custom domain rewrite, route protection, /io rewrite). Do not replace with a minimal snippet; preserve app behavior.
+- **Layout**: `src/app/layout.tsx` — already has `<ClerkProvider>` and auth header (SignedOut/SignedIn, UserButton).
+- **Sign-in/up pages**: `src/app/sign-in/[[...sign-in]]/page.tsx`, `src/app/sign-up/[[...sign-up]]/page.tsx` — use `<SignIn>` and `<SignUp>` from Clerk.

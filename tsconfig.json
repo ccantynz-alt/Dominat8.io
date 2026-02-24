@@ -1,46 +1,48 @@
 {
-    "compilerOptions":  {
-                            "target":  "ES2017",
-                            "lib":  [
-                                        "dom",
-                                        "dom.iterable",
-                                        "esnext"
-                                    ],
-                            "allowJs":  true,
-                            "skipLibCheck":  true,
-                            "strict":  true,
-                            "noEmit":  true,
-                            "esModuleInterop":  true,
-                            "module":  "esnext",
-                            "moduleResolution":  "bundler",
-                            "resolveJsonModule":  true,
-                            "isolatedModules":  true,
-                            "jsx":  "preserve",
-                            "incremental":  true,
-                            "plugins":  [
-                                            {
-                                                "name":  "next"
-                                            }
-                                        ],
-                            "baseUrl":  ".",
-                            "paths":  {
-                                          "@/*":  [
-                                                      "./src/*",
-                                                      "./*"
-                                                  ]
-                                      }
-                        },
-    "include":  [
-                    "next-env.d.ts",
-                    "**/*.ts",
-                    "**/*.tsx",
-                    ".next/types/**/*.ts"
-                ],
-    "exclude":  [
-"src/_app_backup/**",
-                    "node_modules",
-                    "builder-workspace-v1",
-                    "**/builder-workspace-v1/**",
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*",
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/vanta.d.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "src/_app_backup/**",
+    "node_modules",
+    "builder-workspace-v1",
+    "**/builder-workspace-v1/**",
     "src/_legacy_app_*",
     "src/_legacy_app_*/**/*",
     "_quarantine/**/*"
