@@ -41,4 +41,4 @@ jobs:
 
       - name: Pass (no protected changes)
         if: steps.filter.outputs.protected != 'true'
-        run: echo "OK: no protected paths changed."
+        run: echo "OK - no protected paths changed."

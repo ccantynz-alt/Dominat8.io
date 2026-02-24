@@ -2,6 +2,7 @@ name: D8 Quality Gates
 
 on:
   pull_request:
+    branches: [ "main" ]
   push:
     branches: [ "main" ]
 

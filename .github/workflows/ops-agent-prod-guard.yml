@@ -1,1 +1,15 @@
-<installed earlier>
+# Superseded by d8_prod_watchdog.yml — disabled to avoid duplicate production checks.
+name: ops-agent-prod-guard
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  guard:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "disabled"

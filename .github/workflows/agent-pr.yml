@@ -111,7 +111,7 @@ jobs:
             --title "${{ inputs.pr_title }}" \
             --body "**Instruction**\n${{ inputs.instruction }}\n\n**Patch URL**\n${{ inputs.patch_url }}\n\n**Notes**\n- This PR was created by the Agent PR workflow.\n- Vercel Preview Deploy should run automatically on this PR."
 
-      - name: Optional: label auto-merge
+      - name: "Optional: label auto-merge"
         if: ${{ inputs.auto_merge == 'true' }}
         uses: actions/github-script@v7
         with:
