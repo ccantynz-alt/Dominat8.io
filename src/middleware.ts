@@ -39,7 +39,7 @@ const DIRECT_PATHS = new Set([
   "/twitter-image",
 ]);
 
-// Path prefixes served directly
+// Path prefixes served directly (cockpit is protected below, not passed through)
 const DIRECT_PREFIXES = [
   "/sign-in",
   "/sign-up",
@@ -48,7 +48,6 @@ const DIRECT_PREFIXES = [
   "/s/",
   "/tv/",
   "/io/",
-  "/cockpit/",
 ];
 
 function shouldPassThrough(pathname: string): boolean {
@@ -74,20 +73,24 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
 
   const { pathname } = request.nextUrl;
 
+  // Let icon and metadata routes through first — no auth, no rewrite (browsers/crawlers hit these without cookies)
+  if (shouldPassThrough(pathname)) return NextResponse.next();
+
   // Protect builder and cockpit — redirect to sign-in if not authenticated
   if (isProtectedRoute(request)) {
     await (await auth()).protect();
   }
 
-  if (shouldPassThrough(pathname)) return NextResponse.next();
-
-  // Root serves the Builder. All other paths → /io cockpit.
+  // Root serves the Builder. Cockpit paths serve as-is. All other paths → /io.
   if (pathname === '/') return NextResponse.next();
+  if (pathname.startsWith('/cockpit')) return NextResponse.next();
   const url = request.nextUrl.clone();
   url.pathname = "/io";
   return NextResponse.rewrite(url);
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
+  // Exclude static assets and metadata routes so they never hit Clerk (avoids any auth/redirect)
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico|icon|apple-icon|opengraph-image|twitter-image).*)"],
 };
