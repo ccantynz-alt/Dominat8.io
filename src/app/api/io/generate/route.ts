@@ -13,6 +13,8 @@ const MONTHLY_LIMITS: Record<string, number> = {
   agency: 500,
 };
 
+const MONTH_KEY_TTL_SECONDS = 60 * 60 * 24 * 32;
+
 const SYSTEM_PROMPT = `You are an elite creative director and principal front-end engineer at the world's most award-winning digital studio. Your work has won Webby Awards, FWA Site of the Day, and CSS Design Awards. You build websites that make people stop scrolling and say "wow".
 
 Generate a complete, single-page website as ONE self-contained HTML file.
@@ -169,6 +171,9 @@ export async function POST(req: NextRequest) {
             { status: 429 }
           );
         }
+        // Increment usage before streaming to prevent abort-to-bypass abuse
+        await kv.incr(monthKey!);
+        await kv.expire(monthKey!, MONTH_KEY_TTL_SECONDS);
       } catch {
         /* KV unavailable: allow generation, skip usage tracking */
       }
@@ -227,12 +232,6 @@ export async function POST(req: NextRequest) {
           if (text) controller.enqueue(encoder.encode(text));
         }
       } finally {
-        if (monthKey) {
-          try {
-            await kv.incr(monthKey);
-            await kv.expire(monthKey, 60 * 60 * 24 * 32);
-          } catch { /* non-fatal */ }
-        }
         controller.close();
       }
     },
