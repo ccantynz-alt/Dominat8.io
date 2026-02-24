@@ -11,11 +11,16 @@ permissions:
 
 jobs:
   guard:
+    # NOTE: This job currently acts only as a logging/visibility hook and does not
+    # enforce any production guard logic. Add real validation (e.g., branch protection
+    # checks, required approvals, deployment criteria) before relying on it to protect prod.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Check branch protection
         run: |
+          # Placeholder guard: this step only logs context and always passes.
+          # TODO: Implement actual validation of branch protection / approvals as needed.
           echo "Branch: ${{ github.ref_name }}"
           echo "Event: ${{ github.event_name }}"
-          echo "Ops guard check passed."
+          echo "Ops guard check passed (no validation performed)."
