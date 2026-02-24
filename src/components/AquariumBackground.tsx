@@ -1,14 +1,180 @@
 "use client";
 
-import React from "react";
-
-const FISH_COUNT = 6;
-const BUBBLE_COUNT = 12;
+import React, { useRef, useMemo } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import * as THREE from "three";
 
 /**
- * Live fish aquarium background — CSS-only animated fish and bubbles.
- * Use as a full-screen layer behind content (e.g. Builder home).
+ * 3D aquarium background — realistic fish, water volume, and bubbles.
+ * Uses React Three Fiber; full-screen fixed layer behind Builder content.
  */
+
+const FISH_COUNT = 8;
+const BUBBLE_COUNT = 24;
+
+// ─── Single 3D fish: body + tail + fins, swims along a 3D path ─────────────────
+function Fish({ seed = 0 }: { seed?: number }) {
+  const group = useRef<THREE.Group>(null);
+  const tailRef = useRef<THREE.Mesh>(null);
+  const dorsalRef = useRef<THREE.Mesh>(null);
+
+  const path = useMemo(() => {
+    const s = seed * 0.7;
+    return (t: number) => {
+      const x = Math.sin(t + s) * 2.2 + Math.sin(t * 0.5 + s) * 0.4;
+      const y = Math.cos(t * 0.8 + s * 1.3) * 1.4 + Math.cos(t * 0.3) * 0.3;
+      const z = Math.sin(t * 0.6 + s * 0.9) * 1.2 - 1.5;
+      return new THREE.Vector3(x, y, z);
+    };
+  }, [seed]);
+
+  const prevPos = useRef(new THREE.Vector3());
+  const t = useRef(seed * 10);
+
+  useFrame((_, delta) => {
+    if (!group.current || !tailRef.current || !dorsalRef.current) return;
+    t.current += delta * (0.4 + (seed % 3) * 0.15);
+    const pos = path(t.current);
+    const prev = prevPos.current;
+    group.current.position.copy(pos);
+    // Face direction of travel
+    const dir = pos.clone().sub(prev);
+    if (dir.lengthSq() > 1e-6) {
+      dir.normalize();
+      group.current.lookAt(pos.clone().sub(dir));
+    }
+    prevPos.current.copy(pos);
+    // Tail and dorsal wiggle
+    const wiggle = Math.sin(t.current * 12) * 0.35;
+    tailRef.current.rotation.z = wiggle;
+    dorsalRef.current.rotation.z = wiggle * 0.6;
+  });
+
+  const bodyColor = useMemo(() => {
+    const hues = [0.55, 0.58, 0.62, 0.52]; // blue–green fish tones
+    return new THREE.Color().setHSL(hues[seed % hues.length], 0.5, 0.45);
+  }, [seed]);
+
+  return (
+    <group ref={group}>
+      {/* Body: elongated capsule (length along Z for swimming) */}
+      <mesh castShadow receiveShadow scale={[0.9, 1, 1.2]} rotation={[-Math.PI / 2, 0, 0]}>
+        <capsuleGeometry args={[0.12, 0.55, 4, 10]} />
+        <meshStandardMaterial
+          color={bodyColor}
+          roughness={0.5}
+          metalness={0.08}
+          envMapIntensity={0.4}
+        />
+      </mesh>
+      {/* Tail fin: flat fan shape */}
+      <mesh
+        ref={tailRef}
+        position={[0, 0, -0.4]}
+        rotation={[Math.PI / 2, 0, 0]}
+        castShadow
+      >
+        <circleGeometry args={[0.22, 8, 0, Math.PI * 0.85]} />
+        <meshStandardMaterial
+          color={bodyColor}
+          roughness={0.6}
+          metalness={0.05}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* Dorsal fin */}
+      <mesh
+        ref={dorsalRef}
+        position={[0, 0.22, 0.05]}
+        rotation={[Math.PI / 2, 0, 0]}
+        castShadow
+      >
+        <planeGeometry args={[0.08, 0.2]} />
+        <meshStandardMaterial
+          color={bodyColor}
+          roughness={0.6}
+          metalness={0.05}
+          side={THREE.DoubleSide}
+          transparent
+          opacity={0.9}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+// ─── Rising bubble ───────────────────────────────────────────────────────────
+function Bubble({ seed = 0 }: { seed?: number }) {
+  const mesh = useRef<THREE.Mesh>(null);
+  const start = useMemo(() => ({
+    x: (seed * 0.17) % 4 - 2,
+    y: -2.5 - (seed % 5) * 0.4,
+    z: (seed * 0.13) % 2 - 1,
+    speed: 0.5 + (seed % 10) * 0.05,
+    wobble: 0.3 + (seed % 7) * 0.05,
+  }), [seed]);
+  const offset = useRef(0);
+
+  useFrame((_, delta) => {
+    if (!mesh.current) return;
+    offset.current += delta * start.speed;
+    const y = start.y + offset.current * 1.2;
+    if (y > 3) offset.current = -start.y / 1.2;
+    mesh.current.position.set(
+      start.x + Math.sin(offset.current * 2) * start.wobble,
+      start.y + offset.current * 1.2,
+      start.z + Math.cos(offset.current * 1.7) * start.wobble * 0.5
+    );
+  });
+
+  const size = 0.04 + (seed % 5) * 0.012;
+  return (
+    <mesh ref={mesh} position={[start.x, start.y, start.z]}>
+      <sphereGeometry args={[size, 8, 6]} />
+      <meshStandardMaterial
+        color="#a8e6f0"
+        roughness={0.2}
+        metalness={0.1}
+        transparent
+        opacity={0.65}
+      />
+    </mesh>
+  );
+}
+
+// ─── Water volume: fog + caustic-style lighting ───────────────────────────────
+function WaterVolume() {
+  return (
+    <>
+      <fog attach="fog" args={["#041a28", 2, 12]} />
+      <ambientLight intensity={0.35} />
+      <directionalLight
+        position={[2, 4, 3]}
+        intensity={1.2}
+        castShadow
+        shadow-mapSize-width={512}
+        shadow-mapSize-height={512}
+      />
+      <directionalLight position={[-1, 2, -1]} intensity={0.4} />
+      <pointLight position={[0, 2, 0]} color="#5ba3b8" intensity={0.3} />
+    </>
+  );
+}
+
+function AquariumScene() {
+  return (
+    <>
+      <WaterVolume />
+      {Array.from({ length: FISH_COUNT }, (_, i) => (
+        <Fish key={`fish-${i}`} seed={i} />
+      ))}
+      {Array.from({ length: BUBBLE_COUNT }, (_, i) => (
+        <Bubble key={`bubble-${i}`} seed={i} />
+      ))}
+    </>
+  );
+}
+
 export default function AquariumBackground() {
   return (
     <div
@@ -19,126 +185,26 @@ export default function AquariumBackground() {
         inset: 0,
         zIndex: 0,
         overflow: "hidden",
-        background:
-          "linear-gradient(180deg, #020a12 0%, #041a28 25%, #052535 50%, #041e2e 75%, #030d14 100%)",
+        background: "linear-gradient(180deg, #020a12 0%, #041a28 30%, #052535 60%, #030d14 100%)",
       }}
     >
-      {/* Subtle caustics / light ripple */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse 80% 40% at 50% 20%, rgba(61,240,255,0.06) 0%, transparent 50%)",
-          animation: "aquarium-pulse 8s ease-in-out infinite",
+      <Canvas
+        camera={{
+          position: [0, 0, 6],
+          fov: 55,
+          near: 0.1,
+          far: 20,
         }}
-      />
-      {/* Fish */}
-      {Array.from({ length: FISH_COUNT }, (_, i) => (
-        <div
-          key={`fish-${i}`}
-          className="aquarium-fish"
-          style={{
-            "--delay": `${i * 2.2}s`,
-            "--duration": `${14 + i * 3}s`,
-            "--y": `${15 + (i * 14) % 70}%`,
-            "--size": `${14 + (i % 3) * 6}px`,
-          } as React.CSSProperties}
-        >
-          <span className="aquarium-fish-body" />
-          <span className="aquarium-fish-tail" />
-        </div>
-      ))}
-      {/* Bubbles */}
-      {Array.from({ length: BUBBLE_COUNT }, (_, i) => (
-        <div
-          key={`bubble-${i}`}
-          className="aquarium-bubble"
-          style={{
-            "--delay": `${i * 0.8}s`,
-            "--x": `${5 + (i * 9) % 90}%`,
-            "--size": `${4 + (i % 4) * 2}px`,
-          } as React.CSSProperties}
-        />
-      ))}
-      <style dangerouslySetInnerHTML={{ __html: AQUARIUM_CSS }} />
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: "high-performance",
+        }}
+        dpr={[1, 2]}
+        style={{ width: "100%", height: "100%" }}
+      >
+        <AquariumScene />
+      </Canvas>
     </div>
   );
 }
-
-const AQUARIUM_CSS = `
-  @keyframes aquarium-pulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-  }
-  @keyframes aquarium-swim {
-    0% { left: -8%; transform: scaleX(1); }
-    49% { transform: scaleX(1); }
-    50% { left: 108%; transform: scaleX(-1); }
-    99% { transform: scaleX(-1); }
-    100% { left: -8%; transform: scaleX(1); }
-  }
-  @keyframes aquarium-swim-tail {
-    0%, 100% { transform: scaleX(1) rotate(-8deg); }
-    25% { transform: scaleX(1) rotate(8deg); }
-    50% { transform: scaleX(-1) rotate(8deg); }
-    75% { transform: scaleX(-1) rotate(-8deg); }
-  }
-  @keyframes aquarium-bubble-rise {
-    0% {
-      bottom: -10%;
-      opacity: 0.3;
-      transform: translateX(0) scale(0.8);
-    }
-    10% { opacity: 0.6; }
-    90% { opacity: 0.4; }
-    100% {
-      bottom: 110%;
-      opacity: 0;
-      transform: translateX(20px) scale(1.2);
-    }
-  }
-  .aquarium-fish {
-    position: absolute;
-    top: var(--y, 30%);
-    left: -8%;
-    width: var(--size, 18px);
-    height: var(--size, 18px);
-    animation: aquarium-swim var(--duration, 18s) var(--delay, 0s) linear infinite;
-    pointer-events: none;
-  }
-  .aquarium-fish-body {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 65%;
-    height: 45%;
-    background: linear-gradient(90deg, rgba(61,240,255,0.5), rgba(61,200,230,0.35));
-    border-radius: 50% 40% 40% 50%;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
-  }
-  .aquarium-fish-tail {
-    position: absolute;
-    right: -2px;
-    top: 50%;
-    transform: translateY(-50%) rotate(-8deg);
-    width: 0;
-    height: 0;
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    border-left: 10px solid rgba(61,240,255,0.4);
-    animation: aquarium-swim-tail 0.4s ease-in-out infinite;
-  }
-  .aquarium-bubble {
-    position: absolute;
-    left: var(--x, 20%);
-    bottom: -10%;
-    width: var(--size, 6px);
-    height: var(--size, 6px);
-    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), rgba(61,240,255,0.2));
-    border-radius: 50%;
-    animation: aquarium-bubble-rise 6s var(--delay, 0s) linear infinite;
-    pointer-events: none;
-  }
-`;
