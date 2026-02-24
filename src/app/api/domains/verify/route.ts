@@ -1,7 +1,10 @@
 import { kv } from "@vercel/kv";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+
+type SavedSiteMeta = { id: string; prompt: string; blobUrl: string; createdAt: string; userId?: string };
 
 function normalizeDomain(domain: string): string {
   return domain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
@@ -19,12 +22,26 @@ async function lookupTXT(hostname: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Sign in to verify domains" }, { status: 401 });
+  }
+
   try {
     const { domain, siteId } = (await req.json()) as { domain?: string; siteId?: string };
 
     const d = normalizeDomain(domain || "");
     if (!d || !siteId?.trim()) {
       return NextResponse.json({ error: "domain and siteId required" }, { status: 400 });
+    }
+
+    // Verify user owns the site
+    const meta = await kv.get<SavedSiteMeta>(`site:${siteId}`);
+    if (!meta) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    }
+    if (meta.userId !== undefined && meta.userId !== userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const stored = await kv.get<{ txt: string; siteId: string }>(`domain:challenge:${d}`);
