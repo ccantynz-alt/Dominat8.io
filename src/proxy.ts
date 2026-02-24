@@ -126,8 +126,7 @@ export function proxy(request: NextRequest, event: NextFetchEvent) {
         request.headers.get("x-d8-admin-key") ||
         request.headers.get("x-dom-admin-key") ||
         "";
-      const q = request.nextUrl.searchParams.get("admin_key") || "";
-      if (hdr !== adminKey && q !== adminKey) {
+      if (hdr !== adminKey) {
         return new NextResponse("Unauthorized", { status: 401 });
       }
     }
