@@ -9,9 +9,9 @@ on:
     branches: [main]
   workflow_run:
     workflows:
-      - "d8-gate"
+      - "CI"
       - "d8-keep-green"
-      - "Staging smoke check"
+      - "d8-autonomous-repairer"
     types: [completed]
   workflow_dispatch:
     inputs:
