@@ -19,6 +19,7 @@
     "finish:1h": "node scripts/run-one-hour.mjs",
     "keep-build": "node scripts/keep-build-moving.mjs",
     "keep-build:loop": "node scripts/keep-build-moving.mjs --loop",
+    "finish:overnight": "node scripts/run-overnight-finish.mjs",
     "auto-improve": "node scripts/auto-improve.mjs"
   },
   "dependencies": {

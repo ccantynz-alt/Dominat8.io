@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
 import { NextRequest } from "next/server";
 
-export const runtime = "edge";
+// Node runtime: Clerk auth() has issues in Edge (Request/headers symbol). Generation is I/O-bound anyway.
 export const maxDuration = 60;
 
 const MONTHLY_LIMITS: Record<string, number> = {
