@@ -154,6 +154,7 @@ export async function POST(req: NextRequest) {
     let plan = "free";
     let usage = 0;
     let limit = MONTHLY_LIMITS.free;
+    let usageIncremented = false;
     const now = new Date();
     const monthKey = userId
       ? `user:${userId}:usage:${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`
@@ -169,6 +170,10 @@ export async function POST(req: NextRequest) {
             { status: 429 }
           );
         }
+        // Increment usage before starting the stream to prevent bypassing limits via request abort
+        await kv.incr(monthKey!);
+        await kv.expire(monthKey!, 60 * 60 * 24 * 32);
+        usageIncremented = true;
       } catch {
         /* KV unavailable: allow generation, skip usage tracking */
       }
@@ -210,6 +215,10 @@ export async function POST(req: NextRequest) {
     temperature: 0.80,
   });
   } catch (err: unknown) {
+    // Roll back usage increment if the OpenAI request failed before streaming began
+    if (usageIncremented && monthKey) {
+      try { await kv.decr(monthKey); } catch { /* non-fatal */ }
+    }
     const msg = err instanceof Error ? err.message : String(err);
     const isRateLimit = msg.includes("rate") || msg.includes("429");
     const isAuth = msg.includes("API key") || msg.includes("401") || msg.includes("Incorrect API key");
@@ -227,12 +236,6 @@ export async function POST(req: NextRequest) {
           if (text) controller.enqueue(encoder.encode(text));
         }
       } finally {
-        if (monthKey) {
-          try {
-            await kv.incr(monthKey);
-            await kv.expire(monthKey, 60 * 60 * 24 * 32);
-          } catch { /* non-fatal */ }
-        }
         controller.close();
       }
     },
