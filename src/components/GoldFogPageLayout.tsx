@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import FOG from "vanta/dist/vanta.fog.min";
@@ -28,34 +28,32 @@ export default function GoldFogPageLayout({
   title: string;
 }) {
   const vantaRef = useRef<HTMLDivElement>(null);
-  const [vantaEffect, setVantaEffect] = useState<ReturnType<typeof FOG> | null>(null);
+  const vantaEffect = useRef<ReturnType<typeof FOG> | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!vantaEffect && vantaRef.current) {
-      setVantaEffect(
-        FOG({
-          el: vantaRef.current,
-          THREE: THREE,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200.0,
-          minWidth: 200.0,
-          highlightColor: 0xffe066,
-          midtoneColor: 0xe6a23c,
-          lowlightColor: 0x8b6914,
-          baseColor: 0x1a0f00,
-          blurFactor: 0.5,
-          speed: 1.5,
-          zoom: 0.5,
-        })
-      );
+    if (!vantaEffect.current && vantaRef.current) {
+      vantaEffect.current = FOG({
+        el: vantaRef.current,
+        THREE: THREE,
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.0,
+        minWidth: 200.0,
+        highlightColor: 0xffe066,
+        midtoneColor: 0xe6a23c,
+        lowlightColor: 0x8b6914,
+        baseColor: 0x1a0f00,
+        blurFactor: 0.5,
+        speed: 1.5,
+        zoom: 0.5,
+      });
     }
     return () => {
-      if (vantaEffect) vantaEffect.destroy();
+      if (vantaEffect.current) vantaEffect.current.destroy();
     };
-  }, [vantaEffect]);
+  }, []);
 
   return (
     <>
