@@ -23,7 +23,7 @@
     "auto-improve": "node scripts/auto-improve.mjs"
   },
   "dependencies": {
-    "@clerk/nextjs": "^5.7.0",
+    "@clerk/nextjs": "^5.7.5",
     "@react-three/drei": "^8.20.2",
     "@react-three/fiber": "^8.18.0",
     "@tailwindcss/postcss": "^4.1.18",

@@ -18,7 +18,7 @@ Use this when continuing work on the Dominat8.io AI website builder so the build
 - **Builder UI**: `src/io/surfaces/Builder.tsx` — main builder (industries, prompts, typewriter, preview iframe, deploy).
 - **App entry**: `src/app/page.tsx` renders `<Builder />`; `src/app/io/page.tsx` renders TV shell (`IOTVShell`).
 - **Generation API**: `src/app/api/io/generate/route.ts` — edge, streaming, single HTML output.
-- **Middleware**: `src/middleware.ts` — routes and TV/api bypass; avoid breaking host/rewrite behavior.
+- **Proxy**: `src/proxy.ts` — Clerk auth + route protection, custom domain rewrite, /io rewrite; avoid breaking host/rewrite behavior.
 
 ## Generation Contract (Do Not Weaken)
 

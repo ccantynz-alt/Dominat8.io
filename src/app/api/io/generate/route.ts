@@ -133,9 +133,6 @@ const VIBE_HINTS: Record<string, string> = {
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
-    if (!userId) {
-      return new Response("Sign in to generate sites", { status: 401 });
-    }
 
     let body: { prompt?: string; industry?: string; vibe?: string };
     try {
@@ -158,19 +155,23 @@ export async function POST(req: NextRequest) {
     let usage = 0;
     let limit = MONTHLY_LIMITS.free;
     const now = new Date();
-    const monthKey = `user:${userId}:usage:${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-    try {
-      plan = (await kv.get<string>(`user:${userId}:plan`)) ?? "free";
-      limit = MONTHLY_LIMITS[plan] ?? MONTHLY_LIMITS.free;
-      usage = (await kv.get<number>(monthKey)) ?? 0;
-      if (usage >= limit) {
-        return new Response(
-          `Monthly generation limit reached (${limit} for ${plan}). Upgrade or wait until next month.`,
-          { status: 429 }
-        );
+    const monthKey = userId
+      ? `user:${userId}:usage:${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`
+      : null;
+    if (userId) {
+      try {
+        plan = (await kv.get<string>(`user:${userId}:plan`)) ?? "free";
+        limit = MONTHLY_LIMITS[plan] ?? MONTHLY_LIMITS.free;
+        usage = (await kv.get<number>(monthKey!)) ?? 0;
+        if (usage >= limit) {
+          return new Response(
+            `Monthly generation limit reached (${limit} for ${plan}). Upgrade or wait until next month.`,
+            { status: 429 }
+          );
+        }
+      } catch {
+        /* KV unavailable: allow generation, skip usage tracking */
       }
-    } catch {
-      /* KV unavailable (e.g. local dev): allow generation, skip usage tracking */
     }
 
   const openai = new OpenAI({ apiKey });
@@ -226,10 +227,12 @@ export async function POST(req: NextRequest) {
           if (text) controller.enqueue(encoder.encode(text));
         }
       } finally {
-        try {
-          await kv.incr(monthKey);
-          await kv.expire(monthKey, 60 * 60 * 24 * 32);
-        } catch { /* non-fatal */ }
+        if (monthKey) {
+          try {
+            await kv.incr(monthKey);
+            await kv.expire(monthKey, 60 * 60 * 24 * 32);
+          } catch { /* non-fatal */ }
+        }
         controller.close();
       }
     },

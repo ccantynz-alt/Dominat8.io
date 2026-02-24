@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { Builder } from "@/io/surfaces/Builder";
-import FuturisticLandingPage from "./FuturisticLandingPage";
 
 export const metadata = {
   title: "Dominat8 — Your website doesn't sit there. It works.",
@@ -17,9 +16,7 @@ function BuilderFallback() {
 
 /**
  * dominat8.io home: Builder (Gold Fog) — hero, prompt, dock, deployments.
- * Alternate views (not used here; keep in mind for dominat8.com):
- * - FuturisticLandingPage: "Dominat8 is Coming" splash + gold card + Vanta fog.
- * - MonsterHeroClient: full marketing hero ("Your website doesn't sit there. It works.", proof card, nav).
+ * No sign-in required to view or generate (per FIRST_IMPRESSIONS.md). Optional account for save/deploy.
  */
 export default function Page() {
   return (
