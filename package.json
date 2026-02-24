@@ -17,6 +17,8 @@
     "finish-build:no-lint": "node scripts/finish-build.mjs --skip-lint",
     "overnight": "node scripts/overnight-run.mjs",
     "finish:1h": "node scripts/run-one-hour.mjs",
+    "keep-build": "node scripts/keep-build-moving.mjs",
+    "keep-build:loop": "node scripts/keep-build-moving.mjs --loop",
     "auto-improve": "node scripts/auto-improve.mjs"
   },
   "dependencies": {
