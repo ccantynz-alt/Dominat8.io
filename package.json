@@ -49,8 +49,8 @@
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
     "@types/three": "^0.183.1",
-    "eslint": "^8.56.0",
-    "eslint-config-next": "14.2.5",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.1.6",
     "tailwindcss": "^4.1.18"
   },
   "engines": {

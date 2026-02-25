@@ -1,5 +1,6 @@
 import { kv } from "@vercel/kv";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -19,6 +20,7 @@ function json(body: unknown, status = 200) {
 type SavedSiteMeta = { id: string; prompt: string; blobUrl: string; createdAt: string; userId?: string };
 
 export async function GET() {
+  await headers();
   let userId: string | null = null;
   try {
     const authResult = await auth();

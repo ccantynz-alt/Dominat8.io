@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 
@@ -10,6 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(_req: NextRequest) {
+  await headers();
   let userId: string | null = null;
   try {
     const authResult = await auth();

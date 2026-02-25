@@ -1,5 +1,6 @@
 import { kv } from "@vercel/kv";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -11,6 +12,7 @@ function normalizeDomain(domain: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  await headers();
   let userId: string | null = null;
   try {
     const authResult = await auth();

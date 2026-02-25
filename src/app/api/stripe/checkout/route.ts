@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 
@@ -17,6 +18,7 @@ const PRICE_IDS: Record<string, string | undefined> = {
 };
 
 export async function POST(req: NextRequest) {
+  await headers();
   let userId: string | null = null;
   try {
     const authResult = await auth();
