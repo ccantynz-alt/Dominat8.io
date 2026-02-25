@@ -41,7 +41,7 @@ jobs:
         run: node scripts/protected-paths-check.mjs
 
       - name: Lint
-        run: next lint .
+        run: npm run lint
 
       - name: Build
         run: npm run build
