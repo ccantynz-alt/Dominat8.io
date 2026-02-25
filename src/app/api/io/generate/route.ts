@@ -132,7 +132,13 @@ const VIBE_HINTS: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await auth();
+    let userId: string | null = null;
+    try {
+      const authResult = await auth();
+      userId = authResult?.userId ?? null;
+    } catch {
+      // Clerk auth() can throw in Next 16 (headers/symbol). Proceed without userId.
+    }
 
     let body: { prompt?: string; industry?: string; vibe?: string };
     try {

@@ -14,7 +14,13 @@ type SavedSiteMeta = {
 };
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
+  let userId: string | null = null;
+  try {
+    const authResult = await auth();
+    userId = authResult?.userId ?? null;
+  } catch {
+    /* Clerk auth() can throw in Next 16 */
+  }
   if (!userId) {
     return NextResponse.json({ error: "Sign in to save and share sites" }, { status: 401 });
   }

@@ -19,7 +19,13 @@ function json(body: unknown, status = 200) {
 type SavedSiteMeta = { id: string; prompt: string; blobUrl: string; createdAt: string; userId?: string };
 
 export async function GET() {
-  const { userId } = await auth();
+  let userId: string | null = null;
+  try {
+    const authResult = await auth();
+    userId = authResult?.userId ?? null;
+  } catch {
+    /* Clerk auth() can throw in Next 16 */
+  }
   const now = new Date().toISOString();
   const deployments: { domain: string; desc: string; status: string; pill: string; progress: number; icon: string; updatedAt: string }[] = [];
 
