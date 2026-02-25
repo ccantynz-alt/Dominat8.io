@@ -55,7 +55,7 @@ export default function GoldFogPageLayout({
     return () => {
       if (vantaEffect) vantaEffect.destroy();
     };
-  }, [vantaEffect]);
+  }, []);
 
   return (
     <>
