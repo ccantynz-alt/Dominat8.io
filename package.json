@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint .",
+    "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "guard:protected": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/guard-protected-paths.ps1",
     "ci:build": "npm run build",
