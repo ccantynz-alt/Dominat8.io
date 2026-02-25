@@ -4,7 +4,10 @@ import { headers } from "next/headers";
 import { kv } from "@vercel/kv";
 import { NextRequest } from "next/server";
 
-// Node runtime: Clerk auth() has issues in Edge (Request/headers symbol). Generation is I/O-bound anyway.
+// Node.js runtime (explicit): Clerk auth() has issues in Edge (Request/headers symbol mismatch).
+// Generation is I/O-bound so the cold-start tradeoff is acceptable.
+// maxDuration 60s covers long OpenAI streaming responses within Vercel's serverless limits.
+export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MONTHLY_LIMITS: Record<string, number> = {
