@@ -22,7 +22,7 @@ Claude needs a **GitHub PAT** with admin access to approve PRs, merge branches, 
 ### Automated PR flow
 
 Once `GH_CLAUDE_PAT` is set as a repo secret:
-- Any PR from a `claude/*` branch will be **auto-approved + auto-merged** once all checks pass
+- Any PR from a `claude/*` or `copilot/*` branch will be **auto-approved + auto-merged** once all checks pass
 - Workflow: `.github/workflows/auto-approve-merge.yml`
 
 ### Manual merge (any PR)
@@ -45,4 +45,4 @@ GH_TOKEN=ghp_YOUR_TOKEN bash scripts/gh-merge-pr.sh <PR_NUMBER>
 
 ## Development branches
 
-Claude develops on `claude/*` branches. The auto-approve workflow handles merging.
+Claude develops on `claude/*` branches and Copilot on `copilot/*` branches. The auto-approve workflow handles merging.

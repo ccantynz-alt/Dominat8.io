@@ -1,6 +1,6 @@
-name: Auto Approve + Merge (Claude PRs)
+name: Auto Approve + Merge (Claude/Copilot PRs)
 
-# Runs on every PR from claude/* branches.
+# Runs on every PR from claude/* and copilot/* branches.
 # Approves + squash-merges once all required checks pass.
 
 on:
@@ -26,14 +26,14 @@ permissions:
 
 jobs:
   auto-approve-merge:
-    name: Auto-approve and merge Claude PRs
+    name: Auto-approve and merge Claude/Copilot PRs
     runs-on: ubuntu-latest
-    # Only act on claude/* branches
+    # Only act on claude/* and copilot/* branches
     if: |
       (github.event_name == 'pull_request' &&
-        startsWith(github.head_ref, 'claude/')) ||
+        (startsWith(github.head_ref, 'claude/') || startsWith(github.head_ref, 'copilot/'))) ||
       (github.event_name == 'workflow_run' &&
-        startsWith(github.event.workflow_run.head_branch, 'claude/')) ||
+        (startsWith(github.event.workflow_run.head_branch, 'claude/') || startsWith(github.event.workflow_run.head_branch, 'copilot/'))) ||
       github.event_name == 'workflow_dispatch'
     steps:
       - name: Find open PR for branch
