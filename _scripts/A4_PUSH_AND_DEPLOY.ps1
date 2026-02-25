@@ -1,5 +1,8 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+# Source the Vercel Healer script
+. "scripts/D8_VERCEL_HEALER.ps1"
 Set-Location -LiteralPath "C:\Temp\FARMS\Dominat8.io-clone"
 $out = "C:\Temp\FARMS\Dominat8.io-clone\_doctor_out_20260203_201539"
 
@@ -16,7 +19,7 @@ if (git diff --name-only) {
   Write-Host "No changes to commit." -ForegroundColor DarkGray
 }
 
-if (-not False) {
+if (-not $false) {
   git push | Tee-Object -FilePath (Join-Path $out "A4_git_push.txt") | Out-Null
   Write-Host "Pushed to origin/main." -ForegroundColor Green
 } else {
@@ -24,7 +27,7 @@ if (-not False) {
 }
 
 # Optional Vercel CLI deploy (if installed/logged in)
-if (-not False) {
+if (-not $false) {
   Write-Host "
 --- Vercel CLI check ---" -ForegroundColor Yellow
   try {
@@ -34,8 +37,10 @@ if (-not False) {
     # If it prompts, stop and run manually in an interactive session.
     Write-Host "Attempting: vercel --prod --force" -ForegroundColor Yellow
     vercel --prod --force 2>&1 | Tee-Object -FilePath (Join-Path $out "A4_vercel_prod_deploy.txt")
+    Invoke-VercelHealer -LogPath (Join-Path $out "A4_vercel_prod_deploy.txt")
   } catch {
     Write-Host "Vercel CLI deploy skipped/failed (not installed or not logged in): $_" -ForegroundColor Yellow
+    Invoke-VercelHealer -LogPath (Join-Path $out "A4_vercel_prod_deploy.txt") # Also run healer if vercel command itself throws an error
   }
 } else {
   Write-Host "SKIP: Vercel CLI disabled (-SkipVercelCli)" -ForegroundColor Yellow

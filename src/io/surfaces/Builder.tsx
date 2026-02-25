@@ -1,20 +1,15 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
+import FOG from "vanta/dist/vanta.fog.min";
+import * as THREE from "three";
 
-// ─── Anonymous usage tracking (localStorage, 3 free generations) ──────────────
-
-const ANON_KEY = "d8_anon_v1";
-const ANON_LIMIT = 3;
-
-function getAnonCount(): number {
-  try { return parseInt(localStorage.getItem(ANON_KEY) ?? "0", 10) || 0; } catch { return 0; }
-}
-function incrementAnonCount(): void {
-  try { localStorage.setItem(ANON_KEY, String(getAnonCount() + 1)); } catch { /* quota */ }
-}
+const AquariumBackground = dynamic(
+  () => import("@/components/AquariumBackground"),
+  { ssr: false }
+);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -99,12 +94,78 @@ function useTypewriter(texts: string[], interval = 4000) {
   return displayed;
 }
 
+function useSpeechRecognition({ onTranscript }: { onTranscript: (text: string) => void }) {
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("Speech recognition not supported");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event: Event & { results: SpeechRecognitionResultList }) => {
+      const transcript = event.results[0][0].transcript;
+      onTranscript(transcript);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: Event & { error?: string }) => {
+      console.error("Speech recognition error", (event as { error?: string }).error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+  }, [onTranscript]);
+
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  return { isListening, startListening };
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Dots() {
   return (
     <span className="d8b-dots">
       <span /><span /><span />
+    </span>
+  );
+}
+
+function InputLeadIcon() {
+  return (
+    <span className="d8h-input-icon" aria-hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3v18M5 12l14 0M3 8l6 4 6-4" />
+      </svg>
+    </span>
+  );
+}
+
+function MicIcon({ listening }: { listening: boolean }) {
+  return (
+    <span className={`d8h-mic-icon ${listening ? "d8h-mic-icon--active" : ""}`} aria-hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
+      </svg>
     </span>
   );
 }
@@ -132,42 +193,55 @@ function SiteCard({ site, onSelect }: { site: Site; onSelect: () => void }) {
   );
 }
 
-// Social proof counter — increments over time for live feel
+// Social proof — monitor + sites built today
+const SITE_PREVIEWS = [
+  { bar: "rgba(212,175,55,0.5)", body: "linear-gradient(180deg, rgba(212,175,55,0.08), rgba(26,15,0,0.5))", accent: "#D4AF37" },
+  { bar: "rgba(56,189,248,0.4)", body: "linear-gradient(180deg, rgba(56,189,248,0.06), rgba(26,15,0,0.5))", accent: "#38BDF8" },
+  { bar: "rgba(56,201,164,0.4)", body: "linear-gradient(180deg, rgba(56,201,164,0.06), rgba(26,15,0,0.5))", accent: "#38C9A4" },
+  { bar: "rgba(240,146,74,0.4)", body: "linear-gradient(180deg, rgba(240,146,74,0.06), rgba(26,15,0,0.5))", accent: "#F0924A" },
+  { bar: "rgba(124,92,255,0.4)", body: "linear-gradient(180deg, rgba(124,92,255,0.06), rgba(26,15,0,0.5))", accent: "#7C5CFF" },
+];
+
 function SocialProof() {
   const [count, setCount] = React.useState(() => {
-    // Deterministic base from date (resets each day)
     const d = new Date();
     const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
     return 2400 + (seed % 600);
   });
+  const [siteIndex, setSiteIndex] = React.useState(0);
+  const preview = SITE_PREVIEWS[siteIndex % SITE_PREVIEWS.length];
 
   React.useEffect(() => {
-    // Tick up by 1-3 every 8-15 seconds
-    const tick = () => {
-      setCount(c => c + Math.floor(Math.random() * 3) + 1);
-    };
+    const tick = () => setCount(c => c + Math.floor(Math.random() * 3) + 1);
     const id = setInterval(tick, 8000 + Math.random() * 7000);
     return () => clearInterval(id);
   }, []);
 
-  const AVATAR_COLORS = ["#7C5CFF", "#38F8A6", "#FF4D6D", "#3DF0FF", "#FFD166", "#C09A5C"];
+  React.useEffect(() => {
+    const rot = setInterval(() => setSiteIndex(i => i + 1), 4000);
+    return () => clearInterval(rot);
+  }, []);
 
   return (
     <div className="d8h-social-proof">
-      <div className="d8h-avatars">
-        {AVATAR_COLORS.map((c, i) => (
-          <span key={i} className="d8h-avatar" style={{ background: c, marginLeft: i > 0 ? -8 : 0, zIndex: AVATAR_COLORS.length - i }} />
-        ))}
+      <div className="d8h-sp-monitor" aria-hidden>
+        <div className="d8h-sp-monitor-frame">
+          <div className="d8h-sp-monitor-screen">
+            <div className="d8h-sp-monitor-bar" style={{ background: preview.bar }} />
+            <div className="d8h-sp-monitor-body" style={{ background: preview.body }}>
+              <div className="d8h-sp-monitor-hero" style={{ background: preview.accent }} />
+              <div className="d8h-sp-monitor-cards">
+                <span /><span /><span />
+              </div>
+            </div>
+          </div>
+          <div className="d8h-sp-monitor-stand" />
+        </div>
       </div>
-      <span className="d8h-sp-count">
-        <span className="d8h-sp-num">{count.toLocaleString()}</span> sites built today
-      </span>
-      <span className="d8h-sp-divider">·</span>
-      <span className="d8h-sp-tag">No credit card</span>
-      <span className="d8h-sp-divider">·</span>
-      <span className="d8h-sp-tag">HTML export</span>
-      <span className="d8h-sp-divider">·</span>
-      <span className="d8h-sp-tag">1-click deploy</span>
+      <div className="d8h-sp-stat-wrap">
+        <span className="d8h-sp-stat">{count.toLocaleString()}</span>
+        <span className="d8h-sp-label">sites built today</span>
+      </div>
     </div>
   );
 }
@@ -222,18 +296,76 @@ function useDeployments() {
   return { deployments, loaded };
 }
 
-// ─── Dock icons ───────────────────────────────────────────────────────────────
+// ─── Dock icons (SVG) ─────────────────────────────────────────────────────────
 
-const DOCK_ITEMS = [
-  { label: "Deploy",    color: "#4A90E2", bg: "rgba(74,144,226,0.18)", icon: "🚀", href: null },
-  { label: "Domains",  color: "#C09A5C", bg: "rgba(192,154,92,0.18)",  icon: "🌐", href: "/io" },
-  { label: "SSL",      color: "#9B7FD4", bg: "rgba(155,127,212,0.18)", icon: "🔒", href: null },
-  { label: "Monitor",  color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "📊", href: "/tv" },
-  { label: "Logs",     color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "💬", href: "/tv" },
-  { label: "Fix",      color: "#F0924A", bg: "rgba(240,146,74,0.18)",  icon: "🔧", href: "/io" },
-  { label: "Automate", color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "⚡", href: "/io" },
-  { label: "Integrate",color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "✏️", href: null },
-  { label: "Settings", color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "⚙️", href: null },
+function DockIcon({ name }: { name: string }) {
+  const w = 20; const h = 20;
+  const stroke = "currentColor"; const sw = 1.5;
+  const svgs: Record<string, React.ReactNode> = {
+    Deploy: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" />
+      </svg>
+    ),
+    Domains: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+    ),
+    SSL: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+    ),
+    Monitor: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><path d="M8 21h8M12 17v4" />
+      </svg>
+    ),
+    Logs: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+    Fix: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg>
+    ),
+    Automate: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
+    ),
+    Integrate: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+      </svg>
+    ),
+    Settings: (
+      <svg width={w} height={h} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+    ),
+  };
+  return <span className="dock-icon-svg">{svgs[name] ?? null}</span>;
+}
+
+interface DockItem {
+  label: string;
+  href: string | null;
+}
+
+const DOCK_ITEMS: DockItem[] = [
+  { label: "Deploy",    href: "/cockpit/deploy" },
+  { label: "Domains",   href: "/cockpit/domain" },
+  { label: "SSL",       href: "/cockpit/ssl" },
+  { label: "Monitor",   href: "/cockpit/monitor" },
+  { label: "Logs",      href: "/cockpit/logs" },
+  { label: "Fix",       href: "/cockpit/fix" },
+  { label: "Automate",  href: "/cockpit/animate" },
+  { label: "Integrate", href: "/cockpit/integrate" },
+  { label: "Settings",  href: "/cockpit/settings" },
 ];
 
 // ─── localStorage history persistence ─────────────────────────────────────────
@@ -307,12 +439,8 @@ export function Builder() {
     issues: { severity: string; category: string; message: string; fix: string }[];
     strengths: string[];
   } | null>(null);
-  const [errorCode, setErrorCode] = useState<"quota" | "auth" | "generic" | null>(null);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [showAnonLimit, setShowAnonLimit] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
-
-  const { isSignedIn } = useUser();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [backgroundMode, setBackgroundMode] = useState<"fog" | "aquarium">("fog");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -320,6 +448,8 @@ export function Builder() {
   const abortRef = useRef<AbortController | null>(null);
   const startRef = useRef<number>(0);
   const progressRef = useRef<number>(0);
+  const vantaRef = useRef<HTMLDivElement>(null);
+  const [vantaEffect, setVantaEffect] = useState<ReturnType<typeof FOG> | null>(null);
 
   // Abort any in-flight generation when the component unmounts
   useEffect(() => {
@@ -327,30 +457,81 @@ export function Builder() {
       abortRef.current?.abort();
     };
   }, []);
+
+  // Gold fog background (Vanta) — only when fog mode is selected; destroy when switching to aquarium
+  useEffect(() => {
+    if (backgroundMode !== "fog") {
+      if (vantaEffect) {
+        vantaEffect.destroy();
+        setVantaEffect(null);
+      }
+      return;
+    }
+    if (!vantaEffect && vantaRef.current) {
+      setVantaEffect(
+        FOG({
+          el: vantaRef.current,
+          THREE: THREE,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.0,
+          minWidth: 200.0,
+          highlightColor: 0xffe066,
+          midtoneColor: 0xe6a23c,
+          lowlightColor: 0x8b6914,
+          baseColor: 0x1a0f00,
+          blurFactor: 0.5,
+          speed: 1.5,
+          zoom: 0.5,
+        })
+      );
+    }
+    return () => {
+      if (vantaEffect) vantaEffect.destroy();
+    };
+  }, [backgroundMode]);
+
+  useEffect(() => {
+    const dashboard = document.querySelector('.main-interface-container');
+    if (!dashboard) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const xAxis = (window.innerWidth / 2 - e.pageX) / 40;
+      const yAxis = (window.innerHeight / 2 - e.pageY) / 40;
+      (dashboard as HTMLElement).style.transform = `perspective(1000px) rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
   const placeholder = useTypewriter(EXAMPLE_PROMPTS);
   const { deployments, loaded } = useDeployments();
   const searchParams = useSearchParams();
+  const handleTranscript = useCallback((text: string) => {
+    setPrompt(text);
+  }, []);
+
+  const { isListening, startListening } = useSpeechRecognition({
+    onTranscript: handleTranscript,
+  });
 
   // Pre-fill prompt from URL ?prompt= param (e.g. from /templates)
-  // Also detect ?payment=success return from Stripe
   useEffect(() => {
     const p = searchParams?.get("prompt");
     if (p && p.trim()) {
       setPrompt(p.trim());
+      // Remove param from URL without page reload
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("prompt");
+        window.history.replaceState({}, "", url.toString());
+      } catch { /* noop */ }
     }
-    const payment = searchParams?.get("payment");
-    const plan = searchParams?.get("plan");
-    if (payment === "success") {
-      setPaymentSuccess(plan ?? "pro");
-    }
-    // Clean params from URL
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("prompt");
-      url.searchParams.delete("payment");
-      url.searchParams.delete("plan");
-      window.history.replaceState({}, "", url.toString());
-    } catch { /* noop */ }
   }, [searchParams]);
 
   // Persist history
@@ -366,20 +547,10 @@ export function Builder() {
     const activePrompt = overridePrompt ?? prompt;
     if (!activePrompt.trim() || state === "generating") return;
 
-    // Anonymous limit check (client-side honesty gate)
-    if (!isSignedIn) {
-      if (getAnonCount() >= ANON_LIMIT) {
-        setShowAnonLimit(true);
-        return;
-      }
-    }
-
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
     setState("generating");
-    setErrorCode(null);
-    setErrorMsg("");
     setHtml("");
     setProgress(0);
     setActiveSite(null);
@@ -401,19 +572,21 @@ export function Builder() {
       });
 
       if (!res.ok) {
-        let code: "quota" | "auth" | "generic" = "generic";
-        let msg = `Error ${res.status}. Please try again.`;
-        try {
-          const errData = await res.json() as { error?: string; code?: string };
-          if (errData.error) msg = errData.error;
-          if (res.status === 429) code = "quota";
-          else if (res.status === 401) code = "auth";
-        } catch { /* no JSON body */ }
-        setErrorCode(code);
-        setErrorMsg(msg);
+        const body = await res.text();
+        // Never show raw HTML (e.g. Next.js 404 page) as the error message
+        const isHtml = body?.trim().startsWith("<!") || (body?.includes("</html>") ?? false);
+        const raw = body?.trim() || "";
+        const msg = isHtml
+          ? `Server error (${res.status}). The generate API may be unavailable — check that the app is running and /api/io/generate exists.`
+          : (raw || `API error: ${res.status}`);
+        const displayMsg = msg.length > 500 ? `${msg.slice(0, 497)}…` : msg;
+        setErrorMessage(displayMsg);
         throw new Error(msg);
       }
-      if (!res.body) throw new Error("No response body");
+      if (!res.body) {
+        setErrorMessage("No response body");
+        throw new Error("No response body");
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -447,19 +620,17 @@ export function Builder() {
       setSites((prev) => [site, ...prev]);
       setActiveSite(site);
       setState("done");
-      // Track anonymous usage client-side
-      if (!isSignedIn) incrementAnonCount();
     } catch (err: unknown) {
       clearInterval(progressTimer);
       if (err instanceof Error && err.name === "AbortError") {
         setState("idle");
       } else {
-        if (!errorCode) setErrorCode("generic");
-        if (!errorMsg) setErrorMsg("Something went wrong. Please try again.");
+        const msg = err instanceof Error ? err.message : "Network or stream error. Check your connection.";
+        setErrorMessage(msg);
         setState("error");
       }
     }
-  }, [prompt, industry, vibe, state, isSignedIn, errorCode, errorMsg]);
+  }, [prompt, industry, vibe, state]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -471,6 +642,7 @@ export function Builder() {
   const reset = () => {
     abortRef.current?.abort();
     setState("idle");
+    setErrorMessage(null);
     setHtml("");
     setProgress(0);
     setActiveSite(null);
@@ -482,9 +654,6 @@ export function Builder() {
     setShowSeo(false);
     setSeoState("idle");
     setSeoData(null);
-    setErrorCode(null);
-    setErrorMsg("");
-    setShowAnonLimit(false);
   };
 
   const handleRefine = useCallback(() => {
@@ -594,27 +763,28 @@ export function Builder() {
   const isIdle = state === "idle";
   const isError = state === "error";
 
+  // ── Background: Gold fog (Vanta) or live aquarium ──
+  const fogLayer = (
+    <div
+      ref={vantaRef}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 0,
+        background: "var(--bg-0, #04060e)",
+      }}
+    />
+  );
+  const backgroundLayer =
+    backgroundMode === "aquarium" ? <AquariumBackground /> : fogLayer;
+
   // ── New home layout (idle, no html) ──────────────────────────────────────
   if (isIdle && !html) {
     return (
-      <div className="d8h-root">
+      <>
+        {backgroundLayer}
+        <div className="d8h-root d8h-root--fog" style={{ position: "relative", zIndex: 1 }}>
         <HomeStyles />
-
-        {/* Ambient animated background */}
-        <div className="d8h-bg" aria-hidden="true">
-          <div className="d8h-bg-a" />
-          <div className="d8h-bg-b" />
-          <div className="d8h-bg-c" />
-        </div>
-
-        {/* Payment success banner */}
-        {paymentSuccess && (
-          <div className="d8h-payment-banner">
-            <span>🎉</span>
-            <span>Welcome to the <strong>{paymentSuccess}</strong> plan — your quota has been updated!</span>
-            <button type="button" className="d8h-payment-dismiss" onClick={() => setPaymentSuccess(null)}>✕</button>
-          </div>
-        )}
 
         {/* Header */}
         <header className="d8h-header">
@@ -624,33 +794,36 @@ export function Builder() {
             <span className="d8h-logo-text">Dominat8.io</span>
           </div>
           <nav className="d8h-nav">
-            <a href="/templates" className="d8h-nav-link">Templates</a>
-            <a href="/gallery" className="d8h-nav-link">Gallery</a>
+            <button
+              type="button"
+              onClick={() => setBackgroundMode((m) => (m === "fog" ? "aquarium" : "fog"))}
+              className="d8h-nav-link"
+              style={{
+                cursor: "pointer",
+                border: "none",
+                background: "none",
+                font: "inherit",
+                padding: 0,
+              }}
+              title={backgroundMode === "fog" ? "Switch to aquarium background" : "Switch to gold fog background"}
+            >
+              {backgroundMode === "fog" ? "🐠 Aquarium" : "✨ Fog"}
+            </button>
             <a href="/pricing" className="d8h-nav-link">Pricing</a>
-            {isSignedIn ? (
-              <UserButton afterSignOutUrl="/" />
-            ) : (
-              <SignInButton mode="redirect">
-                <button type="button" className="d8h-nav-signin">Sign in</button>
-              </SignInButton>
-            )}
           </nav>
         </header>
 
         {/* Hero */}
         <div className="d8h-hero">
-          <div className="d8h-eyebrow">✦ AI Website Builder</div>
-          <h1 className="d8h-title">What would you like to{" "}
-            <span className="d8h-title-accent">build?</span>
-          </h1>
+          <h1 className="d8h-title">What would you like to build?</h1>
           <p className="d8h-sub">Describe your business. Your site appears in seconds.</p>
 
           {/* Prompt row */}
           <div className="d8h-input-row">
-            <span className="d8h-input-icon">🚀</span>
+            <InputLeadIcon />
             <input
               ref={inputRef}
-              className="d8h-input"
+              className="d8h-input search-input"
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -666,24 +839,17 @@ export function Builder() {
             >
               GENERATE
             </button>
+            <button
+              className={`d8h-mic-btn ${isListening ? "d8h-mic-btn--listening" : ""}`}
+              onClick={startListening}
+              disabled={isListening}
+              type="button"
+              title={isListening ? "Listening…" : "Voice input"}
+            >
+              <MicIcon listening={isListening} />
+            </button>
           </div>
 
-          {/* Industry chips */}
-          <div className="d8h-chips">
-            {INDUSTRIES.map((ind) => (
-              <button
-                key={ind.label}
-                type="button"
-                className={`d8h-chip ${industry === ind.label ? "d8h-chip--active" : ""}`}
-                onClick={() => setIndustry((prev) => prev === ind.label ? "" : ind.label)}
-              >
-                {ind.icon} {ind.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Social proof strip */}
-          <SocialProof />
         </div>
 
         {/* Deployments */}
@@ -732,87 +898,50 @@ export function Builder() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="d8h-footer">
-          <div className="d8h-footer-links">
-            <a href="/templates" className="d8h-footer-link">Templates</a>
-            <a href="/gallery" className="d8h-footer-link">Gallery</a>
+        {/* Bottom bar: sites built (left), dock (center), links (right) — all aligned */}
+        <div className="d8h-bottom-bar">
+          <div className="d8h-bottom-left">
+            <SocialProof />
+          </div>
+          <div className="d8h-dock-bar">
+          <div className="d8h-dock-glass">
+            {DOCK_ITEMS.map((item) => {
+              const isActive = item.label === "Settings";
+              const content = (
+                <>
+                  <DockIcon name={item.label} />
+                  <span className="d8h-dock-label">{item.label}</span>
+                </>
+              );
+              return item.href ? (
+                <a key={item.label} href={item.href} className={`d8h-dock-item ${isActive ? "d8h-dock-item--active" : ""}`} data-label={item.label}>
+                  {content}
+                </a>
+              ) : (
+                <div key={item.label} className={`d8h-dock-item ${isActive ? "d8h-dock-item--active" : ""}`} data-label={item.label} role="button" tabIndex={0}>
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+          <div className="d8h-bottom-right">
             <a href="/pricing" className="d8h-footer-link">Pricing</a>
             <a href="/about" className="d8h-footer-link">About</a>
             <a href="/privacy" className="d8h-footer-link">Privacy</a>
             <a href="/terms" className="d8h-footer-link">Terms</a>
-          </div>
-          <div className="d8h-footer-copy">© {new Date().getFullYear()} Dominat8.io · Built with AI</div>
-        </footer>
-
-        {/* Bottom dock */}
-        <div className="d8h-dock">
-          {DOCK_ITEMS.map((item) => {
-            const style = { "--dock-bg": item.bg, "--dock-color": item.color } as React.CSSProperties;
-            const inner = (
-              <>
-                <span className="d8h-dock-icon">{item.icon}</span>
-                <span className="d8h-dock-label">{item.label}</span>
-              </>
-            );
-            if (item.href) {
-              return (
-                <a key={item.label} href={item.href} className="d8h-dock-btn" title={item.label} style={style}>
-                  {inner}
-                </a>
-              );
-            }
-            return (
-              <button key={item.label} type="button" className="d8h-dock-btn" title={item.label} style={style}>
-                {inner}
-              </button>
-            );
-          })}
-        </div>
-
-      {/* Anon limit modal — inside root so fixed positioning works correctly */}
-      {showAnonLimit && (
-        <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setShowAnonLimit(false); }}>
-          <div className="d8b-modal">
-            <div className="d8b-modal-header">
-              <div className="d8b-modal-title">You've used your 3 free generations</div>
-              <button className="d8b-modal-close" onClick={() => setShowAnonLimit(false)} type="button">✕</button>
-            </div>
-            <div className="d8b-modal-body">
-              <p className="d8b-modal-desc">Create a free account to keep building. No credit card required.</p>
-              <div className="d8b-deploy-options">
-                <a href="/sign-up" className="d8b-deploy-option" style={{ textDecoration: "none" }}>
-                  <span className="d8b-deploy-option-icon">✨</span>
-                  <div>
-                    <div className="d8b-deploy-option-title">Sign up free</div>
-                    <div className="d8b-deploy-option-sub">Free account · No card needed</div>
-                  </div>
-                </a>
-                <a href="/sign-in" className="d8b-deploy-option d8b-deploy-option--ghost" style={{ textDecoration: "none" }}>
-                  <span className="d8b-deploy-option-icon">→</span>
-                  <div>
-                    <div className="d8b-deploy-option-title">Sign in</div>
-                    <div className="d8b-deploy-option-sub">Already have an account</div>
-                  </div>
-                </a>
-                <a href="/pricing" className="d8b-deploy-option d8b-deploy-option--ghost" style={{ textDecoration: "none" }}>
-                  <span className="d8b-deploy-option-icon">⚡</span>
-                  <div>
-                    <div className="d8b-deploy-option-title">See all plans</div>
-                    <div className="d8b-deploy-option-sub">Starter $9/mo · 20 generations</div>
-                  </div>
-                </a>
-              </div>
-            </div>
+            <span className="d8h-footer-copy">© {new Date().getFullYear()} Dominat8.io</span>
           </div>
         </div>
-      )}
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="d8b-root">
+    <>
+      {backgroundLayer}
+      <div className="d8b-root main-interface-container" style={{ position: "relative", zIndex: 1 }}>
       <BuilderStyles />
 
       {/* ── Sidebar ── */}
@@ -1109,40 +1238,21 @@ export function Builder() {
           /* ── Error state ── */
           <div className="d8b-error-screen">
             <div className="d8b-error-content">
-              {errorCode === "quota" ? (
-                <>
-                  <div className="d8b-error-icon">⚡</div>
-                  <h2 className="d8b-error-title">Monthly limit reached</h2>
-                  <p className="d8b-error-message">{errorMsg}</p>
-                  <div className="d8b-error-actions">
-                    <a href="/pricing" className="d8b-error-upgrade-btn">View plans →</a>
-                    <button className="d8b-error-retry-btn" onClick={reset} type="button">← Back</button>
-                  </div>
-                </>
-              ) : errorCode === "auth" ? (
-                <>
-                  <div className="d8b-error-icon">🔒</div>
-                  <h2 className="d8b-error-title">Sign in to continue</h2>
-                  <p className="d8b-error-message">Create a free account to generate websites.</p>
-                  <div className="d8b-error-actions">
-                    <a href="/sign-up" className="d8b-error-upgrade-btn">Sign up free →</a>
-                    <a href="/sign-in" className="d8b-error-retry-btn" style={{ textDecoration: "none" }}>Sign in</a>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="d8b-error-icon">⚠️</div>
-                  <h2 className="d8b-error-title">Generation failed</h2>
-                  <p className="d8b-error-message">{errorMsg || "Something went wrong. Please try again."}</p>
-                  <button
-                    className="d8b-error-retry-btn"
-                    onClick={() => { reset(); generate(); }}
-                    type="button"
-                  >
-                    🔄 Retry
-                  </button>
-                </>
-              )}
+              <div className="d8b-error-icon">⚠️</div>
+              <h2 className="d8b-error-title">Generation failed</h2>
+              <p className="d8b-error-message">
+                {errorMessage || "Something went wrong while building your site. Please try again."}
+              </p>
+              <button
+                className="d8b-error-retry-btn"
+                onClick={() => {
+                  reset();
+                  generate();
+                }}
+                type="button"
+              >
+                🔄 Retry
+              </button>
             </div>
           </div>
         ) : (
@@ -1242,7 +1352,7 @@ export function Builder() {
             {/* Progress bar */}
             {isBuilding && (
               <div className="d8b-progress-bar">
-                <div className="d8b-progress-fill" style={{ width: `${progress}%` }} />
+                <div className="d8b-progress-fill progress-fill" style={{ width: `${progress}%` }} />
               </div>
             )}
           </div>
@@ -1254,6 +1364,7 @@ export function Builder() {
         <DeployModal html={html} prompt={prompt} onClose={() => setShowDeploy(false)} />
       )}
     </div>
+    </>
   );
 }
 
@@ -1264,25 +1375,92 @@ type DeployStep = "options" | "deploying" | "done";
 function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; onClose: () => void }) {
   const [step, setStep] = useState<DeployStep>("options");
   const [log, setLog] = useState<string[]>([]);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [siteId, setSiteId] = useState<string | null>(null);
+  const [domainInput, setDomainInput] = useState("");
+  const [domainStep, setDomainStep] = useState<"idle" | "challenge" | "verifying" | "verified">("idle");
+  const [domainInstructions, setDomainInstructions] = useState("");
 
-  function simulateDeploy() {
+  async function doDeploy() {
     setStep("deploying");
     setLog([]);
-    const steps = [
-      "Optimising assets…",
-      "Minifying HTML + inline CSS…",
-      "Running SEO checks…",
-      "Generating sitemap.xml…",
-      "Provisioning edge deployment…",
-      "SSL certificate issued…",
-      "✓ Site is live!",
-    ];
-    steps.forEach((msg, i) => {
-      setTimeout(() => {
-        setLog(prev => [...prev, msg]);
-        if (i === steps.length - 1) setStep("done");
-      }, 400 + i * 600);
-    });
+    setShareUrl(null);
+    setSiteId(null);
+
+    const addLog = (msg: string) => setLog((prev) => [...prev, msg]);
+
+    addLog("Saving your site…");
+    try {
+      const res = await fetch("/api/sites/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html, prompt }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        addLog(data?.error || "Save failed");
+        addLog("Try downloading HTML instead.");
+        setStep("options");
+        return;
+      }
+
+      addLog("✓ Site saved");
+      addLog("Provisioning live URL…");
+      addLog("✓ Site is live!");
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      setShareUrl(data.shareUrl ? `${origin}${data.shareUrl}` : null);
+      setSiteId(data.id ?? null);
+      setStep("done");
+    } catch {
+      addLog("Network error. Try again.");
+      setStep("options");
+    }
+  }
+
+  async function requestDomainChallenge() {
+    const d = domainInput.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0];
+    if (!d || !siteId) return;
+    setDomainStep("challenge");
+    try {
+      const res = await fetch("/api/domains/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: d, siteId }),
+      });
+      const data = await res.json();
+      if (data.ok && data.instructions) {
+        setDomainInstructions(data.instructions);
+      } else {
+        setDomainInstructions(data.error || "Failed to create challenge");
+      }
+    } catch {
+      setDomainInstructions("Network error");
+    }
+  }
+
+  async function verifyDomain() {
+    const d = domainInput.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0];
+    if (!d || !siteId) return;
+    setDomainStep("verifying");
+    try {
+      const res = await fetch("/api/domains/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: d, siteId }),
+      });
+      const data = await res.json();
+      if (data.verified) {
+        setDomainInstructions(`✓ Verified! Add a CNAME: ${d} → cname.vercel-dns.com (or your hosting provider).`);
+        setDomainStep("verified");
+      } else {
+        setDomainInstructions(data.error || "Verification failed. DNS may take a few minutes.");
+        setDomainStep("challenge");
+      }
+    } catch {
+      setDomainInstructions("Network error");
+      setDomainStep("challenge");
+    }
   }
 
   function download() {
@@ -1313,7 +1491,7 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
               Your site is ready. Choose how to publish it.
             </p>
             <div className="d8b-deploy-options">
-              <button className="d8b-deploy-option" onClick={simulateDeploy} type="button">
+              <button className="d8b-deploy-option" onClick={doDeploy} type="button">
                 <span className="d8b-deploy-option-icon">⚡</span>
                 <div>
                   <div className="d8b-deploy-option-title">Deploy to Dominat8</div>
@@ -1343,7 +1521,62 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
             </div>
             {step === "done" && (
               <div className="d8b-deploy-success">
-                <div className="d8b-deploy-url">dominat8.io/sites/preview</div>
+                {shareUrl && (
+                  <div className="d8b-deploy-url-row">
+                    <div className="d8b-deploy-url">{shareUrl}</div>
+                    <button
+                      className="d8b-deploy-copy"
+                      type="button"
+                      onClick={() => { navigator.clipboard.writeText(shareUrl); }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                )}
+                {siteId && (
+                  <div className="d8b-domain-section">
+                    <div className="d8b-domain-title">Add custom domain</div>
+                    {domainStep === "idle" && (
+                      <div className="d8b-domain-row">
+                        <input
+                          className="d8b-domain-input"
+                          type="text"
+                          placeholder="mysite.com"
+                          value={domainInput}
+                          onChange={(e) => setDomainInput(e.target.value)}
+                        />
+                        <button className="d8b-domain-btn" type="button" onClick={requestDomainChallenge}>
+                          Verify ownership
+                        </button>
+                      </div>
+                    )}
+                    {(domainStep === "challenge" || domainStep === "verifying") && (
+                      <>
+                        <div className="d8b-domain-instructions">{domainInstructions}</div>
+                        <div className="d8b-domain-row">
+                          <button
+                            className="d8b-domain-btn"
+                            type="button"
+                            disabled={domainStep === "verifying"}
+                            onClick={verifyDomain}
+                          >
+                            {domainStep === "verifying" ? "Checking…" : "Verify"}
+                          </button>
+                          <button
+                            className="d8b-domain-btn d8b-domain-btn--ghost"
+                            type="button"
+                            onClick={() => { setDomainStep("idle"); setDomainInstructions(""); }}
+                          >
+                            Back
+                          </button>
+                        </div>
+                      </>
+                    )}
+                    {domainStep === "verified" && (
+                      <div className="d8b-domain-instructions d8b-domain-instructions--ok">{domainInstructions}</div>
+                    )}
+                  </div>
+                )}
                 <button className="d8b-deploy-btn" onClick={onClose} type="button">Done ✓</button>
               </div>
             )}
@@ -1779,19 +2012,6 @@ function BuilderStyles() {
         transform: translateY(-1px);
       }
 
-      /* ── Error actions (quota/auth states) ── */
-      .d8b-error-actions {
-        display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center;
-      }
-      .d8b-error-upgrade-btn {
-        padding: 12px 24px; border-radius: 10px;
-        background: linear-gradient(135deg, #00C97A, #00B36B);
-        color: #fff; font-size: 14px; font-weight: 700;
-        text-decoration: none; cursor: pointer;
-        transition: all 140ms ease;
-      }
-      .d8b-error-upgrade-btn:hover { background: linear-gradient(135deg, #00DD8A, #00C47A); transform: translateY(-1px); }
-
       /* ── Dots animation ── */
       .d8b-dots { display: inline-flex; gap: 2px; margin-left: 4px; }
       .d8b-dots span {
@@ -2079,12 +2299,41 @@ function BuilderStyles() {
       .d8b-deploy-log-line--ok { color: rgba(56,248,166,0.90); }
       .d8b-deploy-cursor { animation: d8b-blink 1s step-end infinite; color: rgba(61,240,255,0.8); }
 
-      .d8b-deploy-success { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
+      .d8b-deploy-success { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+      .d8b-deploy-url-row { display: flex; align-items: center; gap: 10px; }
       .d8b-deploy-url {
         flex: 1; padding: 10px 14px; border-radius: 10px;
         background: rgba(56,248,166,0.08); border: 1px solid rgba(56,248,166,0.25);
         font-size: 13px; font-family: ui-monospace, monospace; color: rgba(56,248,166,0.90);
       }
+      .d8b-deploy-copy {
+        padding: 10px 16px; border-radius: 10px;
+        border: 1px solid rgba(56,248,166,0.35); background: rgba(56,248,166,0.10);
+        color: rgba(56,248,166,0.95); font-size: 13px; font-weight: 600; cursor: pointer;
+        transition: all 120ms ease;
+      }
+      .d8b-deploy-copy:hover { background: rgba(56,248,166,0.18); }
+
+      .d8b-domain-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+      .d8b-domain-title { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+      .d8b-domain-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+      .d8b-domain-input {
+        flex: 1; padding: 10px 14px; border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+        color: #fff; font-size: 13px;
+      }
+      .d8b-domain-btn {
+        padding: 10px 16px; border-radius: 10px;
+        border: 1px solid rgba(61,240,255,0.35); background: rgba(61,240,255,0.1);
+        color: rgba(61,240,255,0.95); font-size: 13px; font-weight: 600; cursor: pointer;
+      }
+      .d8b-domain-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+      .d8b-domain-btn--ghost { background: transparent; border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
+      .d8b-domain-instructions {
+        font-size: 12px; color: rgba(255,255,255,0.6); padding: 10px; border-radius: 8px;
+        background: rgba(0,0,0,0.2); font-family: ui-monospace, monospace; word-break: break-all;
+      }
+      .d8b-domain-instructions--ok { color: rgba(56,248,166,0.9); }
 
       /* ── Refine ── */
       .d8b-refine-section { display: flex; flex-direction: column; gap: 8px; }
@@ -2178,84 +2427,27 @@ function HomeStyles() {
       .d8h-root {
         min-height: 100vh;
         width: 100%;
-        background: #06080e;
+        background:
+          radial-gradient(900px 600px at 15% 10%, rgba(61,240,255,0.04), transparent 60%),
+          radial-gradient(700px 500px at 85% 5%, rgba(124,92,255,0.05), transparent 60%),
+          #06080e;
         color: #e9eef7;
         font-family: 'Outfit', 'Inter', system-ui, sans-serif;
         display: flex;
         flex-direction: column;
         padding-bottom: 100px;
-        position: relative;
-        overflow-x: hidden;
       }
-
-      /* ── Animated ambient background ── */
-      .d8h-bg {
-        position: fixed; inset: 0;
-        pointer-events: none; z-index: 0; overflow: hidden;
+      .d8h-root--fog {
+        background: transparent;
       }
-      .d8h-bg-a {
-        position: absolute;
-        width: 800px; height: 600px;
-        top: -200px; left: -150px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(61,240,255,0.055) 0%, transparent 70%);
-        animation: d8h-drift-a 22s ease-in-out infinite;
-      }
-      .d8h-bg-b {
-        position: absolute;
-        width: 700px; height: 500px;
-        top: 100px; right: -200px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(0,201,122,0.045) 0%, transparent 70%);
-        animation: d8h-drift-b 28s ease-in-out infinite;
-      }
-      .d8h-bg-c {
-        position: absolute;
-        width: 500px; height: 400px;
-        bottom: -100px; left: 30%;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(124,92,255,0.025) 0%, transparent 70%);
-        animation: d8h-drift-a 35s ease-in-out infinite reverse;
-      }
-      @keyframes d8h-drift-a {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(60px, 40px) scale(1.05); }
-        66% { transform: translate(-40px, 60px) scale(0.97); }
-      }
-      @keyframes d8h-drift-b {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(-70px, -30px) scale(1.08); }
-        66% { transform: translate(50px, 50px) scale(0.95); }
-      }
-
-      /* ── Payment success banner ── */
-      .d8h-payment-banner {
-        display: flex; align-items: center; justify-content: center; gap: 10px;
-        padding: 11px 20px;
-        background: rgba(56,248,166,0.10);
-        border-bottom: 1px solid rgba(56,248,166,0.25);
-        font-size: 13px; color: rgba(56,248,166,0.90);
-        position: relative;
-      }
-      .d8h-payment-dismiss {
-        position: absolute; right: 14px;
-        background: none; border: none; cursor: pointer;
-        color: rgba(56,248,166,0.60); font-size: 14px; line-height: 1;
-        padding: 0; font-family: inherit;
-      }
-      .d8h-payment-dismiss:hover { color: rgba(56,248,166,0.90); }
 
       /* ── Header ── */
       .d8h-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 16px 28px;
+        padding: 18px 28px;
         border-bottom: 1px solid rgba(255,255,255,0.06);
-        position: sticky; top: 0; z-index: 50;
-        background: rgba(6,8,14,0.75);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
       }
       .d8h-logo { display: flex; align-items: center; gap: 7px; }
       .d8h-logo-mark {
@@ -2264,32 +2456,13 @@ function HomeStyles() {
       }
       .d8h-logo-dot {
         width: 5px; height: 5px; border-radius: 50%;
-        background: rgba(61,240,255,0.8);
-        box-shadow: 0 0 6px rgba(61,240,255,0.5);
-        animation: d8h-dot-pulse 3s ease-in-out infinite;
-      }
-      @keyframes d8h-dot-pulse {
-        0%, 100% { opacity: 0.75; box-shadow: 0 0 4px rgba(61,240,255,0.4); }
-        50% { opacity: 1; box-shadow: 0 0 10px rgba(61,240,255,0.75); }
+        background: rgba(212,175,55,0.85);
       }
       .d8h-logo-text {
         font-size: 13px; font-weight: 500;
         color: rgba(255,255,255,0.45); letter-spacing: 0.01em;
       }
-      .d8h-nav { display: flex; gap: 6px; align-items: center; }
-      .d8h-nav-signin {
-        padding: 7px 14px;
-        border-radius: 999px;
-        border: 1px solid rgba(0,201,122,0.35);
-        background: rgba(0,201,122,0.10);
-        color: rgba(0,220,140,0.90);
-        font-size: 12px; font-weight: 600; font-family: inherit;
-        cursor: pointer; transition: all 140ms ease;
-      }
-      .d8h-nav-signin:hover {
-        background: rgba(0,201,122,0.18);
-        border-color: rgba(0,201,122,0.55);
-      }
+      .d8h-nav { display: flex; gap: 6px; }
       .d8h-nav-link {
         padding: 6px 14px;
         border-radius: 999px;
@@ -2307,42 +2480,25 @@ function HomeStyles() {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 72px 24px 40px;
-        gap: 22px;
-        position: relative; z-index: 1;
-      }
-      .d8h-eyebrow {
-        display: inline-flex; align-items: center; gap: 7px;
-        padding: 5px 16px; border-radius: 999px;
-        border: 1px solid rgba(61,240,255,0.25);
-        background: rgba(61,240,255,0.06);
-        color: rgba(61,240,255,0.80);
-        font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
-        text-transform: uppercase;
+        padding: 96px 32px 64px;
+        gap: 36px;
       }
       .d8h-title {
         margin: 0;
-        font-size: clamp(38px, 6vw, 66px);
+        font-size: clamp(40px, 7vw, 72px);
         font-weight: 800;
+        line-height: 1.08;
         color: #fff;
         letter-spacing: -0.04em;
         text-align: center;
-        line-height: 1.05;
-      }
-      .d8h-title-accent {
-        background: linear-gradient(95deg, #3DF0FF 0%, #38F8A6 55%, #00D47A 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
       }
       .d8h-sub {
         margin: 0;
         font-size: 16px;
-        color: rgba(255,255,255,0.38);
+        max-width: 420px;
+        color: rgba(255,255,255,0.40);
         text-align: center;
         letter-spacing: -0.01em;
-        max-width: 480px;
-        line-height: 1.55;
       }
 
       /* ── Input row ── */
@@ -2358,10 +2514,15 @@ function HomeStyles() {
         transition: border-color 140ms ease;
       }
       .d8h-input-row:focus-within {
-        border-color: rgba(61,240,255,0.30);
-        box-shadow: 0 0 0 3px rgba(61,240,255,0.07), 0 6px 24px rgba(0,0,0,0.35);
+        border-color: rgba(212,175,55,0.35);
       }
-      .d8h-input-icon { font-size: 18px; flex-shrink: 0; }
+      .d8h-input-icon {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(212,175,55,0.7);
+      }
       .d8h-input {
         flex: 1;
         background: transparent;
@@ -2379,22 +2540,58 @@ function HomeStyles() {
         padding: 11px 22px;
         border-radius: 11px;
         border: none;
-        background: linear-gradient(135deg, #00C97A, #00B36B);
-        color: #fff;
+        background: linear-gradient(135deg, #D4AF37, #B8962E);
+        color: #0c0a06;
         font-size: 13px;
         font-weight: 700;
         font-family: inherit;
         letter-spacing: 0.06em;
         cursor: pointer;
         transition: all 140ms ease;
-        box-shadow: 0 2px 12px rgba(0,201,122,0.35);
+        box-shadow: 0 2px 12px rgba(212,175,55,0.35);
       }
       .d8h-gen-btn:hover:not(:disabled) {
-        background: linear-gradient(135deg, #00DD88, #00C47A);
-        box-shadow: 0 4px 18px rgba(0,201,122,0.50);
+        background: linear-gradient(135deg, #E5C04A, #C9A63C);
+        box-shadow: 0 4px 18px rgba(212,175,55,0.45);
         transform: translateY(-1px);
       }
-      .d8h-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+      .d8h-gen-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+      .d8h-mic-btn {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border-radius: 11px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.75);
+        cursor: pointer;
+        transition: all 140ms ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .d8h-mic-btn:hover:not(:disabled) {
+        background: rgba(212,175,55,0.12);
+        border-color: rgba(212,175,55,0.35);
+        color: rgba(255,255,255,0.95);
+      }
+      .d8h-mic-btn--listening {
+        background: rgba(212,80,80,0.15);
+        border-color: rgba(212,80,80,0.4);
+        color: #e8a0a0;
+      }
+      .d8h-mic-btn--listening .d8h-mic-icon { animation: d8h-mic-pulse 1.2s ease-in-out infinite; }
+      .d8h-mic-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .d8h-mic-icon { display: inline-flex; align-items: center; justify-content: center; }
+      @keyframes d8h-mic-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
 
       /* ── Industry chips ── */
       .d8h-chips {
@@ -2416,42 +2613,83 @@ function HomeStyles() {
       }
       .d8h-chip:hover { border-color: rgba(255,255,255,0.20); color: rgba(255,255,255,0.80); }
       .d8h-chip--active {
-        border-color: rgba(61,240,255,0.45);
-        background: rgba(61,240,255,0.08);
-        color: rgba(61,240,255,0.90);
+        border-color: rgba(212,175,55,0.5);
+        background: rgba(212,175,55,0.12);
+        color: rgba(255,255,255,0.95);
       }
 
       /* ── Social proof ── */
       .d8h-social-proof {
-        display: flex; align-items: center; justify-content: center;
-        flex-wrap: wrap; gap: 8px 10px;
-        margin: 20px 0 0;
-        padding: 0 24px;
+        display: flex; align-items: center; justify-content: flex-start;
+        gap: 20px;
+        padding: 0;
       }
-      .d8h-avatars { display: flex; align-items: center; }
-      .d8h-avatar {
-        width: 22px; height: 22px; border-radius: 50%;
-        border: 2px solid #06080e;
-        display: inline-block; flex-shrink: 0;
+      .d8h-sp-monitor {
+        flex-shrink: 0;
       }
-      .d8h-sp-count {
-        font-size: 13px; color: rgba(255,255,255,0.60);
+      .d8h-sp-monitor-frame {
+        display: flex; flex-direction: column; align-items: center;
       }
-      .d8h-sp-num { font-weight: 700; color: rgba(255,255,255,0.85); }
-      .d8h-sp-divider { color: rgba(255,255,255,0.20); font-size: 13px; }
-      .d8h-sp-tag {
-        font-size: 12px; color: rgba(255,255,255,0.38);
-        padding: 2px 8px; border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.03);
+      .d8h-sp-monitor-screen {
+        width: 72px; height: 46px;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 2px solid rgba(212,175,55,0.3);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+      }
+      .d8h-sp-monitor-bar {
+        height: 6px;
+        transition: background 800ms ease;
+      }
+      .d8h-sp-monitor-body {
+        flex: 1;
+        height: 38px;
+        transition: background 800ms ease;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 4px;
+      }
+      .d8h-sp-monitor-hero {
+        height: 8px;
+        border-radius: 2px;
+        opacity: 0.5;
+        transition: background 800ms ease;
+      }
+      .d8h-sp-monitor-cards {
+        display: flex; gap: 3px;
+      }
+      .d8h-sp-monitor-cards span {
+        flex: 1;
+        height: 6px;
+        border-radius: 2px;
+        background: rgba(255,255,255,0.08);
+      }
+      .d8h-sp-monitor-stand {
+        width: 16px; height: 6px;
+        margin-top: 2px;
+        border-radius: 0 0 4px 4px;
+        background: rgba(212,175,55,0.2);
+      }
+      .d8h-sp-stat-wrap {
+        display: flex; align-items: baseline; gap: 8px;
+      }
+      .d8h-sp-stat {
+        font-size: 18px; font-weight: 600;
+        color: rgba(212,175,55,0.95);
+        letter-spacing: 0.02em;
+      }
+      .d8h-sp-label {
+        font-size: 14px; font-weight: 400;
+        color: rgba(255,255,255,0.45);
+        letter-spacing: 0.01em;
       }
 
       /* ── Deployments ── */
       .d8h-deploys {
         width: min(800px, 100%);
         margin: 0 auto;
-        padding: 0 24px;
-        position: relative; z-index: 1;
+        padding: 0 24px 140px;
       }
       .d8h-deploys-header {
         display: flex; align-items: center; justify-content: space-between;
@@ -2470,7 +2708,7 @@ function HomeStyles() {
       }
       .d8h-live-dot {
         width: 6px; height: 6px; border-radius: 50%;
-        background: #38F8A6;
+        background: #D4AF37;
         animation: d8h-blink 2s ease-in-out infinite;
       }
       @keyframes d8h-blink { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
@@ -2482,14 +2720,9 @@ function HomeStyles() {
         border-radius: 14px;
         border: 1px solid rgba(255,255,255,0.08);
         background: rgba(255,255,255,0.03);
-        transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.20);
+        transition: background 140ms ease;
       }
-      .d8h-dep-row:hover {
-        background: rgba(255,255,255,0.05);
-        border-color: rgba(255,255,255,0.12);
-        box-shadow: 0 4px 18px rgba(0,0,0,0.30);
-      }
+      .d8h-dep-row:hover { background: rgba(255,255,255,0.05); }
       .d8h-dep-icon { font-size: 18px; flex-shrink: 0; }
       .d8h-dep-info { flex: 1; min-width: 0; }
       .d8h-dep-domain {
@@ -2526,70 +2759,101 @@ function HomeStyles() {
         text-align: center; padding: 20px 0;
       }
 
-      /* ── Bottom dock ── */
-      .d8h-dock {
+      /* ── Bottom bar: left (sites built), center (dock), right (links) ── */
+      .d8h-bottom-bar {
         position: fixed;
-        bottom: 20px; left: 50%; transform: translateX(-50%);
-        display: flex; gap: 6px; align-items: center;
-        padding: 8px 10px;
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(8,10,18,0.85);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
+        bottom: 0; left: 0; right: 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        padding: 16px 24px 24px;
         z-index: 100;
+        pointer-events: none;
+      }
+      .d8h-bottom-bar > * { pointer-events: auto; }
+      .d8h-bottom-left {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        min-width: 0;
+      }
+      .d8h-bottom-right {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px 16px;
+        flex-wrap: wrap;
+      }
+      .d8h-bottom-right .d8h-footer-link {
+        font-size: 12px; color: rgba(255,255,255,0.4);
+        text-decoration: none; transition: color 140ms ease;
+      }
+      .d8h-bottom-right .d8h-footer-link:hover { color: rgba(255,255,255,0.75); }
+      .d8h-bottom-right .d8h-footer-copy {
+        font-size: 11px; color: rgba(255,255,255,0.22);
+        margin-left: 12px;
+      }
+      .d8h-dock-bar {
+        flex-shrink: 0;
+        display: flex; justify-content: center;
+      }
+      .d8h-dock-glass {
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: min(900px, 100%);
+        padding: 12px 24px 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(26,15,0,0.35) 50%, rgba(15,10,0,0.4) 100%);
+        backdrop-filter: blur(28px) saturate(150%);
+        -webkit-backdrop-filter: blur(28px) saturate(150%);
+        border: 1px solid rgba(212,175,55,0.22);
+        border-radius: 24px;
         box-shadow:
-          0 8px 40px rgba(0,0,0,0.60),
-          0 1px 0 rgba(255,255,255,0.08) inset;
+          0 8px 32px rgba(0,0,0,0.2),
+          0 0 0 1px rgba(255,255,255,0.04) inset,
+          inset 0 1px 0 rgba(255,255,255,0.12);
       }
-      .d8h-dock-btn {
-        display: flex; flex-direction: column; align-items: center;
-        gap: 3px; padding: 8px 10px;
-        border-radius: 12px;
+      .d8h-dock-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 14px 6px;
+        border-radius: 14px;
         border: 1px solid transparent;
-        background: var(--dock-bg, rgba(255,255,255,0.06));
-        color: rgba(255,255,255,0.75);
-        cursor: pointer; transition: all 140ms ease;
-        min-width: 52px;
+        color: rgba(255,255,255,0.55);
         text-decoration: none;
+        cursor: pointer;
+        transition: all 180ms ease;
       }
-      .d8h-dock-btn:hover {
-        border-color: rgba(255,255,255,0.14);
-        background: rgba(255,255,255,0.10);
-        transform: translateY(-2px);
+      .d8h-dock-item:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: rgba(212,175,55,0.3);
+        color: rgba(255,255,255,0.98);
       }
-      .d8h-dock-icon { font-size: 17px; }
+      .d8h-dock-item--active {
+        background: rgba(255,255,255,0.08);
+        border-color: rgba(212,175,55,0.35);
+        color: rgba(255,255,255,1);
+      }
+      .dock-icon-svg { display: inline-flex; align-items: center; justify-content: center; }
       .d8h-dock-label {
-        font-size: 9px; font-family: inherit;
-        color: rgba(255,255,255,0.45);
-        letter-spacing: 0.03em;
+        font-size: 10px; font-family: inherit; font-weight: 500;
+        color: inherit;
+        letter-spacing: 0.02em;
         white-space: nowrap;
       }
 
       /* ── Footer ── */
-      .d8h-footer {
-        text-align: center;
-        padding: 32px 24px 100px;
-        margin-top: 24px;
-      }
-      .d8h-footer-links {
-        display: flex; flex-wrap: wrap;
-        align-items: center; justify-content: center;
-        gap: 4px 18px; margin-bottom: 12px;
-      }
-      .d8h-footer-link {
-        font-size: 13px; color: rgba(255,255,255,0.32);
-        text-decoration: none; transition: color 140ms ease;
-      }
-      .d8h-footer-link:hover { color: rgba(255,255,255,0.65); }
-      .d8h-footer-copy {
-        font-size: 12px; color: rgba(255,255,255,0.18);
-      }
 
       @media (max-width: 640px) {
         .d8h-title { font-size: 32px; }
-        .d8h-dock { gap: 3px; padding: 6px 8px; }
-        .d8h-dock-btn { min-width: 40px; padding: 6px 6px; }
+        .d8h-dock-glass { gap: 2px; padding: 8px 12px 10px; }
+        .d8h-dock-item { padding: 6px 8px 4px; }
         .d8h-dock-label { display: none; }
       }
     `}</style>

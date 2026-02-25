@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh run view:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(python3 -c \" import json,sys data=json.load\\(sys.stdin\\) pkgs = data.get\\(''packages'', {}\\) for k,v in pkgs.items\\(\\): if ''eslint-config-next'' in k and ''node_modules/'' in k: print\\(k\\) print\\(json.dumps\\(v.get\\(''dependencies'',{}\\), indent=2\\)\\) print\\(json.dumps\\(v.get\\(''peerDependencies'',{}\\), indent=2\\)\\) break \")",
+      "Bash(gh pr merge:*)",
+      "Bash(gh api:*)"
+    ]
+  }
+}

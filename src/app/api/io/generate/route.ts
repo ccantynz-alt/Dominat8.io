@@ -1,83 +1,17 @@
 import { OpenAI } from "openai";
 import { auth } from "@clerk/nextjs/server";
+import { kv } from "@vercel/kv";
 import { NextRequest } from "next/server";
 
-export const runtime = "edge";
+// Node runtime: Clerk auth() has issues in Edge (Request/headers symbol). Generation is I/O-bound anyway.
 export const maxDuration = 60;
 
-// ── Plan limits ────────────────────────────────────────────────────────────────
-
-const PLAN_LIMITS: Record<string, number> = {
+const MONTHLY_LIMITS: Record<string, number> = {
   free: 3,
   starter: 20,
   pro: 100,
   agency: 500,
 };
-
-// Raw KV REST calls (edge-compatible — no Node.js require)
-async function kvGet(key: string): Promise<string | null> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return null;
-  try {
-    const res = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json() as { result?: string | null };
-    return data.result ?? null;
-  } catch { return null; }
-}
-
-async function kvIncr(key: string): Promise<number> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return 0;
-  try {
-    const res = await fetch(`${url}/incr/${encodeURIComponent(key)}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json() as { result?: number };
-    return data.result ?? 0;
-  } catch { return 0; }
-}
-
-async function kvExpire(key: string, seconds: number): Promise<void> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return;
-  try {
-    await fetch(`${url}/expire/${encodeURIComponent(key)}/${seconds}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  } catch { /* silent */ }
-}
-
-async function checkUsage(userId: string): Promise<{
-  allowed: boolean;
-  plan: string;
-  usage: number;
-  limit: number;
-}> {
-  const planRaw = await kvGet(`user:${userId}:plan`);
-  const plan = ["starter", "pro", "agency"].includes(planRaw ?? "") ? planRaw! : "free";
-  const limit = PLAN_LIMITS[plan] ?? 3;
-
-  const month = new Date().toISOString().slice(0, 7); // "2026-02"
-  const usageKey = `usage:${userId}:${month}`;
-  const usageRaw = await kvGet(usageKey);
-  const usage = parseInt(usageRaw ?? "0", 10) || 0;
-
-  if (usage >= limit) {
-    return { allowed: false, plan, usage, limit };
-  }
-
-  const newUsage = await kvIncr(usageKey);
-  await kvExpire(usageKey, 60 * 60 * 24 * 35); // 35-day TTL
-
-  return { allowed: true, plan, usage: newUsage, limit };
-}
 
 const SYSTEM_PROMPT = `You are an elite creative director and principal front-end engineer at the world's most award-winning digital studio. Your work has won Webby Awards, FWA Site of the Day, and CSS Design Awards. You build websites that make people stop scrolling and say "wow".
 
@@ -197,38 +131,48 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { prompt, industry, vibe } = await req.json();
+  try {
+    const { userId } = await auth();
 
-  if (!prompt?.trim()) {
-    return new Response("Prompt required", { status: 400 });
-  }
-
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return new Response("OpenAI API key not configured", { status: 500 });
-  }
-
-  // ── Auth + quota check ────────────────────────────────────────────────────
-  const { userId } = auth();
-
-  if (userId) {
-    // Authenticated: enforce monthly quota
-    const { allowed, plan, usage, limit } = await checkUsage(userId);
-    if (!allowed) {
-      return new Response(
-        JSON.stringify({
-          error: `Monthly limit reached. You've used ${usage}/${limit} generations on the ${plan} plan.`,
-          code: "QUOTA_EXCEEDED",
-          plan,
-          usage,
-          limit,
-        }),
-        { status: 429, headers: { "Content-Type": "application/json" } }
-      );
+    let body: { prompt?: string; industry?: string; vibe?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response("Invalid JSON body", { status: 400 });
     }
-  }
-  // Unauthenticated users get 3 free generations tracked client-side (localStorage).
-  // ─────────────────────────────────────────────────────────────────────────
+    const { prompt, industry, vibe } = body;
+
+    if (!prompt?.trim()) {
+      return new Response("Prompt required", { status: 400 });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return new Response("OpenAI API key not configured. Add OPENAI_API_KEY to .env.local.", { status: 500 });
+    }
+
+    let plan = "free";
+    let usage = 0;
+    let limit = MONTHLY_LIMITS.free;
+    const now = new Date();
+    const monthKey = userId
+      ? `user:${userId}:usage:${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`
+      : null;
+    if (userId) {
+      try {
+        plan = (await kv.get<string>(`user:${userId}:plan`)) ?? "free";
+        limit = MONTHLY_LIMITS[plan] ?? MONTHLY_LIMITS.free;
+        usage = (await kv.get<number>(monthKey!)) ?? 0;
+        if (usage >= limit) {
+          return new Response(
+            `Monthly generation limit reached (${limit} for ${plan}). Upgrade or wait until next month.`,
+            { status: 429 }
+          );
+        }
+      } catch {
+        /* KV unavailable: allow generation, skip usage tracking */
+      }
+    }
 
   const openai = new OpenAI({ apiKey });
 
@@ -253,7 +197,9 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
-  const stream = await openai.chat.completions.create({
+  let stream;
+  try {
+    stream = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
@@ -263,6 +209,22 @@ export async function POST(req: NextRequest) {
     max_tokens: 16000,
     temperature: 0.80,
   });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isRateLimit = msg.includes("rate") || msg.includes("429");
+    const isAuth = msg.includes("API key") || msg.includes("401") || msg.includes("Incorrect API key");
+    const status = isAuth ? 401 : isRateLimit ? 429 : 500;
+    return new Response(msg, { status });
+  }
+
+  // Increment usage before streaming begins so that aborting mid-stream cannot
+  // be used to bypass the monthly limit.
+  if (monthKey) {
+    try {
+      await kv.incr(monthKey);
+      await kv.expire(monthKey, 60 * 60 * 24 * 32);
+    } catch { /* non-fatal */ }
+  }
 
   const encoder = new TextEncoder();
 
@@ -286,4 +248,8 @@ export async function POST(req: NextRequest) {
       "Cache-Control": "no-store",
     },
   });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(`Generate failed: ${msg}`, { status: 500 });
+  }
 }

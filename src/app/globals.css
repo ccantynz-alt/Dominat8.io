@@ -14,12 +14,14 @@
   --border-strong: rgba(255,255,255,0.16);
 }
 
-/* Base background */
+/* Base background — html + body so no white flash or partial white viewport */
+html,
 body {
   background: var(--bg-0);
   color: var(--fg-1);
   margin: 0;
   padding: 0;
+  min-height: 100%;
 }
 
 /* Neutral focus ring */

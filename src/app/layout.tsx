@@ -1,9 +1,21 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
+import {
+  ClerkProvider,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dominat8.io"),
+  icons: {
+    icon: "/api/icon",
+    shortcut: "/api/icon",
+    apple: "/api/icon",
+  },
   title: {
     default: "Dominat8.io — AI Website Builder",
     template: "%s — Dominat8.io",
@@ -21,7 +33,7 @@ export const metadata: Metadata = {
     description: "Describe your business. Our AI builds a complete, professional website in under 30 seconds. No templates. No drag and drop.",
     images: [
       {
-        url: "/opengraph-image",
+        url: "/api/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Dominat8.io — AI Website Builder",
@@ -32,7 +44,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Dominat8.io — AI Website Builder",
     description: "Build a world-class website in seconds. Just describe your business.",
-    images: ["/opengraph-image"],
+    images: ["/api/opengraph-image"],
     creator: "@dominat8io",
   },
   robots: {
@@ -60,7 +72,61 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             rel="stylesheet"
           />
         </head>
-        <body style={{ margin: 0, padding: 0 }}>{children}</body>
+        <body>
+          <header
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              gap: "12px",
+              padding: "12px 16px",
+              minHeight: "48px",
+              background: "rgba(4, 6, 14, 0.85)",
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  style={{
+                    padding: "8px 16px",
+                    background: "transparent",
+                    color: "#9aa3c7",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: "9999px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                  }}
+                >
+                  Sign in
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button
+                  type="button"
+                  style={{
+                    padding: "8px 16px",
+                    background: "#3DF0FF",
+                    color: "#04060e",
+                    border: "none",
+                    borderRadius: "9999px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                  }}
+                >
+                  Sign up
+                </button>
+              </SignUpButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+          </header>
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   );
