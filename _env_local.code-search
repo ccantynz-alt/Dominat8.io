@@ -1,0 +1,175 @@
+# Query: .env.local
+# ContextLines: 1
+
+46 results - 19 files
+
+.env.example:
+   6  #   LOCAL (run on your machine with "npm run dev"):
+   7: #     Paste into a file named .env.local in this project folder (same folder as
+   8: #     package.json). Create it by copying this file: copy .env.example .env.local
+   9  #     Then replace the placeholder values below with your real keys.
+
+  16  # If your site is already working online, the keys are probably already set in
+  17: # Vercel. You only need .env.local if you want to run the app locally.
+  18  #
+
+  56  # Without these, generation still works; usage/limits are skipped.
+  57: # Create at: https://vercel.com/storage/kv — then: vercel env pull .env.local
+  58  KV_REST_API_URL=https://...
+
+.gitignore:
+  46  
+  47: .env.local
+  48  
+
+BUILD_FAIL_20260202_115116.log:
+  5    ▲ Next.js 14.2.5
+  6:   - Environments: .env.local
+  7  
+
+build_log_20260128_173337.txt:
+  5    Γû▓ Next.js 14.2.5
+  6:   - Environments: .env.local
+  7  
+
+build-output-local.txt:
+  5    Γû▓ Next.js 14.2.5
+  6:   - Environments: .env.local
+  7  
+
+FINISH-SITE.md:
+  39  
+  40: Copy `.env.example` to `.env.local` and set at least:
+  41  
+
+FINISH-TODAY.md:
+  11  | Install | `npm install` |
+  12: | Env | Copy `.env.example` → `.env.local`, add at least **OpenAI** + **Clerk** keys (see [SETUP-NOVICE.md](./SETUP-NOVICE.md)) |
+  13  | Build | `npm run build` — must finish with no errors |
+
+  17  
+  18: If any step fails, fix it before deploying. Most “Generate” failures are missing `OPENAI_API_KEY` in `.env.local`.
+  19  
+
+HANDOVER.md:
+  66  
+  67: - **Generator:** Single self-contained HTML; required sections (Nav, Hero, Features, Social proof, CTA, Footer); no Lorem; strict iframe sandbox (no `allow-same-origin` + `allow-scripts`); validate `OPENAI_API_KEY`. If generation fails, the Builder shows the API error message; set `OPENAI_API_KEY` in `.env.local` for local dev (see `.env.example`).
+  68  - **CI:** One main workflow for PRs to `main`; protected paths = middleware, `src/lib/engine/`, Stripe/billing API routes only. Use `[ALLOW-PROTECTED]` in PR title only when changing those.
+
+README.md:
+  10  
+  11: - **[SETUP-NOVICE.md](./SETUP-NOVICE.md)** — Install Node, copy `.env.local`, add Clerk + OpenAI keys, run `npm run dev`. Written so you don’t need to already know the stack.
+  12  
+
+  16  npm install
+  17: cp .env.example .env.local   # then edit .env.local with your keys
+  18  npm run dev
+
+SETUP-NOVICE.md:
+   14  2. **A code editor** (optional but helpful)  
+   15:    - VS Code or Cursor is enough. You mainly need it to edit one file: `.env.local`.
+   16  
+
+   39  1. In the project folder, find the file **`.env.example`**.
+   40: 2. **Copy** it and name the copy **`.env.local`** (same folder).  
+   41:    - Windows (PowerShell): `Copy-Item .env.example .env.local`  
+   42:    - Mac/Linux: `cp .env.example .env.local`
+   43: 3. Open **`.env.local`** in your editor. You’ll fill in the values below.
+   44  
+   45: **What this file is:** A list of “variables” (keys and values). Each line is something like `NAME=value`. The app reads these when it starts. Never commit `.env.local` or share it; it contains secrets.
+   46  
+
+   57  - Copy the **Publishable key** (starts with `pk_`) and the **Secret key** (starts with `sk_`).
+   58: - In `.env.local`, set:
+   59    - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...pk_test_bWFnbmV0aWMtY2F0ZmlzaC03LmNsZXJrLmFjY291bnRzLmRldiQ
+
+   67  - Go to [platform.openai.com](https://platform.openai.com/api-keys) and create an API key.
+   68: - In `.env.local`, set:
+   69    - `OPENAI_API_KEY=sk-...` (paste your key)
+
+  127  
+  128: 1. Push your code to GitHub (and don’t commit `.env.local`).
+  129  2. Go to [vercel.com](https://vercel.com), sign in, and **Import** your repo.
+  130  3. In the Vercel project, go to **Settings → Environment Variables**.
+  131: 4. Add the **same** variables you put in `.env.local` (Clerk, OpenAI, and any others you use). Use the same names (e.g. `OPENAI_API_KEY`, `CLERK_SECRET_KEY`).
+  132  5. For Clerk: in the Clerk dashboard, add your Vercel URL (e.g. `https://your-app.vercel.app`) to allowed redirect/origin URLs.
+
+  134  
+  135: **What “deploy” means:** Your app runs on Vercel’s servers so anyone with the link can open it. Environment variables you set in Vercel are used instead of `.env.local`.
+  136  
+
+  153  - **“Sign in to generate” or 401**  
+  154:   You must be signed in (Clerk). Use Sign up / Sign in. Make sure `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` are set in `.env.local`.
+  155  
+  156  - **“OpenAI API key not configured”**  
+  157:   Add `OPENAI_API_KEY=sk-...` to `.env.local` and restart the dev server (`npm run dev`).
+  158  
+
+  177  
+  178: If you’re still stuck, check that you completed Step 1 (install), Step 2 (`.env.local`), Step 3 (Clerk + OpenAI keys), and Step 4 (`npm run dev`). Most “it doesn’t work” cases are a missing key or a typo in `.env.local`.
+
+.cursor\rules\clerk-nextjs-app-router.mdc:
+  17  - Reference **App Router** paths: `app/` or `src/app/` (page.tsx, layout.tsx, route handlers).
+  18: - Store real keys only in **`.env.local`**; use **placeholders** (e.g. `YOUR_PUBLISHABLE_KEY`) in docs or snippets. Ensure `.gitignore` excludes `.env*`.
+  19  
+
+_render_nuke_out_20260203_201912\03_npm_run_build.txt:
+  5    Γû▓ Next.js 14.2.5
+  6:   - Environments: .env.local
+  7  
+
+_render_nuke_out_20260203_202242\03_npm_run_build.txt:
+  5    Γû▓ Next.js 14.2.5
+  6:   - Environments: .env.local
+  7  
+
+docs\CLERK-INTEGRATION-RULES.md:
+   27  
+   28: Set up your environment variables in `.env.local`:
+   29  
+   30: From your Clerk Dashboard, open the [API keys page](https://dashboard.clerk.com/last-active?path=api-keys) and copy your Publishable Key and Secret Key. Paste them into `.env.local` as shown below.
+   31  
+   32  ```bash
+   33: # .env.local
+   34  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+
+  110  5. **Check** that imports for methods like `auth()` are imported from the right package (in this case `@clerk/nextjs/server`) and are using `async / await`
+  111: 6. **Store real keys only in `.env.local`** (never in app code, markdown, or other tracked files). **Verify `.gitignore` excludes `.env*`.**
+  112  7. **Use placeholders only** (e.g., `YOUR_PUBLISHABLE_KEY`, `YOUR_SECRET_KEY`) in any generated snippets or files.
+
+  156  5. **Environment Variables**: Are only placeholder values (e.g., `YOUR_PUBLISHABLE_KEY`) used in code examples?
+  157: 6. **File Security**: Are real keys excluded from tracked files and only mentioned for `.env.local`?
+  158  
+
+  183  | `auth()` with async/await | ✅ API routes and server layouts use `await auth()` from `@clerk/nextjs/server` (with try/catch for Next 16 compatibility). |
+  184: | Keys in `.env.local` only, placeholders in docs | ✅ `.env.example` uses placeholders; real keys only in `.env.local` / Vercel env. |
+  185  
+
+docs\CLERK-SETUP.md:
+  21  |----------------------|------------------------|
+  22: | **Local** (`npm run dev`) | File **`.env.local`** in the project root. Add: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...` and `CLERK_SECRET_KEY=sk_...` |
+  23  | **Live** (Vercel) | **Vercel → your project → Settings → Environment Variables**. Add the same two variable names and paste the same values. Redeploy after saving. |
+
+  53  - [ ] Create a Clerk application and copy Publishable + Secret keys.
+  54: - [ ] **Local:** Add both keys to `.env.local`, then run `npm run dev`.
+  55  - [ ] **Live:** Add both keys to Vercel Environment Variables, then redeploy.
+
+src\app\api\io\generate\route.ts:
+  159      if (!apiKey) {
+  160:       return new Response("OpenAI API key not configured. Add OPENAI_API_KEY to .env.local.", { status: 500 });
+  161      }
+
+src\app\sign-in\[[...sign-in]]\page.tsx:
+  31              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>
+  32:               Set <code style={{ background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: 4 }}>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> in <code style={{ background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: 4 }}>.env.local</code> and restart the dev server.
+  33              </p>
+
+src\app\sign-up\[[...sign-up]]\page.tsx:
+  31              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>
+  32:               Set <code style={{ background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: 4 }}>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> in <code style={{ background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: 4 }}>.env.local</code> and restart the dev server.
+  33              </p>
+
+src\lib\d8\mm\kv.ts:
+  11  function envMissing(): KvErr {
+  12:   return { ok: false, error: "KV env missing", hint: "Set KV_REST_API_URL and KV_REST_API_TOKEN in Vercel + .env.local" };
+  13  }
