@@ -110,9 +110,11 @@ export default function TemplatesPage() {
         }
 
         // Update the UI in real-time
-        document.getElementById('interim-text')!.textContent = interimTranscript;
+        const interimEl = document.getElementById('interim-text');
+        if (interimEl) interimEl.textContent = interimTranscript;
         if (finalTranscript) {
-          document.getElementById('final-text')!.textContent = finalTranscript;
+          const finalEl = document.getElementById('final-text');
+          if (finalEl) finalEl.textContent = finalTranscript;
           
           const transcript = finalTranscript.toLowerCase().trim();
           console.log("Voice Command Received:", transcript);
@@ -135,8 +137,10 @@ export default function TemplatesPage() {
 
           // Clear subtitles after a few seconds of inactivity
           setTimeout(() => {
-            document.getElementById('interim-text')!.textContent = "";
-            document.getElementById('final-text')!.textContent = "";
+            const i = document.getElementById('interim-text');
+            const f = document.getElementById('final-text');
+            if (i) i.textContent = "";
+            if (f) f.textContent = "";
           }, 3000);
         }
       };
@@ -147,11 +151,12 @@ export default function TemplatesPage() {
 
       recognition.onend = () => {
         setIsRecording(false);
-        document.getElementById('final-text')!.textContent = '';
+        const finalEl = document.getElementById('final-text');
+        if (finalEl) finalEl.textContent = '';
       };
       
       recognition.onerror = (event: any) => {
-        console.error("Speech recognition error:", event.error);
+        console.error("Speech recognition error:", event.error, event);
         setIsRecording(false);
       };
 

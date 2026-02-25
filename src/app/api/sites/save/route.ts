@@ -20,8 +20,9 @@ export async function POST(req: NextRequest) {
   try {
     const authResult = await auth();
     userId = authResult?.userId ?? null;
-  } catch {
-    /* Clerk auth() can throw in Next 16 */
+  } catch (err) {
+    console.error("Clerk auth() error in save route:", err);
+    return NextResponse.json({ error: "Authentication system error" }, { status: 500 });
   }
   if (!userId) {
     return NextResponse.json({ error: "Sign in to save and share sites" }, { status: 401 });
