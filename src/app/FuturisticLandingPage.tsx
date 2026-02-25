@@ -1,38 +1,39 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import FOG from "vanta/dist/vanta.fog.min";
 import * as THREE from "three";
 
 const FuturisticLandingPage = () => {
-  const [vantaEffect, setVantaEffect] = useState(null);
   const vantaRef = useRef(null);
+  const vantaEffectRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!vantaEffect) {
-      setVantaEffect(
-        FOG({
-          el: vantaRef.current,
-          THREE: THREE,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200.0,
-          minWidth: 200.0,
-          highlightColor: 0xFFE066,
-          midtoneColor: 0xE6A23C,
-          lowlightColor: 0x8B6914,
-          baseColor: 0x1a0f00,
-          blurFactor: 0.5,
-          speed: 1.5,
-          zoom: 0.5,
-        })
-      );
+    if (!vantaEffectRef.current) {
+      vantaEffectRef.current = FOG({
+        el: vantaRef.current,
+        THREE: THREE,
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.0,
+        minWidth: 200.0,
+        highlightColor: 0xFFE066,
+        midtoneColor: 0xE6A23C,
+        lowlightColor: 0x8B6914,
+        baseColor: 0x1a0f00,
+        blurFactor: 0.5,
+        speed: 1.5,
+        zoom: 0.5,
+      });
     }
     return () => {
-      if (vantaEffect) (vantaEffect as any).destroy();
+      if (vantaEffectRef.current) {
+        vantaEffectRef.current.destroy();
+        vantaEffectRef.current = null;
+      }
     };
-  }, [vantaEffect]);
+  }, []);
 
   return (
     <div
