@@ -7,7 +7,7 @@
  */
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
-import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const MAIN_HOSTS = new Set(["dominat8.io", "www.dominat8.io", "localhost"]);
 
@@ -99,26 +99,26 @@ const clerkHandler = clerkMiddleware(async (auth, request: NextRequest) => {
   return NextResponse.rewrite(url);
 });
 
-export function proxy(request: NextRequest, event: NextFetchEvent) {
+export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname || "/";
 
-  if (startsWithAny(pathname, ALLOW_PREFIXES)) return clerkHandler(request, event);
-  if (pathname.startsWith("/_next/")) return clerkHandler(request, event);
+  if (startsWithAny(pathname, ALLOW_PREFIXES)) return clerkHandler(request);
+  if (pathname.startsWith("/_next/")) return clerkHandler(request);
 
   if (startsWithAny(pathname, PROTECTED_PREFIXES)) {
     const adminKey = process.env.ADMIN_API_KEY?.trim() || "";
-    if (!adminKey) return clerkHandler(request, event);
+    if (!adminKey) return clerkHandler(request);
     const hdr =
       request.headers.get("x-admin-key") ||
       request.headers.get("x-d8-admin-key") ||
       request.headers.get("x-dom-admin-key") ||
       "";
     const q = request.nextUrl.searchParams.get("admin_key") || "";
-    if (hdr === adminKey || q === adminKey) return clerkHandler(request, event);
+    if (hdr === adminKey || q === adminKey) return clerkHandler(request);
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  return clerkHandler(request, event);
+  return clerkHandler(request);
 }
 
 export const config = {
