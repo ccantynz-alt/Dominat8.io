@@ -24,6 +24,7 @@ Required for the Builder and “Generate Site”: **Clerk** (sign-in) and **Open
 
 ## Scripts and deploy
 
+- **Finish today:** [FINISH-TODAY.md](./FINISH-TODAY.md) — checklist to get the site built, running locally, and deployed to live (Vercel + env).
 - **Build & quality:** [FINISH-SITE.md](./FINISH-SITE.md) — `npm run keep-build`, `npm run finish:overnight`, env checklist.
 - **Env reference:** [.env.example](./.env.example) — all variables with short comments.
 
