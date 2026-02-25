@@ -1,7 +1,10 @@
 import { kv } from "@vercel/kv";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+
+type SavedSiteMeta = { id: string; prompt: string; blobUrl: string; createdAt: string; userId?: string };
 
 function normalizeDomain(domain: string): string {
   return domain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
@@ -19,6 +22,17 @@ async function lookupTXT(hostname: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
+  let userId: string | null = null;
+  try {
+    const authResult = await auth();
+    userId = authResult?.userId ?? null;
+  } catch {
+    /* Clerk auth() can throw in Next 16 */
+  }
+  if (!userId) {
+    return NextResponse.json({ error: "Sign in to verify domains" }, { status: 401 });
+  }
+
   try {
     const { domain, siteId } = (await req.json()) as { domain?: string; siteId?: string };
 
@@ -30,6 +44,16 @@ export async function POST(req: NextRequest) {
     const stored = await kv.get<{ txt: string; siteId: string }>(`domain:challenge:${d}`);
     if (!stored || stored.siteId !== siteId) {
       return NextResponse.json({ error: "Challenge not found or expired. Request a new one." }, { status: 400 });
+    }
+
+    // Verify that the authenticated user owns the site
+    const siteMeta = await kv.get<SavedSiteMeta>(`site:${siteId}`);
+    if (!siteMeta) {
+      return NextResponse.json({ error: "Site not found" }, { status: 404 });
+    }
+    // Verify ownership: either no userId set (backwards compat) or userId matches
+    if (siteMeta.userId && siteMeta.userId !== userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const hostname = `_dominat8-verify.${d}`;
