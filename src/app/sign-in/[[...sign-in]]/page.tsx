@@ -2,7 +2,11 @@ import { SignIn } from "@clerk/nextjs";
 
 export const metadata = { title: "Sign in — Dominat8.io" };
 
+const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+
 export default function SignInPage() {
+  const hasClerk = Boolean(publishableKey.trim());
+
   return (
     <main style={{
       minHeight: "100vh",
@@ -19,7 +23,16 @@ export default function SignInPage() {
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
           </a>
         </div>
-        <SignIn />
+        {hasClerk ? (
+          <SignIn />
+        ) : (
+          <div style={{ color: "rgba(255,255,255,0.7)", textAlign: "center", maxWidth: 360 }}>
+            <p style={{ marginBottom: 12 }}>Sign-in is not configured.</p>
+            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>
+              Set <code style={{ background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: 4 }}>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> in <code style={{ background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: 4 }}>.env.local</code> and restart the dev server.
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );
