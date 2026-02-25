@@ -23,8 +23,8 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Lint (if available)
-        run: npm run lint --if-present
+      - name: Lint
+        run: next lint .
 
       - name: Build
         run: npm run build
