@@ -1,10 +1,15 @@
 /**
  * Next.js 16 Proxy. Inlined so config is not re-exported (Turbopack). Replaces deprecated middleware.
- * Uses clerkMiddleware() from @clerk/nextjs/server. Handles: admin-key protection, custom domain rewrites, /io rewrite.
+ * Uses clerkMiddleware() from @clerk/nextjs/server when NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is set.
+ * When Clerk is not configured, uses a pass-through handler so the app doesn't crash (set the key in Vercel/env).
  */
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
+
+const HAS_CLERK = Boolean(
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim()
+);
 
 const MAIN_HOSTS = new Set(["dominat8.io", "www.dominat8.io", "localhost"]);
 
@@ -67,7 +72,7 @@ function shouldPassThrough(pathname: string): boolean {
   return DIRECT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-const clerkHandler = clerkMiddleware(async (_auth, request: NextRequest) => {
+async function handleRequest(request: NextRequest): Promise<NextResponse> {
   const host = request.headers.get("host") || "";
   const hostname = host.replace(/:\d+$/, "");
 
@@ -93,7 +98,11 @@ const clerkHandler = clerkMiddleware(async (_auth, request: NextRequest) => {
   const url = request.nextUrl.clone();
   url.pathname = "/io";
   return NextResponse.rewrite(url);
-});
+}
+
+const clerkHandler = HAS_CLERK
+  ? clerkMiddleware(async (_auth, request: NextRequest) => handleRequest(request))
+  : async (request: NextRequest, _event: NextFetchEvent) => handleRequest(request);
 
 export function proxy(request: NextRequest, event: NextFetchEvent) {
   const pathname = request.nextUrl.pathname || "/";
