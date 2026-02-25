@@ -449,7 +449,7 @@ export function Builder() {
   const startRef = useRef<number>(0);
   const progressRef = useRef<number>(0);
   const vantaRef = useRef<HTMLDivElement>(null);
-  const [vantaEffect, setVantaEffect] = useState<ReturnType<typeof FOG> | null>(null);
+  const vantaEffectRef = useRef<ReturnType<typeof FOG> | null>(null);
 
   // Abort any in-flight generation when the component unmounts
   useEffect(() => {
@@ -461,34 +461,32 @@ export function Builder() {
   // Gold fog background (Vanta) — only when fog mode is selected; destroy when switching to aquarium
   useEffect(() => {
     if (backgroundMode !== "fog") {
-      if (vantaEffect) {
-        vantaEffect.destroy();
-        setVantaEffect(null);
+      if (vantaEffectRef.current) {
+        vantaEffectRef.current.destroy();
+        vantaEffectRef.current = null;
       }
       return;
     }
-    if (!vantaEffect && vantaRef.current) {
-      setVantaEffect(
-        FOG({
-          el: vantaRef.current,
-          THREE: THREE,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200.0,
-          minWidth: 200.0,
-          highlightColor: 0xffe066,
-          midtoneColor: 0xe6a23c,
-          lowlightColor: 0x8b6914,
-          baseColor: 0x1a0f00,
-          blurFactor: 0.5,
-          speed: 1.5,
-          zoom: 0.5,
-        })
-      );
+    if (!vantaEffectRef.current && vantaRef.current) {
+      vantaEffectRef.current = FOG({
+        el: vantaRef.current,
+        THREE: THREE,
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.0,
+        minWidth: 200.0,
+        highlightColor: 0xffe066,
+        midtoneColor: 0xe6a23c,
+        lowlightColor: 0x8b6914,
+        baseColor: 0x1a0f00,
+        blurFactor: 0.5,
+        speed: 1.5,
+        zoom: 0.5,
+      });
     }
     return () => {
-      if (vantaEffect) vantaEffect.destroy();
+      if (vantaEffectRef.current) vantaEffectRef.current.destroy();
     };
   }, [backgroundMode]);
 
