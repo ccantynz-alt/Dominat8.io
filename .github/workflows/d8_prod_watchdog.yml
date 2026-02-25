@@ -3,7 +3,7 @@ name: D8 Prod Watchdog (heartbeat)
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "0 * * * *"
 
 permissions:
   issues: write

@@ -1,4 +1,5 @@
 name: d8-keep-green
+# Superseded by ci.yml — disabled to avoid duplicate runs.
 
 on:
   pull_request:
@@ -8,6 +9,7 @@ on:
 
 jobs:
   build:
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

@@ -1,8 +1,0 @@
-﻿Exception calling "Start" with "0" argument(s): "The system cannot find the file specified"
-At C:\Temp\Dominat8.io\AUTO_WATCH_BUILD.ps1:26 char:3
-+   [void]$p.Start()
-+   ~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (:) [], MethodInvocationException
-    + FullyQualifiedErrorId : Win32Exception
- 
-

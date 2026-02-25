@@ -29,14 +29,14 @@ jobs:
         run: |
           echo "Protected paths changed."
           echo "PR title: ${{ github.event.pull_request.title }}"
-          if echo "${{ github.event.pull_request.title }}" | grep -q "\[ALLOW-PROTECTED\]"; then
-            echo "Bypass accepted via PR title tag [ALLOW-PROTECTED]."
+          if echo "${{ github.event.pull_request.title }}" | grep -q "\[ALLOW_PROTECTED\]"; then
+            echo "Bypass accepted via PR title tag [ALLOW_PROTECTED]."
             exit 0
           fi
           echo ""
           echo "BLOCKED: This PR modifies protected paths."
-          echo "To proceed, add [ALLOW-PROTECTED] to the PR title (explicit override)."
-          echo "Example: [ALLOW-PROTECTED] fix: adjust middleware routing"
+          echo "To proceed, add [ALLOW_PROTECTED] to the PR title (explicit override)."
+          echo "Example: [ALLOW_PROTECTED] fix: adjust middleware routing"
           exit 1
 
       - name: Pass (no protected changes)

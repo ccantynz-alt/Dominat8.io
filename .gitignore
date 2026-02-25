@@ -1,4 +1,4 @@
-node# dependencies
+# dependencies
 node_modules
 
 # next.js
@@ -7,53 +7,120 @@ out
 
 # env files
 .env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_or_test_REPLACE_ME
-CLERK_SECRET_KEY=sk_live_or_test_REPLACE_ME
-KV_REST_API_URL=REPLACE_ME
-KV_REST_API_TOKEN=REPLACE_ME
-KV_REST_API_READ_ONLY_TOKEN=REPLACE_ME
-
+.env.local
 .env.*.local
 
 # logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
 
 # misc
 .DS_Store
 _modules
 
 # vercel
-
-.next
-
-deploy.zip
-
-
-deploy.zip
-
-
-build-output.txt
-
-# --- Dominat8 local artifacts (do not commit) ---
-package.json.bak_*
-
 .vercel
-.env*.local
-ai-saas-starter.zip
+deploy.zip
 *.zip
-
-.env.local
-
-
-downloads/
-
-# D8_PHASE1_LOCK_DEPLOY_STYLING_v1_20260128
-*.bak_*
-*.bak
-builder-workspace-v1/
 
 # TypeScript build info
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+
+# --- Dominat8 local artifacts (do not commit) ---
+package.json.bak_*
+*.bak_*
+*.bak
+*.off
+
+# Build output logs / artifacts
+build-output.txt
+build-output-*.txt
+build-output-local.txt
+vercel-build-output.txt
+vercel-deploy-log.txt
+LOCAL_BUILD_LOG*.txt
+BUILD_FAIL_*.log
+build_log_*.txt
+VERCEL_BUILD_LOG.txt
+VERCEL_DEPLOY_PING.txt
+PROOF_VERCEL_SHA.txt
+DEPLOY_MARKER.txt
+build.log
+build_after.log
+agent.patch
+
+# PowerShell automation / upgrade scripts
+*.ps1
+upgrades/
+tools/
+_scripts/
+
+# Backup / legacy / disabled directories
+builder-workspace-v1/
+._app_disabled/
+.d8_bak/
+.d8_legacy/
+_app_disabled/
+app_disabled/
+disabled_projects/
+disabled_runs/
+pages__DISABLED/
+BOOTSTRAP/
+rc/
+site/
+seo-v2/
+generated/
+auto-publish/
+
+# Agent/CI artifact logs
+.agent-smoke/
+.d8/
+._app_disabled/
+agent_logs/
+bundle_logs/
+patch_logs/
+_auto_logs/
+_render_nuke_out_*/
+LOCK_GREEN_*/
+
+# Miscellaneous root clutter
+02_tcp_443.txt
+NAV_HITS.txt
+PATCHPACK_DEMO.txt
+PATCH_UI_E2E.txt
+ProjectsRoute__DISABLED.txt
+DUMP__*.txt
+filter-branch_zip_purge_*.txt
+pages-projects-filelist.txt
+checkout_payload.json
+payload.json
+repair_owner.log
+.vercel-redeploy.txt
+.vercel_bypass_cookiejar.txt
+launch-run.ts.DUMP.txt
+ai-saas-starter.zip
+downloads/
+
+# Root-level stray files / PowerShell output artifacts
+-File
+-H
+-Uri
+Build
+main
+next
+s
+app_disabled
+auto-publish
+sitemap
+seo-v2
+my-saas-app@0.1.0
+_hdr_deploy.txt
+_hdr_domain.txt
+
+# Directories not part of the Next.js build
+backend/
+api/kv-test
+github/
