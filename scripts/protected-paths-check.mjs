@@ -6,10 +6,11 @@ import { execSync } from "node:child_process";
 
 const allow = process.env.ALLOW_PROTECTED_PATHS === "1";
 
-// Only truly sensitive paths: routing, engine, billing. Rest (e.g. src/app/**) is unrestricted.
+// Only truly sensitive paths: routing (proxy), engine, billing. Rest (e.g. src/app/**) is unrestricted.
+// Next.js 16 uses proxy.ts; middleware.ts is deprecated and excluded via .vercelignore.
 const protectedPrefixes = [
-  "src/middleware.ts",
-  "middleware.ts",
+  "src/proxy.ts",
+  "proxy.ts",
   "src/lib/engine/",
   "src/app/api/stripe/",
   "src/app/api/billing/",

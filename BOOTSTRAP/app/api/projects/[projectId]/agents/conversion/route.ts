@@ -199,7 +199,7 @@ function applyConversionImprovements(html: string, instructions: string) {
 }
 
 export async function POST(req: Request, ctx: RouteContext) {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }

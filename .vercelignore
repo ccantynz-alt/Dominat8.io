@@ -1,7 +1,8 @@
 deploy.zip
 
-# Next 16 uses proxy.ts only; exclude legacy middleware so "both detected" build error never happens
+# Next 16 uses src/proxy.ts only; exclude legacy middleware so "both detected" build error never happens
 middleware.ts
+src/middleware.ts
 
 # Ensure client wrapper files are NOT excluded:
 !src/app/_client/**

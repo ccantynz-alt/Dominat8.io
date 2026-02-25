@@ -6,7 +6,7 @@ These guardrails block PRs that touch only a small set of sensitive paths. Norma
 
 The workflow blocks PRs that modify:
 
-- `src/middleware.ts` and `middleware.ts` (routing / auth / domain)
+- `src/proxy.ts` and `proxy.ts` (Next.js 16 proxy: routing / auth / domain)
 - `src/lib/engine/**` (core engine)
 - Billing-related API routes: `src/app/api/stripe/**`, `src/app/api/billing/**`
 

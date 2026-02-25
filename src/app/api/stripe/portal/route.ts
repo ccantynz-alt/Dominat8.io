@@ -6,9 +6,11 @@ import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
-});
+function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("Stripe not configured");
+  return new Stripe(key, { apiVersion: "2023-10-16" });
+}
 
 export async function POST(_req: NextRequest) {
   await headers();
@@ -41,6 +43,7 @@ export async function POST(_req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://dominat8.io";
 
+  const stripe = getStripe();
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: `${appUrl}/`,

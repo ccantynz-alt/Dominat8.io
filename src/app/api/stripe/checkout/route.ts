@@ -6,9 +6,11 @@ import { kv } from "@vercel/kv";
 
 export const runtime = "nodejs";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
-});
+function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("Stripe not configured");
+  return new Stripe(key, { apiVersion: "2023-10-16" });
+}
 
 // Map plan names to Stripe Price IDs (set in env vars)
 const PRICE_IDS: Record<string, string | undefined> = {
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest) {
     // KV not available — continue without customer reuse
   }
 
+  const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     payment_method_types: ["card"],

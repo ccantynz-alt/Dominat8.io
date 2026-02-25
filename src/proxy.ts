@@ -1,14 +1,14 @@
 /**
  * Next.js 16 Proxy (replaces deprecated middleware.ts).
- * Uses clerkMiddleware() from @clerk/nextjs/server per official Clerk + App Router docs.
+ * Uses clerkMiddleware() from @clerk/nextjs/server when Clerk is configured.
+ * When Clerk is not set (e.g. CI), uses a pass-through so the app doesn't crash.
  * Handles: admin-key protection, custom domain rewrites, and /io rewrite.
- * Route protection (/, /io, /cockpit) is done in App Router via auth() in pages/layouts —
- * auth() in proxy context can trigger "headers is a symbol" in some runtimes.
  */
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { kv } from "@vercel/kv";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 
+const HAS_CLERK = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim());
 const MAIN_HOSTS = new Set(["dominat8.io", "www.dominat8.io", "localhost"]);
 
 // Admin-key protection (merged from root middleware)
@@ -71,7 +71,7 @@ function shouldPassThrough(pathname: string): boolean {
   return DIRECT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-const clerkHandler = clerkMiddleware(async (auth, request: NextRequest) => {
+async function handleRequest(request: NextRequest): Promise<NextResponse> {
   const host = request.headers.get("host") || "";
   const hostname = host.replace(/:\d+$/, "");
 
@@ -97,7 +97,11 @@ const clerkHandler = clerkMiddleware(async (auth, request: NextRequest) => {
   const url = request.nextUrl.clone();
   url.pathname = "/io";
   return NextResponse.rewrite(url);
-});
+}
+
+const clerkHandler = HAS_CLERK
+  ? clerkMiddleware(async (_auth, request: NextRequest) => handleRequest(request))
+  : async (request: NextRequest, _event: NextFetchEvent) => handleRequest(request);
 
 export function proxy(request: NextRequest, event: NextFetchEvent) {
   const pathname = request.nextUrl.pathname || "/";
@@ -120,8 +124,6 @@ export function proxy(request: NextRequest, event: NextFetchEvent) {
 
   return clerkHandler(request, event);
 }
-
-export default proxy;
 
 export const config = {
   matcher: [
