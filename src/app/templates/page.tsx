@@ -110,9 +110,11 @@ export default function TemplatesPage() {
         }
 
         // Update the UI in real-time
-        document.getElementById('interim-text')!.innerHTML = interimTranscript;
+        const interimEl = document.getElementById('interim-text');
+        if (interimEl) interimEl.innerHTML = interimTranscript;
         if (finalTranscript) {
-          document.getElementById('final-text')!.innerHTML = finalTranscript;
+          const finalEl = document.getElementById('final-text');
+          if (finalEl) finalEl.innerHTML = finalTranscript;
           
           const transcript = finalTranscript.toLowerCase().trim();
           console.log("Voice Command Received:", transcript);
