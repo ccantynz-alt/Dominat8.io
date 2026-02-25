@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { auth } from "@clerk/nextjs/server";
 import "@/io/styles/io.css";
 import "@/io/styles/io.globals.css";
@@ -10,6 +11,7 @@ export const revalidate = 0;
 const PATCH_ID = "IO_ROCKET_COCKPIT_v2_20260220";
 
 export default async function IOPage() {
+  await headers();
   let userId: string | null = null;
   try {
     const authResult = await auth();

@@ -1,5 +1,6 @@
 import { OpenAI } from "openai";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 import { kv } from "@vercel/kv";
 import { NextRequest } from "next/server";
 
@@ -133,6 +134,7 @@ const VIBE_HINTS: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   try {
+    await headers();
     let userId: string | null = null;
     try {
       const authResult = await auth();

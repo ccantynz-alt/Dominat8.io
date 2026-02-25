@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { auth } from "@clerk/nextjs/server";
 
 export const metadata: Metadata = {
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CockpitLayout({ children }: { children: React.ReactNode }) {
+  await headers();
   let userId: string | null = null;
   try {
     const authResult = await auth();

@@ -89,17 +89,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        {hasClerk ? (
-          <ClerkProvider publishableKey={publishableKey}>
-            <AuthHeader />
-            {children}
-          </ClerkProvider>
-        ) : (
-          <>
-            <SimpleHeader />
-            {children}
-          </>
-        )}
+        <ClerkProvider publishableKey={publishableKey || "pk_placeholder"}>
+          {hasClerk ? <AuthHeader /> : <SimpleHeader />}
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );
