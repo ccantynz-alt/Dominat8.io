@@ -57,7 +57,7 @@ function main() {
   }
 
   console.error("[protected-paths] BLOCKED: protected paths modified.");
-  console.error("To allow for a deliberate change, include [ALLOW_PROTECTED] in PR title.");
+  console.error("To allow for a deliberate change, include [ALLOW-PROTECTED] in PR title.");
   for (const f of hit) console.error("  - " + f);
   process.exit(2);
 }

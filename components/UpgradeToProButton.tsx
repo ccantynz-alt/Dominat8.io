@@ -21,6 +21,7 @@ export function UpgradeToProButton() {
       });
 
       if (res.status === 401) {
+        setLoading(false);
         router.push("/sign-up?redirect_url=/pricing");
         return;
       }
