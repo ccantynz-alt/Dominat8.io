@@ -16,8 +16,8 @@ export const metadata: Metadata = {
     default: "Dominat8.io — AI Website Builder",
     template: "%s — Dominat8.io",
   },
-  description: "Describe your website. Watch it appear in seconds. No templates, no drag and drop. Just results.",
-  keywords: ["AI website builder", "website generator", "AI web design", "automatic website creation", "no-code website builder"],
+  description: "The AI website builder that delivers award-worthy sites in under 30 seconds. No templates. No drag and drop. Describe your business — get a complete, deploy-ready site.",
+  keywords: ["AI website builder", "website generator", "AI web design", "automatic website creation", "no-code website builder", "build website in seconds"],
   authors: [{ name: "Dominat8", url: "https://dominat8.io" }],
   creator: "Dominat8.io",
   openGraph: {
@@ -25,8 +25,8 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://dominat8.io",
     siteName: "Dominat8.io",
-    title: "Dominat8.io — Build a world-class website in seconds",
-    description: "Describe your business. Our AI builds a complete, professional website in under 30 seconds. No templates. No drag and drop.",
+    title: "Dominat8.io — The AI that builds sites CMOs pay $50K for",
+    description: "Award-worthy websites in under 30 seconds. Describe your business — get a complete, deploy-ready site. No credit card. Export HTML. 1-click deploy.",
     images: [
       {
         url: "/api/opengraph-image",
@@ -38,8 +38,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dominat8.io — AI Website Builder",
-    description: "Build a world-class website in seconds. Just describe your business.",
+    title: "Dominat8.io — The AI that builds sites CMOs pay $50K for",
+    description: "Award-worthy websites in under 30 seconds. No templates. Export HTML. 1-click deploy.",
     images: ["/api/opengraph-image"],
     creator: "@dominat8io",
   },

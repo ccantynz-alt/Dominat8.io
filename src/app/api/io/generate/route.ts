@@ -99,6 +99,7 @@ TECHNICAL EXCELLENCE
 ═══════════════════════════════════════════
 QUALITY BAR: If a Fortune 500 CMO saw this, they would think it cost $50,000+ to build.
 Every pixel must be intentional. Every word must earn its place.
+This is the bar that makes Dominat8 the AI website builder that wins the market.
 ═══════════════════════════════════════════`;
 
 const INDUSTRY_HINTS: Record<string, string> = {

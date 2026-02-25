@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import { Builder } from "@/io/surfaces/Builder";
 
 export const metadata = {
-  title: "Dominat8 — Your website doesn't sit there. It works.",
-  description: "Generate. Launch. Rank. The AI system that keeps your site alive and growing.",
+  title: "Dominat8 — The AI that builds sites CMOs pay $50K for",
+  description: "Award-worthy websites in under 30 seconds. Describe your business — get a complete, deploy-ready site. No credit card. 1-click deploy.",
 };
 
 function BuilderFallback() {

@@ -33,8 +33,10 @@
 ## Quick wins for first impressions
 
 - [ ] Hero loads with gold fog visible immediately (no long blank).
-- [ ] GENERATE is the only strong CTA; secondary actions (voice, chips) support it.
-- [ ] One line of social proof or trust badge if you have it.
+- [x] GENERATE is the only strong CTA; secondary actions (voice, mic) support it.
+- [x] Trust strip in hero: "No credit card · Export HTML · 1-click deploy" (instant credibility).
+- [x] Headline + subline: "The AI that builds sites CMOs pay $50K for" + "Award-worthy website in under 30 seconds."
+- [x] Social proof: "X sites built today" + monitor in bottom bar (SocialProof component).
 - [ ] Mobile: same one promise + one CTA; dock/footer still usable.
 - [x] Meta title/description and OG image tuned for "AI website builder" and benefit (see `src/app/layout.tsx`).
 

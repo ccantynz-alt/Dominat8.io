@@ -5,6 +5,10 @@ import { useSearchParams } from "next/navigation";
 import FOG from "vanta/dist/vanta.fog.min";
 import * as THREE from "three";
 
+// ─── Hero background: change this to try alternatives (see docs/BACKGROUND-OPTIONS.md) ───
+type HeroBackground = "fog" | "net" | "gradient" | "minimal";
+const HERO_BACKGROUND: HeroBackground = "fog";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type BuildState = "idle" | "generating" | "done" | "error";
@@ -49,6 +53,7 @@ const EXAMPLE_PROMPTS = [
   "A personal injury law firm that wins cases and takes no prisoners",
   "A cutting-edge SaaS tool that automates customer support with AI",
   "A high-end wedding photography studio in Melbourne",
+  "A B2B cybersecurity startup — enterprise trust, zero fluff",
 ];
 
 const VIBES = [
@@ -780,8 +785,15 @@ export function Builder() {
 
         {/* Hero */}
         <div className="d8h-hero">
-          <h1 className="d8h-title">What would you like to build?</h1>
-          <p className="d8h-sub">Describe your business. Your site appears in seconds.</p>
+          <h1 className="d8h-title">The AI that builds sites CMOs pay $50K for.</h1>
+          <p className="d8h-sub">Describe your business. Get a complete, award-worthy website in under 30 seconds.</p>
+          <div className="d8h-trust-strip" aria-label="Trust and benefits">
+            <span className="d8h-trust-item">No credit card</span>
+            <span className="d8h-trust-dot" aria-hidden />
+            <span className="d8h-trust-item">Export HTML</span>
+            <span className="d8h-trust-dot" aria-hidden />
+            <span className="d8h-trust-item">1-click deploy</span>
+          </div>
 
           {/* Prompt row */}
           <div className="d8h-input-row">
@@ -2464,6 +2476,26 @@ function HomeStyles() {
         color: rgba(255,255,255,0.40);
         text-align: center;
         letter-spacing: -0.01em;
+      }
+      .d8h-trust-strip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: -12px;
+      }
+      .d8h-trust-item {
+        font-size: 13px;
+        font-weight: 500;
+        color: rgba(255,255,255,0.55);
+        letter-spacing: 0.02em;
+      }
+      .d8h-trust-dot {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.25);
       }
 
       /* ── Input row ── */
