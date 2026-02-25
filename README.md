@@ -18,7 +18,7 @@ cp .env.example .env.local   # then edit .env.local with your keys
 npm run dev
 ```
 
-Required for the Builder and “Generate Site”: **Clerk** (sign-in) and **OpenAI** (generation). See `.env.example` and [SETUP-NOVICE.md](./SETUP-NOVICE.md) for the rest.
+Required for the Builder and “Generate Site”: **Clerk** (sign-in) and **OpenAI** (generation). See [docs/CLERK-SETUP.md](./docs/CLERK-SETUP.md) for a minimal Clerk checklist, or `.env.example` and [SETUP-NOVICE.md](./SETUP-NOVICE.md) for the full setup.
 
 ---
 

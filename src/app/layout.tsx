@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AuthHeader } from "@/components/AuthHeader";
 
+const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://dominat8.io"),
   icons: {
@@ -54,23 +56,51 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+function SimpleHeader() {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <head>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-            rel="stylesheet"
-          />
-        </head>
-        <body>
-          <AuthHeader />
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
+    <header
+      style={{
+        display: "flex",
+        justifyContent: "flex-end",
+        alignItems: "center",
+        gap: "12px",
+        padding: "12px 16px",
+        minHeight: "48px",
+        background: "rgba(4, 6, 14, 0.85)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      <a href="/sign-in" style={{ padding: "8px 16px", color: "#9aa3c7", textDecoration: "none", fontSize: 14 }}>Sign in</a>
+      <a href="/sign-up" style={{ padding: "8px 16px", borderRadius: 9999, background: "rgba(61,240,255,0.15)", color: "#9ef2e6", textDecoration: "none", fontSize: 14 }}>Sign up</a>
+    </header>
+  );
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const hasClerk = Boolean(publishableKey.trim());
+  return (
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>
+        {hasClerk ? (
+          <ClerkProvider publishableKey={publishableKey}>
+            <AuthHeader />
+            {children}
+          </ClerkProvider>
+        ) : (
+          <>
+            <SimpleHeader />
+            {children}
+          </>
+        )}
+      </body>
+    </html>
   );
 }

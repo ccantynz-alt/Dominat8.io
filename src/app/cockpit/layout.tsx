@@ -9,7 +9,13 @@ export const metadata: Metadata = {
 };
 
 export default async function CockpitLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth();
+  let userId: string | null = null;
+  try {
+    const authResult = await auth();
+    userId = authResult?.userId ?? null;
+  } catch {
+    /* Clerk auth() can throw in Next 16 (headers/symbol). Treat as unauthenticated. */
+  }
   if (!userId) redirect("/sign-in");
 
   return <>{children}</>;

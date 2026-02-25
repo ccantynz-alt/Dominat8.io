@@ -2,8 +2,10 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 
 export function UpgradeToProButton() {
+  const router = useRouter();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -12,11 +14,16 @@ export function UpgradeToProButton() {
     setError(null);
 
     try {
-      const res = await fetch("/api/billing/checkout", {
+      const res = await fetch("/api/stripe/checkout", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({}),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "pro" }),
       });
+
+      if (res.status === 401) {
+        router.push("/sign-up?redirect_url=/pricing");
+        return;
+      }
 
       const data = await res.json();
 
@@ -25,8 +32,8 @@ export function UpgradeToProButton() {
       }
 
       window.location.href = data.url;
-    } catch (e: any) {
-      setError(e?.message ?? "Something went wrong");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
       setLoading(false);
     }
   }

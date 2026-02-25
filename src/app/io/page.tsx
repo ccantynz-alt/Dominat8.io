@@ -10,7 +10,13 @@ export const revalidate = 0;
 const PATCH_ID = "IO_ROCKET_COCKPIT_v2_20260220";
 
 export default async function IOPage() {
-  const { userId } = await auth();
+  let userId: string | null = null;
+  try {
+    const authResult = await auth();
+    userId = authResult?.userId ?? null;
+  } catch {
+    /* Clerk auth() can throw in Next 16 (headers/symbol). Treat as unauthenticated. */
+  }
   if (!userId) redirect("/sign-in");
 
   return <RocketCockpit patchId={PATCH_ID} />;

@@ -1,15 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import FOG from "vanta/dist/vanta.fog.min";
 import * as THREE from "three";
-
-const AquariumBackground = dynamic(
-  () => import("@/components/AquariumBackground"),
-  { ssr: false }
-);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -440,8 +434,6 @@ export function Builder() {
     strengths: string[];
   } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [backgroundMode, setBackgroundMode] = useState<"fog" | "aquarium">("fog");
-
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -458,15 +450,8 @@ export function Builder() {
     };
   }, []);
 
-  // Gold fog background (Vanta) — only when fog mode is selected; destroy when switching to aquarium
+  // Gold fog background (Vanta)
   useEffect(() => {
-    if (backgroundMode !== "fog") {
-      if (vantaEffect) {
-        vantaEffect.destroy();
-        setVantaEffect(null);
-      }
-      return;
-    }
     if (!vantaEffect && vantaRef.current) {
       setVantaEffect(
         FOG({
@@ -490,7 +475,7 @@ export function Builder() {
     return () => {
       if (vantaEffect) vantaEffect.destroy();
     };
-  }, [vantaEffect, backgroundMode]);
+  }, [vantaEffect]);
 
   useEffect(() => {
     const dashboard = document.querySelector('.main-interface-container');
@@ -773,14 +758,11 @@ export function Builder() {
       }}
     />
   );
-  const backgroundLayer =
-    backgroundMode === "aquarium" ? <AquariumBackground /> : fogLayer;
-
   // ── New home layout (idle, no html) ──────────────────────────────────────
   if (isIdle && !html) {
     return (
       <>
-        {backgroundLayer}
+        {fogLayer}
         <div className="d8h-root d8h-root--fog" style={{ position: "relative", zIndex: 1 }}>
         <HomeStyles />
 
@@ -792,21 +774,6 @@ export function Builder() {
             <span className="d8h-logo-text">Dominat8.io</span>
           </div>
           <nav className="d8h-nav">
-            <button
-              type="button"
-              onClick={() => setBackgroundMode((m) => (m === "fog" ? "aquarium" : "fog"))}
-              className="d8h-nav-link"
-              style={{
-                cursor: "pointer",
-                border: "none",
-                background: "none",
-                font: "inherit",
-                padding: 0,
-              }}
-              title={backgroundMode === "fog" ? "Switch to aquarium background" : "Switch to gold fog background"}
-            >
-              {backgroundMode === "fog" ? "🐠 Aquarium" : "✨ Fog"}
-            </button>
             <a href="/pricing" className="d8h-nav-link">Pricing</a>
           </nav>
         </header>
@@ -938,7 +905,7 @@ export function Builder() {
 
   return (
     <>
-      {backgroundLayer}
+      {fogLayer}
       <div className="d8b-root main-interface-container" style={{ position: "relative", zIndex: 1 }}>
       <BuilderStyles />
 

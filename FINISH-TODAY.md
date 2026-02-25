@@ -51,6 +51,31 @@ Once these are true, the site is in a shippable state. You can polish (copy, tru
 
 ---
 
+## 5. Stripe & builders progress
+
+**Done in code:**
+
+- **Pricing page** — Plans (Free, Starter, Pro, Agency) with **CheckoutButton** → `POST /api/stripe/checkout` with `{ plan }`. Sign-in required; 401 → redirect to sign-up.
+- **Checkout** — Creates Stripe Checkout (subscription), uses `STRIPE_*_PRICE_ID` env for starter/pro/agency. Returns `{ url }` for redirect.
+- **Billing portal** — Cockpit → Settings → “Billing portal” button: `POST /api/stripe/portal` → returns `{ url }` → redirect. (Requires existing Stripe customer from a past checkout.)
+- **Webhook** — `POST /api/stripe/webhook` handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`; writes plan and customer ID to KV.
+- **UpgradeToProButton** — Uses `/api/stripe/checkout` with `plan: "pro"`; 401 → sign-up redirect.
+
+**Env you need for Stripe to work:**
+
+| Variable | Purpose |
+|----------|---------|
+| `STRIPE_SECRET_KEY` | Checkout, portal, webhook |
+| `STRIPE_WEBHOOK_SECRET` | Verify webhook signatures |
+| `STRIPE_STARTER_PRICE_ID` | Price ID for Starter plan |
+| `STRIPE_PRO_PRICE_ID` | Price ID for Pro plan |
+| `STRIPE_AGENCY_PRICE_ID` | Price ID for Agency plan |
+| `NEXT_PUBLIC_APP_URL` | Success/cancel/return URLs (e.g. `https://dominat8.io`) |
+
+In Stripe Dashboard: create Products and recurring Prices, copy the Price IDs (e.g. `price_...`) into env. Point the webhook at `https://yourdomain.com/api/stripe/webhook` and subscribe to `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`.
+
+---
+
 ## 5. Quick reference
 
 | Goal | Command / doc |

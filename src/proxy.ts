@@ -121,6 +121,8 @@ export function proxy(request: NextRequest, event: NextFetchEvent) {
   return clerkHandler(request, event);
 }
 
+export default proxy;
+
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon\\.ico|icon|apple-icon|opengraph-image|twitter-image).*)",
