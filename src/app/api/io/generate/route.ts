@@ -251,8 +251,8 @@ export async function POST(req: NextRequest) {
       "Cache-Control": "no-store",
     },
   });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return new Response(`Generate failed: ${msg}`, { status: 500 });
-  }
+} catch (err: unknown) {
+  const msg = err instanceof Error ? err.message : String(err);
+  return new Response(`Generate failed: ${msg}`, { status: 500 });
+}
 }
