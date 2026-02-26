@@ -144,7 +144,7 @@ export default function PricingPage() {
         <div style={{ display: "flex", gap: 8 }}>
           <a href="/templates" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Templates</a>
           <a href="/gallery" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Gallery</a>
-          <a href="/" style={{ padding: "8px 18px", borderRadius: 999, background: "linear-gradient(135deg,#00C97A,#00B36B)", color: "#fff", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Start building →</a>
+          <a href="/build" style={{ padding: "8px 18px", borderRadius: 999, background: "linear-gradient(135deg,#00C97A,#00B36B)", color: "#fff", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Start building →</a>
         </div>
       </nav>
 

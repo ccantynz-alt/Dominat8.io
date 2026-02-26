@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -17,12 +18,19 @@ interface CreditInfo {
   };
 }
 
-// ── Dashboard page ─────────────────────────────────────────────────────────────
+// ── Inner component (needs useSearchParams) ─────────────────────────────────
 
-export default function DashboardPage() {
+function DashboardInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const paymentSuccess = searchParams?.get("payment") === "success";
+  const newPlan = searchParams?.get("plan") ?? "";
+
   const [creditInfo, setCreditInfo] = useState<CreditInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [showBanner, setShowBanner] = useState(paymentSuccess);
 
   useEffect(() => {
     fetch("/api/io/agents/credits")
@@ -31,6 +39,16 @@ export default function DashboardPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Remove query params from URL after showing banner
+  useEffect(() => {
+    if (paymentSuccess) {
+      const t = setTimeout(() => {
+        router.replace("/dashboard", { scroll: false });
+      }, 6000);
+      return () => clearTimeout(t);
+    }
+  }, [paymentSuccess, router]);
 
   async function openBillingPortal() {
     setPortalLoading(true);
@@ -53,6 +71,12 @@ export default function DashboardPage() {
     pro: "rgba(139,92,246,0.90)",
     agency: "rgba(251,191,36,0.90)",
     admin: "rgba(56,248,166,0.90)",
+  };
+
+  const PLAN_LABELS: Record<string, string> = {
+    starter: "Starter",
+    pro: "Pro",
+    agency: "Agency",
   };
 
   return (
@@ -78,7 +102,6 @@ export default function DashboardPage() {
         .db-card-sub { font-size: 12px; color: rgba(255,255,255,0.40); margin-top: 4px; }
         .db-progress-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 12px 0 6px; overflow: hidden; }
         .db-progress-fill { height: 100%; border-radius: 3px; transition: width 400ms ease; }
-        .db-section-title { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
         .db-actions { display: flex; flex-direction: column; gap: 10px; }
         .db-action-btn { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; color: rgba(255,255,255,0.80); font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; font-family: inherit; transition: all 130ms; text-align: left; }
         .db-action-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.16); color: #fff; }
@@ -88,6 +111,16 @@ export default function DashboardPage() {
         .db-action-desc { font-size: 12px; color: rgba(255,255,255,0.40); margin-top: 1px; }
         .db-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.20); border-top-color: rgba(255,255,255,0.70); border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Payment success banner ── */
+        .db-banner { border-radius: 14px; border: 1px solid rgba(56,248,166,0.30); background: rgba(56,248,166,0.08); padding: 18px 22px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px; animation: slideIn 300ms ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .db-banner-icon { font-size: 24px; flex-shrink: 0; }
+        .db-banner-body { flex: 1; }
+        .db-banner-title { font-size: 15px; font-weight: 700; color: rgba(56,248,166,0.95); margin-bottom: 3px; }
+        .db-banner-sub { font-size: 13px; color: rgba(255,255,255,0.55); }
+        .db-banner-close { background: none; border: none; color: rgba(255,255,255,0.30); font-size: 18px; cursor: pointer; padding: 4px; line-height: 1; transition: color 120ms; }
+        .db-banner-close:hover { color: rgba(255,255,255,0.60); }
       `}</style>
       <div className="db-root">
         <nav className="db-nav">
@@ -99,6 +132,25 @@ export default function DashboardPage() {
         </nav>
         <main className="db-main">
           <div className="db-page-title">Dashboard</div>
+
+          {/* Payment success banner */}
+          {showBanner && (
+            <div className="db-banner">
+              <span className="db-banner-icon">🎉</span>
+              <div className="db-banner-body">
+                <div className="db-banner-title">
+                  {newPlan ? `${PLAN_LABELS[newPlan] ?? newPlan} plan activated!` : "Payment successful!"}
+                </div>
+                <div className="db-banner-sub">
+                  Your credits and plan access have been updated.{" "}
+                  <Link href="/build" style={{ color: "rgba(61,240,255,0.80)", textDecoration: "underline" }}>
+                    Start building →
+                  </Link>
+                </div>
+              </div>
+              <button className="db-banner-close" onClick={() => setShowBanner(false)}>×</button>
+            </div>
+          )}
 
           {loading ? (
             <div style={{ color: "rgba(255,255,255,0.40)", fontSize: 14 }}>Loading your account…</div>
@@ -199,5 +251,19 @@ export default function DashboardPage() {
         </main>
       </div>
     </>
+  );
+}
+
+// ── Page (wraps in Suspense for useSearchParams) ────────────────────────────
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ background: "#060810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.40)", fontFamily: "system-ui" }}>
+        Loading…
+      </div>
+    }>
+      <DashboardInner />
+    </Suspense>
   );
 }
