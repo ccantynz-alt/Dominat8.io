@@ -1348,7 +1348,7 @@ export function Builder() {
           <button
             className="d8b-published-copy"
             type="button"
-            onClick={() => navigator.clipboard.writeText(publishedUrl ?? "")}
+            onClick={() => navigator.clipboard.writeText(publishedUrl)}
             title="Copy URL"
           >↗ Copy</button>
         </div>
