@@ -78,13 +78,13 @@ export default function LandingPage() {
         @keyframes drift2 { to { transform: translate(-60px, -80px); } }
 
         /* ── Fog ── */
-        .ln-fog-wisp { position: absolute; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; }
-        .ln-fog-1 { width: 140%; height: 340px; top: 6%; left: -20%; background: radial-gradient(ellipse at 50% 50%, rgba(210,220,240,0.22), rgba(200,215,240,0.10) 42%, transparent 70%); filter: blur(38px); animation: fogDrift1 58s ease-in-out infinite alternate; }
-        .ln-fog-2 { width: 120%; height: 280px; bottom: 12%; right: -22%; background: radial-gradient(ellipse at 50% 50%, rgba(220,225,245,0.18), rgba(215,225,245,0.07) 45%, transparent 68%); filter: blur(44px); animation: fogDrift2 74s ease-in-out infinite alternate; }
-        .ln-fog-3 { width: 105%; height: 220px; top: 50%; left: -5%; background: radial-gradient(ellipse at 50% 50%, rgba(230,235,255,0.14), transparent 63%); filter: blur(34px); animation: fogDrift3 46s ease-in-out infinite alternate; }
-        @keyframes fogDrift1 { 0% { transform: translate(0,0) scaleY(1); } 100% { transform: translate(9%,28px) scaleY(1.08); } }
-        @keyframes fogDrift2 { 0% { transform: translate(0,0) scaleX(1); } 100% { transform: translate(-7%,-22px) scaleX(1.06); } }
-        @keyframes fogDrift3 { 0% { transform: translate(0,0); } 100% { transform: translate(6%,-18px); } }
+        .ln-fog-wisp { position: absolute; border-radius: 50%; pointer-events: none; }
+        .ln-fog-1 { width: 160%; height: 160px; top: 10%; left: -30%; background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.30), rgba(220,230,255,0.12) 48%, transparent 72%); filter: blur(22px); animation: fogDrift1 60s ease-in-out infinite alternate; }
+        .ln-fog-2 { width: 140%; height: 130px; bottom: 16%; right: -30%; background: radial-gradient(ellipse at 50% 50%, rgba(235,240,255,0.25), rgba(220,228,255,0.08) 50%, transparent 70%); filter: blur(18px); animation: fogDrift2 76s ease-in-out infinite alternate; }
+        .ln-fog-3 { width: 120%; height: 110px; top: 52%; left: -10%; background: radial-gradient(ellipse at 50% 50%, rgba(245,248,255,0.20), transparent 66%); filter: blur(16px); animation: fogDrift3 50s ease-in-out infinite alternate; }
+        @keyframes fogDrift1 { 0% { transform: translate(0,0) scaleY(1); } 100% { transform: translate(9%,22px) scaleY(1.07); } }
+        @keyframes fogDrift2 { 0% { transform: translate(0,0) scaleX(1); } 100% { transform: translate(-7%,-18px) scaleX(1.05); } }
+        @keyframes fogDrift3 { 0% { transform: translate(0,0); } 100% { transform: translate(6%,-15px); } }
 
         .ln-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; border: 1px solid rgba(61,240,255,0.25); background: rgba(61,240,255,0.06); color: rgba(61,240,255,0.80); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 28px; }
         .ln-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(61,240,255,0.90); animation: pulse 2s ease-in-out infinite; }
