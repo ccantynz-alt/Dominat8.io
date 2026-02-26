@@ -1,7 +1,9 @@
 import { OpenAI } from "openai";
 import { NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { isAdminUser, checkAndConsumeCredits } from "@/lib/agent-credits";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const FIX_SYSTEM_PROMPT = `You are an elite front-end engineer and UX designer reviewing and repairing an AI-generated website.
@@ -27,6 +29,18 @@ OUTPUT RULES:
 • The result must be a complete, self-contained HTML file`;
 
 export async function POST(req: NextRequest) {
+  // ── Auth + credit check ────────────────────────────────────────────────────
+  const { userId } = auth();
+  if (userId && !isAdminUser(userId)) {
+    const check = await checkAndConsumeCredits(userId, "design-fixer");
+    if (!check.ok) {
+      return Response.json(
+        { error: check.message, code: check.code, balance: check.balance },
+        { status: check.code === "NO_ACCESS" ? 403 : 402 },
+      );
+    }
+  }
+
   const { html, prompt } = await req.json();
 
   if (!html?.trim()) {

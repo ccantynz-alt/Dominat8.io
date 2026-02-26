@@ -1,0 +1,35 @@
+name: Mirror claude/* → staging
+
+# Every push to a claude/* branch resets the staging branch to that commit.
+# Vercel (staging project) watches the staging branch and redeploys automatically.
+
+on:
+  push:
+    branches:
+      - 'claude/**'
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    name: Reset staging to latest claude/* push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Reset staging to this branch
+        run: |
+          git fetch origin
+          # Create or force-update staging to match the pushed claude/* commit
+          git checkout -B staging FETCH_HEAD
+          git push origin staging --force
+          echo "✓ staging reset to ${{ github.ref_name }} @ ${{ github.sha }}"

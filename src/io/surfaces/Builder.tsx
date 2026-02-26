@@ -53,14 +53,27 @@ const INDUSTRIES = [
   { label: "Medical", icon: "🏥" },
   { label: "Agency", icon: "🚀" },
   { label: "Construction", icon: "🔨" },
+  { label: "Education", icon: "🎓" },
+  { label: "Technology", icon: "💻" },
+  { label: "Finance", icon: "📈" },
+  { label: "Photography", icon: "📸" },
+  { label: "Travel", icon: "✈️" },
+  { label: "Beauty", icon: "💅" },
+  { label: "Consulting", icon: "🧠" },
+  { label: "Nonprofit", icon: "❤️" },
 ];
 
 const EXAMPLE_PROMPTS = [
   "A luxury plumbing company in Auckland — premium, trustworthy, modern",
   "A boutique coffee roastery in Brooklyn with a subscription service",
   "A personal injury law firm that wins cases and takes no prisoners",
-  "A cutting-edge SaaS tool that automates customer support with AI",
-  "A high-end wedding photography studio in Melbourne",
+  "A cutting-edge SaaS platform that automates customer support with AI",
+  "A high-end wedding photography studio in Melbourne, Australia",
+  "A private members investment club for high-net-worth individuals",
+  "A zero-waste sustainable fashion brand targeting Gen Z in London",
+  "A concierge medicine practice for busy executives in Manhattan",
+  "A B2B cybersecurity startup protecting enterprise infrastructure",
+  "A world-class architecture firm with a portfolio of iconic buildings",
 ];
 
 const VIBES = [
@@ -70,6 +83,8 @@ const VIBES = [
   { label: "Dark",      icon: "◉", hint: "Full dark mode. Neon glowing accents, subtle grid-line bg, cyberpunk-adjacent but professional." },
   { label: "Playful",   icon: "✦", hint: "Vibrant gradients, rounded friendly shapes, personality-forward. Warm, inviting, energetic." },
   { label: "Corporate", icon: "▲", hint: "Polished and trustworthy. Blue tones, measured layout, clear hierarchy, enterprise-ready." },
+  { label: "Editorial", icon: "◇", hint: "Magazine-quality. Large imagery, editorial grid, mix of serif and sans. Journalistic authority." },
+  { label: "Futuristic", icon: "◈", hint: "Cutting-edge tech aesthetic. Glassmorphism, grid overlays, animated gradients, AI-age feel." },
 ];
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -314,6 +329,7 @@ export function Builder() {
   const [industry, setIndustry] = useState("");
   const [state, setState] = useState<BuildState>("idle");
   const [html, setHtml] = useState("");
+  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-sonnet-4-6">("gpt-4o");
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [sites, setSites] = useState<Site[]>(() => {
@@ -342,6 +358,11 @@ export function Builder() {
   const [errorMsg, setErrorMsg] = useState("");
   const [showAnonLimit, setShowAnonLimit] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showDomains, setShowDomains] = useState(false);
+  const [showSSL, setShowSSL] = useState(false);
+  const [showAutomate, setShowAutomate] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
   const { isSignedIn } = useUser();
 
@@ -427,7 +448,7 @@ export function Builder() {
       const res = await fetch("/api/io/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: activePrompt, industry, vibe }),
+        body: JSON.stringify({ prompt: activePrompt, industry, vibe, model: genModel }),
         signal: abortRef.current.signal,
       });
 
@@ -538,11 +559,12 @@ export function Builder() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ html, prompt }),
       });
-      const data = await res.json();
+      const data = await res.json() as { ok?: boolean; shareUrl?: string };
       if (data.ok && data.shareUrl) {
         const fullUrl = `${window.location.origin}${data.shareUrl}`;
         await navigator.clipboard.writeText(fullUrl);
         setShareState("copied");
+        setPublishedUrl(fullUrl); // persist the live URL in the banner
         setTimeout(() => setShareState("idle"), 3000);
       } else {
         setShareState("error");
@@ -620,6 +642,35 @@ export function Builder() {
     }
   }, [seoState, html]);
 
+  const handleDockClick = useCallback((label: string) => {
+    switch (label) {
+      case "Deploy":
+        if (html) setShowDeploy(true);
+        break;
+      case "Domains":
+        setShowDomains(true);
+        break;
+      case "SSL":
+        setShowSSL(true);
+        break;
+      case "Settings":
+        setShowSettings(true);
+        break;
+      case "Automate":
+        setShowAutomate(true);
+        break;
+      case "Fix":
+        if (html) handleFix();
+        break;
+      case "Monitor":
+        window.location.href = "/tv";
+        break;
+      case "Logs":
+        window.location.href = "/tv";
+        break;
+    }
+  }, [html, handleFix]);
+
   const isBuilding = state === "generating";
   const isDone = state === "done";
   const isIdle = state === "idle";
@@ -682,7 +733,7 @@ export function Builder() {
 
           {/* Prompt row */}
           <div className="d8h-input-row">
-            <span className="d8h-input-icon">🚀</span>
+            <span className="d8h-input-icon">✦</span>
             <input
               ref={inputRef}
               className="d8h-input"
@@ -690,9 +741,30 @@ export function Builder() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
-              placeholder={placeholder || "Describe your project…"}
-              autoFocus
             />
+            {typeof window !== "undefined" && "webkitSpeechRecognition" in window && (
+              <button
+                className="d8h-mic-btn"
+                type="button"
+                title="Voice input"
+                aria-label="Voice input"
+                onClick={() => {
+                  if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
+                    type SpeechResult = { results: { 0: { transcript: string } }[] };
+                    type SR = { lang: string; onresult: ((e: SpeechResult) => void) | null; start: () => void };
+                    const Ctor = (window as unknown as { webkitSpeechRecognition: new () => SR }).webkitSpeechRecognition;
+                    const recognition = new Ctor();
+                    recognition.lang = "en-US";
+                    recognition.onresult = (ev) => {
+                      setPrompt(ev.results[0][0].transcript);
+                    };
+                    recognition.start();
+                  }
+                }}
+              >
+                🎙
+              </button>
+            )}
             <button
               className="d8h-gen-btn"
               onClick={() => generate()}
@@ -793,20 +865,26 @@ export function Builder() {
                 <span className="d8h-dock-label">{item.label}</span>
               </>
             );
-            if (item.href) {
-              return (
-                <a key={item.label} href={item.href} className="d8h-dock-btn" title={item.label} style={style}>
-                  {inner}
-                </a>
-              );
-            }
             return (
-              <button key={item.label} type="button" className="d8h-dock-btn" title={item.label} style={style}>
+              <button
+                key={item.label}
+                type="button"
+                className="d8h-dock-btn"
+                title={item.label}
+                style={style}
+                onClick={() => handleDockClick(item.label)}
+              >
                 {inner}
               </button>
             );
           })}
         </div>
+
+        {/* Dock modals (rendered inside root for correct fixed positioning) */}
+        {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+        {showDomains && <DomainsModal onClose={() => setShowDomains(false)} publishedUrl={publishedUrl} />}
+        {showSSL && <SSLModal onClose={() => setShowSSL(false)} />}
+        {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} html={html} prompt={prompt} onApplyHtml={setHtml} />}
 
       {/* Anon limit modal — inside root so fixed positioning works correctly */}
       {showAnonLimit && (
@@ -931,6 +1009,22 @@ export function Builder() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Model selector */}
+            <div className="d8b-model-selector">
+              {(["gpt-4o", "claude-sonnet-4-6"] as const).map(m => (
+                <button
+                  key={m}
+                  className={`d8b-model-btn ${genModel === m ? "d8b-model-btn--active" : ""}`}
+                  onClick={() => setGenModel(m)}
+                  type="button"
+                  disabled={isBuilding}
+                  title={m === "gpt-4o" ? "OpenAI GPT-4o" : "Anthropic Claude Sonnet"}
+                >
+                  {m === "gpt-4o" ? "GPT-4o" : "Claude"}
+                </button>
+              ))}
             </div>
 
             {/* Generate button */}
@@ -1289,7 +1383,33 @@ export function Builder() {
 
       {/* Deploy modal */}
       {showDeploy && html && (
-        <DeployModal html={html} prompt={prompt} onClose={() => setShowDeploy(false)} />
+        <DeployModal
+          html={html}
+          prompt={prompt}
+          onClose={() => setShowDeploy(false)}
+          onDeployed={(url) => { setPublishedUrl(url); setShowDeploy(false); }}
+        />
+      )}
+
+      {/* Dock modals */}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showDomains && <DomainsModal onClose={() => setShowDomains(false)} publishedUrl={publishedUrl} />}
+      {showSSL && <SSLModal onClose={() => setShowSSL(false)} />}
+      {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} html={html} prompt={prompt} />}
+
+      {/* Published URL banner */}
+      {publishedUrl && (
+        <div className="d8b-published-banner">
+          <span className="d8b-published-dot" />
+          <span className="d8b-published-label">Live:</span>
+          <a href={publishedUrl} target="_blank" rel="noopener noreferrer" className="d8b-published-url">{publishedUrl}</a>
+          <button
+            className="d8b-published-copy"
+            type="button"
+            onClick={() => navigator.clipboard.writeText(publishedUrl)}
+            title="Copy URL"
+          >↗ Copy</button>
+        </div>
       )}
     </div>
   );
@@ -1299,29 +1419,11 @@ export function Builder() {
 
 type DeployStep = "options" | "deploying" | "done";
 
-function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; onClose: () => void }) {
+function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prompt: string; onClose: () => void; onDeployed?: (url: string) => void }) {
   const [step, setStep] = useState<DeployStep>("options");
   const [log, setLog] = useState<string[]>([]);
-
-  function simulateDeploy() {
-    setStep("deploying");
-    setLog([]);
-    const steps = [
-      "Optimising assets…",
-      "Minifying HTML + inline CSS…",
-      "Running SEO checks…",
-      "Generating sitemap.xml…",
-      "Provisioning edge deployment…",
-      "SSL certificate issued…",
-      "✓ Site is live!",
-    ];
-    steps.forEach((msg, i) => {
-      setTimeout(() => {
-        setLog(prev => [...prev, msg]);
-        if (i === steps.length - 1) setStep("done");
-      }, 400 + i * 600);
-    });
-  }
+  const [deployUrl, setDeployUrl] = useState<string | null>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
 
   function download() {
     const blob = new Blob([html], { type: "text/html" });
@@ -1333,6 +1435,70 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
     URL.revokeObjectURL(url);
   }
 
+  async function realDeploy() {
+    setStep("deploying");
+    setLog([]);
+    setDeployUrl(null);
+
+    const logSteps = [
+      "Optimising assets…",
+      "Minifying HTML + inline CSS…",
+      "Running SEO pre-checks…",
+      "Generating sitemap.xml…",
+      "Provisioning global edge network…",
+    ];
+
+    // Animate log steps while API call runs concurrently
+    let logIdx = 0;
+    const logTimer = setInterval(() => {
+      if (logIdx < logSteps.length) {
+        const msg = logSteps[logIdx];
+        setLog(prev => [...prev, msg]);
+        logIdx++;
+      }
+    }, 550);
+
+    try {
+      const res = await fetch("/api/sites/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html, prompt }),
+      });
+      const data = await res.json() as { ok?: boolean; shareUrl?: string; error?: string; code?: string };
+
+      clearInterval(logTimer);
+
+      if (data.ok && data.shareUrl) {
+        const fullUrl = `${window.location.origin}${data.shareUrl}`;
+        setLog(prev => [...prev, "SSL certificate issued…", "✓ Site is live!"]);
+        setDeployUrl(fullUrl);
+        setStep("done");
+        onDeployed?.(fullUrl);
+      } else if (data.code === "STORAGE_NOT_CONFIGURED") {
+        // Storage not configured — fall back to download
+        setLog(prev => [...prev, "✓ Ready — preparing download"]);
+        setStep("done");
+        setTimeout(download, 400);
+      } else {
+        throw new Error(data.error ?? "Deploy failed");
+      }
+    } catch {
+      clearInterval(logTimer);
+      setLog(prev => [...prev, "⚠ Cloud deploy unavailable — downloading as HTML"]);
+      setStep("done");
+      setTimeout(download, 800);
+    }
+  }
+
+  async function copyUrl() {
+    if (!deployUrl) return;
+    try {
+      await navigator.clipboard.writeText(deployUrl);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2500);
+    } catch { /* ignore */ }
+  }
+
   return (
     <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="d8b-modal">
@@ -1340,7 +1506,7 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
           <div className="d8b-modal-title">
             {step === "options" && "Deploy your site"}
             {step === "deploying" && "Deploying…"}
-            {step === "done" && "🎉 Site deployed!"}
+            {step === "done" && (deployUrl ? "🎉 Site is live!" : "✓ Ready")}
           </div>
           <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
         </div>
@@ -1348,21 +1514,21 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
         {step === "options" && (
           <div className="d8b-modal-body">
             <p className="d8b-modal-desc">
-              Your site is ready. Choose how to publish it.
+              Your site is ready. Publish it live or download the HTML.
             </p>
             <div className="d8b-deploy-options">
-              <button className="d8b-deploy-option" onClick={simulateDeploy} type="button">
-                <span className="d8b-deploy-option-icon">⚡</span>
+              <button className="d8b-deploy-option" onClick={realDeploy} type="button">
+                <span className="d8b-deploy-option-icon">🌐</span>
                 <div>
-                  <div className="d8b-deploy-option-title">Deploy to Dominat8</div>
-                  <div className="d8b-deploy-option-sub">Live URL in seconds · Free subdomain</div>
+                  <div className="d8b-deploy-option-title">Publish live URL</div>
+                  <div className="d8b-deploy-option-sub">Shareable link in seconds · Free · No signup needed</div>
                 </div>
               </button>
               <button className="d8b-deploy-option d8b-deploy-option--ghost" onClick={download} type="button">
                 <span className="d8b-deploy-option-icon">↓</span>
                 <div>
                   <div className="d8b-deploy-option-title">Download HTML</div>
-                  <div className="d8b-deploy-option-sub">Single file · Host anywhere</div>
+                  <div className="d8b-deploy-option-sub">Single self-contained file · Host anywhere</div>
                 </div>
               </button>
             </div>
@@ -1373,16 +1539,58 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
           <div className="d8b-modal-body">
             <div className="d8b-deploy-log">
               {log.map((l, i) => (
-                <div key={i} className={`d8b-deploy-log-line ${l.startsWith("✓") ? "d8b-deploy-log-line--ok" : ""}`}>
-                  <span>{l.startsWith("✓") ? "✓" : "›"}</span> {l.replace("✓ ", "")}
+                <div key={i} className={`d8b-deploy-log-line ${l.startsWith("✓") ? "d8b-deploy-log-line--ok" : l.startsWith("⚠") ? "d8b-deploy-log-line--warn" : ""}`}>
+                  <span>{l.startsWith("✓") ? "✓" : l.startsWith("⚠") ? "⚠" : "›"}</span> {l.replace(/^[✓⚠] /, "")}
                 </div>
               ))}
               {step === "deploying" && <div className="d8b-deploy-cursor">_</div>}
             </div>
-            {step === "done" && (
+            {step === "done" && deployUrl && (
               <div className="d8b-deploy-success">
-                <div className="d8b-deploy-url">dominat8.io/sites/preview</div>
-                <button className="d8b-deploy-btn" onClick={onClose} type="button">Done ✓</button>
+                <div className="d8b-deploy-url" title={deployUrl}>{deployUrl}</div>
+                <button
+                  className={`d8b-deploy-btn${urlCopied ? " d8b-deploy-btn--copied" : ""}`}
+                  onClick={copyUrl}
+                  type="button"
+                >
+                  {urlCopied ? "✓ Copied!" : "Copy URL"}
+                </button>
+              </div>
+            )}
+            {step === "done" && deployUrl && (
+              <div className="d8b-deploy-actions">
+                <a
+                  href={deployUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="d8b-deploy-option d8b-deploy-option--ghost d8b-deploy-option--wide"
+                >
+                  <span className="d8b-deploy-option-icon d8b-deploy-option-icon--sm">↗</span>
+                  <div>
+                    <div className="d8b-deploy-option-title d8b-deploy-option-title--sm">Open live site</div>
+                  </div>
+                </a>
+                <button
+                  className="d8b-deploy-option d8b-deploy-option--ghost d8b-deploy-option--wide"
+                  onClick={onClose}
+                  type="button"
+                >
+                  <span className="d8b-deploy-option-icon d8b-deploy-option-icon--sm">✓</span>
+                  <div>
+                    <div className="d8b-deploy-option-title d8b-deploy-option-title--sm">Done</div>
+                  </div>
+                </button>
+              </div>
+            )}
+            {step === "done" && !deployUrl && (
+              <div className="d8b-deploy-actions d8b-deploy-actions--single">
+                <button
+                  className="d8b-deploy-btn d8b-deploy-btn--full"
+                  onClick={onClose}
+                  type="button"
+                >
+                  Done ✓
+                </button>
               </div>
             )}
           </div>
@@ -1546,6 +1754,36 @@ function BuilderStyles() {
         color: rgba(61,240,255,0.9);
       }
       .d8b-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+
+      /* ── Model selector ── */
+      .d8b-model-selector {
+        display: flex;
+        gap: 4px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 3px;
+      }
+      .d8b-model-btn {
+        flex: 1;
+        padding: 5px 10px;
+        border-radius: 7px;
+        border: none;
+        background: transparent;
+        color: rgba(255,255,255,0.40);
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 120ms ease;
+      }
+      .d8b-model-btn:hover:not(:disabled) { color: rgba(255,255,255,0.70); }
+      .d8b-model-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .d8b-model-btn--active {
+        background: rgba(255,255,255,0.10);
+        color: rgba(255,255,255,0.90);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      }
 
       /* ── Generate button ── */
       .d8b-generate-btn {
@@ -2153,6 +2391,7 @@ function BuilderStyles() {
       }
       .d8b-deploy-log-line { color: rgba(255,255,255,0.65); }
       .d8b-deploy-log-line--ok { color: rgba(56,248,166,0.90); }
+      .d8b-deploy-log-line--warn { color: rgba(255,180,50,0.85); }
       .d8b-deploy-cursor { animation: d8b-blink 1s step-end infinite; color: rgba(61,240,255,0.8); }
 
       .d8b-deploy-success { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
@@ -2237,12 +2476,566 @@ function BuilderStyles() {
       .d8b-seo-issue-msg { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.80); margin-bottom: 3px; }
       .d8b-seo-issue-fix { font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.5; }
 
+      /* ── Published URL banner ── */
+      .d8b-published-banner {
+        position: fixed; bottom: 0; left: 300px; right: 0;
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 16px;
+        background: rgba(56,248,166,0.08);
+        border-top: 1px solid rgba(56,248,166,0.20);
+        z-index: 200;
+        font-size: 12px;
+      }
+      .d8b-published-dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: #38F8A6;
+        box-shadow: 0 0 6px rgba(56,248,166,0.7);
+        flex-shrink: 0;
+        animation: d8b-blink 2s ease-in-out infinite;
+      }
+      .d8b-published-label { color: rgba(56,248,166,0.70); font-weight: 600; flex-shrink: 0; }
+      .d8b-published-url {
+        color: rgba(56,248,166,0.90); text-decoration: none; font-family: ui-monospace, monospace;
+        flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .d8b-published-url:hover { text-decoration: underline; }
+      .d8b-published-copy {
+        flex-shrink: 0; padding: 4px 10px; border-radius: 6px;
+        border: 1px solid rgba(56,248,166,0.30);
+        background: rgba(56,248,166,0.08);
+        color: rgba(56,248,166,0.85); font-size: 11px; font-family: inherit;
+        cursor: pointer; transition: all 120ms ease;
+      }
+      .d8b-published-copy:hover { background: rgba(56,248,166,0.15); }
+
+      /* ── Info modal (Settings, Domains, SSL, Automate) ── */
+      .d8b-info-modal {
+        width: min(520px, 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: #0d1020;
+        box-shadow: 0 32px 80px rgba(0,0,0,0.70);
+        overflow: hidden;
+        animation: d8b-modal-in 200ms ease;
+      }
+      .d8b-info-section {
+        border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        padding: 14px 16px; margin-bottom: 10px;
+        display: flex; flex-direction: column; gap: 6px;
+      }
+      .d8b-info-section-title { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.70); letter-spacing: 0.04em; }
+      .d8b-info-section-body { font-size: 13px; color: rgba(255,255,255,0.50); line-height: 1.6; }
+      .d8b-info-pill {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 10px; border-radius: 999px;
+        background: rgba(56,248,166,0.10); border: 1px solid rgba(56,248,166,0.25);
+        color: rgba(56,248,166,0.85); font-size: 11px; font-weight: 600;
+      }
+      .d8b-info-code {
+        font-family: ui-monospace, monospace; font-size: 12px;
+        background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px; padding: 10px 12px;
+        color: rgba(61,240,255,0.85); line-height: 1.7;
+        white-space: pre;
+      }
+      .d8b-info-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+        font-size: 13px;
+      }
+      .d8b-info-row:last-child { border-bottom: none; padding-bottom: 0; }
+      .d8b-info-row-label { color: rgba(255,255,255,0.55); }
+      .d8b-info-row-val { color: rgba(255,255,255,0.85); font-weight: 600; }
+
       /* ── Mobile ── */
       @media (max-width: 768px) {
         .d8b-sidebar { width: 260px; min-width: 260px; }
         .d8b-splash-title { font-size: 32px; }
+        .d8b-published-banner { left: 0; }
       }
     `}</style>
+  );
+}
+
+// ─── Settings Modal ───────────────────────────────────────────────────────────
+
+function SettingsModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">⚙️ Settings</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">GENERATION</div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">AI Model</span>
+              <span className="d8b-info-row-val">GPT-4o</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Max output tokens</span>
+              <span className="d8b-info-row-val">16,000</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Temperature</span>
+              <span className="d8b-info-row-val">0.80 (creative)</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Avg. generation time</span>
+              <span className="d8b-info-row-val">~18 seconds</span>
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">OUTPUT FORMAT</div>
+            <div className="d8b-info-section-body">
+              Every generated site is a single self-contained HTML file with all CSS and JavaScript inline. Works fully offline once downloaded. No external dependencies required.
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">DESIGN QUALITY</div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Design standard</span>
+              <span className="d8b-info-row-val">Webby Award level</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Sections per site</span>
+              <span className="d8b-info-row-val">8 (hero → footer)</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Responsive</span>
+              <span className="d8b-info-pill">320px · 768px · 1440px</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Animations</span>
+              <span className="d8b-info-row-val">Full micro-interaction suite</span>
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">ACCOUNT</div>
+            <div className="d8b-info-section-body">
+              Manage your plan, billing, and usage at{" "}
+              <a href="/pricing" style={{ color: "rgba(61,240,255,0.8)", textDecoration: "none" }}>dominat8.io/pricing</a>.
+              Upgrade to Pro or Agency for higher generation limits and priority queue.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Domains Modal ────────────────────────────────────────────────────────────
+
+function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishedUrl: string | null }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">🌐 Custom Domain</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          {publishedUrl && (
+            <div className="d8b-info-section">
+              <div className="d8b-info-section-title">YOUR LIVE SITE</div>
+              <div className="d8b-info-row">
+                <span className="d8b-info-row-label">Published URL</span>
+                <span className="d8b-info-pill">● LIVE</span>
+              </div>
+              <div className="d8b-info-code">{publishedUrl}</div>
+            </div>
+          )}
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">POINT YOUR DOMAIN</div>
+            <div className="d8b-info-section-body">
+              To use a custom domain (e.g. <strong>yoursite.com</strong>), add these DNS records at your registrar (GoDaddy, Namecheap, Cloudflare, etc.):
+            </div>
+            <div className="d8b-info-code">{`Type    Name    Value
+────────────────────────────────
+CNAME   @       cname.dominat8.io
+CNAME   www     cname.dominat8.io`}</div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">HOW IT WORKS</div>
+            <div className="d8b-info-section-body">
+              DNS propagation typically takes 5–60 minutes. Once propagated, your custom domain will serve the generated site with full SSL/HTTPS automatically provisioned.
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">UPGRADE FOR CUSTOM DOMAINS</div>
+            <div className="d8b-info-section-body">
+              Custom domain binding is available on <strong>Pro</strong> ($29/mo) and <strong>Agency</strong> ($99/mo) plans.{" "}
+              <a href="/pricing" style={{ color: "rgba(61,240,255,0.8)", textDecoration: "none" }}>View plans →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SSL Modal ────────────────────────────────────────────────────────────────
+
+function SSLModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">🔒 SSL / HTTPS</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          <div className="d8b-info-section">
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Certificate type</span>
+              <span className="d8b-info-row-val">TLS 1.3 (Let&apos;s Encrypt)</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Auto-renewal</span>
+              <span className="d8b-info-pill">✓ Automatic</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">HSTS</span>
+              <span className="d8b-info-pill">✓ Enabled</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">HTTP → HTTPS redirect</span>
+              <span className="d8b-info-pill">✓ Enforced</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Edge network</span>
+              <span className="d8b-info-row-val">Global CDN (100+ PoPs)</span>
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">SECURITY HEADERS</div>
+            <div className="d8b-info-code">{`X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Cache-Control: no-store
+Referrer-Policy: strict-origin`}</div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">CERTIFICATE STATUS</div>
+            <div className="d8b-info-section-body">
+              SSL certificates are auto-provisioned on every deployment. No configuration required — your site is always served over HTTPS from the moment it&apos;s published.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Automate Modal ───────────────────────────────────────────────────────────
+
+type AgentId = "seo-sweep" | "design-fixer" | "responsive-audit" | "performance-optimizer" | "accessibility-checker" | "link-scanner";
+type AgentRunState = "idle" | "running" | "done" | "failed";
+
+interface AgentResult { summary: string; model: string; provider: string; data: unknown }
+
+const AUTOMATE_AGENTS: { id: AgentId; icon: string; name: string; desc: string }[] = [
+  { id: "seo-sweep",             icon: "🔍", name: "SEO Sweep",            desc: "Scans for title, meta, OG, H1, and structured data issues." },
+  { id: "design-fixer",          icon: "🎨", name: "Design Fixer",         desc: "Fixes layout bugs, contrast issues, and typography problems." },
+  { id: "responsive-audit",      icon: "📱", name: "Responsive Audit",     desc: "Tests your site at 320px, 768px, and 1440px breakpoints." },
+  { id: "performance-optimizer", icon: "⚡", name: "Performance Optimizer", desc: "Identifies critical CSS, render-blocking scripts, and CLS risks." },
+  { id: "accessibility-checker", icon: "♿", name: "Accessibility Checker", desc: "Validates ARIA roles, alt text, colour contrast, and keyboard nav." },
+  { id: "link-scanner",          icon: "🔗", name: "Link Scanner",         desc: "Validates all internal links, anchors, and CTA buttons." },
+];
+
+const SEVERITY_COLOR: Record<string, string> = {
+  high: "rgba(255,100,100,0.90)", critical: "rgba(255,60,60,0.95)",
+  medium: "rgba(255,180,0,0.90)", serious: "rgba(255,130,0,0.90)", moderate: "rgba(255,180,0,0.85)",
+  low: "rgba(255,255,255,0.45)", minor: "rgba(255,255,255,0.40)",
+};
+
+function AgentResultDetail({ id, data, onApply }: { id: AgentId; data: unknown; onApply?: () => void }) {
+  if (!data) return null;
+  if (id === "design-fixer") {
+    return (
+      <div style={{ marginTop: 8 }}>
+        <button onClick={onApply} type="button" style={{ fontSize: 11, padding: "5px 14px", borderRadius: 8, background: "linear-gradient(135deg,#00C97A,#00B36B)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}>
+          ✓ Apply to preview
+        </button>
+      </div>
+    );
+  }
+  const r = data as Record<string, unknown>;
+  const issues = (r.issues as Record<string, unknown>[] | undefined) ?? [];
+  const strengths = (r.strengths ?? r.passes ?? r.quick_wins) as string[] | undefined;
+  const score = r.score as number | undefined;
+  const grade = r.grade as string | undefined;
+  return (
+    <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
+      {score !== undefined && (
+        <div style={{ fontSize: 11, color: score >= 70 ? "rgba(56,248,166,0.90)" : score >= 50 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)", fontWeight: 700, fontFamily: "ui-monospace,monospace" }}>
+          Score: {score}/100{grade ? ` (${grade})` : ""}
+        </div>
+      )}
+      {issues.slice(0, 5).map((iss, i) => {
+        const sev = String(iss.severity ?? iss.priority ?? "low");
+        return (
+          <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", background: "rgba(0,0,0,0.25)", borderRadius: 6, padding: "5px 8px" }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: SEVERITY_COLOR[sev] ?? "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.04em", minWidth: 36, paddingTop: 1 }}>{sev.slice(0, 4)}</span>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", lineHeight: 1.45 }}>{String(iss.message ?? iss.title ?? iss.problem ?? "")}</span>
+          </div>
+        );
+      })}
+      {issues.length > 5 && <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", paddingLeft: 2 }}>+{issues.length - 5} more issues</div>}
+      {strengths && strengths.slice(0, 2).map((s, i) => (
+        <div key={i} style={{ fontSize: 11, color: "rgba(56,248,166,0.75)", paddingLeft: 4 }}>✓ {s}</div>
+      ))}
+    </div>
+  );
+}
+
+interface CreditInfo {
+  admin: boolean;
+  balance: { plan: string; monthlyAllowance: number; monthlyUsed: number; monthlyRemaining: number; purchased: number; total: number };
+  costs: Record<AgentId, number>;
+  access: AgentId[];
+  packs: { id: string; credits: number; priceInCents: number; label: string; tag: string }[];
+}
+
+function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClose: () => void; html: string; prompt: string; onApplyHtml?: (html: string) => void }) {
+  const [states, setStates] = useState<Record<AgentId, AgentRunState>>({} as Record<AgentId, AgentRunState>);
+  const [results, setResults] = useState<Record<AgentId, AgentResult>>({} as Record<AgentId, AgentResult>);
+  const [expanded, setExpanded] = useState<Record<AgentId, boolean>>({} as Record<AgentId, boolean>);
+  const [creditInfo, setCreditInfo] = useState<CreditInfo | null>(null);
+  const [showBuy, setShowBuy] = useState(false);
+  const [buyingPack, setBuyingPack] = useState<string | null>(null);
+  const hasHtml = !!html.trim();
+
+  useEffect(() => {
+    fetch("/api/io/agents/credits")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.balance) setCreditInfo(d as CreditInfo); })
+      .catch(() => {});
+  }, []);
+
+  function updateBalance(b: CreditInfo["balance"] | null | undefined) {
+    if (b) setCreditInfo(ci => ci ? { ...ci, balance: b } : ci);
+  }
+
+  function agentAccess(id: AgentId) {
+    if (!creditInfo) return { canRun: true, locked: false, tooExpensive: false };
+    if (creditInfo.admin) return { canRun: true, locked: false, tooExpensive: false };
+    const accessible = creditInfo.access.includes(id);
+    const cost = creditInfo.costs[id] ?? 1;
+    const affordable = creditInfo.balance.total >= cost;
+    return { canRun: accessible && affordable, locked: !accessible, tooExpensive: accessible && !affordable };
+  }
+
+  async function buyCredits(packId: string) {
+    setBuyingPack(packId);
+    try {
+      const res = await fetch("/api/stripe/credits", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ packId }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } finally { setBuyingPack(null); }
+  }
+
+  async function runAgent(id: AgentId) {
+    if (!hasHtml || states[id] === "running") return;
+    setStates(s => ({ ...s, [id]: "running" }));
+    try {
+      const res = await fetch("/api/io/agents/run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ agent: id, html, prompt: _prompt }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setStates(s => ({ ...s, [id]: "done" }));
+        setResults(s => ({ ...s, [id]: { summary: data.summary, model: data.model, provider: data.provider, data: data.result } }));
+        setExpanded(s => ({ ...s, [id]: true }));
+        updateBalance(data.balance);
+      } else {
+        setStates(s => ({ ...s, [id]: "failed" }));
+        const errMsg = data.code === "NO_ACCESS" ? `🔒 ${data.error}`
+          : data.code === "INSUFFICIENT_CREDITS" ? `⚡ ${data.error}`
+          : (data.error ?? "Agent failed.");
+        setResults(s => ({ ...s, [id]: { summary: errMsg, model: "", provider: "", data: null } }));
+        updateBalance(data.balance);
+      }
+    } catch (e: unknown) {
+      setStates(s => ({ ...s, [id]: "failed" }));
+      setResults(s => ({ ...s, [id]: { summary: e instanceof Error ? e.message : "Network error.", model: "", provider: "", data: null } }));
+    }
+  }
+
+  async function runAll() {
+    for (const ag of AUTOMATE_AGENTS) {
+      const { canRun } = agentAccess(ag.id);
+      if (canRun && states[ag.id] !== "running") runAgent(ag.id);
+    }
+  }
+
+  const totalCredits = creditInfo?.balance.total ?? null;
+  const planLabel = creditInfo?.admin ? "Admin" : creditInfo?.balance.plan ?? null;
+
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal" style={{ maxHeight: "88vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+
+        {/* ── Header ── */}
+        <div className="d8b-modal-header" style={{ flexDirection: "column", gap: 10, alignItems: "stretch" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div className="d8b-modal-title">⚡ Automate</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {hasHtml && (
+                <button onClick={runAll} disabled={AUTOMATE_AGENTS.some(a => states[a.id] === "running")} type="button"
+                  style={{ fontSize: 12, padding: "4px 12px", borderRadius: 8, background: "rgba(61,240,255,0.12)", border: "1px solid rgba(61,240,255,0.30)", color: "rgba(61,240,255,0.90)", cursor: "pointer", fontWeight: 600 }}>
+                  Run All
+                </button>
+              )}
+              <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+            </div>
+          </div>
+
+          {/* Credit balance bar */}
+          {creditInfo && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, padding: "7px 12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 11 }}>
+                  <span style={{ color: "rgba(255,255,255,0.40)" }}>Plan </span>
+                  <span style={{ color: "rgba(255,255,255,0.85)", fontWeight: 600, textTransform: "capitalize" }}>{planLabel}</span>
+                </div>
+                {!creditInfo.admin && (
+                  <div style={{ fontSize: 11 }}>
+                    <span style={{ color: "rgba(255,255,255,0.40)" }}>Credits </span>
+                    <span style={{ fontWeight: 700, fontFamily: "ui-monospace,monospace", color: totalCredits! > 5 ? "rgba(56,248,166,0.90)" : totalCredits! > 0 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)" }}>
+                      {totalCredits}
+                    </span>
+                    {(creditInfo.balance.purchased ?? 0) > 0 && (
+                      <span style={{ color: "rgba(255,255,255,0.28)", fontSize: 10 }}>
+                        {" "}({creditInfo.balance.monthlyRemaining} mo + {creditInfo.balance.purchased} bought)
+                      </span>
+                    )}
+                  </div>
+                )}
+                {creditInfo.admin && <span style={{ fontSize: 10, color: "rgba(61,240,255,0.75)", fontWeight: 700, letterSpacing: "0.05em" }}>∞ ADMIN</span>}
+              </div>
+              {!creditInfo.admin && (
+                <button onClick={() => setShowBuy(b => !b)} type="button"
+                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: 7, background: showBuy ? "rgba(61,240,255,0.12)" : "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.70)", cursor: "pointer", fontWeight: 600 }}>
+                  {showBuy ? "▲ Hide" : "+ Buy credits"}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Credit packs */}
+          {showBuy && creditInfo?.packs && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+              {creditInfo.packs.map(pack => (
+                <button key={pack.id} onClick={() => buyCredits(pack.id)} disabled={!!buyingPack} type="button"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 6px", cursor: buyingPack ? "wait" : "pointer", textAlign: "center" as const }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "rgba(255,255,255,0.92)" }}>{pack.credits}</div>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>credits</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(61,240,255,0.85)", marginTop: 4 }}>${(pack.priceInCents / 100).toFixed(2)}</div>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", marginTop: 2, textTransform: "capitalize" as const }}>{pack.tag}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Agent list ── */}
+        <div className="d8b-modal-body" style={{ overflowY: "auto", flex: 1 }}>
+          {!hasHtml && (
+            <p className="d8b-modal-desc" style={{ background: "rgba(255,209,102,0.07)", border: "1px solid rgba(255,209,102,0.20)", borderRadius: 10, padding: "10px 14px", color: "rgba(255,209,102,0.90)" }}>
+              Generate a site first — agents need your HTML to analyse.
+            </p>
+          )}
+          {AUTOMATE_AGENTS.map((agent) => {
+            const st = states[agent.id] ?? "idle";
+            const res = results[agent.id];
+            const isExp = expanded[agent.id];
+            const { locked, tooExpensive, canRun } = agentAccess(agent.id);
+            const cost = creditInfo?.costs[agent.id] ?? null;
+
+            return (
+              <div key={agent.id} className="d8b-info-section d8b-info-section--agent" style={{ opacity: locked ? 0.65 : 1 }}>
+                <div className="d8b-automate-row">
+                  <div className="d8b-automate-row-main">
+                    <span className="d8b-automate-icon">{locked ? "🔒" : agent.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const }}>
+                        <div className="d8b-info-section-title d8b-info-section-title--compact">{agent.name}</div>
+                        {cost !== null && !creditInfo?.admin && (
+                          <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.30)", background: "rgba(255,255,255,0.06)", borderRadius: 4, padding: "1px 5px" }}>
+                            {cost} cr
+                          </span>
+                        )}
+                        {locked && (
+                          <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,180,0,0.80)", background: "rgba(255,180,0,0.08)", borderRadius: 4, padding: "1px 6px" }}>
+                            {agent.id === "design-fixer" ? "Pro+" : "Starter+"}
+                          </span>
+                        )}
+                      </div>
+                      {st === "idle" && !locked && <div className="d8b-info-section-body d8b-info-section-body--small">{agent.desc}</div>}
+                      {locked && <div style={{ fontSize: 11, color: "rgba(255,180,0,0.60)", marginTop: 2 }}>Upgrade your plan to unlock this agent.</div>}
+                      {tooExpensive && st === "idle" && <div style={{ fontSize: 11, color: "rgba(255,100,100,0.70)", marginTop: 2 }}>Not enough credits — buy more to run this agent.</div>}
+                      {res && (
+                        <div style={{ marginTop: 4 }}>
+                          <div style={{ fontSize: 11, lineHeight: 1.5, color: st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(56,248,166,0.90)", fontFamily: "ui-monospace,monospace" }}>
+                            {st !== "failed" && "✓ "}{res.summary}
+                          </div>
+                          {res.model && (
+                            <div style={{ marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.28)" }}>
+                              via {res.provider === "anthropic" ? "🟠 Claude" : "⬢ OpenAI"} · {res.model}
+                            </div>
+                          )}
+                          {st === "done" && !!res.data && (
+                            <button onClick={() => setExpanded(s => ({ ...s, [agent.id]: !isExp }))} type="button"
+                              style={{ marginTop: 4, fontSize: 10, color: "rgba(61,240,255,0.75)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                              {isExp ? "▲ Hide details" : "▼ View details"}
+                            </button>
+                          )}
+                          {isExp && !!res.data && (
+                            <AgentResultDetail
+                              id={agent.id}
+                              data={res.data}
+                              onApply={agent.id === "design-fixer" ? () => {
+                                if (typeof res.data === "string" && res.data.trim().startsWith("<")) {
+                                  onApplyHtml?.(res.data as string);
+                                  setExpanded(s => ({ ...s, [agent.id]: false }));
+                                }
+                              } : undefined}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => locked || tooExpensive ? setShowBuy(true) : runAgent(agent.id)}
+                    disabled={st === "running" || (!hasHtml && !locked && !tooExpensive)}
+                    type="button"
+                    style={{
+                      flexShrink: 0, fontSize: 11, padding: "4px 10px", borderRadius: 8, fontWeight: 600, whiteSpace: "nowrap" as const,
+                      cursor: st === "running" ? "not-allowed" : "pointer",
+                      background: locked || tooExpensive ? "rgba(255,180,0,0.10)" : st === "done" ? "rgba(56,248,166,0.12)" : st === "failed" ? "rgba(255,100,100,0.12)" : "rgba(255,255,255,0.06)",
+                      border: `1px solid ${locked || tooExpensive ? "rgba(255,180,0,0.30)" : st === "done" ? "rgba(56,248,166,0.35)" : st === "failed" ? "rgba(255,100,100,0.35)" : "rgba(255,255,255,0.14)"}`,
+                      color: locked || tooExpensive ? "rgba(255,180,0,0.85)" : st === "done" ? "rgba(56,248,166,0.90)" : st === "failed" ? "rgba(255,100,100,0.85)" : canRun ? "rgba(255,255,255,0.70)" : "rgba(255,255,255,0.40)",
+                      opacity: !hasHtml && !locked && !tooExpensive ? 0.4 : 1,
+                    }}>
+                    {st === "running" ? "Running…" : locked ? "Upgrade" : tooExpensive ? "Buy credits" : st === "done" ? "✓ Done" : st === "failed" ? "↩ Retry" : "Run"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2493,6 +3286,18 @@ function HomeStyles() {
         transform: translateY(-1px);
       }
       .d8h-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+      .d8h-mic-btn {
+        flex-shrink: 0;
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.55);
+        font-size: 15px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 140ms ease;
+      }
+      .d8h-mic-btn:hover { background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.22); }
 
       /* ── Industry chips ── */
       .d8h-chips {

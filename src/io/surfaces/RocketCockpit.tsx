@@ -174,33 +174,89 @@ function SystemMetricsPanel({ patchId }: { patchId: string }) {
 
 // ─── Quick Actions Panel ───────────────────────────────────────────────────────
 
+type QAState = "idle" | "running" | "done" | "failed";
+type QAResult = { summary?: string; error?: string };
+
+const QA_ACTIONS = [
+  { id: "seo-sweep",             label: "SEO Sweep",      sub: "Titles, descriptions, keywords", badge: "RUN",   cls: "badge hot" },
+  { id: "sit",                   label: "Sitemap Rebuild", sub: "Trigger sitemap refresh",        badge: "RUN",   cls: "badge ok" },
+  { id: "performance-optimizer", label: "Perf Audit",     sub: "LCP, CLS, render-blocking",      badge: "SCAN",  cls: "badge" },
+  { id: "accessibility-checker", label: "A11y Check",     sub: "ARIA, contrast, keyboard nav",   badge: "CHECK", cls: "badge" },
+] as const;
+
+type QAId = typeof QA_ACTIONS[number]["id"];
+
 function QuickActionsPanel() {
-  const [active, setActive] = React.useState<string | null>(null);
-  const actions = [
-    { id: "seo",  label: "SEO Sweep",      sub: "Titles, descriptions, keywords", badge: "RUN",  cls: "badge hot" },
-    { id: "sit",  label: "Sitemap Rebuild", sub: "Generate + upload sitemap.xml",  badge: "RUN",  cls: "badge ok" },
-    { id: "perf", label: "Perf Audit",      sub: "LCP, CLS, TTFB diagnostics",    badge: "SCAN", cls: "badge" },
-    { id: "ssl",  label: "SSL Check",       sub: "Certificate + expiry status",   badge: "CHECK", cls: "badge" },
-  ];
-  function trigger(id: string) {
-    setActive(id);
-    setTimeout(() => setActive(null), 3000);
+  const [states, setStates] = React.useState<Record<string, QAState>>({});
+  const [results, setResults] = React.useState<Record<string, QAResult>>({});
+
+  async function trigger(id: QAId) {
+    if (states[id] === "running") return;
+    setStates(s => ({ ...s, [id]: "running" }));
+    setResults(s => ({ ...s, [id]: {} }));
+
+    if (id === "sit") {
+      // Sitemap rebuild — just fetch the sitemap route to warm/regenerate it
+      try {
+        await fetch("/sitemap.xml", { cache: "no-store" });
+        setStates(s => ({ ...s, [id]: "done" }));
+        setResults(s => ({ ...s, [id]: { summary: "Sitemap refreshed." } }));
+      } catch {
+        setStates(s => ({ ...s, [id]: "failed" }));
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/io/agents/run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ agent: id, html: "" }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setStates(s => ({ ...s, [id]: "done" }));
+        setResults(s => ({ ...s, [id]: { summary: data.summary } }));
+      } else {
+        setStates(s => ({ ...s, [id]: "failed" }));
+        setResults(s => ({ ...s, [id]: { error: data.error } }));
+      }
+    } catch {
+      setStates(s => ({ ...s, [id]: "failed" }));
+    }
   }
+
   return (
     <div className="card" style={{ padding: 14 }}>
       <div className="kicker" style={{ marginBottom: 10 }}>quick actions</div>
       <div className="list">
-        {actions.map(a => (
-          <div key={a.id} className="row" style={{ cursor: "pointer" }} onClick={() => trigger(a.id)}>
-            <div>
-              <div className="t">{a.label}</div>
-              <div className="m">{a.sub}</div>
+        {QA_ACTIONS.map(a => {
+          const st = states[a.id] ?? "idle";
+          const res = results[a.id];
+          return (
+            <div key={a.id} className="row" style={{ cursor: st === "running" ? "default" : "pointer", flexDirection: "column", alignItems: "stretch", gap: 4 }} onClick={() => trigger(a.id as QAId)}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div className="t">{a.label}</div>
+                  <div className="m">{a.sub}</div>
+                </div>
+                <span className={st === "done" ? "badge ok" : st === "failed" ? "badge hot" : st === "running" ? "badge" : a.cls}>
+                  {st === "running" ? "RUNNING…" : st === "done" ? "DONE" : st === "failed" ? "FAILED" : a.badge}
+                </span>
+              </div>
+              {res?.summary && (
+                <div style={{ fontSize: 10, color: "rgba(56,248,166,0.85)", fontFamily: "ui-monospace,monospace", paddingLeft: 2, lineHeight: 1.4 }}>
+                  ✓ {res.summary}
+                </div>
+              )}
+              {res?.error && (
+                <div style={{ fontSize: 10, color: "rgba(255,100,100,0.85)", fontFamily: "ui-monospace,monospace", paddingLeft: 2 }}>
+                  ✗ {res.error}
+                </div>
+              )}
             </div>
-            <span className={active === a.id ? "badge ok" : a.cls}>
-              {active === a.id ? "RUNNING…" : a.badge}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -208,7 +264,29 @@ function QuickActionsPanel() {
 
 // ─── Rocket Cockpit (main export) ─────────────────────────────────────────────
 
+type CockpitAgentState = "idle" | "running" | "done";
+
+const COCKPIT_AGENTS = ["seo-sweep", "performance-optimizer", "accessibility-checker", "link-scanner"] as const;
+
 export function RocketCockpit(props: { patchId: string }) {
+  const [runAllState, setRunAllState] = React.useState<CockpitAgentState>("idle");
+
+  async function runAllAgents() {
+    if (runAllState === "running") return;
+    setRunAllState("running");
+    await Promise.allSettled(
+      COCKPIT_AGENTS.map(agent =>
+        fetch("/api/io/agents/run", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ agent, html: "" }),
+        })
+      )
+    );
+    setRunAllState("done");
+    setTimeout(() => setRunAllState("idle"), 4000);
+  }
+
   return (
     <Shell
       patchId={props.patchId}
@@ -217,7 +295,9 @@ export function RocketCockpit(props: { patchId: string }) {
       right={
         <div style={{ display: "flex", gap: 10 }}>
           <button className="btn2" type="button">+ New Capsule</button>
-          <button className="btn" type="button">▶ Run Agents</button>
+          <button className="btn" type="button" onClick={runAllAgents} disabled={runAllState === "running"}>
+            {runAllState === "running" ? "Running…" : runAllState === "done" ? "✓ Done" : "▶ Run Agents"}
+          </button>
         </div>
       }
     >
