@@ -845,7 +845,7 @@ export function Builder() {
         {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
         {showDomains && <DomainsModal onClose={() => setShowDomains(false)} publishedUrl={publishedUrl} />}
         {showSSL && <SSLModal onClose={() => setShowSSL(false)} />}
-        {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} />}
+        {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} html={html} prompt={prompt} />}
 
       {/* Anon limit modal — inside root so fixed positioning works correctly */}
       {showAnonLimit && (
@@ -1340,7 +1340,7 @@ export function Builder() {
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showDomains && <DomainsModal onClose={() => setShowDomains(false)} publishedUrl={publishedUrl} />}
       {showSSL && <SSLModal onClose={() => setShowSSL(false)} />}
-      {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} />}
+      {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} html={html} prompt={prompt} />}
 
       {/* Published URL banner */}
       {publishedUrl && (
@@ -2608,45 +2608,115 @@ Referrer-Policy: strict-origin`}</div>
 
 // ─── Automate Modal ───────────────────────────────────────────────────────────
 
-function AutomateModal({ onClose }: { onClose: () => void }) {
-  const AGENTS = [
-    { icon: "🔍", name: "SEO Sweep", desc: "Scans every page for title, meta, OG, H1, and structured data issues.", status: "Ready" },
-    { icon: "🎨", name: "Design Fixer", desc: "Auto-detects layout bugs, contrast issues, and typography inconsistencies.", status: "Ready" },
-    { icon: "📱", name: "Responsive Audit", desc: "Tests your site at 320px, 768px, and 1440px breakpoints.", status: "Ready" },
-    { icon: "⚡", name: "Performance Optimizer", desc: "Inlines critical CSS, defers scripts, and optimises asset delivery.", status: "Ready" },
-    { icon: "♿", name: "Accessibility Checker", desc: "Validates ARIA roles, alt text, colour contrast, and keyboard nav.", status: "Ready" },
-    { icon: "🔗", name: "Link Scanner", desc: "Validates all internal links, anchors, and CTA buttons.", status: "Ready" },
-  ];
+type AgentId = "seo-sweep" | "design-fixer" | "responsive-audit" | "performance-optimizer" | "accessibility-checker" | "link-scanner";
+type AgentRunState = "idle" | "running" | "done" | "failed";
+
+const AUTOMATE_AGENTS: { id: AgentId; icon: string; name: string; desc: string }[] = [
+  { id: "seo-sweep",             icon: "🔍", name: "SEO Sweep",            desc: "Scans for title, meta, OG, H1, and structured data issues." },
+  { id: "design-fixer",          icon: "🎨", name: "Design Fixer",         desc: "Fixes layout bugs, contrast issues, and typography problems." },
+  { id: "responsive-audit",      icon: "📱", name: "Responsive Audit",     desc: "Tests your site at 320px, 768px, and 1440px breakpoints." },
+  { id: "performance-optimizer", icon: "⚡", name: "Performance Optimizer", desc: "Identifies critical CSS, render-blocking scripts, and CLS risks." },
+  { id: "accessibility-checker", icon: "♿", name: "Accessibility Checker", desc: "Validates ARIA roles, alt text, colour contrast, and keyboard nav." },
+  { id: "link-scanner",          icon: "🔗", name: "Link Scanner",         desc: "Validates all internal links, anchors, and CTA buttons." },
+];
+
+function AutomateModal({ onClose, html, prompt: _prompt }: { onClose: () => void; html: string; prompt: string }) {
+  const [states, setStates] = useState<Record<AgentId, AgentRunState>>({} as Record<AgentId, AgentRunState>);
+  const [summaries, setSummaries] = useState<Record<AgentId, string>>({} as Record<AgentId, string>);
+  const hasHtml = !!html.trim();
+
+  async function runAgent(id: AgentId) {
+    if (!hasHtml || states[id] === "running") return;
+    setStates(s => ({ ...s, [id]: "running" }));
+    setSummaries(s => ({ ...s, [id]: "" }));
+    try {
+      const res = await fetch("/api/io/agents/run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ agent: id, html }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setStates(s => ({ ...s, [id]: "done" }));
+        setSummaries(s => ({ ...s, [id]: data.summary || "Completed." }));
+      } else {
+        setStates(s => ({ ...s, [id]: "failed" }));
+        setSummaries(s => ({ ...s, [id]: data.error || "Agent failed." }));
+      }
+    } catch (e: unknown) {
+      setStates(s => ({ ...s, [id]: "failed" }));
+      setSummaries(s => ({ ...s, [id]: e instanceof Error ? e.message : "Network error." }));
+    }
+  }
+
+  async function runAll() {
+    for (const ag of AUTOMATE_AGENTS) {
+      if (states[ag.id] !== "running") runAgent(ag.id);
+    }
+  }
+
   return (
     <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="d8b-info-modal">
         <div className="d8b-modal-header">
           <div className="d8b-modal-title">⚡ Automate</div>
-          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {hasHtml && (
+              <button
+                onClick={runAll}
+                disabled={AUTOMATE_AGENTS.some(a => states[a.id] === "running")}
+                type="button"
+                style={{ fontSize: 12, padding: "4px 12px", borderRadius: 8, background: "rgba(61,240,255,0.12)", border: "1px solid rgba(61,240,255,0.30)", color: "rgba(61,240,255,0.90)", cursor: "pointer", fontWeight: 600 }}
+              >
+                Run All
+              </button>
+            )}
+            <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+          </div>
         </div>
         <div className="d8b-modal-body">
-          <p className="d8b-modal-desc">
-            AI agents that continuously audit and improve your generated site. Generate a site first to run agents on it.
-          </p>
-          {AGENTS.map((agent) => (
-            <div key={agent.name} className="d8b-info-section d8b-info-section--agent">
-              <div className="d8b-automate-row">
-                <div className="d8b-automate-row-main">
-                  <span className="d8b-automate-icon">{agent.icon}</span>
-                  <div>
-                    <div className="d8b-info-section-title d8b-info-section-title--compact">{agent.name}</div>
-                    <div className="d8b-info-section-body d8b-info-section-body--small">{agent.desc}</div>
+          {!hasHtml && (
+            <p className="d8b-modal-desc" style={{ background: "rgba(255,209,102,0.07)", border: "1px solid rgba(255,209,102,0.20)", borderRadius: 10, padding: "10px 14px", color: "rgba(255,209,102,0.90)" }}>
+              Generate a site first — agents need your HTML to analyse.
+            </p>
+          )}
+          {AUTOMATE_AGENTS.map((agent) => {
+            const st = states[agent.id] ?? "idle";
+            const summary = summaries[agent.id];
+            return (
+              <div key={agent.id} className="d8b-info-section d8b-info-section--agent">
+                <div className="d8b-automate-row">
+                  <div className="d8b-automate-row-main">
+                    <span className="d8b-automate-icon">{agent.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div className="d8b-info-section-title d8b-info-section-title--compact">{agent.name}</div>
+                      <div className="d8b-info-section-body d8b-info-section-body--small">{agent.desc}</div>
+                      {summary && (
+                        <div style={{ marginTop: 5, fontSize: 11, lineHeight: 1.5, color: st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(56,248,166,0.90)", fontFamily: "ui-monospace,monospace" }}>
+                          {st === "failed" ? "✗ " : "✓ "}{summary}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  <button
+                    onClick={() => runAgent(agent.id)}
+                    disabled={!hasHtml || st === "running"}
+                    type="button"
+                    style={{
+                      flexShrink: 0, fontSize: 11, padding: "4px 10px", borderRadius: 8, cursor: hasHtml && st !== "running" ? "pointer" : "not-allowed",
+                      fontWeight: 600, whiteSpace: "nowrap",
+                      background: st === "done" ? "rgba(56,248,166,0.12)" : st === "failed" ? "rgba(255,100,100,0.12)" : st === "running" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.06)",
+                      border: `1px solid ${st === "done" ? "rgba(56,248,166,0.35)" : st === "failed" ? "rgba(255,100,100,0.35)" : st === "running" ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.14)"}`,
+                      color: st === "done" ? "rgba(56,248,166,0.90)" : st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(255,255,255,0.60)",
+                      opacity: !hasHtml ? 0.4 : 1,
+                    }}
+                  >
+                    {st === "running" ? "Running…" : st === "done" ? "✓ Done" : st === "failed" ? "↩ Retry" : "Run"}
+                  </button>
                 </div>
-                <span className="d8b-info-pill d8b-info-pill--status">{agent.status}</span>
               </div>
-            </div>
-          ))}
-          <div className="d8b-info-section d8b-info-section--footer">
-            <div className="d8b-info-section-body">
-              After generating a site, use the <strong>Fix issues</strong> and <strong>SEO scan</strong> buttons in the sidebar to run agents immediately.
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
     </div>
