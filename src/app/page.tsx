@@ -77,6 +77,15 @@ export default function LandingPage() {
         @keyframes drift1 { to { transform: translate(80px, 60px); } }
         @keyframes drift2 { to { transform: translate(-60px, -80px); } }
 
+        /* ── Fog ── */
+        .ln-fog-wisp { position: absolute; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; }
+        .ln-fog-1 { width: 140%; height: 340px; top: 6%; left: -20%; background: radial-gradient(ellipse at 50% 50%, rgba(210,220,240,0.22), rgba(200,215,240,0.10) 42%, transparent 70%); filter: blur(38px); animation: fogDrift1 58s ease-in-out infinite alternate; }
+        .ln-fog-2 { width: 120%; height: 280px; bottom: 12%; right: -22%; background: radial-gradient(ellipse at 50% 50%, rgba(220,225,245,0.18), rgba(215,225,245,0.07) 45%, transparent 68%); filter: blur(44px); animation: fogDrift2 74s ease-in-out infinite alternate; }
+        .ln-fog-3 { width: 105%; height: 220px; top: 50%; left: -5%; background: radial-gradient(ellipse at 50% 50%, rgba(230,235,255,0.14), transparent 63%); filter: blur(34px); animation: fogDrift3 46s ease-in-out infinite alternate; }
+        @keyframes fogDrift1 { 0% { transform: translate(0,0) scaleY(1); } 100% { transform: translate(9%,28px) scaleY(1.08); } }
+        @keyframes fogDrift2 { 0% { transform: translate(0,0) scaleX(1); } 100% { transform: translate(-7%,-22px) scaleX(1.06); } }
+        @keyframes fogDrift3 { 0% { transform: translate(0,0); } 100% { transform: translate(6%,-18px); } }
+
         .ln-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; border: 1px solid rgba(61,240,255,0.25); background: rgba(61,240,255,0.06); color: rgba(61,240,255,0.80); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 28px; }
         .ln-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(61,240,255,0.90); animation: pulse 2s ease-in-out infinite; }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -203,6 +212,7 @@ export default function LandingPage() {
           <a href="#loop" className="ln-nav-link">The Loop</a>
           <a href="#agents" className="ln-nav-link">Agents</a>
           <Link href="/pricing" className="ln-nav-link">Pricing</Link>
+          <Link href="/video" className="ln-nav-link">🎵 Video</Link>
           <Link href="/build" className="ln-nav-cta">Launch builder →</Link>
         </div>
       </nav>
@@ -211,6 +221,9 @@ export default function LandingPage() {
       <section className="ln-hero">
         <div className="ln-blob ln-blob-1" />
         <div className="ln-blob ln-blob-2" />
+        <div className="ln-fog-wisp ln-fog-1" />
+        <div className="ln-fog-wisp ln-fog-2" />
+        <div className="ln-fog-wisp ln-fog-3" />
 
         <div className="ln-badge">
           <span className="ln-badge-dot" />
