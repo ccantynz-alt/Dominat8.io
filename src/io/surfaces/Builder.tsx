@@ -1493,36 +1493,48 @@ function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prom
               <div className="d8b-deploy-success">
                 <div className="d8b-deploy-url" title={deployUrl}>{deployUrl}</div>
                 <button
-                  className="d8b-deploy-btn"
+                  className={`d8b-deploy-btn${urlCopied ? " d8b-deploy-btn--copied" : ""}`}
                   onClick={copyUrl}
                   type="button"
-                  style={urlCopied ? { borderColor: "rgba(56,248,166,0.5)", color: "rgba(56,248,166,0.9)" } : {}}
                 >
                   {urlCopied ? "✓ Copied!" : "Copy URL"}
                 </button>
               </div>
             )}
             {step === "done" && deployUrl && (
-              <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+              <div className="d8b-deploy-actions">
                 <a
                   href={deployUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="d8b-deploy-option d8b-deploy-option--ghost"
-                  style={{ textDecoration: "none", flex: 1, justifyContent: "center", padding: "10px 14px" }}
+                  className="d8b-deploy-option d8b-deploy-option--ghost d8b-deploy-option--wide"
                 >
-                  <span className="d8b-deploy-option-icon" style={{ fontSize: 14 }}>↗</span>
-                  <div><div className="d8b-deploy-option-title" style={{ fontSize: 13 }}>Open live site</div></div>
+                  <span className="d8b-deploy-option-icon d8b-deploy-option-icon--sm">↗</span>
+                  <div>
+                    <div className="d8b-deploy-option-title d8b-deploy-option-title--sm">Open live site</div>
+                  </div>
                 </a>
-                <button className="d8b-deploy-option d8b-deploy-option--ghost" onClick={onClose} type="button" style={{ flex: 1, justifyContent: "center", padding: "10px 14px" }}>
-                  <span className="d8b-deploy-option-icon" style={{ fontSize: 14 }}>✓</span>
-                  <div><div className="d8b-deploy-option-title" style={{ fontSize: 13 }}>Done</div></div>
+                <button
+                  className="d8b-deploy-option d8b-deploy-option--ghost d8b-deploy-option--wide"
+                  onClick={onClose}
+                  type="button"
+                >
+                  <span className="d8b-deploy-option-icon d8b-deploy-option-icon--sm">✓</span>
+                  <div>
+                    <div className="d8b-deploy-option-title d8b-deploy-option-title--sm">Done</div>
+                  </div>
                 </button>
               </div>
             )}
             {step === "done" && !deployUrl && (
-              <div style={{ marginTop: 10 }}>
-                <button className="d8b-deploy-btn" onClick={onClose} type="button" style={{ width: "100%" }}>Done ✓</button>
+              <div className="d8b-deploy-actions d8b-deploy-actions--single">
+                <button
+                  className="d8b-deploy-btn d8b-deploy-btn--full"
+                  onClick={onClose}
+                  type="button"
+                >
+                  Done ✓
+                </button>
               </div>
             )}
           </div>
