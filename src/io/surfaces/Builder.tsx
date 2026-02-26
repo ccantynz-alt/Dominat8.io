@@ -527,11 +527,12 @@ export function Builder() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ html, prompt }),
       });
-      const data = await res.json();
+      const data = await res.json() as { ok?: boolean; shareUrl?: string };
       if (data.ok && data.shareUrl) {
         const fullUrl = `${window.location.origin}${data.shareUrl}`;
         await navigator.clipboard.writeText(fullUrl);
         setShareState("copied");
+        setPublishedUrl(fullUrl); // persist the live URL in the banner
         setTimeout(() => setShareState("idle"), 3000);
       } else {
         setShareState("error");
@@ -696,7 +697,7 @@ export function Builder() {
 
           {/* Prompt row */}
           <div className="d8h-input-row">
-            <span className="d8h-input-icon">🚀</span>
+            <span className="d8h-input-icon">✦</span>
             <input
               ref={inputRef}
               className="d8h-input"
@@ -704,9 +705,30 @@ export function Builder() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
-              placeholder={placeholder || "Describe your project…"}
+              placeholder={placeholder || "A B2B cybersecurity startup — enterprise grade"}
               autoFocus
             />
+            <button
+              className="d8h-mic-btn"
+              type="button"
+              title="Voice input"
+              aria-label="Voice input"
+              onClick={() => {
+                if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const SR = (window as any).webkitSpeechRecognition;
+                  const recognition = new SR();
+                  recognition.lang = "en-US";
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  recognition.onresult = (ev: any) => {
+                    setPrompt(ev.results[0][0].transcript);
+                  };
+                  recognition.start();
+                }
+              }}
+            >
+              🎙
+            </button>
             <button
               className="d8h-gen-btn"
               onClick={() => generate()}
@@ -2844,6 +2866,18 @@ function HomeStyles() {
         transform: translateY(-1px);
       }
       .d8h-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+      .d8h-mic-btn {
+        flex-shrink: 0;
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.55);
+        font-size: 15px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 140ms ease;
+      }
+      .d8h-mic-btn:hover { background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.22); }
 
       /* ── Industry chips ── */
       .d8h-chips {
