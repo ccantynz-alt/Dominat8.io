@@ -1,4 +1,5 @@
 import { OpenAI } from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 
@@ -279,22 +280,36 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { prompt, industry, vibe } = await req.json();
+  const { prompt, industry, vibe, model: requestedModel } = await req.json() as {
+    prompt?: string;
+    industry?: string;
+    vibe?: string;
+    model?: string;
+  };
 
   if (!prompt?.trim()) {
     return new Response("Prompt required", { status: 400 });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return new Response("OpenAI API key not configured", { status: 500 });
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+  // Determine provider: honour the client's model preference, fallback across providers
+  const wantClaude = requestedModel === "claude-sonnet-4-6";
+  const useAnthropic = (wantClaude && !!anthropicKey) || (!openaiKey && !!anthropicKey);
+  const useOpenAI   = !useAnthropic && !!openaiKey;
+
+  if (!useAnthropic && !useOpenAI) {
+    return new Response(
+      JSON.stringify({ error: "No AI provider configured. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in your environment." }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   // ── Auth + quota check ────────────────────────────────────────────────────
-  const { userId } = auth();
+  const { userId } = await auth();
 
   if (userId) {
-    // Authenticated: enforce monthly quota
     const { allowed, plan, usage, limit } = await checkUsage(userId);
     if (!allowed) {
       return new Response(
@@ -311,8 +326,6 @@ export async function POST(req: NextRequest) {
   }
   // Unauthenticated users get 3 free generations tracked client-side (localStorage).
   // ─────────────────────────────────────────────────────────────────────────
-
-  const openai = new OpenAI({ apiKey });
 
   const industryHint = industry && INDUSTRY_HINTS[industry]
     ? `\nINDUSTRY GUIDANCE: ${INDUSTRY_HINTS[industry]}`
@@ -335,6 +348,44 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
+  const encoder = new TextEncoder();
+
+  // ── Anthropic (Claude) path ───────────────────────────────────────────────
+  if (useAnthropic) {
+    const client = new Anthropic({ apiKey: anthropicKey });
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          const stream = client.messages.stream({
+            model: "claude-sonnet-4-6",
+            max_tokens: 16000,
+            system: SYSTEM_PROMPT,
+            messages: [{ role: "user", content: userMessage }],
+          });
+          for await (const event of stream) {
+            if (
+              event.type === "content_block_delta" &&
+              event.delta.type === "text_delta"
+            ) {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          }
+        } finally {
+          controller.close();
+        }
+      },
+    });
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
+  // ── OpenAI path ───────────────────────────────────────────────────────────
+  const openai = new OpenAI({ apiKey: openaiKey });
   const stream = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
@@ -345,8 +396,6 @@ export async function POST(req: NextRequest) {
     max_tokens: 16000,
     temperature: 0.80,
   });
-
-  const encoder = new TextEncoder();
 
   const readable = new ReadableStream({
     async start(controller) {
