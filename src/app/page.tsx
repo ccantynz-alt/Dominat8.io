@@ -262,7 +262,7 @@ export default function LandingPage() {
       {/* ── Agentic Loop ── */}
       <section className="ln-section ln-section--surface" id="loop">
         <div className="ln-section-inner">
-          <div className="ln-section-label">// agentic_loop.ts</div>
+          <div className="ln-section-label">{"// agentic_loop.ts"}</div>
           <h2 className="ln-section-h2">Multi-step reasoning.<br />Not just a prompt.</h2>
           <p className="ln-section-body">
             Every build runs through a six-stage orchestrated loop. Claude plans the architecture,
@@ -283,7 +283,7 @@ export default function LandingPage() {
           {/* Self-heal callout */}
           <div className="ln-heal-box">
             <div>
-              <div className="ln-section-label" style={{ marginBottom: 10 }}>// self_heal.ts</div>
+              <div className="ln-section-label" style={{ marginBottom: 10 }}>{"// self_heal.ts"}</div>
               <div className="ln-heal-title">
                 The loop catches what<br />
                 <span style={{ color: "rgba(139,92,246,0.90)" }}>you&apos;d never see.</span>
@@ -316,7 +316,7 @@ export default function LandingPage() {
       <section className="ln-section ln-section--dark">
         <div className="ln-section-inner" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "center" }}>
           <div style={{ minWidth: 0 }}>
-            <div className="ln-section-label">// export.tsx</div>
+            <div className="ln-section-label">{"// export.tsx"}</div>
             <h2 className="ln-section-h2">Not a black box.<br />Real code you own.</h2>
             <p className="ln-section-body" style={{ marginBottom: 24 }}>
               Export clean, professional React + TypeScript. Componentised, typed,
@@ -377,7 +377,7 @@ export default function LandingPage() {
       {/* ── Agents ── */}
       <section className="ln-section ln-section--surface" id="agents">
         <div className="ln-section-inner">
-          <div className="ln-section-label">// agents[]</div>
+          <div className="ln-section-label">{"// agents[]"}</div>
           <h2 className="ln-section-h2">Six specialist agents.<br />The audit layer.</h2>
           <p className="ln-section-body">
             After the self-heal loop, run any combination of domain-expert agents.
@@ -402,7 +402,7 @@ export default function LandingPage() {
       {/* ── Pricing ── */}
       <section className="ln-section ln-section--dark" id="pricing">
         <div className="ln-section-inner">
-          <div className="ln-section-label">// plans[]</div>
+          <div className="ln-section-label">{"// plans[]"}</div>
           <h2 className="ln-section-h2">Start free.<br />Scale when you ship.</h2>
           <p className="ln-section-body">
             Credits never expire. Run out? Buy a top-up pack — no subscription needed.
