@@ -1368,6 +1368,15 @@ function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prom
   const [log, setLog] = useState<string[]>([]);
   const [deployUrl, setDeployUrl] = useState<string | null>(null);
   const [urlCopied, setUrlCopied] = useState(false);
+  const logTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (logTimerRef.current !== null) {
+        clearInterval(logTimerRef.current);
+      }
+    };
+  }, []);
 
   function download() {
     const blob = new Blob([html], { type: "text/html" });
@@ -1394,7 +1403,7 @@ function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prom
 
     // Animate log steps while API call runs concurrently
     let logIdx = 0;
-    const logTimer = setInterval(() => {
+    logTimerRef.current = setInterval(() => {
       if (logIdx < logSteps.length) {
         const msg = logSteps[logIdx];
         setLog(prev => [...prev, msg]);
@@ -1410,7 +1419,10 @@ function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prom
       });
       const data = await res.json() as { ok?: boolean; shareUrl?: string; error?: string; code?: string };
 
-      clearInterval(logTimer);
+      if (logTimerRef.current !== null) {
+        clearInterval(logTimerRef.current);
+        logTimerRef.current = null;
+      }
 
       if (data.ok && data.shareUrl) {
         const fullUrl = `${window.location.origin}${data.shareUrl}`;
@@ -1427,7 +1439,10 @@ function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prom
         throw new Error(data.error ?? "Deploy failed");
       }
     } catch {
-      clearInterval(logTimer);
+      if (logTimerRef.current !== null) {
+        clearInterval(logTimerRef.current);
+        logTimerRef.current = null;
+      }
       setLog(prev => [...prev, "⚠ Cloud deploy unavailable — downloading as HTML"]);
       setStep("done");
       setTimeout(download, 800);
