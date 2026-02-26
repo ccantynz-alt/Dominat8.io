@@ -1,7 +1,9 @@
 import { OpenAI } from "openai";
 import { NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { isAdminUser, checkAndConsumeCredits } from "@/lib/agent-credits";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const SEO_SYSTEM_PROMPT = `You are an expert SEO analyst. Analyse the provided HTML and return a JSON object with this exact structure:
@@ -40,6 +42,18 @@ WHAT TO CHECK:
 Return ONLY valid JSON. No markdown, no explanation, no code fences.`;
 
 export async function POST(req: NextRequest) {
+  // ── Auth + credit check ────────────────────────────────────────────────────
+  const { userId } = auth();
+  if (userId && !isAdminUser(userId)) {
+    const check = await checkAndConsumeCredits(userId, "seo-sweep");
+    if (!check.ok) {
+      return Response.json(
+        { error: check.message, code: check.code, balance: check.balance },
+        { status: check.code === "NO_ACCESS" ? 403 : 402 },
+      );
+    }
+  }
+
   const { html } = await req.json();
 
   if (!html?.trim()) {
