@@ -705,27 +705,29 @@ export function Builder() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
-              placeholder={placeholder || "A B2B cybersecurity startup — enterprise grade"}
-              autoFocus
-            />
-            <button
-              className="d8h-mic-btn"
-              type="button"
-              title="Voice input"
-              aria-label="Voice input"
-              onClick={() => {
-                if (typeof window === "undefined" || !("webkitSpeechRecognition" in window)) return;
-                type SpeechResult = { results: { 0: { transcript: string } }[] };
-                type SR = { lang: string; onresult: ((e: SpeechResult) => void) | null; start: () => void };
-                const Ctor = (window as unknown as { webkitSpeechRecognition: new () => SR }).webkitSpeechRecognition;
-                const r = new Ctor();
-                r.lang = "en-US";
-                r.onresult = (e) => setPrompt(e.results[0][0].transcript);
-                r.start();
-              }}
-            >
-              🎙
-            </button>
+            {typeof window !== "undefined" && "webkitSpeechRecognition" in window && (
+              <button
+                className="d8h-mic-btn"
+                type="button"
+                title="Voice input"
+                aria-label="Voice input"
+                onClick={() => {
+                  if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const SR = (window as any).webkitSpeechRecognition;
+                    const recognition = new SR();
+                    recognition.lang = "en-US";
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    recognition.onresult = (ev: any) => {
+                      setPrompt(ev.results[0][0].transcript);
+                    };
+                    recognition.start();
+                  }
+                }}
+              >
+                🎙
+              </button>
+            )}
             <button
               className="d8h-gen-btn"
               onClick={() => generate()}
