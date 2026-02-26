@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
+import { addPurchasedCredits } from "@/lib/agent-credits";
 
 export const runtime = "nodejs";
 
@@ -42,18 +43,27 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (event.type) {
-      // ── Payment completed → grant plan access ──────────────────────────
+      // ── Payment completed ──────────────────────────────────────────────
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.client_reference_id ?? session.metadata?.userId;
-        const plan = session.metadata?.plan;
         const customerId = session.customer as string;
 
-        if (userId && plan) {
-          await setUserPlan(userId, plan);
-        }
-        if (userId && customerId) {
-          await storeCustomerId(userId, customerId);
+        if (session.metadata?.type === "credits") {
+          // ── Credit pack purchase ─────────────────────────────────────────
+          const credits = parseInt(session.metadata?.credits ?? "0", 10);
+          if (userId && credits > 0) {
+            await addPurchasedCredits(userId, credits);
+          }
+        } else {
+          // ── Subscription purchase → grant plan access ────────────────────
+          const plan = session.metadata?.plan;
+          if (userId && plan) {
+            await setUserPlan(userId, plan);
+          }
+          if (userId && customerId) {
+            await storeCustomerId(userId, customerId);
+          }
         }
         break;
       }

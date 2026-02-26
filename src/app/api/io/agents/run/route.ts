@@ -1,7 +1,13 @@
 import { NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { startRun, completeRun, failRun, type AgentType } from "../_store";
+import {
+  isAdminUser,
+  checkAndConsumeCredits,
+  AGENT_COSTS,
+} from "@/lib/agent-credits";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -218,6 +224,23 @@ export async function POST(req: NextRequest) {
     return Response.json({ ok: false, error: `Unknown agent: ${agent}` }, { status: 400 });
   }
 
+  // ── Auth + credit enforcement ──────────────────────────────────────────────
+  const { userId } = auth();
+
+  let creditBalance = null;
+  if (userId && !isAdminUser(userId)) {
+    const check = await checkAndConsumeCredits(userId, agent);
+    if (!check.ok) {
+      return Response.json(
+        { ok: false, error: check.message, code: check.code, balance: check.balance },
+        { status: check.code === "NO_ACCESS" ? 403 : 402 }
+      );
+    }
+    creditBalance = check.balance;
+  }
+  // Anonymous users and admins proceed without credit deduction.
+  // Production hardening: restrict anonymous users if needed via env flag.
+
   const provider = chooseProvider(agent);
   if (provider === "anthropic" && !process.env.ANTHROPIC_API_KEY) {
     return Response.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 503 });
@@ -263,6 +286,8 @@ export async function POST(req: NextRequest) {
       model: provider === "anthropic" ? claudeModel(agent) : openaiModel(agent),
       summary,
       result,
+      creditCost: AGENT_COSTS[agent],
+      balance: creditBalance,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
