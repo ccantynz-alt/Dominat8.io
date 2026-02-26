@@ -78,10 +78,10 @@ export default function LandingPage() {
         @keyframes drift2 { to { transform: translate(-60px, -80px); } }
 
         /* ── Fog ── */
-        .ln-fog-wisp { position: absolute; border-radius: 50%; pointer-events: none; }
-        .ln-fog-1 { width: 140%; height: 320px; top: 8%; left: -20%; background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.055), rgba(230,238,255,0.022) 45%, transparent 72%); filter: blur(55px); animation: fogDrift1 58s ease-in-out infinite alternate; }
-        .ln-fog-2 { width: 120%; height: 260px; bottom: 14%; right: -25%; background: radial-gradient(ellipse at 50% 50%, rgba(240,245,255,0.042), transparent 68%); filter: blur(65px); animation: fogDrift2 74s ease-in-out infinite alternate; }
-        .ln-fog-3 { width: 100%; height: 200px; top: 52%; left: -5%; background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.028), transparent 65%); filter: blur(48px); animation: fogDrift3 46s ease-in-out infinite alternate; }
+        .ln-fog-wisp { position: absolute; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; }
+        .ln-fog-1 { width: 140%; height: 340px; top: 6%; left: -20%; background: radial-gradient(ellipse at 50% 50%, rgba(210,220,240,0.22), rgba(200,215,240,0.10) 42%, transparent 70%); filter: blur(38px); animation: fogDrift1 58s ease-in-out infinite alternate; }
+        .ln-fog-2 { width: 120%; height: 280px; bottom: 12%; right: -22%; background: radial-gradient(ellipse at 50% 50%, rgba(220,225,245,0.18), rgba(215,225,245,0.07) 45%, transparent 68%); filter: blur(44px); animation: fogDrift2 74s ease-in-out infinite alternate; }
+        .ln-fog-3 { width: 105%; height: 220px; top: 50%; left: -5%; background: radial-gradient(ellipse at 50% 50%, rgba(230,235,255,0.14), transparent 63%); filter: blur(34px); animation: fogDrift3 46s ease-in-out infinite alternate; }
         @keyframes fogDrift1 { 0% { transform: translate(0,0) scaleY(1); } 100% { transform: translate(9%,28px) scaleY(1.08); } }
         @keyframes fogDrift2 { 0% { transform: translate(0,0) scaleX(1); } 100% { transform: translate(-7%,-22px) scaleX(1.06); } }
         @keyframes fogDrift3 { 0% { transform: translate(0,0); } 100% { transform: translate(6%,-18px); } }
