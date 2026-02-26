@@ -12,6 +12,10 @@ const DIRECT_PATHS = new Set([
   "/terms",
   "/tv",
   "/healthz",
+  "/dashboard",
+  "/build",
+  "/onboarding",
+  "/video",
 ]);
 
 // Path prefixes served directly
@@ -22,6 +26,8 @@ const DIRECT_PREFIXES = [
   "/_next/",
   "/s/",
   "/tv/",
+  "/admin",
+  "/io",
 ];
 
 function shouldPassThrough(pathname: string): boolean {
@@ -30,7 +36,23 @@ function shouldPassThrough(pathname: string): boolean {
 }
 
 export default clerkMiddleware((_auth, request: NextRequest) => {
-  const { pathname } = request.nextUrl;
+  const { pathname, hostname } = request.nextUrl;
+
+  // ── Subdomain routing: {slug}.dominat8.io → /api/subdomain/{slug} ──────────
+  const appHost = process.env.NEXT_PUBLIC_APP_URL
+    ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname
+    : "dominat8.io";
+
+  if (hostname !== appHost && hostname !== "localhost" && !hostname.includes("vercel.app")) {
+    // Check if it's a subdomain of our app
+    if (hostname.endsWith(`.${appHost}`)) {
+      const slug = hostname.replace(`.${appHost}`, "");
+      const url = request.nextUrl.clone();
+      url.pathname = `/api/subdomain/${encodeURIComponent(slug)}`;
+      return NextResponse.rewrite(url);
+    }
+  }
+
   if (shouldPassThrough(pathname)) return NextResponse.next();
 
   // Everything else (e.g. /some-slug) → /io admin cockpit
