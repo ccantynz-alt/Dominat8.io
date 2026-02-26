@@ -2628,20 +2628,20 @@ function AutomateModal({ onClose }: { onClose: () => void }) {
             AI agents that continuously audit and improve your generated site. Generate a site first to run agents on it.
           </p>
           {AGENTS.map((agent) => (
-            <div key={agent.name} className="d8b-info-section" style={{ marginBottom: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 20 }}>{agent.icon}</span>
+            <div key={agent.name} className="d8b-info-section d8b-info-section--agent">
+              <div className="d8b-automate-row">
+                <div className="d8b-automate-row-main">
+                  <span className="d8b-automate-icon">{agent.icon}</span>
                   <div>
-                    <div className="d8b-info-section-title" style={{ marginBottom: 2 }}>{agent.name}</div>
-                    <div className="d8b-info-section-body" style={{ fontSize: 12, margin: 0 }}>{agent.desc}</div>
+                    <div className="d8b-info-section-title d8b-info-section-title--compact">{agent.name}</div>
+                    <div className="d8b-info-section-body d8b-info-section-body--small">{agent.desc}</div>
                   </div>
                 </div>
-                <span className="d8b-info-pill" style={{ flexShrink: 0, marginLeft: 12 }}>{agent.status}</span>
+                <span className="d8b-info-pill d8b-info-pill--status">{agent.status}</span>
               </div>
             </div>
           ))}
-          <div className="d8b-info-section" style={{ marginTop: 4 }}>
+          <div className="d8b-info-section d8b-info-section--footer">
             <div className="d8b-info-section-body">
               After generating a site, use the <strong>Fix issues</strong> and <strong>SEO scan</strong> buttons in the sidebar to run agents immediately.
             </div>
