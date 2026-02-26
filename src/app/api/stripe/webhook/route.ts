@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { addPurchasedCredits } from "@/lib/agent-credits";
+import { sendUpgradeEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -60,6 +61,11 @@ export async function POST(req: NextRequest) {
           const plan = session.metadata?.plan;
           if (userId && plan) {
             await setUserPlan(userId, plan);
+            // Send upgrade confirmation email
+            const email = session.customer_details?.email ?? session.customer_email;
+            if (email) {
+              await sendUpgradeEmail(email, plan);
+            }
           }
           if (userId && customerId) {
             await storeCustomerId(userId, customerId);

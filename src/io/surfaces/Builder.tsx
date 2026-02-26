@@ -501,6 +501,18 @@ export function Builder() {
       setState("done");
       // Track anonymous usage client-side
       if (!isSignedIn) incrementAnonCount();
+      // Auto-save to cloud for logged-in users
+      if (isSignedIn) {
+        fetch("/api/sites/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ html: accumulated, prompt: activePrompt, industry, vibe }),
+        }).then(r => r.json()).then((d: { ok?: boolean; shareUrl?: string }) => {
+          if (d.ok && d.shareUrl) {
+            setPublishedUrl(`${window.location.origin}${d.shareUrl}`);
+          }
+        }).catch(() => {});
+      }
     } catch (err: unknown) {
       clearInterval(progressTimer);
       if (err instanceof Error && err.name === "AbortError") {
@@ -557,7 +569,7 @@ export function Builder() {
       const res = await fetch("/api/sites/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html, prompt }),
+        body: JSON.stringify({ html, prompt, industry, vibe }),
       });
       const data = await res.json() as { ok?: boolean; shareUrl?: string };
       if (data.ok && data.shareUrl) {
