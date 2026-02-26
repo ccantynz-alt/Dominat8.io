@@ -279,20 +279,14 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { prompt, industry, vibe, model } = await req.json();
+  const { prompt, industry, vibe } = await req.json();
 
   if (!prompt?.trim()) {
     return new Response("Prompt required", { status: 400 });
   }
 
-  const isClaudeModel = typeof model === "string" && model.startsWith("claude");
   const apiKey = process.env.OPENAI_API_KEY;
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-
-  if (isClaudeModel && !anthropicKey) {
-    return new Response("ANTHROPIC_API_KEY not configured", { status: 500 });
-  }
-  if (!isClaudeModel && !apiKey) {
+  if (!apiKey) {
     return new Response("OpenAI API key not configured", { status: 500 });
   }
 
@@ -318,6 +312,8 @@ export async function POST(req: NextRequest) {
   // Unauthenticated users get 3 free generations tracked client-side (localStorage).
   // ─────────────────────────────────────────────────────────────────────────
 
+  const openai = new OpenAI({ apiKey });
+
   const industryHint = industry && INDUSTRY_HINTS[industry]
     ? `\nINDUSTRY GUIDANCE: ${INDUSTRY_HINTS[industry]}`
     : "";
@@ -339,75 +335,6 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
-  const encoder = new TextEncoder();
-
-  // ── Claude streaming (Anthropic API via fetch — edge compatible) ──────────
-  if (isClaudeModel) {
-    const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": anthropicKey!,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: model,
-        max_tokens: 16000,
-        temperature: 0.80,
-        stream: true,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-      }),
-    });
-
-    if (!claudeRes.ok) {
-      const err = await claudeRes.text();
-      return new Response(`Anthropic error: ${err}`, { status: claudeRes.status });
-    }
-
-    const readable = new ReadableStream({
-      async start(controller) {
-        const reader = claudeRes.body!.getReader();
-        const decoder = new TextDecoder();
-        let buf = "";
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buf += decoder.decode(value, { stream: true });
-            const lines = buf.split("\n");
-            buf = lines.pop() ?? "";
-            for (const line of lines) {
-              if (!line.startsWith("data: ")) continue;
-              const data = line.slice(6).trim();
-              if (!data || data === "[DONE]") continue;
-              try {
-                const ev = JSON.parse(data);
-                if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") {
-                  controller.enqueue(encoder.encode(ev.delta.text));
-                }
-              } catch { /* skip malformed SSE */ }
-            }
-          }
-        } finally {
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "X-Content-Type-Options": "nosniff",
-        "Cache-Control": "no-store",
-        "X-Model": model,
-      },
-    });
-  }
-
-  // ── OpenAI streaming (default) ────────────────────────────────────────────
-  const openai = new OpenAI({ apiKey: apiKey! });
-
   const stream = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
@@ -418,6 +345,8 @@ export async function POST(req: NextRequest) {
     max_tokens: 16000,
     temperature: 0.80,
   });
+
+  const encoder = new TextEncoder();
 
   const readable = new ReadableStream({
     async start(controller) {
@@ -437,7 +366,6 @@ export async function POST(req: NextRequest) {
       "Content-Type": "text/plain; charset=utf-8",
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "no-store",
-      "X-Model": "gpt-4o",
     },
   });
 }
