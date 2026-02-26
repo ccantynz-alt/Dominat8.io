@@ -298,6 +298,7 @@ export function Builder() {
   const [industry, setIndustry] = useState("");
   const [state, setState] = useState<BuildState>("idle");
   const [html, setHtml] = useState("");
+  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-sonnet-4-6">("gpt-4o");
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [sites, setSites] = useState<Site[]>(() => {
@@ -416,7 +417,7 @@ export function Builder() {
       const res = await fetch("/api/io/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: activePrompt, industry, vibe }),
+        body: JSON.stringify({ prompt: activePrompt, industry, vibe, model: genModel }),
         signal: abortRef.current.signal,
       });
 
@@ -845,7 +846,7 @@ export function Builder() {
         {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
         {showDomains && <DomainsModal onClose={() => setShowDomains(false)} publishedUrl={publishedUrl} />}
         {showSSL && <SSLModal onClose={() => setShowSSL(false)} />}
-        {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} html={html} prompt={prompt} />}
+        {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} html={html} prompt={prompt} onApplyHtml={setHtml} />}
 
       {/* Anon limit modal — inside root so fixed positioning works correctly */}
       {showAnonLimit && (
@@ -970,6 +971,22 @@ export function Builder() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Model selector */}
+            <div className="d8b-model-selector">
+              {(["gpt-4o", "claude-sonnet-4-6"] as const).map(m => (
+                <button
+                  key={m}
+                  className={`d8b-model-btn ${genModel === m ? "d8b-model-btn--active" : ""}`}
+                  onClick={() => setGenModel(m)}
+                  type="button"
+                  disabled={isBuilding}
+                  title={m === "gpt-4o" ? "OpenAI GPT-4o" : "Anthropic Claude Sonnet"}
+                >
+                  {m === "gpt-4o" ? "GPT-4o" : "Claude"}
+                </button>
+              ))}
             </div>
 
             {/* Generate button */}
@@ -1699,6 +1716,36 @@ function BuilderStyles() {
         color: rgba(61,240,255,0.9);
       }
       .d8b-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+
+      /* ── Model selector ── */
+      .d8b-model-selector {
+        display: flex;
+        gap: 4px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 3px;
+      }
+      .d8b-model-btn {
+        flex: 1;
+        padding: 5px 10px;
+        border-radius: 7px;
+        border: none;
+        background: transparent;
+        color: rgba(255,255,255,0.40);
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 120ms ease;
+      }
+      .d8b-model-btn:hover:not(:disabled) { color: rgba(255,255,255,0.70); }
+      .d8b-model-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .d8b-model-btn--active {
+        background: rgba(255,255,255,0.10);
+        color: rgba(255,255,255,0.90);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      }
 
       /* ── Generate button ── */
       .d8b-generate-btn {
@@ -2611,6 +2658,8 @@ Referrer-Policy: strict-origin`}</div>
 type AgentId = "seo-sweep" | "design-fixer" | "responsive-audit" | "performance-optimizer" | "accessibility-checker" | "link-scanner";
 type AgentRunState = "idle" | "running" | "done" | "failed";
 
+interface AgentResult { summary: string; model: string; provider: string; data: unknown }
+
 const AUTOMATE_AGENTS: { id: AgentId; icon: string; name: string; desc: string }[] = [
   { id: "seo-sweep",             icon: "🔍", name: "SEO Sweep",            desc: "Scans for title, meta, OG, H1, and structured data issues." },
   { id: "design-fixer",          icon: "🎨", name: "Design Fixer",         desc: "Fixes layout bugs, contrast issues, and typography problems." },
@@ -2620,32 +2669,79 @@ const AUTOMATE_AGENTS: { id: AgentId; icon: string; name: string; desc: string }
   { id: "link-scanner",          icon: "🔗", name: "Link Scanner",         desc: "Validates all internal links, anchors, and CTA buttons." },
 ];
 
-function AutomateModal({ onClose, html, prompt: _prompt }: { onClose: () => void; html: string; prompt: string }) {
+const SEVERITY_COLOR: Record<string, string> = {
+  high: "rgba(255,100,100,0.90)", critical: "rgba(255,60,60,0.95)",
+  medium: "rgba(255,180,0,0.90)", serious: "rgba(255,130,0,0.90)", moderate: "rgba(255,180,0,0.85)",
+  low: "rgba(255,255,255,0.45)", minor: "rgba(255,255,255,0.40)",
+};
+
+function AgentResultDetail({ id, data, onApply }: { id: AgentId; data: unknown; onApply?: () => void }) {
+  if (!data) return null;
+  if (id === "design-fixer") {
+    return (
+      <div style={{ marginTop: 8 }}>
+        <button onClick={onApply} type="button" style={{ fontSize: 11, padding: "5px 14px", borderRadius: 8, background: "linear-gradient(135deg,#00C97A,#00B36B)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}>
+          ✓ Apply to preview
+        </button>
+      </div>
+    );
+  }
+  const r = data as Record<string, unknown>;
+  const issues = (r.issues as Record<string, unknown>[] | undefined) ?? [];
+  const strengths = (r.strengths ?? r.passes ?? r.quick_wins) as string[] | undefined;
+  const score = r.score as number | undefined;
+  const grade = r.grade as string | undefined;
+  return (
+    <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
+      {score !== undefined && (
+        <div style={{ fontSize: 11, color: score >= 70 ? "rgba(56,248,166,0.90)" : score >= 50 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)", fontWeight: 700, fontFamily: "ui-monospace,monospace" }}>
+          Score: {score}/100{grade ? ` (${grade})` : ""}
+        </div>
+      )}
+      {issues.slice(0, 5).map((iss, i) => {
+        const sev = String(iss.severity ?? iss.priority ?? "low");
+        return (
+          <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", background: "rgba(0,0,0,0.25)", borderRadius: 6, padding: "5px 8px" }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: SEVERITY_COLOR[sev] ?? "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.04em", minWidth: 36, paddingTop: 1 }}>{sev.slice(0, 4)}</span>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", lineHeight: 1.45 }}>{String(iss.message ?? iss.title ?? iss.problem ?? "")}</span>
+          </div>
+        );
+      })}
+      {issues.length > 5 && <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", paddingLeft: 2 }}>+{issues.length - 5} more issues</div>}
+      {strengths && strengths.slice(0, 2).map((s, i) => (
+        <div key={i} style={{ fontSize: 11, color: "rgba(56,248,166,0.75)", paddingLeft: 4 }}>✓ {s}</div>
+      ))}
+    </div>
+  );
+}
+
+function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClose: () => void; html: string; prompt: string; onApplyHtml?: (html: string) => void }) {
   const [states, setStates] = useState<Record<AgentId, AgentRunState>>({} as Record<AgentId, AgentRunState>);
-  const [summaries, setSummaries] = useState<Record<AgentId, string>>({} as Record<AgentId, string>);
+  const [results, setResults] = useState<Record<AgentId, AgentResult>>({} as Record<AgentId, AgentResult>);
+  const [expanded, setExpanded] = useState<Record<AgentId, boolean>>({} as Record<AgentId, boolean>);
   const hasHtml = !!html.trim();
 
   async function runAgent(id: AgentId) {
     if (!hasHtml || states[id] === "running") return;
     setStates(s => ({ ...s, [id]: "running" }));
-    setSummaries(s => ({ ...s, [id]: "" }));
     try {
       const res = await fetch("/api/io/agents/run", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ agent: id, html }),
+        body: JSON.stringify({ agent: id, html, prompt: _prompt }),
       });
       const data = await res.json();
       if (data.ok) {
         setStates(s => ({ ...s, [id]: "done" }));
-        setSummaries(s => ({ ...s, [id]: data.summary || "Completed." }));
+        setResults(s => ({ ...s, [id]: { summary: data.summary, model: data.model, provider: data.provider, data: data.result } }));
+        setExpanded(s => ({ ...s, [id]: true }));
       } else {
         setStates(s => ({ ...s, [id]: "failed" }));
-        setSummaries(s => ({ ...s, [id]: data.error || "Agent failed." }));
+        setResults(s => ({ ...s, [id]: { summary: data.error ?? "Agent failed.", model: "", provider: "", data: null } }));
       }
     } catch (e: unknown) {
       setStates(s => ({ ...s, [id]: "failed" }));
-      setSummaries(s => ({ ...s, [id]: e instanceof Error ? e.message : "Network error." }));
+      setResults(s => ({ ...s, [id]: { summary: e instanceof Error ? e.message : "Network error.", model: "", provider: "", data: null } }));
     }
   }
 
@@ -2657,24 +2753,20 @@ function AutomateModal({ onClose, html, prompt: _prompt }: { onClose: () => void
 
   return (
     <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="d8b-info-modal">
+      <div className="d8b-info-modal" style={{ maxHeight: "82vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
         <div className="d8b-modal-header">
           <div className="d8b-modal-title">⚡ Automate</div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {hasHtml && (
-              <button
-                onClick={runAll}
-                disabled={AUTOMATE_AGENTS.some(a => states[a.id] === "running")}
-                type="button"
-                style={{ fontSize: 12, padding: "4px 12px", borderRadius: 8, background: "rgba(61,240,255,0.12)", border: "1px solid rgba(61,240,255,0.30)", color: "rgba(61,240,255,0.90)", cursor: "pointer", fontWeight: 600 }}
-              >
+              <button onClick={runAll} disabled={AUTOMATE_AGENTS.some(a => states[a.id] === "running")} type="button"
+                style={{ fontSize: 12, padding: "4px 12px", borderRadius: 8, background: "rgba(61,240,255,0.12)", border: "1px solid rgba(61,240,255,0.30)", color: "rgba(61,240,255,0.90)", cursor: "pointer", fontWeight: 600 }}>
                 Run All
               </button>
             )}
             <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
           </div>
         </div>
-        <div className="d8b-modal-body">
+        <div className="d8b-modal-body" style={{ overflowY: "auto", flex: 1 }}>
           {!hasHtml && (
             <p className="d8b-modal-desc" style={{ background: "rgba(255,209,102,0.07)", border: "1px solid rgba(255,209,102,0.20)", borderRadius: 10, padding: "10px 14px", color: "rgba(255,209,102,0.90)" }}>
               Generate a site first — agents need your HTML to analyse.
@@ -2682,7 +2774,8 @@ function AutomateModal({ onClose, html, prompt: _prompt }: { onClose: () => void
           )}
           {AUTOMATE_AGENTS.map((agent) => {
             const st = states[agent.id] ?? "idle";
-            const summary = summaries[agent.id];
+            const res = results[agent.id];
+            const isExp = expanded[agent.id];
             return (
               <div key={agent.id} className="d8b-info-section d8b-info-section--agent">
                 <div className="d8b-automate-row">
@@ -2690,27 +2783,48 @@ function AutomateModal({ onClose, html, prompt: _prompt }: { onClose: () => void
                     <span className="d8b-automate-icon">{agent.icon}</span>
                     <div style={{ flex: 1 }}>
                       <div className="d8b-info-section-title d8b-info-section-title--compact">{agent.name}</div>
-                      <div className="d8b-info-section-body d8b-info-section-body--small">{agent.desc}</div>
-                      {summary && (
-                        <div style={{ marginTop: 5, fontSize: 11, lineHeight: 1.5, color: st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(56,248,166,0.90)", fontFamily: "ui-monospace,monospace" }}>
-                          {st === "failed" ? "✗ " : "✓ "}{summary}
+                      {st === "idle" && <div className="d8b-info-section-body d8b-info-section-body--small">{agent.desc}</div>}
+                      {res && (
+                        <div style={{ marginTop: 4 }}>
+                          <div style={{ fontSize: 11, lineHeight: 1.5, color: st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(56,248,166,0.90)", fontFamily: "ui-monospace,monospace" }}>
+                            {st === "failed" ? "✗ " : "✓ "}{res.summary}
+                          </div>
+                          {res.model && (
+                            <div style={{ marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.30)" }}>
+                              via {res.provider === "anthropic" ? "🟠 Claude" : "⬢ OpenAI"} · {res.model}
+                            </div>
+                          )}
+                          {st === "done" && !!res.data && (
+                            <button onClick={() => setExpanded(s => ({ ...s, [agent.id]: !isExp }))} type="button"
+                              style={{ marginTop: 4, fontSize: 10, color: "rgba(61,240,255,0.75)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                              {isExp ? "▲ Hide details" : "▼ View details"}
+                            </button>
+                          )}
+                          {isExp && !!res.data && (
+                            <AgentResultDetail
+                              id={agent.id}
+                              data={res.data}
+                              onApply={agent.id === "design-fixer" ? () => {
+                                if (typeof res.data === "string" && res.data.trim().startsWith("<")) {
+                                  onApplyHtml?.(res.data as string);
+                                  setExpanded(s => ({ ...s, [agent.id]: false }));
+                                }
+                              } : undefined}
+                            />
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => runAgent(agent.id)}
-                    disabled={!hasHtml || st === "running"}
-                    type="button"
+                  <button onClick={() => runAgent(agent.id)} disabled={!hasHtml || st === "running"} type="button"
                     style={{
-                      flexShrink: 0, fontSize: 11, padding: "4px 10px", borderRadius: 8, cursor: hasHtml && st !== "running" ? "pointer" : "not-allowed",
-                      fontWeight: 600, whiteSpace: "nowrap",
-                      background: st === "done" ? "rgba(56,248,166,0.12)" : st === "failed" ? "rgba(255,100,100,0.12)" : st === "running" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.06)",
-                      border: `1px solid ${st === "done" ? "rgba(56,248,166,0.35)" : st === "failed" ? "rgba(255,100,100,0.35)" : st === "running" ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.14)"}`,
+                      flexShrink: 0, fontSize: 11, padding: "4px 10px", borderRadius: 8,
+                      cursor: hasHtml && st !== "running" ? "pointer" : "not-allowed", fontWeight: 600, whiteSpace: "nowrap",
+                      background: st === "done" ? "rgba(56,248,166,0.12)" : st === "failed" ? "rgba(255,100,100,0.12)" : "rgba(255,255,255,0.06)",
+                      border: `1px solid ${st === "done" ? "rgba(56,248,166,0.35)" : st === "failed" ? "rgba(255,100,100,0.35)" : "rgba(255,255,255,0.14)"}`,
                       color: st === "done" ? "rgba(56,248,166,0.90)" : st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(255,255,255,0.60)",
                       opacity: !hasHtml ? 0.4 : 1,
-                    }}
-                  >
+                    }}>
                     {st === "running" ? "Running…" : st === "done" ? "✓ Done" : st === "failed" ? "↩ Retry" : "Run"}
                   </button>
                 </div>
