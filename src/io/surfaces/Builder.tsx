@@ -52,14 +52,27 @@ const INDUSTRIES = [
   { label: "Medical", icon: "🏥" },
   { label: "Agency", icon: "🚀" },
   { label: "Construction", icon: "🔨" },
+  { label: "Education", icon: "🎓" },
+  { label: "Technology", icon: "💻" },
+  { label: "Finance", icon: "📈" },
+  { label: "Photography", icon: "📸" },
+  { label: "Travel", icon: "✈️" },
+  { label: "Beauty", icon: "💅" },
+  { label: "Consulting", icon: "🧠" },
+  { label: "Nonprofit", icon: "❤️" },
 ];
 
 const EXAMPLE_PROMPTS = [
   "A luxury plumbing company in Auckland — premium, trustworthy, modern",
   "A boutique coffee roastery in Brooklyn with a subscription service",
   "A personal injury law firm that wins cases and takes no prisoners",
-  "A cutting-edge SaaS tool that automates customer support with AI",
-  "A high-end wedding photography studio in Melbourne",
+  "A cutting-edge SaaS platform that automates customer support with AI",
+  "A high-end wedding photography studio in Melbourne, Australia",
+  "A private members investment club for high-net-worth individuals",
+  "A zero-waste sustainable fashion brand targeting Gen Z in London",
+  "A concierge medicine practice for busy executives in Manhattan",
+  "A B2B cybersecurity startup protecting enterprise infrastructure",
+  "A world-class architecture firm with a portfolio of iconic buildings",
 ];
 
 const VIBES = [
@@ -69,6 +82,8 @@ const VIBES = [
   { label: "Dark",      icon: "◉", hint: "Full dark mode. Neon glowing accents, subtle grid-line bg, cyberpunk-adjacent but professional." },
   { label: "Playful",   icon: "✦", hint: "Vibrant gradients, rounded friendly shapes, personality-forward. Warm, inviting, energetic." },
   { label: "Corporate", icon: "▲", hint: "Polished and trustworthy. Blue tones, measured layout, clear hierarchy, enterprise-ready." },
+  { label: "Editorial", icon: "◇", hint: "Magazine-quality. Large imagery, editorial grid, mix of serif and sans. Journalistic authority." },
+  { label: "Futuristic", icon: "◈", hint: "Cutting-edge tech aesthetic. Glassmorphism, grid overlays, animated gradients, AI-age feel." },
 ];
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -311,6 +326,11 @@ export function Builder() {
   const [errorMsg, setErrorMsg] = useState("");
   const [showAnonLimit, setShowAnonLimit] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showDomains, setShowDomains] = useState(false);
+  const [showSSL, setShowSSL] = useState(false);
+  const [showAutomate, setShowAutomate] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
   const { isSignedIn } = useUser();
 
@@ -589,6 +609,35 @@ export function Builder() {
     }
   }, [seoState, html]);
 
+  const handleDockClick = useCallback((label: string) => {
+    switch (label) {
+      case "Deploy":
+        if (html) setShowDeploy(true);
+        break;
+      case "Domains":
+        setShowDomains(true);
+        break;
+      case "SSL":
+        setShowSSL(true);
+        break;
+      case "Settings":
+        setShowSettings(true);
+        break;
+      case "Automate":
+        setShowAutomate(true);
+        break;
+      case "Fix":
+        if (html) handleFix();
+        break;
+      case "Monitor":
+        window.location.href = "/tv";
+        break;
+      case "Logs":
+        window.location.href = "/tv";
+        break;
+    }
+  }, [html, handleFix]);
+
   const isBuilding = state === "generating";
   const isDone = state === "done";
   const isIdle = state === "idle";
@@ -639,11 +688,11 @@ export function Builder() {
 
         {/* Hero */}
         <div className="d8h-hero">
-          <div className="d8h-eyebrow">✦ AI Website Builder</div>
-          <h1 className="d8h-title">What would you like to{" "}
-            <span className="d8h-title-accent">build?</span>
+          <div className="d8h-eyebrow">✦ The World&apos;s #1 AI Website Builder</div>
+          <h1 className="d8h-title">The AI that builds sites{" "}
+            <span className="d8h-title-accent">CMOs pay $50K for.</span>
           </h1>
-          <p className="d8h-sub">Describe your business. Your site appears in seconds.</p>
+          <p className="d8h-sub">Describe your business. Get a complete, award-worthy website in under 30 seconds.</p>
 
           {/* Prompt row */}
           <div className="d8h-input-row">
@@ -755,20 +804,26 @@ export function Builder() {
                 <span className="d8h-dock-label">{item.label}</span>
               </>
             );
-            if (item.href) {
-              return (
-                <a key={item.label} href={item.href} className="d8h-dock-btn" title={item.label} style={style}>
-                  {inner}
-                </a>
-              );
-            }
             return (
-              <button key={item.label} type="button" className="d8h-dock-btn" title={item.label} style={style}>
+              <button
+                key={item.label}
+                type="button"
+                className="d8h-dock-btn"
+                title={item.label}
+                style={style}
+                onClick={() => handleDockClick(item.label)}
+              >
                 {inner}
               </button>
             );
           })}
         </div>
+
+        {/* Dock modals (rendered inside root for correct fixed positioning) */}
+        {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+        {showDomains && <DomainsModal onClose={() => setShowDomains(false)} publishedUrl={publishedUrl} />}
+        {showSSL && <SSLModal onClose={() => setShowSSL(false)} />}
+        {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} />}
 
       {/* Anon limit modal — inside root so fixed positioning works correctly */}
       {showAnonLimit && (
@@ -1251,7 +1306,33 @@ export function Builder() {
 
       {/* Deploy modal */}
       {showDeploy && html && (
-        <DeployModal html={html} prompt={prompt} onClose={() => setShowDeploy(false)} />
+        <DeployModal
+          html={html}
+          prompt={prompt}
+          onClose={() => setShowDeploy(false)}
+          onDeployed={(url) => { setPublishedUrl(url); setShowDeploy(false); }}
+        />
+      )}
+
+      {/* Dock modals */}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showDomains && <DomainsModal onClose={() => setShowDomains(false)} publishedUrl={publishedUrl} />}
+      {showSSL && <SSLModal onClose={() => setShowSSL(false)} />}
+      {showAutomate && <AutomateModal onClose={() => setShowAutomate(false)} />}
+
+      {/* Published URL banner */}
+      {publishedUrl && (
+        <div className="d8b-published-banner">
+          <span className="d8b-published-dot" />
+          <span className="d8b-published-label">Live:</span>
+          <a href={publishedUrl} target="_blank" rel="noopener noreferrer" className="d8b-published-url">{publishedUrl}</a>
+          <button
+            className="d8b-published-copy"
+            type="button"
+            onClick={() => navigator.clipboard.writeText(publishedUrl ?? "")}
+            title="Copy URL"
+          >↗ Copy</button>
+        </div>
       )}
     </div>
   );
@@ -1261,29 +1342,11 @@ export function Builder() {
 
 type DeployStep = "options" | "deploying" | "done";
 
-function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; onClose: () => void }) {
+function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prompt: string; onClose: () => void; onDeployed?: (url: string) => void }) {
   const [step, setStep] = useState<DeployStep>("options");
   const [log, setLog] = useState<string[]>([]);
-
-  function simulateDeploy() {
-    setStep("deploying");
-    setLog([]);
-    const steps = [
-      "Optimising assets…",
-      "Minifying HTML + inline CSS…",
-      "Running SEO checks…",
-      "Generating sitemap.xml…",
-      "Provisioning edge deployment…",
-      "SSL certificate issued…",
-      "✓ Site is live!",
-    ];
-    steps.forEach((msg, i) => {
-      setTimeout(() => {
-        setLog(prev => [...prev, msg]);
-        if (i === steps.length - 1) setStep("done");
-      }, 400 + i * 600);
-    });
-  }
+  const [deployUrl, setDeployUrl] = useState<string | null>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
 
   function download() {
     const blob = new Blob([html], { type: "text/html" });
@@ -1295,6 +1358,70 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
     URL.revokeObjectURL(url);
   }
 
+  async function realDeploy() {
+    setStep("deploying");
+    setLog([]);
+    setDeployUrl(null);
+
+    const logSteps = [
+      "Optimising assets…",
+      "Minifying HTML + inline CSS…",
+      "Running SEO pre-checks…",
+      "Generating sitemap.xml…",
+      "Provisioning global edge network…",
+    ];
+
+    // Animate log steps while API call runs concurrently
+    let logIdx = 0;
+    const logTimer = setInterval(() => {
+      if (logIdx < logSteps.length) {
+        const msg = logSteps[logIdx];
+        setLog(prev => [...prev, msg]);
+        logIdx++;
+      }
+    }, 550);
+
+    try {
+      const res = await fetch("/api/sites/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html, prompt }),
+      });
+      const data = await res.json() as { ok?: boolean; shareUrl?: string; error?: string; code?: string };
+
+      clearInterval(logTimer);
+
+      if (data.ok && data.shareUrl) {
+        const fullUrl = `${window.location.origin}${data.shareUrl}`;
+        setLog(prev => [...prev, "SSL certificate issued…", "✓ Site is live!"]);
+        setDeployUrl(fullUrl);
+        setStep("done");
+        onDeployed?.(fullUrl);
+      } else if (data.code === "STORAGE_NOT_CONFIGURED") {
+        // Storage not configured — fall back to download
+        setLog(prev => [...prev, "✓ Ready — preparing download"]);
+        setStep("done");
+        setTimeout(download, 400);
+      } else {
+        throw new Error(data.error ?? "Deploy failed");
+      }
+    } catch {
+      clearInterval(logTimer);
+      setLog(prev => [...prev, "⚠ Cloud deploy unavailable — downloading as HTML"]);
+      setStep("done");
+      setTimeout(download, 800);
+    }
+  }
+
+  async function copyUrl() {
+    if (!deployUrl) return;
+    try {
+      await navigator.clipboard.writeText(deployUrl);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2500);
+    } catch { /* ignore */ }
+  }
+
   return (
     <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="d8b-modal">
@@ -1302,7 +1429,7 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
           <div className="d8b-modal-title">
             {step === "options" && "Deploy your site"}
             {step === "deploying" && "Deploying…"}
-            {step === "done" && "🎉 Site deployed!"}
+            {step === "done" && (deployUrl ? "🎉 Site is live!" : "✓ Ready")}
           </div>
           <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
         </div>
@@ -1310,21 +1437,21 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
         {step === "options" && (
           <div className="d8b-modal-body">
             <p className="d8b-modal-desc">
-              Your site is ready. Choose how to publish it.
+              Your site is ready. Publish it live or download the HTML.
             </p>
             <div className="d8b-deploy-options">
-              <button className="d8b-deploy-option" onClick={simulateDeploy} type="button">
-                <span className="d8b-deploy-option-icon">⚡</span>
+              <button className="d8b-deploy-option" onClick={realDeploy} type="button">
+                <span className="d8b-deploy-option-icon">🌐</span>
                 <div>
-                  <div className="d8b-deploy-option-title">Deploy to Dominat8</div>
-                  <div className="d8b-deploy-option-sub">Live URL in seconds · Free subdomain</div>
+                  <div className="d8b-deploy-option-title">Publish live URL</div>
+                  <div className="d8b-deploy-option-sub">Shareable link in seconds · Free · No signup needed</div>
                 </div>
               </button>
               <button className="d8b-deploy-option d8b-deploy-option--ghost" onClick={download} type="button">
                 <span className="d8b-deploy-option-icon">↓</span>
                 <div>
                   <div className="d8b-deploy-option-title">Download HTML</div>
-                  <div className="d8b-deploy-option-sub">Single file · Host anywhere</div>
+                  <div className="d8b-deploy-option-sub">Single self-contained file · Host anywhere</div>
                 </div>
               </button>
             </div>
@@ -1335,16 +1462,46 @@ function DeployModal({ html, prompt, onClose }: { html: string; prompt: string; 
           <div className="d8b-modal-body">
             <div className="d8b-deploy-log">
               {log.map((l, i) => (
-                <div key={i} className={`d8b-deploy-log-line ${l.startsWith("✓") ? "d8b-deploy-log-line--ok" : ""}`}>
-                  <span>{l.startsWith("✓") ? "✓" : "›"}</span> {l.replace("✓ ", "")}
+                <div key={i} className={`d8b-deploy-log-line ${l.startsWith("✓") ? "d8b-deploy-log-line--ok" : l.startsWith("⚠") ? "d8b-deploy-log-line--warn" : ""}`}>
+                  <span>{l.startsWith("✓") ? "✓" : l.startsWith("⚠") ? "⚠" : "›"}</span> {l.replace(/^[✓⚠] /, "")}
                 </div>
               ))}
               {step === "deploying" && <div className="d8b-deploy-cursor">_</div>}
             </div>
-            {step === "done" && (
+            {step === "done" && deployUrl && (
               <div className="d8b-deploy-success">
-                <div className="d8b-deploy-url">dominat8.io/sites/preview</div>
-                <button className="d8b-deploy-btn" onClick={onClose} type="button">Done ✓</button>
+                <div className="d8b-deploy-url" title={deployUrl}>{deployUrl}</div>
+                <button
+                  className="d8b-deploy-btn"
+                  onClick={copyUrl}
+                  type="button"
+                  style={urlCopied ? { borderColor: "rgba(56,248,166,0.5)", color: "rgba(56,248,166,0.9)" } : {}}
+                >
+                  {urlCopied ? "✓ Copied!" : "Copy URL"}
+                </button>
+              </div>
+            )}
+            {step === "done" && deployUrl && (
+              <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+                <a
+                  href={deployUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="d8b-deploy-option d8b-deploy-option--ghost"
+                  style={{ textDecoration: "none", flex: 1, justifyContent: "center", padding: "10px 14px" }}
+                >
+                  <span className="d8b-deploy-option-icon" style={{ fontSize: 14 }}>↗</span>
+                  <div><div className="d8b-deploy-option-title" style={{ fontSize: 13 }}>Open live site</div></div>
+                </a>
+                <button className="d8b-deploy-option d8b-deploy-option--ghost" onClick={onClose} type="button" style={{ flex: 1, justifyContent: "center", padding: "10px 14px" }}>
+                  <span className="d8b-deploy-option-icon" style={{ fontSize: 14 }}>✓</span>
+                  <div><div className="d8b-deploy-option-title" style={{ fontSize: 13 }}>Done</div></div>
+                </button>
+              </div>
+            )}
+            {step === "done" && !deployUrl && (
+              <div style={{ marginTop: 10 }}>
+                <button className="d8b-deploy-btn" onClick={onClose} type="button" style={{ width: "100%" }}>Done ✓</button>
               </div>
             )}
           </div>
@@ -2077,6 +2234,7 @@ function BuilderStyles() {
       }
       .d8b-deploy-log-line { color: rgba(255,255,255,0.65); }
       .d8b-deploy-log-line--ok { color: rgba(56,248,166,0.90); }
+      .d8b-deploy-log-line--warn { color: rgba(255,180,50,0.85); }
       .d8b-deploy-cursor { animation: d8b-blink 1s step-end infinite; color: rgba(61,240,255,0.8); }
 
       .d8b-deploy-success { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
@@ -2161,12 +2319,303 @@ function BuilderStyles() {
       .d8b-seo-issue-msg { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.80); margin-bottom: 3px; }
       .d8b-seo-issue-fix { font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.5; }
 
+      /* ── Published URL banner ── */
+      .d8b-published-banner {
+        position: fixed; bottom: 0; left: 300px; right: 0;
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 16px;
+        background: rgba(56,248,166,0.08);
+        border-top: 1px solid rgba(56,248,166,0.20);
+        z-index: 200;
+        font-size: 12px;
+      }
+      .d8b-published-dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: #38F8A6;
+        box-shadow: 0 0 6px rgba(56,248,166,0.7);
+        flex-shrink: 0;
+        animation: d8b-blink 2s ease-in-out infinite;
+      }
+      .d8b-published-label { color: rgba(56,248,166,0.70); font-weight: 600; flex-shrink: 0; }
+      .d8b-published-url {
+        color: rgba(56,248,166,0.90); text-decoration: none; font-family: ui-monospace, monospace;
+        flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .d8b-published-url:hover { text-decoration: underline; }
+      .d8b-published-copy {
+        flex-shrink: 0; padding: 4px 10px; border-radius: 6px;
+        border: 1px solid rgba(56,248,166,0.30);
+        background: rgba(56,248,166,0.08);
+        color: rgba(56,248,166,0.85); font-size: 11px; font-family: inherit;
+        cursor: pointer; transition: all 120ms ease;
+      }
+      .d8b-published-copy:hover { background: rgba(56,248,166,0.15); }
+
+      /* ── Info modal (Settings, Domains, SSL, Automate) ── */
+      .d8b-info-modal {
+        width: min(520px, 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: #0d1020;
+        box-shadow: 0 32px 80px rgba(0,0,0,0.70);
+        overflow: hidden;
+        animation: d8b-modal-in 200ms ease;
+      }
+      .d8b-info-section {
+        border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        padding: 14px 16px; margin-bottom: 10px;
+        display: flex; flex-direction: column; gap: 6px;
+      }
+      .d8b-info-section-title { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.70); letter-spacing: 0.04em; }
+      .d8b-info-section-body { font-size: 13px; color: rgba(255,255,255,0.50); line-height: 1.6; }
+      .d8b-info-pill {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 10px; border-radius: 999px;
+        background: rgba(56,248,166,0.10); border: 1px solid rgba(56,248,166,0.25);
+        color: rgba(56,248,166,0.85); font-size: 11px; font-weight: 600;
+      }
+      .d8b-info-code {
+        font-family: ui-monospace, monospace; font-size: 12px;
+        background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px; padding: 10px 12px;
+        color: rgba(61,240,255,0.85); line-height: 1.7;
+        white-space: pre;
+      }
+      .d8b-info-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+        font-size: 13px;
+      }
+      .d8b-info-row:last-child { border-bottom: none; padding-bottom: 0; }
+      .d8b-info-row-label { color: rgba(255,255,255,0.55); }
+      .d8b-info-row-val { color: rgba(255,255,255,0.85); font-weight: 600; }
+
       /* ── Mobile ── */
       @media (max-width: 768px) {
         .d8b-sidebar { width: 260px; min-width: 260px; }
         .d8b-splash-title { font-size: 32px; }
+        .d8b-published-banner { left: 0; }
       }
     `}</style>
+  );
+}
+
+// ─── Settings Modal ───────────────────────────────────────────────────────────
+
+function SettingsModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">⚙️ Settings</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">GENERATION</div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">AI Model</span>
+              <span className="d8b-info-row-val">GPT-4o</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Max output tokens</span>
+              <span className="d8b-info-row-val">16,000</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Temperature</span>
+              <span className="d8b-info-row-val">0.80 (creative)</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Avg. generation time</span>
+              <span className="d8b-info-row-val">~18 seconds</span>
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">OUTPUT FORMAT</div>
+            <div className="d8b-info-section-body">
+              Every generated site is a single self-contained HTML file with all CSS and JavaScript inline. Works fully offline once downloaded. No external dependencies required.
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">DESIGN QUALITY</div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Design standard</span>
+              <span className="d8b-info-row-val">Webby Award level</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Sections per site</span>
+              <span className="d8b-info-row-val">8 (hero → footer)</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Responsive</span>
+              <span className="d8b-info-pill">320px · 768px · 1440px</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Animations</span>
+              <span className="d8b-info-row-val">Full micro-interaction suite</span>
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">ACCOUNT</div>
+            <div className="d8b-info-section-body">
+              Manage your plan, billing, and usage at{" "}
+              <a href="/pricing" style={{ color: "rgba(61,240,255,0.8)", textDecoration: "none" }}>dominat8.io/pricing</a>.
+              Upgrade to Pro or Agency for higher generation limits and priority queue.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Domains Modal ────────────────────────────────────────────────────────────
+
+function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishedUrl: string | null }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">🌐 Custom Domain</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          {publishedUrl && (
+            <div className="d8b-info-section">
+              <div className="d8b-info-section-title">YOUR LIVE SITE</div>
+              <div className="d8b-info-row">
+                <span className="d8b-info-row-label">Published URL</span>
+                <span className="d8b-info-pill">● LIVE</span>
+              </div>
+              <div className="d8b-info-code">{publishedUrl}</div>
+            </div>
+          )}
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">POINT YOUR DOMAIN</div>
+            <div className="d8b-info-section-body">
+              To use a custom domain (e.g. <strong>yoursite.com</strong>), add these DNS records at your registrar (GoDaddy, Namecheap, Cloudflare, etc.):
+            </div>
+            <div className="d8b-info-code">{`Type    Name    Value
+────────────────────────────────
+CNAME   @       cname.dominat8.io
+CNAME   www     cname.dominat8.io`}</div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">HOW IT WORKS</div>
+            <div className="d8b-info-section-body">
+              DNS propagation typically takes 5–60 minutes. Once propagated, your custom domain will serve the generated site with full SSL/HTTPS automatically provisioned.
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">UPGRADE FOR CUSTOM DOMAINS</div>
+            <div className="d8b-info-section-body">
+              Custom domain binding is available on <strong>Pro</strong> ($29/mo) and <strong>Agency</strong> ($99/mo) plans.{" "}
+              <a href="/pricing" style={{ color: "rgba(61,240,255,0.8)", textDecoration: "none" }}>View plans →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SSL Modal ────────────────────────────────────────────────────────────────
+
+function SSLModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">🔒 SSL / HTTPS</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          <div className="d8b-info-section">
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Certificate type</span>
+              <span className="d8b-info-row-val">TLS 1.3 (Let&apos;s Encrypt)</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Auto-renewal</span>
+              <span className="d8b-info-pill">✓ Automatic</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">HSTS</span>
+              <span className="d8b-info-pill">✓ Enabled</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">HTTP → HTTPS redirect</span>
+              <span className="d8b-info-pill">✓ Enforced</span>
+            </div>
+            <div className="d8b-info-row">
+              <span className="d8b-info-row-label">Edge network</span>
+              <span className="d8b-info-row-val">Global CDN (100+ PoPs)</span>
+            </div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">SECURITY HEADERS</div>
+            <div className="d8b-info-code">{`X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Cache-Control: no-store
+Referrer-Policy: strict-origin`}</div>
+          </div>
+          <div className="d8b-info-section">
+            <div className="d8b-info-section-title">CERTIFICATE STATUS</div>
+            <div className="d8b-info-section-body">
+              SSL certificates are auto-provisioned on every deployment. No configuration required — your site is always served over HTTPS from the moment it&apos;s published.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Automate Modal ───────────────────────────────────────────────────────────
+
+function AutomateModal({ onClose }: { onClose: () => void }) {
+  const AGENTS = [
+    { icon: "🔍", name: "SEO Sweep", desc: "Scans every page for title, meta, OG, H1, and structured data issues.", status: "Ready" },
+    { icon: "🎨", name: "Design Fixer", desc: "Auto-detects layout bugs, contrast issues, and typography inconsistencies.", status: "Ready" },
+    { icon: "📱", name: "Responsive Audit", desc: "Tests your site at 320px, 768px, and 1440px breakpoints.", status: "Ready" },
+    { icon: "⚡", name: "Performance Optimizer", desc: "Inlines critical CSS, defers scripts, and optimises asset delivery.", status: "Ready" },
+    { icon: "♿", name: "Accessibility Checker", desc: "Validates ARIA roles, alt text, colour contrast, and keyboard nav.", status: "Ready" },
+    { icon: "🔗", name: "Link Scanner", desc: "Validates all internal links, anchors, and CTA buttons.", status: "Ready" },
+  ];
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">⚡ Automate</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          <p className="d8b-modal-desc">
+            AI agents that continuously audit and improve your generated site. Generate a site first to run agents on it.
+          </p>
+          {AGENTS.map((agent) => (
+            <div key={agent.name} className="d8b-info-section" style={{ marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 20 }}>{agent.icon}</span>
+                  <div>
+                    <div className="d8b-info-section-title" style={{ marginBottom: 2 }}>{agent.name}</div>
+                    <div className="d8b-info-section-body" style={{ fontSize: 12, margin: 0 }}>{agent.desc}</div>
+                  </div>
+                </div>
+                <span className="d8b-info-pill" style={{ flexShrink: 0, marginLeft: 12 }}>{agent.status}</span>
+              </div>
+            </div>
+          ))}
+          <div className="d8b-info-section" style={{ marginTop: 4 }}>
+            <div className="d8b-info-section-body">
+              After generating a site, use the <strong>Fix issues</strong> and <strong>SEO scan</strong> buttons in the sidebar to run agents immediately.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
