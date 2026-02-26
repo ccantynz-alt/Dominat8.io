@@ -714,12 +714,12 @@ export function Builder() {
                 aria-label="Voice input"
                 onClick={() => {
                   if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const SR = (window as any).webkitSpeechRecognition;
-                    const recognition = new SR();
+                    type SpeechResult = { results: { 0: { transcript: string } }[] };
+                    type SR = { lang: string; onresult: ((e: SpeechResult) => void) | null; start: () => void };
+                    const Ctor = (window as unknown as { webkitSpeechRecognition: new () => SR }).webkitSpeechRecognition;
+                    const recognition = new Ctor();
                     recognition.lang = "en-US";
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    recognition.onresult = (ev: any) => {
+                    recognition.onresult = (ev) => {
                       setPrompt(ev.results[0][0].transcript);
                     };
                     recognition.start();
