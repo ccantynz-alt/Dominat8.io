@@ -2715,11 +2715,55 @@ function AgentResultDetail({ id, data, onApply }: { id: AgentId; data: unknown; 
   );
 }
 
+interface CreditInfo {
+  admin: boolean;
+  balance: { plan: string; monthlyAllowance: number; monthlyUsed: number; monthlyRemaining: number; purchased: number; total: number };
+  costs: Record<AgentId, number>;
+  access: AgentId[];
+  packs: { id: string; credits: number; priceInCents: number; label: string; tag: string }[];
+}
+
 function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClose: () => void; html: string; prompt: string; onApplyHtml?: (html: string) => void }) {
   const [states, setStates] = useState<Record<AgentId, AgentRunState>>({} as Record<AgentId, AgentRunState>);
   const [results, setResults] = useState<Record<AgentId, AgentResult>>({} as Record<AgentId, AgentResult>);
   const [expanded, setExpanded] = useState<Record<AgentId, boolean>>({} as Record<AgentId, boolean>);
+  const [creditInfo, setCreditInfo] = useState<CreditInfo | null>(null);
+  const [showBuy, setShowBuy] = useState(false);
+  const [buyingPack, setBuyingPack] = useState<string | null>(null);
   const hasHtml = !!html.trim();
+
+  useEffect(() => {
+    fetch("/api/io/agents/credits")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.balance) setCreditInfo(d as CreditInfo); })
+      .catch(() => {});
+  }, []);
+
+  function updateBalance(b: CreditInfo["balance"] | null | undefined) {
+    if (b) setCreditInfo(ci => ci ? { ...ci, balance: b } : ci);
+  }
+
+  function agentAccess(id: AgentId) {
+    if (!creditInfo) return { canRun: true, locked: false, tooExpensive: false };
+    if (creditInfo.admin) return { canRun: true, locked: false, tooExpensive: false };
+    const accessible = creditInfo.access.includes(id);
+    const cost = creditInfo.costs[id] ?? 1;
+    const affordable = creditInfo.balance.total >= cost;
+    return { canRun: accessible && affordable, locked: !accessible, tooExpensive: accessible && !affordable };
+  }
+
+  async function buyCredits(packId: string) {
+    setBuyingPack(packId);
+    try {
+      const res = await fetch("/api/stripe/credits", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ packId }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } finally { setBuyingPack(null); }
+  }
 
   async function runAgent(id: AgentId) {
     if (!hasHtml || states[id] === "running") return;
@@ -2735,9 +2779,14 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
         setStates(s => ({ ...s, [id]: "done" }));
         setResults(s => ({ ...s, [id]: { summary: data.summary, model: data.model, provider: data.provider, data: data.result } }));
         setExpanded(s => ({ ...s, [id]: true }));
+        updateBalance(data.balance);
       } else {
         setStates(s => ({ ...s, [id]: "failed" }));
-        setResults(s => ({ ...s, [id]: { summary: data.error ?? "Agent failed.", model: "", provider: "", data: null } }));
+        const errMsg = data.code === "NO_ACCESS" ? `🔒 ${data.error}`
+          : data.code === "INSUFFICIENT_CREDITS" ? `⚡ ${data.error}`
+          : (data.error ?? "Agent failed.");
+        setResults(s => ({ ...s, [id]: { summary: errMsg, model: "", provider: "", data: null } }));
+        updateBalance(data.balance);
       }
     } catch (e: unknown) {
       setStates(s => ({ ...s, [id]: "failed" }));
@@ -2747,25 +2796,82 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
 
   async function runAll() {
     for (const ag of AUTOMATE_AGENTS) {
-      if (states[ag.id] !== "running") runAgent(ag.id);
+      const { canRun } = agentAccess(ag.id);
+      if (canRun && states[ag.id] !== "running") runAgent(ag.id);
     }
   }
 
+  const totalCredits = creditInfo?.balance.total ?? null;
+  const planLabel = creditInfo?.admin ? "Admin" : creditInfo?.balance.plan ?? null;
+
   return (
     <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="d8b-info-modal" style={{ maxHeight: "82vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        <div className="d8b-modal-header">
-          <div className="d8b-modal-title">⚡ Automate</div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {hasHtml && (
-              <button onClick={runAll} disabled={AUTOMATE_AGENTS.some(a => states[a.id] === "running")} type="button"
-                style={{ fontSize: 12, padding: "4px 12px", borderRadius: 8, background: "rgba(61,240,255,0.12)", border: "1px solid rgba(61,240,255,0.30)", color: "rgba(61,240,255,0.90)", cursor: "pointer", fontWeight: 600 }}>
-                Run All
-              </button>
-            )}
-            <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+      <div className="d8b-info-modal" style={{ maxHeight: "88vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+
+        {/* ── Header ── */}
+        <div className="d8b-modal-header" style={{ flexDirection: "column", gap: 10, alignItems: "stretch" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div className="d8b-modal-title">⚡ Automate</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {hasHtml && (
+                <button onClick={runAll} disabled={AUTOMATE_AGENTS.some(a => states[a.id] === "running")} type="button"
+                  style={{ fontSize: 12, padding: "4px 12px", borderRadius: 8, background: "rgba(61,240,255,0.12)", border: "1px solid rgba(61,240,255,0.30)", color: "rgba(61,240,255,0.90)", cursor: "pointer", fontWeight: 600 }}>
+                  Run All
+                </button>
+              )}
+              <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+            </div>
           </div>
+
+          {/* Credit balance bar */}
+          {creditInfo && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, padding: "7px 12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 11 }}>
+                  <span style={{ color: "rgba(255,255,255,0.40)" }}>Plan </span>
+                  <span style={{ color: "rgba(255,255,255,0.85)", fontWeight: 600, textTransform: "capitalize" }}>{planLabel}</span>
+                </div>
+                {!creditInfo.admin && (
+                  <div style={{ fontSize: 11 }}>
+                    <span style={{ color: "rgba(255,255,255,0.40)" }}>Credits </span>
+                    <span style={{ fontWeight: 700, fontFamily: "ui-monospace,monospace", color: totalCredits! > 5 ? "rgba(56,248,166,0.90)" : totalCredits! > 0 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)" }}>
+                      {totalCredits}
+                    </span>
+                    {(creditInfo.balance.purchased ?? 0) > 0 && (
+                      <span style={{ color: "rgba(255,255,255,0.28)", fontSize: 10 }}>
+                        {" "}({creditInfo.balance.monthlyRemaining} mo + {creditInfo.balance.purchased} bought)
+                      </span>
+                    )}
+                  </div>
+                )}
+                {creditInfo.admin && <span style={{ fontSize: 10, color: "rgba(61,240,255,0.75)", fontWeight: 700, letterSpacing: "0.05em" }}>∞ ADMIN</span>}
+              </div>
+              {!creditInfo.admin && (
+                <button onClick={() => setShowBuy(b => !b)} type="button"
+                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: 7, background: showBuy ? "rgba(61,240,255,0.12)" : "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.70)", cursor: "pointer", fontWeight: 600 }}>
+                  {showBuy ? "▲ Hide" : "+ Buy credits"}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Credit packs */}
+          {showBuy && creditInfo?.packs && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+              {creditInfo.packs.map(pack => (
+                <button key={pack.id} onClick={() => buyCredits(pack.id)} disabled={!!buyingPack} type="button"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 6px", cursor: buyingPack ? "wait" : "pointer", textAlign: "center" as const }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "rgba(255,255,255,0.92)" }}>{pack.credits}</div>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>credits</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(61,240,255,0.85)", marginTop: 4 }}>${(pack.priceInCents / 100).toFixed(2)}</div>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", marginTop: 2, textTransform: "capitalize" as const }}>{pack.tag}</div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* ── Agent list ── */}
         <div className="d8b-modal-body" style={{ overflowY: "auto", flex: 1 }}>
           {!hasHtml && (
             <p className="d8b-modal-desc" style={{ background: "rgba(255,209,102,0.07)", border: "1px solid rgba(255,209,102,0.20)", borderRadius: 10, padding: "10px 14px", color: "rgba(255,209,102,0.90)" }}>
@@ -2776,21 +2882,38 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
             const st = states[agent.id] ?? "idle";
             const res = results[agent.id];
             const isExp = expanded[agent.id];
+            const { locked, tooExpensive, canRun } = agentAccess(agent.id);
+            const cost = creditInfo?.costs[agent.id] ?? null;
+
             return (
-              <div key={agent.id} className="d8b-info-section d8b-info-section--agent">
+              <div key={agent.id} className="d8b-info-section d8b-info-section--agent" style={{ opacity: locked ? 0.65 : 1 }}>
                 <div className="d8b-automate-row">
                   <div className="d8b-automate-row-main">
-                    <span className="d8b-automate-icon">{agent.icon}</span>
+                    <span className="d8b-automate-icon">{locked ? "🔒" : agent.icon}</span>
                     <div style={{ flex: 1 }}>
-                      <div className="d8b-info-section-title d8b-info-section-title--compact">{agent.name}</div>
-                      {st === "idle" && <div className="d8b-info-section-body d8b-info-section-body--small">{agent.desc}</div>}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const }}>
+                        <div className="d8b-info-section-title d8b-info-section-title--compact">{agent.name}</div>
+                        {cost !== null && !creditInfo?.admin && (
+                          <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.30)", background: "rgba(255,255,255,0.06)", borderRadius: 4, padding: "1px 5px" }}>
+                            {cost} cr
+                          </span>
+                        )}
+                        {locked && (
+                          <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,180,0,0.80)", background: "rgba(255,180,0,0.08)", borderRadius: 4, padding: "1px 6px" }}>
+                            {agent.id === "design-fixer" ? "Pro+" : "Starter+"}
+                          </span>
+                        )}
+                      </div>
+                      {st === "idle" && !locked && <div className="d8b-info-section-body d8b-info-section-body--small">{agent.desc}</div>}
+                      {locked && <div style={{ fontSize: 11, color: "rgba(255,180,0,0.60)", marginTop: 2 }}>Upgrade your plan to unlock this agent.</div>}
+                      {tooExpensive && st === "idle" && <div style={{ fontSize: 11, color: "rgba(255,100,100,0.70)", marginTop: 2 }}>Not enough credits — buy more to run this agent.</div>}
                       {res && (
                         <div style={{ marginTop: 4 }}>
                           <div style={{ fontSize: 11, lineHeight: 1.5, color: st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(56,248,166,0.90)", fontFamily: "ui-monospace,monospace" }}>
-                            {st === "failed" ? "✗ " : "✓ "}{res.summary}
+                            {st !== "failed" && "✓ "}{res.summary}
                           </div>
                           {res.model && (
-                            <div style={{ marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.30)" }}>
+                            <div style={{ marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.28)" }}>
                               via {res.provider === "anthropic" ? "🟠 Claude" : "⬢ OpenAI"} · {res.model}
                             </div>
                           )}
@@ -2816,16 +2939,19 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
                       )}
                     </div>
                   </div>
-                  <button onClick={() => runAgent(agent.id)} disabled={!hasHtml || st === "running"} type="button"
+                  <button
+                    onClick={() => locked || tooExpensive ? setShowBuy(true) : runAgent(agent.id)}
+                    disabled={st === "running" || (!hasHtml && !locked && !tooExpensive)}
+                    type="button"
                     style={{
-                      flexShrink: 0, fontSize: 11, padding: "4px 10px", borderRadius: 8,
-                      cursor: hasHtml && st !== "running" ? "pointer" : "not-allowed", fontWeight: 600, whiteSpace: "nowrap",
-                      background: st === "done" ? "rgba(56,248,166,0.12)" : st === "failed" ? "rgba(255,100,100,0.12)" : "rgba(255,255,255,0.06)",
-                      border: `1px solid ${st === "done" ? "rgba(56,248,166,0.35)" : st === "failed" ? "rgba(255,100,100,0.35)" : "rgba(255,255,255,0.14)"}`,
-                      color: st === "done" ? "rgba(56,248,166,0.90)" : st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(255,255,255,0.60)",
-                      opacity: !hasHtml ? 0.4 : 1,
+                      flexShrink: 0, fontSize: 11, padding: "4px 10px", borderRadius: 8, fontWeight: 600, whiteSpace: "nowrap" as const,
+                      cursor: st === "running" ? "not-allowed" : "pointer",
+                      background: locked || tooExpensive ? "rgba(255,180,0,0.10)" : st === "done" ? "rgba(56,248,166,0.12)" : st === "failed" ? "rgba(255,100,100,0.12)" : "rgba(255,255,255,0.06)",
+                      border: `1px solid ${locked || tooExpensive ? "rgba(255,180,0,0.30)" : st === "done" ? "rgba(56,248,166,0.35)" : st === "failed" ? "rgba(255,100,100,0.35)" : "rgba(255,255,255,0.14)"}`,
+                      color: locked || tooExpensive ? "rgba(255,180,0,0.85)" : st === "done" ? "rgba(56,248,166,0.90)" : st === "failed" ? "rgba(255,100,100,0.85)" : canRun ? "rgba(255,255,255,0.70)" : "rgba(255,255,255,0.40)",
+                      opacity: !hasHtml && !locked && !tooExpensive ? 0.4 : 1,
                     }}>
-                    {st === "running" ? "Running…" : st === "done" ? "✓ Done" : st === "failed" ? "↩ Retry" : "Run"}
+                    {st === "running" ? "Running…" : locked ? "Upgrade" : tooExpensive ? "Buy credits" : st === "done" ? "✓ Done" : st === "failed" ? "↩ Retry" : "Run"}
                   </button>
                 </div>
               </div>
