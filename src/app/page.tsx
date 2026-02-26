@@ -203,6 +203,7 @@ export default function LandingPage() {
           <a href="#loop" className="ln-nav-link">The Loop</a>
           <a href="#agents" className="ln-nav-link">Agents</a>
           <Link href="/pricing" className="ln-nav-link">Pricing</Link>
+          <Link href="/video" className="ln-nav-link">🎵 Video</Link>
           <Link href="/build" className="ln-nav-cta">Launch builder →</Link>
         </div>
       </nav>
