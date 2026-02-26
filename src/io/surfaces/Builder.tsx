@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 
 // ─── Anonymous usage tracking (localStorage, 3 free generations) ──────────────
@@ -333,6 +333,7 @@ export function Builder() {
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
   const { isSignedIn } = useUser();
+  const router = useRouter();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -631,13 +632,13 @@ export function Builder() {
         if (html) handleFix();
         break;
       case "Monitor":
-        window.location.href = "/tv";
+        router.push("/tv");
         break;
       case "Logs":
-        window.location.href = "/tv";
+        router.push("/tv");
         break;
     }
-  }, [html, handleFix]);
+  }, [html, handleFix, router]);
 
   const isBuilding = state === "generating";
   const isDone = state === "done";
