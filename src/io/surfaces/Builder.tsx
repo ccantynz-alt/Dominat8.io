@@ -1368,6 +1368,15 @@ function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prom
   const [log, setLog] = useState<string[]>([]);
   const [deployUrl, setDeployUrl] = useState<string | null>(null);
   const [urlCopied, setUrlCopied] = useState(false);
+  const downloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (downloadTimeoutRef.current !== null) {
+        clearTimeout(downloadTimeoutRef.current);
+      }
+    };
+  }, []);
 
   function download() {
     const blob = new Blob([html], { type: "text/html" });
@@ -1422,7 +1431,8 @@ function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prom
         // Storage not configured — fall back to download
         setLog(prev => [...prev, "✓ Ready — preparing download"]);
         setStep("done");
-        setTimeout(download, 400);
+        clearTimeout(downloadTimeoutRef.current ?? undefined);
+        downloadTimeoutRef.current = setTimeout(download, 400);
       } else {
         throw new Error(data.error ?? "Deploy failed");
       }
@@ -1430,7 +1440,8 @@ function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prom
       clearInterval(logTimer);
       setLog(prev => [...prev, "⚠ Cloud deploy unavailable — downloading as HTML"]);
       setStep("done");
-      setTimeout(download, 800);
+      clearTimeout(downloadTimeoutRef.current ?? undefined);
+      downloadTimeoutRef.current = setTimeout(download, 800);
     }
   }
 
