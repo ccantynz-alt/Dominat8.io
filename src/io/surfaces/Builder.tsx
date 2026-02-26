@@ -715,7 +715,7 @@ export function Builder() {
               aria-label="Voice input"
               onClick={() => {
                 if (typeof window === "undefined" || !("webkitSpeechRecognition" in window)) return;
-                type SpeechResult = { results: { 0: { 0: { transcript: string } } }[] };
+                type SpeechResult = { results: { 0: { transcript: string } }[] };
                 type SR = { lang: string; onresult: ((e: SpeechResult) => void) | null; start: () => void };
                 const Ctor = (window as unknown as { webkitSpeechRecognition: new () => SR }).webkitSpeechRecognition;
                 const r = new Ctor();
