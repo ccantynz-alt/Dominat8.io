@@ -705,6 +705,7 @@ export function Builder() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
+            />
             {typeof window !== "undefined" && "webkitSpeechRecognition" in window && (
               <button
                 className="d8h-mic-btn"
