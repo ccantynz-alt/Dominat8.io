@@ -358,8 +358,7 @@ export default function LandingPage() {
                 <span className="ln-code-dot" style={{ background: "#28CA41" }} />
                 <span className="ln-code-filename">HeroSection.tsx</span>
               </div>
-              <div className="ln-code-body">
-{`<span class="c-purple">import</span> <span class="c-white">React</span> <span class="c-purple">from</span> <span class="c-green">'react'</span>
+              <div className="ln-code-body" dangerouslySetInnerHTML={{ __html: `<span class="c-purple">import</span> <span class="c-white">React</span> <span class="c-purple">from</span> <span class="c-green">'react'</span>
 
 <span class="c-purple">interface</span> <span class="c-cyan">HeroProps</span> <span class="c-white">{</span>
   <span class="c-cyan">headline</span><span class="c-white">:</span> <span class="c-purple">string</span>
@@ -379,8 +378,7 @@ export default function LandingPage() {
       <span class="c-gray">&lt;/</span><span class="c-cyan">a</span><span class="c-gray">&gt;</span>
     <span class="c-gray">&lt;/</span><span class="c-cyan">section</span><span class="c-gray">&gt;</span>
   <span class="c-white">)</span>
-<span class="c-white">}</span>`}
-              </div>
+<span class="c-white">}</span>` }} />
             </div>
           </div>
         </div>
