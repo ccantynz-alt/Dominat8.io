@@ -1,13 +1,13 @@
-/* ===== ROCKET_COCKPIT_IO_v2_GLASS : IO TOKENS — BRIGHT GLASS EDITION ===== */
+/* ===== ROCKET_COCKPIT_IO_v2_GLASS : IO TOKENS — OBSIDIAN VIOLET EDITION ===== */
 :root{
   color-scheme: dark;
 
-  --io-bg0:#03040A;
-  --io-bg1:#060812;
+  --io-bg0:#08080c;
+  --io-bg1:#08080c;
 
-  --io-ink:rgba(255,255,255,0.97);
-  --io-muted:rgba(255,255,255,0.72);
-  --io-muted2:rgba(255,255,255,0.52);
+  --io-ink:#c8c8d4;
+  --io-muted:rgba(200,200,212,0.72);
+  --io-muted2:rgba(200,200,212,0.52);
 
   /* Glass panels — more opaque for the "glass" look */
   --io-panel:rgba(255,255,255,0.10);
@@ -18,20 +18,20 @@
   --io-stroke:rgba(255,255,255,0.20);
   --io-stroke2:rgba(255,255,255,0.30);
 
-  /* Brand colors — more vivid */
-  --io-electric:#8B6FFF;
-  --io-cyan:#3DF0FF;
-  --io-hot:#FF4D6D;
-  --io-warn:#FFD166;
-  --io-ok:#38F8A6;
+  /* Brand colors — Obsidian Violet */
+  --io-electric:#5046E4;
+  --io-cyan:#7C5AFF;
+  --io-hot:#FF6B8A;
+  --io-warn:#E8B44F;
+  --io-ok:#34D399;
 
   --io-r:20px;
   --io-r-sm:14px;
   --io-shadow:
     0 24px 90px rgba(0,0,0,0.65),
     0 4px 20px rgba(0,0,0,0.35);
-  --io-glow-violet: 0 0 32px rgba(139,111,255,0.35);
-  --io-glow-cyan:   0 0 28px rgba(61,240,255,0.28);
+  --io-glow-violet: 0 0 32px rgba(80,70,228,0.35);
+  --io-glow-cyan:   0 0 28px rgba(124,90,255,0.28);
   --io-blur: 22px;
   --io-blur-sm: 12px;
 }

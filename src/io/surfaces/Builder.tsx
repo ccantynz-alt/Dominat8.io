@@ -166,7 +166,7 @@ function SocialProof() {
     return () => clearInterval(id);
   }, []);
 
-  const AVATAR_COLORS = ["#7C5CFF", "#38F8A6", "#FF4D6D", "#3DF0FF", "#FFD166", "#C09A5C"];
+  const AVATAR_COLORS = ["#7C5AFF", "#34D399", "#FF6B8A", "#7C5AFF", "#E8B44F", "#C49B52"];
 
   return (
     <div className="d8h-social-proof">
@@ -272,7 +272,7 @@ function useDeployments() {
 
 const DOCK_ITEMS = [
   { label: "Deploy",    color: "#4A90E2", bg: "rgba(74,144,226,0.18)", icon: "🚀", href: null },
-  { label: "Domains",  color: "#C09A5C", bg: "rgba(192,154,92,0.18)",  icon: "🌐", href: "/io" },
+  { label: "Domains",  color: "#C49B52", bg: "rgba(196,155,82,0.18)",  icon: "🌐", href: "/io" },
   { label: "SSL",      color: "#9B7FD4", bg: "rgba(155,127,212,0.18)", icon: "🔒", href: null },
   { label: "Monitor",  color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "📊", href: "/tv" },
   { label: "Logs",     color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "💬", href: "/tv" },
@@ -303,14 +303,14 @@ function saveSites(sites: Site[]) {
 
 function pillStyle(pill: string): { color: string; bg: string; border: string } {
   if (pill === "OK" || pill === "LIVE")
-    return { color: "rgba(56,248,166,0.95)", bg: "rgba(56,248,166,0.12)", border: "rgba(56,248,166,0.30)" };
+    return { color: "rgba(52,211,153,0.95)", bg: "rgba(52,211,153,0.12)", border: "rgba(52,211,153,0.30)" };
   if (pill === "TODO" || pill === "PENDING")
-    return { color: "rgba(255,209,102,0.95)", bg: "rgba(255,209,102,0.12)", border: "rgba(255,209,102,0.30)" };
+    return { color: "rgba(232,180,79,0.95)", bg: "rgba(232,180,79,0.12)", border: "rgba(232,180,79,0.30)" };
   return { color: "rgba(255,255,255,0.60)", bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.14)" };
 }
 
 function barColor(progress: number, status: string): string {
-  if (status === "LIVE" || status === "OK") return "linear-gradient(90deg,#38F8A6,#29E09A)";
+  if (status === "LIVE" || status === "OK") return "linear-gradient(90deg,#34D399,#2BC48A)";
   if (status === "DEPLOYING" || (progress > 60 && progress < 90)) return "linear-gradient(90deg,#F0924A,#E07A38)";
   return "linear-gradient(90deg,#4A90E2,#6AABF0)";
 }
@@ -1133,11 +1133,11 @@ export function Builder() {
                 {seoState === "done" && seoData && (
                   <>
                     <div className="d8b-seo-score-row">
-                      <span className="d8b-seo-score" style={{ color: seoData.score >= 80 ? "rgba(56,248,166,0.9)" : seoData.score >= 60 ? "rgba(255,209,102,0.9)" : "rgba(255,100,100,0.85)" }}>
+                      <span className="d8b-seo-score" style={{ color: seoData.score >= 80 ? "rgba(52,211,153,0.9)" : seoData.score >= 60 ? "rgba(232,180,79,0.9)" : "rgba(255,100,100,0.85)" }}>
                         {seoData.score}
                       </span>
                       <div>
-                        <div className="d8b-seo-grade" style={{ color: seoData.score >= 80 ? "rgba(56,248,166,0.75)" : seoData.score >= 60 ? "rgba(255,209,102,0.75)" : "rgba(255,100,100,0.75)" }}>
+                        <div className="d8b-seo-grade" style={{ color: seoData.score >= 80 ? "rgba(52,211,153,0.75)" : seoData.score >= 60 ? "rgba(232,180,79,0.75)" : "rgba(255,100,100,0.75)" }}>
                           Grade {seoData.grade}
                         </div>
                         <div className="d8b-seo-summary">{seoData.summary}</div>
@@ -1321,7 +1321,7 @@ export function Builder() {
                       onClick={handleShare}
                       type="button"
                       title="Copy shareable link"
-                      style={shareState === "copied" ? { color: "#38F8A6", borderColor: "rgba(56,248,166,0.30)" } : shareState === "error" ? { color: "#FF4D6D" } : {}}
+                      style={shareState === "copied" ? { color: "#34D399", borderColor: "rgba(52,211,153,0.30)" } : shareState === "error" ? { color: "#FF6B8A" } : {}}
                     >
                       {shareState === "sharing" ? "⏳ Sharing…" : shareState === "copied" ? "✓ Link copied!" : shareState === "error" ? "✕ Share failed" : "↗ Share"}
                     </button>
@@ -1761,9 +1761,9 @@ function BuilderStyles() {
       }
       .d8b-chip:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.85); }
       .d8b-chip--active {
-        border-color: rgba(61,240,255,0.5);
-        background: rgba(61,240,255,0.08);
-        color: rgba(61,240,255,0.9);
+        border-color: rgba(124,90,255,0.5);
+        background: rgba(124,90,255,0.08);
+        color: rgba(124,90,255,0.9);
       }
       .d8b-chip:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -1802,9 +1802,9 @@ function BuilderStyles() {
         width: 100%;
         padding: 13px;
         border-radius: 12px;
-        border: 1px solid rgba(61,240,255,0.4);
-        background: linear-gradient(180deg, rgba(61,240,255,0.15), rgba(61,240,255,0.06));
-        color: rgba(61,240,255,0.95);
+        border: 1px solid rgba(124,90,255,0.4);
+        background: linear-gradient(180deg, rgba(124,90,255,0.15), rgba(124,90,255,0.06));
+        color: rgba(124,90,255,0.95);
         font-size: 15px;
         font-weight: 600;
         font-family: inherit;
@@ -1817,8 +1817,8 @@ function BuilderStyles() {
         letter-spacing: -0.01em;
       }
       .d8b-generate-btn:hover:not(:disabled) {
-        background: linear-gradient(180deg, rgba(61,240,255,0.22), rgba(61,240,255,0.10));
-        border-color: rgba(61,240,255,0.6);
+        background: linear-gradient(180deg, rgba(124,90,255,0.22), rgba(124,90,255,0.10));
+        border-color: rgba(124,90,255,0.6);
         transform: translateY(-1px);
       }
       .d8b-generate-btn:disabled {
@@ -1925,13 +1925,13 @@ function BuilderStyles() {
         align-items: center;
         justify-content: center;
         background:
-          radial-gradient(800px 600px at 50% 30%, rgba(61,240,255,0.03), transparent 60%),
+          radial-gradient(800px 600px at 50% 30%, rgba(124,90,255,0.03), transparent 60%),
           #07090f;
       }
       .d8b-splash { text-align: center; max-width: 520px; padding: 0 24px; }
       .d8b-splash-mark {
         font-size: 48px;
-        color: rgba(61,240,255,0.3);
+        color: rgba(124,90,255,0.3);
         display: block;
         margin-bottom: 16px;
         animation: d8b-pulse 3s ease-in-out infinite;
@@ -1990,7 +1990,7 @@ function BuilderStyles() {
       .d8b-gen-track { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 4; }
       .d8b-gen-arc {
         fill: none;
-        stroke: rgba(61,240,255,0.8);
+        stroke: rgba(124,90,255,0.8);
         stroke-width: 4;
         stroke-linecap: round;
         transition: stroke-dashoffset 300ms ease;
@@ -2003,7 +2003,7 @@ function BuilderStyles() {
         justify-content: center;
         font-size: 14px;
         font-weight: 700;
-        color: rgba(61,240,255,0.9);
+        color: rgba(124,90,255,0.9);
       }
       .d8b-gen-label { font-size: 18px; font-weight: 600; color: #fff; }
       .d8b-gen-sub { font-size: 13px; color: rgba(255,255,255,0.4); }
@@ -2030,14 +2030,14 @@ function BuilderStyles() {
         transition: all 200ms ease;
       }
       .d8b-gen-stage-pill--active {
-        border-color: rgba(61,240,255,0.30);
-        background: rgba(61,240,255,0.07);
-        color: rgba(61,240,255,0.85);
+        border-color: rgba(124,90,255,0.30);
+        background: rgba(124,90,255,0.07);
+        color: rgba(124,90,255,0.85);
       }
       .d8b-gen-stage-pill--done {
-        color: rgba(56,248,166,0.55);
-        border-color: rgba(56,248,166,0.15);
-        background: rgba(56,248,166,0.04);
+        color: rgba(52,211,153,0.55);
+        border-color: rgba(52,211,153,0.15);
+        background: rgba(52,211,153,0.04);
       }
       .d8b-gen-stage-check {
         font-size: 10px;
@@ -2111,7 +2111,7 @@ function BuilderStyles() {
       }
       .d8b-error-upgrade-btn {
         padding: 12px 24px; border-radius: 10px;
-        background: linear-gradient(135deg, #00C97A, #00B36B);
+        background: linear-gradient(135deg, #7C5AFF, #6347FF);
         color: #fff; font-size: 14px; font-weight: 700;
         text-decoration: none; cursor: pointer;
         transition: all 140ms ease;
@@ -2233,9 +2233,9 @@ function BuilderStyles() {
       .d8b-deploy-btn {
         padding: 7px 14px;
         border-radius: 8px;
-        border: 1px solid rgba(61,240,255,0.4);
-        background: linear-gradient(180deg, rgba(61,240,255,0.15), rgba(61,240,255,0.06));
-        color: rgba(61,240,255,0.9);
+        border: 1px solid rgba(124,90,255,0.4);
+        background: linear-gradient(180deg, rgba(124,90,255,0.15), rgba(124,90,255,0.06));
+        color: rgba(124,90,255,0.9);
         font-size: 12px;
         font-weight: 600;
         font-family: inherit;
@@ -2243,8 +2243,8 @@ function BuilderStyles() {
         transition: all 120ms ease;
       }
       .d8b-deploy-btn:hover:not(:disabled) {
-        border-color: rgba(61,240,255,0.6);
-        background: linear-gradient(180deg, rgba(61,240,255,0.22), rgba(61,240,255,0.10));
+        border-color: rgba(124,90,255,0.6);
+        background: linear-gradient(180deg, rgba(124,90,255,0.22), rgba(124,90,255,0.10));
       }
       .d8b-deploy-btn:disabled {
         opacity: 0.4;
@@ -2302,7 +2302,7 @@ function BuilderStyles() {
       }
       .d8b-progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, rgba(61,240,255,0.6), rgba(61,240,255,1));
+        background: linear-gradient(90deg, rgba(124,90,255,0.6), rgba(124,90,255,1));
         transition: width 300ms ease;
         border-radius: 0 2px 2px 0;
       }
@@ -2380,13 +2380,13 @@ function BuilderStyles() {
       .d8b-deploy-option {
         display: flex; align-items: center; gap: 14px;
         padding: 14px 16px; border-radius: 14px;
-        border: 1px solid rgba(61,240,255,0.30);
-        background: rgba(61,240,255,0.06);
+        border: 1px solid rgba(124,90,255,0.30);
+        background: rgba(124,90,255,0.06);
         color: rgba(255,255,255,0.90);
         text-align: left; cursor: pointer; font-family: inherit;
         transition: all 140ms ease;
       }
-      .d8b-deploy-option:hover { border-color: rgba(61,240,255,0.55); background: rgba(61,240,255,0.10); }
+      .d8b-deploy-option:hover { border-color: rgba(124,90,255,0.55); background: rgba(124,90,255,0.10); }
       .d8b-deploy-option--ghost { border-color: rgba(255,255,255,0.10); background: rgba(255,255,255,0.03); }
       .d8b-deploy-option--ghost:hover { border-color: rgba(255,255,255,0.20); background: rgba(255,255,255,0.06); }
       .d8b-deploy-option-icon { font-size: 20px; flex-shrink: 0; }
@@ -2402,15 +2402,15 @@ function BuilderStyles() {
         display: flex; flex-direction: column; gap: 2px;
       }
       .d8b-deploy-log-line { color: rgba(255,255,255,0.65); }
-      .d8b-deploy-log-line--ok { color: rgba(56,248,166,0.90); }
+      .d8b-deploy-log-line--ok { color: rgba(52,211,153,0.90); }
       .d8b-deploy-log-line--warn { color: rgba(255,180,50,0.85); }
-      .d8b-deploy-cursor { animation: d8b-blink 1s step-end infinite; color: rgba(61,240,255,0.8); }
+      .d8b-deploy-cursor { animation: d8b-blink 1s step-end infinite; color: rgba(124,90,255,0.8); }
 
       .d8b-deploy-success { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
       .d8b-deploy-url {
         flex: 1; padding: 10px 14px; border-radius: 10px;
-        background: rgba(56,248,166,0.08); border: 1px solid rgba(56,248,166,0.25);
-        font-size: 13px; font-family: ui-monospace, monospace; color: rgba(56,248,166,0.90);
+        background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.25);
+        font-size: 13px; font-family: ui-monospace, monospace; color: rgba(52,211,153,0.90);
       }
 
       /* ── Refine ── */
@@ -2427,24 +2427,24 @@ function BuilderStyles() {
       }
       .d8b-refine-toggle:hover { color: rgba(255,255,255,0.80); border-color: rgba(255,255,255,0.18); }
       .d8b-refine-toggle--active {
-        border-color: rgba(61,240,255,0.35);
-        background: rgba(61,240,255,0.06);
-        color: rgba(61,240,255,0.85);
+        border-color: rgba(124,90,255,0.35);
+        background: rgba(124,90,255,0.06);
+        color: rgba(124,90,255,0.85);
       }
       .d8b-refine-arrow { font-size: 10px; opacity: 0.6; }
       .d8b-refine-panel { display: flex; flex-direction: column; gap: 8px; }
       .d8b-refine-btn {
         width: 100%; padding: 10px;
         border-radius: 10px;
-        border: 1px solid rgba(61,240,255,0.35);
-        background: linear-gradient(180deg, rgba(61,240,255,0.10), rgba(61,240,255,0.04));
-        color: rgba(61,240,255,0.90);
+        border: 1px solid rgba(124,90,255,0.35);
+        background: linear-gradient(180deg, rgba(124,90,255,0.10), rgba(124,90,255,0.04));
+        color: rgba(124,90,255,0.90);
         font-size: 13px; font-weight: 600; font-family: inherit;
         cursor: pointer; transition: all 120ms ease;
       }
       .d8b-refine-btn:hover:not(:disabled) {
-        border-color: rgba(61,240,255,0.55);
-        background: linear-gradient(180deg, rgba(61,240,255,0.16), rgba(61,240,255,0.08));
+        border-color: rgba(124,90,255,0.55);
+        background: linear-gradient(180deg, rgba(124,90,255,0.16), rgba(124,90,255,0.08));
       }
       .d8b-refine-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
@@ -2460,7 +2460,7 @@ function BuilderStyles() {
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
       .d8b-agent-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.18); }
-      .d8b-agent-btn--active { border-color: rgba(61,240,255,0.35); background: rgba(61,240,255,0.06); color: rgba(61,240,255,0.85); }
+      .d8b-agent-btn--active { border-color: rgba(124,90,255,0.35); background: rgba(124,90,255,0.06); color: rgba(124,90,255,0.85); }
       .d8b-agent-btn--loading { opacity: 0.6; cursor: not-allowed; }
       .d8b-agent-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -2476,7 +2476,7 @@ function BuilderStyles() {
       .d8b-seo-grade { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 3px; }
       .d8b-seo-summary { font-size: 11px; color: rgba(255,255,255,0.50); line-height: 1.5; }
       .d8b-seo-strengths { display: flex; flex-direction: column; gap: 4px; }
-      .d8b-seo-strength { font-size: 11px; color: rgba(56,248,166,0.75); line-height: 1.5; }
+      .d8b-seo-strength { font-size: 11px; color: rgba(52,211,153,0.75); line-height: 1.5; }
       .d8b-seo-issues { display: flex; flex-direction: column; gap: 8px; }
       .d8b-seo-issue {
         padding: 8px 10px; border-radius: 8px;
@@ -2484,7 +2484,7 @@ function BuilderStyles() {
       }
       .d8b-seo-issue--critical { border-left-color: rgba(255,80,80,0.70); background: rgba(255,80,80,0.05); }
       .d8b-seo-issue--warning  { border-left-color: rgba(255,180,50,0.70); background: rgba(255,180,50,0.05); }
-      .d8b-seo-issue--info     { border-left-color: rgba(61,240,255,0.40); background: rgba(61,240,255,0.04); }
+      .d8b-seo-issue--info     { border-left-color: rgba(124,90,255,0.40); background: rgba(124,90,255,0.04); }
       .d8b-seo-issue-msg { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.80); margin-bottom: 3px; }
       .d8b-seo-issue-fix { font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.5; }
 
@@ -2493,32 +2493,32 @@ function BuilderStyles() {
         position: fixed; bottom: 0; left: 300px; right: 0;
         display: flex; align-items: center; gap: 8px;
         padding: 8px 16px;
-        background: rgba(56,248,166,0.08);
-        border-top: 1px solid rgba(56,248,166,0.20);
+        background: rgba(52,211,153,0.08);
+        border-top: 1px solid rgba(52,211,153,0.20);
         z-index: 200;
         font-size: 12px;
       }
       .d8b-published-dot {
         width: 7px; height: 7px; border-radius: 50%;
-        background: #38F8A6;
-        box-shadow: 0 0 6px rgba(56,248,166,0.7);
+        background: #34D399;
+        box-shadow: 0 0 6px rgba(52,211,153,0.7);
         flex-shrink: 0;
         animation: d8b-blink 2s ease-in-out infinite;
       }
-      .d8b-published-label { color: rgba(56,248,166,0.70); font-weight: 600; flex-shrink: 0; }
+      .d8b-published-label { color: rgba(52,211,153,0.70); font-weight: 600; flex-shrink: 0; }
       .d8b-published-url {
-        color: rgba(56,248,166,0.90); text-decoration: none; font-family: ui-monospace, monospace;
+        color: rgba(52,211,153,0.90); text-decoration: none; font-family: ui-monospace, monospace;
         flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       }
       .d8b-published-url:hover { text-decoration: underline; }
       .d8b-published-copy {
         flex-shrink: 0; padding: 4px 10px; border-radius: 6px;
-        border: 1px solid rgba(56,248,166,0.30);
-        background: rgba(56,248,166,0.08);
-        color: rgba(56,248,166,0.85); font-size: 11px; font-family: inherit;
+        border: 1px solid rgba(52,211,153,0.30);
+        background: rgba(52,211,153,0.08);
+        color: rgba(52,211,153,0.85); font-size: 11px; font-family: inherit;
         cursor: pointer; transition: all 120ms ease;
       }
-      .d8b-published-copy:hover { background: rgba(56,248,166,0.15); }
+      .d8b-published-copy:hover { background: rgba(52,211,153,0.15); }
 
       /* ── Info modal (Settings, Domains, SSL, Automate) ── */
       .d8b-info-modal {
@@ -2541,14 +2541,14 @@ function BuilderStyles() {
       .d8b-info-pill {
         display: inline-flex; align-items: center; gap: 5px;
         padding: 3px 10px; border-radius: 999px;
-        background: rgba(56,248,166,0.10); border: 1px solid rgba(56,248,166,0.25);
-        color: rgba(56,248,166,0.85); font-size: 11px; font-weight: 600;
+        background: rgba(52,211,153,0.10); border: 1px solid rgba(52,211,153,0.25);
+        color: rgba(52,211,153,0.85); font-size: 11px; font-weight: 600;
       }
       .d8b-info-code {
         font-family: ui-monospace, monospace; font-size: 12px;
         background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);
         border-radius: 8px; padding: 10px 12px;
-        color: rgba(61,240,255,0.85); line-height: 1.7;
+        color: rgba(124,90,255,0.85); line-height: 1.7;
         white-space: pre;
       }
       .d8b-info-row {
@@ -2629,7 +2629,7 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
             <div className="d8b-info-section-title">ACCOUNT</div>
             <div className="d8b-info-section-body">
               Manage your plan, billing, and usage at{" "}
-              <a href="/pricing" style={{ color: "rgba(61,240,255,0.8)", textDecoration: "none" }}>dominat8.io/pricing</a>.
+              <a href="/pricing" style={{ color: "rgba(124,90,255,0.8)", textDecoration: "none" }}>dominat8.io/pricing</a>.
               Upgrade to Pro or Agency for higher generation limits and priority queue.
             </div>
           </div>
@@ -2680,7 +2680,7 @@ CNAME   www     cname.dominat8.io`}</div>
             <div className="d8b-info-section-title">UPGRADE FOR CUSTOM DOMAINS</div>
             <div className="d8b-info-section-body">
               Custom domain binding is available on <strong>Pro</strong> ($29/mo) and <strong>Agency</strong> ($99/mo) plans.{" "}
-              <a href="/pricing" style={{ color: "rgba(61,240,255,0.8)", textDecoration: "none" }}>View plans →</a>
+              <a href="/pricing" style={{ color: "rgba(124,90,255,0.8)", textDecoration: "none" }}>View plans →</a>
             </div>
           </div>
         </div>
@@ -2768,7 +2768,7 @@ function AgentResultDetail({ id, data, onApply }: { id: AgentId; data: unknown; 
   if (id === "design-fixer") {
     return (
       <div style={{ marginTop: 8 }}>
-        <button onClick={onApply} type="button" style={{ fontSize: 11, padding: "5px 14px", borderRadius: 8, background: "linear-gradient(135deg,#00C97A,#00B36B)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}>
+        <button onClick={onApply} type="button" style={{ fontSize: 11, padding: "5px 14px", borderRadius: 8, background: "linear-gradient(135deg,#7C5AFF,#6347FF)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}>
           ✓ Apply to preview
         </button>
       </div>
@@ -2782,7 +2782,7 @@ function AgentResultDetail({ id, data, onApply }: { id: AgentId; data: unknown; 
   return (
     <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
       {score !== undefined && (
-        <div style={{ fontSize: 11, color: score >= 70 ? "rgba(56,248,166,0.90)" : score >= 50 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)", fontWeight: 700, fontFamily: "ui-monospace,monospace" }}>
+        <div style={{ fontSize: 11, color: score >= 70 ? "rgba(52,211,153,0.90)" : score >= 50 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)", fontWeight: 700, fontFamily: "ui-monospace,monospace" }}>
           Score: {score}/100{grade ? ` (${grade})` : ""}
         </div>
       )}
@@ -2797,7 +2797,7 @@ function AgentResultDetail({ id, data, onApply }: { id: AgentId; data: unknown; 
       })}
       {issues.length > 5 && <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", paddingLeft: 2 }}>+{issues.length - 5} more issues</div>}
       {strengths && strengths.slice(0, 2).map((s, i) => (
-        <div key={i} style={{ fontSize: 11, color: "rgba(56,248,166,0.75)", paddingLeft: 4 }}>✓ {s}</div>
+        <div key={i} style={{ fontSize: 11, color: "rgba(52,211,153,0.75)", paddingLeft: 4 }}>✓ {s}</div>
       ))}
     </div>
   );
@@ -2903,7 +2903,7 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {hasHtml && (
                 <button onClick={runAll} disabled={AUTOMATE_AGENTS.some(a => states[a.id] === "running")} type="button"
-                  style={{ fontSize: 12, padding: "4px 12px", borderRadius: 8, background: "rgba(61,240,255,0.12)", border: "1px solid rgba(61,240,255,0.30)", color: "rgba(61,240,255,0.90)", cursor: "pointer", fontWeight: 600 }}>
+                  style={{ fontSize: 12, padding: "4px 12px", borderRadius: 8, background: "rgba(124,90,255,0.12)", border: "1px solid rgba(124,90,255,0.30)", color: "rgba(124,90,255,0.90)", cursor: "pointer", fontWeight: 600 }}>
                   Run All
                 </button>
               )}
@@ -2922,7 +2922,7 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
                 {!creditInfo.admin && (
                   <div style={{ fontSize: 11 }}>
                     <span style={{ color: "rgba(255,255,255,0.40)" }}>Credits </span>
-                    <span style={{ fontWeight: 700, fontFamily: "ui-monospace,monospace", color: totalCredits! > 5 ? "rgba(56,248,166,0.90)" : totalCredits! > 0 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)" }}>
+                    <span style={{ fontWeight: 700, fontFamily: "ui-monospace,monospace", color: totalCredits! > 5 ? "rgba(52,211,153,0.90)" : totalCredits! > 0 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)" }}>
                       {totalCredits}
                     </span>
                     {(creditInfo.balance.purchased ?? 0) > 0 && (
@@ -2932,11 +2932,11 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
                     )}
                   </div>
                 )}
-                {creditInfo.admin && <span style={{ fontSize: 10, color: "rgba(61,240,255,0.75)", fontWeight: 700, letterSpacing: "0.05em" }}>∞ ADMIN</span>}
+                {creditInfo.admin && <span style={{ fontSize: 10, color: "rgba(124,90,255,0.75)", fontWeight: 700, letterSpacing: "0.05em" }}>∞ ADMIN</span>}
               </div>
               {!creditInfo.admin && (
                 <button onClick={() => setShowBuy(b => !b)} type="button"
-                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: 7, background: showBuy ? "rgba(61,240,255,0.12)" : "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.70)", cursor: "pointer", fontWeight: 600 }}>
+                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: 7, background: showBuy ? "rgba(124,90,255,0.12)" : "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.70)", cursor: "pointer", fontWeight: 600 }}>
                   {showBuy ? "▲ Hide" : "+ Buy credits"}
                 </button>
               )}
@@ -2951,7 +2951,7 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 6px", cursor: buyingPack ? "wait" : "pointer", textAlign: "center" as const }}>
                   <div style={{ fontSize: 18, fontWeight: 800, color: "rgba(255,255,255,0.92)" }}>{pack.credits}</div>
                   <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>credits</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(61,240,255,0.85)", marginTop: 4 }}>${(pack.priceInCents / 100).toFixed(2)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(124,90,255,0.85)", marginTop: 4 }}>${(pack.priceInCents / 100).toFixed(2)}</div>
                   <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", marginTop: 2, textTransform: "capitalize" as const }}>{pack.tag}</div>
                 </button>
               ))}
@@ -2962,7 +2962,7 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
         {/* ── Agent list ── */}
         <div className="d8b-modal-body" style={{ overflowY: "auto", flex: 1 }}>
           {!hasHtml && (
-            <p className="d8b-modal-desc" style={{ background: "rgba(255,209,102,0.07)", border: "1px solid rgba(255,209,102,0.20)", borderRadius: 10, padding: "10px 14px", color: "rgba(255,209,102,0.90)" }}>
+            <p className="d8b-modal-desc" style={{ background: "rgba(232,180,79,0.07)", border: "1px solid rgba(232,180,79,0.20)", borderRadius: 10, padding: "10px 14px", color: "rgba(232,180,79,0.90)" }}>
               Generate a site first — agents need your HTML to analyse.
             </p>
           )}
@@ -2997,7 +2997,7 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
                       {tooExpensive && st === "idle" && <div style={{ fontSize: 11, color: "rgba(255,100,100,0.70)", marginTop: 2 }}>Not enough credits — buy more to run this agent.</div>}
                       {res && (
                         <div style={{ marginTop: 4 }}>
-                          <div style={{ fontSize: 11, lineHeight: 1.5, color: st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(56,248,166,0.90)", fontFamily: "ui-monospace,monospace" }}>
+                          <div style={{ fontSize: 11, lineHeight: 1.5, color: st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(52,211,153,0.90)", fontFamily: "ui-monospace,monospace" }}>
                             {st !== "failed" && "✓ "}{res.summary}
                           </div>
                           {res.model && (
@@ -3007,7 +3007,7 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
                           )}
                           {st === "done" && !!res.data && (
                             <button onClick={() => setExpanded(s => ({ ...s, [agent.id]: !isExp }))} type="button"
-                              style={{ marginTop: 4, fontSize: 10, color: "rgba(61,240,255,0.75)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                              style={{ marginTop: 4, fontSize: 10, color: "rgba(124,90,255,0.75)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                               {isExp ? "▲ Hide details" : "▼ View details"}
                             </button>
                           )}
@@ -3034,9 +3034,9 @@ function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClos
                     style={{
                       flexShrink: 0, fontSize: 11, padding: "4px 10px", borderRadius: 8, fontWeight: 600, whiteSpace: "nowrap" as const,
                       cursor: st === "running" ? "not-allowed" : "pointer",
-                      background: locked || tooExpensive ? "rgba(255,180,0,0.10)" : st === "done" ? "rgba(56,248,166,0.12)" : st === "failed" ? "rgba(255,100,100,0.12)" : "rgba(255,255,255,0.06)",
-                      border: `1px solid ${locked || tooExpensive ? "rgba(255,180,0,0.30)" : st === "done" ? "rgba(56,248,166,0.35)" : st === "failed" ? "rgba(255,100,100,0.35)" : "rgba(255,255,255,0.14)"}`,
-                      color: locked || tooExpensive ? "rgba(255,180,0,0.85)" : st === "done" ? "rgba(56,248,166,0.90)" : st === "failed" ? "rgba(255,100,100,0.85)" : canRun ? "rgba(255,255,255,0.70)" : "rgba(255,255,255,0.40)",
+                      background: locked || tooExpensive ? "rgba(255,180,0,0.10)" : st === "done" ? "rgba(52,211,153,0.12)" : st === "failed" ? "rgba(255,100,100,0.12)" : "rgba(255,255,255,0.06)",
+                      border: `1px solid ${locked || tooExpensive ? "rgba(255,180,0,0.30)" : st === "done" ? "rgba(52,211,153,0.35)" : st === "failed" ? "rgba(255,100,100,0.35)" : "rgba(255,255,255,0.14)"}`,
+                      color: locked || tooExpensive ? "rgba(255,180,0,0.85)" : st === "done" ? "rgba(52,211,153,0.90)" : st === "failed" ? "rgba(255,100,100,0.85)" : canRun ? "rgba(255,255,255,0.70)" : "rgba(255,255,255,0.40)",
                       opacity: !hasHtml && !locked && !tooExpensive ? 0.4 : 1,
                     }}>
                     {st === "running" ? "Running…" : locked ? "Upgrade" : tooExpensive ? "Buy credits" : st === "done" ? "✓ Done" : st === "failed" ? "↩ Retry" : "Run"}
@@ -3059,8 +3059,8 @@ function HomeStyles() {
       .d8h-root {
         min-height: 100vh;
         width: 100%;
-        background: #06080e;
-        color: #e9eef7;
+        background: #08080c;
+        color: #c8c8d4;
         font-family: 'Outfit', 'Inter', system-ui, sans-serif;
         display: flex;
         flex-direction: column;
@@ -3092,7 +3092,7 @@ function HomeStyles() {
         width: 800px; height: 600px;
         top: -200px; left: -150px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(61,240,255,0.055) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(124,90,255,0.055) 0%, transparent 70%);
         animation: d8h-drift-a 22s ease-in-out infinite;
       }
       .d8h-bg-b {
@@ -3100,7 +3100,7 @@ function HomeStyles() {
         width: 700px; height: 500px;
         top: 100px; right: -200px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(0,201,122,0.045) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(124,90,255,0.045) 0%, transparent 70%);
         animation: d8h-drift-b 28s ease-in-out infinite;
       }
       .d8h-bg-c {
@@ -3126,18 +3126,18 @@ function HomeStyles() {
       .d8h-payment-banner {
         display: flex; align-items: center; justify-content: center; gap: 10px;
         padding: 11px 20px;
-        background: rgba(56,248,166,0.10);
-        border-bottom: 1px solid rgba(56,248,166,0.25);
-        font-size: 13px; color: rgba(56,248,166,0.90);
+        background: rgba(52,211,153,0.10);
+        border-bottom: 1px solid rgba(52,211,153,0.25);
+        font-size: 13px; color: rgba(52,211,153,0.90);
         position: relative;
       }
       .d8h-payment-dismiss {
         position: absolute; right: 14px;
         background: none; border: none; cursor: pointer;
-        color: rgba(56,248,166,0.60); font-size: 14px; line-height: 1;
+        color: rgba(52,211,153,0.60); font-size: 14px; line-height: 1;
         padding: 0; font-family: inherit;
       }
-      .d8h-payment-dismiss:hover { color: rgba(56,248,166,0.90); }
+      .d8h-payment-dismiss:hover { color: rgba(52,211,153,0.90); }
 
       /* ── Header ── */
       .d8h-header {
@@ -3147,7 +3147,7 @@ function HomeStyles() {
         padding: 16px 28px;
         border-bottom: 1px solid rgba(255,255,255,0.06);
         position: sticky; top: 0; z-index: 50;
-        background: rgba(6,8,14,0.75);
+        background: rgba(8,8,12,0.75);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
       }
@@ -3158,13 +3158,13 @@ function HomeStyles() {
       }
       .d8h-logo-dot {
         width: 5px; height: 5px; border-radius: 50%;
-        background: rgba(61,240,255,0.8);
-        box-shadow: 0 0 6px rgba(61,240,255,0.5);
+        background: rgba(124,90,255,0.8);
+        box-shadow: 0 0 6px rgba(124,90,255,0.5);
         animation: d8h-dot-pulse 3s ease-in-out infinite;
       }
       @keyframes d8h-dot-pulse {
-        0%, 100% { opacity: 0.75; box-shadow: 0 0 4px rgba(61,240,255,0.4); }
-        50% { opacity: 1; box-shadow: 0 0 10px rgba(61,240,255,0.75); }
+        0%, 100% { opacity: 0.75; box-shadow: 0 0 4px rgba(124,90,255,0.4); }
+        50% { opacity: 1; box-shadow: 0 0 10px rgba(124,90,255,0.75); }
       }
       .d8h-logo-text {
         font-size: 13px; font-weight: 500;
@@ -3174,15 +3174,15 @@ function HomeStyles() {
       .d8h-nav-signin {
         padding: 7px 14px;
         border-radius: 999px;
-        border: 1px solid rgba(0,201,122,0.35);
-        background: rgba(0,201,122,0.10);
+        border: 1px solid rgba(124,90,255,0.35);
+        background: rgba(124,90,255,0.10);
         color: rgba(0,220,140,0.90);
         font-size: 12px; font-weight: 600; font-family: inherit;
         cursor: pointer; transition: all 140ms ease;
       }
       .d8h-nav-signin:hover {
-        background: rgba(0,201,122,0.18);
-        border-color: rgba(0,201,122,0.55);
+        background: rgba(124,90,255,0.18);
+        border-color: rgba(124,90,255,0.55);
       }
       .d8h-nav-link {
         padding: 6px 14px;
@@ -3208,17 +3208,17 @@ function HomeStyles() {
       .d8h-eyebrow {
         display: inline-flex; align-items: center; gap: 8px;
         padding: 6px 18px; border-radius: 999px;
-        border: 1px solid rgba(61,240,255,0.22);
-        background: rgba(61,240,255,0.05);
-        color: rgba(61,240,255,0.75);
+        border: 1px solid rgba(124,90,255,0.22);
+        background: rgba(124,90,255,0.05);
+        color: rgba(124,90,255,0.75);
         font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
         text-transform: uppercase;
-        box-shadow: 0 0 24px rgba(61,240,255,0.06);
+        box-shadow: 0 0 24px rgba(124,90,255,0.06);
       }
       .d8h-eyebrow-dot {
         width: 6px; height: 6px; border-radius: 50%;
-        background: rgba(61,240,255,0.80);
-        box-shadow: 0 0 8px rgba(61,240,255,0.60);
+        background: rgba(124,90,255,0.80);
+        box-shadow: 0 0 8px rgba(124,90,255,0.60);
         flex-shrink: 0;
         animation: d8h-dot-pulse 2.5s ease-in-out infinite;
       }
@@ -3232,7 +3232,7 @@ function HomeStyles() {
         line-height: 1.04;
       }
       .d8h-title-accent {
-        background: linear-gradient(95deg, #3DF0FF 0%, #38F8A6 55%, #00D47A 100%);
+        background: linear-gradient(95deg, #7C5AFF 0%, #34D399 55%, #2BC48A 100%);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -3261,8 +3261,8 @@ function HomeStyles() {
         transition: border-color 140ms ease;
       }
       .d8h-input-row:focus-within {
-        border-color: rgba(61,240,255,0.30);
-        box-shadow: 0 0 0 3px rgba(61,240,255,0.07), 0 6px 24px rgba(0,0,0,0.35);
+        border-color: rgba(124,90,255,0.30);
+        box-shadow: 0 0 0 3px rgba(124,90,255,0.07), 0 6px 24px rgba(0,0,0,0.35);
       }
       .d8h-input-icon { font-size: 18px; flex-shrink: 0; }
       .d8h-input {
@@ -3282,7 +3282,7 @@ function HomeStyles() {
         padding: 11px 22px;
         border-radius: 11px;
         border: none;
-        background: linear-gradient(135deg, #00C97A, #00B36B);
+        background: linear-gradient(135deg, #7C5AFF, #6347FF);
         color: #fff;
         font-size: 13px;
         font-weight: 700;
@@ -3290,11 +3290,11 @@ function HomeStyles() {
         letter-spacing: 0.06em;
         cursor: pointer;
         transition: all 140ms ease;
-        box-shadow: 0 2px 12px rgba(0,201,122,0.35);
+        box-shadow: 0 2px 12px rgba(124,90,255,0.35);
       }
       .d8h-gen-btn:hover:not(:disabled) {
         background: linear-gradient(135deg, #00DD88, #00C47A);
-        box-shadow: 0 4px 18px rgba(0,201,122,0.50);
+        box-shadow: 0 4px 18px rgba(124,90,255,0.50);
         transform: translateY(-1px);
       }
       .d8h-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
@@ -3331,9 +3331,9 @@ function HomeStyles() {
       }
       .d8h-chip:hover { border-color: rgba(255,255,255,0.20); color: rgba(255,255,255,0.80); }
       .d8h-chip--active {
-        border-color: rgba(61,240,255,0.45);
-        background: rgba(61,240,255,0.08);
-        color: rgba(61,240,255,0.90);
+        border-color: rgba(124,90,255,0.45);
+        background: rgba(124,90,255,0.08);
+        color: rgba(124,90,255,0.90);
       }
 
       /* ── Social proof ── */
@@ -3346,7 +3346,7 @@ function HomeStyles() {
       .d8h-avatars { display: flex; align-items: center; }
       .d8h-avatar {
         width: 22px; height: 22px; border-radius: 50%;
-        border: 2px solid #06080e;
+        border: 2px solid #08080c;
         display: inline-block; flex-shrink: 0;
       }
       .d8h-sp-count {
@@ -3385,7 +3385,7 @@ function HomeStyles() {
       }
       .d8h-live-dot {
         width: 6px; height: 6px; border-radius: 50%;
-        background: #38F8A6;
+        background: #34D399;
         animation: d8h-blink 2s ease-in-out infinite;
       }
       @keyframes d8h-blink { 0%,100%{opacity:1;} 50%{opacity:0.35;} }

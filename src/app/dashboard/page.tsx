@@ -137,15 +137,15 @@ function DashboardInner() {
     <>
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #060810; color: #e9eef7; font-family: 'Outfit', 'Inter', system-ui, sans-serif; }
-        .db-root { min-height: 100vh; background: #060810; }
-        .db-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(24px); background: rgba(6,8,16,0.82); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 56px; }
+        body { background: #08080c; color: #c8c8d4; font-family: 'Outfit', 'Inter', system-ui, sans-serif; }
+        .db-root { min-height: 100vh; background: #08080c; }
+        .db-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(24px); background: rgba(8,8,12,0.82); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 56px; }
         .db-logo { font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.03em; }
         .db-nav-links { display: flex; gap: 8px; align-items: center; }
         .db-nav-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 500; text-decoration: none; cursor: pointer; font-family: inherit; transition: all 120ms; }
         .db-nav-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
-        .db-nav-btn--primary { background: rgba(61,240,255,0.12); border-color: rgba(61,240,255,0.35); color: rgba(61,240,255,0.95); }
-        .db-nav-btn--primary:hover { background: rgba(61,240,255,0.22); }
+        .db-nav-btn--primary { background: rgba(124,90,255,0.12); border-color: rgba(124,90,255,0.35); color: rgba(124,90,255,0.95); }
+        .db-nav-btn--primary:hover { background: rgba(124,90,255,0.22); }
         .db-main { max-width: 960px; margin: 0 auto; padding: 88px 24px 80px; }
         .db-page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 32px; }
         .db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
@@ -167,11 +167,11 @@ function DashboardInner() {
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ── Banner ── */
-        .db-banner { border-radius: 14px; border: 1px solid rgba(56,248,166,0.30); background: rgba(56,248,166,0.08); padding: 18px 22px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px; animation: slideIn 300ms ease; }
+        .db-banner { border-radius: 14px; border: 1px solid rgba(52,211,153,0.30); background: rgba(52,211,153,0.08); padding: 18px 22px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px; animation: slideIn 300ms ease; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
         .db-banner-icon { font-size: 24px; flex-shrink: 0; }
         .db-banner-body { flex: 1; }
-        .db-banner-title { font-size: 15px; font-weight: 700; color: rgba(56,248,166,0.95); margin-bottom: 3px; }
+        .db-banner-title { font-size: 15px; font-weight: 700; color: rgba(52,211,153,0.95); margin-bottom: 3px; }
         .db-banner-sub { font-size: 13px; color: rgba(255,255,255,0.55); }
         .db-banner-close { background: none; border: none; color: rgba(255,255,255,0.30); font-size: 18px; cursor: pointer; padding: 4px; line-height: 1; }
         .db-banner-close:hover { color: rgba(255,255,255,0.60); }
