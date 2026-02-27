@@ -7,7 +7,7 @@ const EXAMPLES = [
   { prompt: "A cutting-edge SaaS tool that automates customer support with AI", industry: "SaaS", grad: "linear-gradient(135deg,#050814,#0a1030,#061224)", accent: "#7C5AFF" },
   { prompt: "A high-end wedding photography studio in Melbourne", industry: "Portfolio", grad: "linear-gradient(135deg,#140808,#2a1010,#1a0c0c)", accent: "#FF6B8A" },
   { prompt: "A fitness studio in Manhattan specialising in reformer Pilates", industry: "Fitness", grad: "linear-gradient(135deg,#080808,#141414,#101010)", accent: "#34D399" },
-  { prompt: "An artisan bakery in Paris offering bespoke wedding cakes", industry: "Restaurant", grad: "linear-gradient(135deg,#1a1008,#2d1e0a,#1a1208)", accent: "#FFD166" },
+  { prompt: "An artisan bakery in Paris offering bespoke wedding cakes", industry: "Restaurant", grad: "linear-gradient(135deg,#1a1008,#2d1e0a,#1a1208)", accent: "#E8B44F" },
   { prompt: "A luxury real estate agency on the Gold Coast of Australia", industry: "Real Estate", grad: "linear-gradient(135deg,#0a0a08,#1a1808,#141200)", accent: "#C9A84C" },
   { prompt: "A telemedicine platform connecting patients with specialists", industry: "Medical", grad: "linear-gradient(135deg,#040d14,#081a26,#061018)", accent: "#38C9A4" },
   { prompt: "A sustainable architecture firm specialising in net-zero residential builds", industry: "Construction", grad: "linear-gradient(135deg,#081408,#102210,#0a1a0a)", accent: "#76E87A" },
