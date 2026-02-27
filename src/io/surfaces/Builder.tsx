@@ -680,6 +680,9 @@ export function Builder() {
       case "Logs":
         window.location.href = "/tv";
         break;
+      case "Integrate":
+        window.location.href = "/io";
+        break;
     }
   }, [html, handleFix]);
 
