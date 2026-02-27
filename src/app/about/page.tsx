@@ -1,5 +1,6 @@
 import { SiteNav } from "@/components/shared/SiteNav";
 import { SiteFooter } from "@/components/shared/SiteFooter";
+import Link from "next/link";
 
 export const metadata = {
   title: "About — Dominat8.io",
@@ -14,165 +15,173 @@ const STATS = [
 ];
 
 const VALUES = [
-  {
-    icon: "⚡",
-    title: "Speed without compromise",
-    body: "We believe building a website shouldn't take weeks. Every architectural decision we make is in service of one goal: getting your vision live faster than anyone thought possible.",
-  },
-  {
-    icon: "✦",
-    title: "Quality as the default",
-    body: "Fast doesn't mean cheap. Our AI is trained on the world's best-designed sites. The output isn't a rough draft — it's something you'd actually be proud to show a client.",
-  },
-  {
-    icon: "🌐",
-    title: "Democratising design",
-    body: "Before AI, a premium website cost $10,000–$50,000. We're making that out of reach. A solo founder in Lagos should have the same competitive edge online as a Silicon Valley startup.",
-  },
-  {
-    icon: "🔒",
-    title: "Radical transparency",
-    body: "We don't lock you in. Every site you build is yours — download the HTML, host it anywhere, no strings attached. We earn your loyalty by being genuinely useful.",
-  },
+  { icon: "⚡", title: "Speed without compromise", body: "Building a website shouldn't take weeks. Every architectural decision we make is in service of one goal: getting your vision live faster than anyone thought possible." },
+  { icon: "✦", title: "Quality as the default", body: "Fast doesn't mean cheap. Our AI is trained on the world's best-designed sites. The output isn't a rough draft — it's something you'd actually show a client." },
+  { icon: "🌐", title: "Democratising design", body: "Before AI, a premium website cost $10,000–$50,000. A solo founder in Lagos should have the same competitive edge online as a Silicon Valley startup." },
+  { icon: "🔒", title: "Radical transparency", body: "We don't lock you in. Every site you build is yours — download the HTML, host it anywhere, no strings attached. We earn loyalty by being genuinely useful." },
 ];
 
 const TIMELINE = [
   { year: "2024", event: "Founded with a conviction that AI could replace the entire web design workflow." },
   { year: "Q1 2025", event: "First public beta. 1,000 sites generated in the first week." },
-  { year: "Q2 2025", event: "Crossed 10,000 active users. Launched the Pro tier with CDN deployment." },
-  { year: "Q3 2025", event: "38-template library. Business tier with API access and team features." },
+  { year: "Q2 2025", event: "Crossed 10,000 active users. Launched Pro tier with CDN deployment." },
+  { year: "Q3 2025", event: "38-template library. Agency tier with API access and team features." },
   { year: "2026", event: "Share links, white-label output, and agent automation suite in production." },
 ];
 
 export default function AboutPage() {
   return (
-    <main style={{
-      minHeight: "100vh",
-      background: "#06080e",
-      color: "#e9eef7",
-      fontFamily: "'Outfit', ui-sans-serif,system-ui,-apple-system,sans-serif",
-      padding: "0 0 80px",
-    }}>
-      <SiteNav />
+    <>
+      <style>{`
+@keyframes abFade{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.ab-a{animation:abFade 800ms cubic-bezier(.16,1,.3,1) both}
+.ab-d1{animation-delay:80ms}.ab-d2{animation-delay:180ms}.ab-d3{animation-delay:280ms}.ab-d4{animation-delay:380ms}.ab-d5{animation-delay:480ms}
 
-      {/* Hero */}
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "120px 24px 56px", textAlign: "center" }}>
-        <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(61,240,255,0.25)", background: "rgba(61,240,255,0.06)", color: "rgba(61,240,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
-          ABOUT
+.ab-page{min-height:100vh;background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;padding:0 0 0;}
+.ab-hero{max-width:800px;margin:0 auto;padding:120px 24px 60px;text-align:center;position:relative;}
+.ab-badge{display:inline-block;padding:5px 16px;border-radius:999px;border:1px solid rgba(61,240,255,.20);background:rgba(61,240,255,.05);color:rgba(61,240,255,.80);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px;}
+.ab-h1{font-size:clamp(34px,5.5vw,56px);font-weight:900;margin:0 0 20px;letter-spacing:-.05em;line-height:1.05;}
+.ab-sub{font-size:18px;color:rgba(255,255,255,.50);margin:0 auto;line-height:1.7;max-width:600px;}
+
+/* Stats */
+.ab-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;max-width:900px;margin:0 auto 72px;padding:0 24px;}
+.ab-stat{padding:28px 20px;text-align:center;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);transition:all 200ms;}
+.ab-stat:first-child{border-radius:18px 0 0 18px}.ab-stat:last-child{border-radius:0 18px 18px 0}
+.ab-stat:hover{background:rgba(255,255,255,.04);}
+.ab-stat-val{font-size:clamp(24px,3vw,36px);font-weight:900;letter-spacing:-.03em;background:linear-gradient(135deg,#3DF0FF,#8B5CF6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;}
+.ab-stat-label{font-size:13px;color:rgba(255,255,255,.40);}
+@media(max-width:640px){.ab-stats{grid-template-columns:1fr 1fr;}.ab-stat:first-child{border-radius:18px 0 0 0}.ab-stat:nth-child(2){border-radius:0 18px 0 0}.ab-stat:nth-child(3){border-radius:0 0 0 18px}.ab-stat:last-child{border-radius:0 0 18px 0}}
+
+/* Story */
+.ab-story{max-width:720px;margin:0 auto 80px;padding:0 24px;}
+.ab-story-border{padding:0 0 0 28px;border-left:2px solid rgba(61,240,255,.25);position:relative;}
+.ab-story-border::before{content:'';position:absolute;left:-5px;top:0;width:8px;height:8px;border-radius:50%;background:rgba(61,240,255,.50);}
+.ab-story h2{font-size:clamp(22px,3vw,32px);font-weight:800;margin:0 0 20px;letter-spacing:-.03em;}
+.ab-story p{font-size:16px;color:rgba(255,255,255,.58);line-height:1.80;margin:0 0 18px;}
+.ab-story p:last-child{margin:0;}
+
+/* Values */
+.ab-values{max-width:1040px;margin:0 auto 80px;padding:0 24px;}
+.ab-values-h2{text-align:center;font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.04em;margin:0 0 40px;}
+.ab-values-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:640px){.ab-values-grid{grid-template-columns:1fr;}}
+.ab-value{padding:28px;border-radius:22px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);transition:all 280ms;position:relative;overflow:hidden;}
+.ab-value::before{content:'';position:absolute;inset:0;border-radius:22px;padding:1px;background:linear-gradient(135deg,rgba(61,240,255,.15),rgba(139,92,246,.12),rgba(56,248,166,.08));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity 280ms;pointer-events:none;}
+.ab-value:hover{background:rgba(255,255,255,.04);transform:translateY(-3px);box-shadow:0 16px 48px rgba(0,0,0,.20);}
+.ab-value:hover::before{opacity:1;}
+.ab-value-icon{font-size:28px;margin-bottom:14px;display:block;}
+.ab-value h3{font-size:17px;font-weight:700;margin:0 0 10px;letter-spacing:-.02em;}
+.ab-value p{margin:0;font-size:14px;color:rgba(255,255,255,.50);line-height:1.75;}
+
+/* Timeline */
+.ab-timeline{max-width:640px;margin:0 auto 80px;padding:0 24px;}
+.ab-timeline-h2{text-align:center;font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.04em;margin:0 0 40px;}
+.ab-tl-item{display:flex;gap:24px;position:relative;padding-bottom:32px;}
+.ab-tl-item:last-child{padding-bottom:0;}
+.ab-tl-item:not(:last-child)::after{content:'';position:absolute;left:51px;top:32px;bottom:0;width:1px;background:linear-gradient(180deg,rgba(61,240,255,.20),rgba(139,92,246,.10));}
+.ab-tl-year{width:80px;flex-shrink:0;padding-top:4px;}
+.ab-tl-year span{font-size:12px;font-weight:700;color:rgba(61,240,255,.75);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.ab-tl-dot{width:10px;height:10px;border-radius:50%;background:rgba(61,240,255,.50);border:2px solid rgba(61,240,255,.20);flex-shrink:0;margin-top:6px;z-index:1;}
+.ab-tl-body{flex:1;font-size:14px;color:rgba(255,255,255,.60);line-height:1.65;}
+
+/* CTA */
+.ab-cta{text-align:center;padding:0 24px 80px;}
+.ab-cta h2{font-size:clamp(26px,4vw,34px);font-weight:800;letter-spacing:-.04em;margin:0 0 12px;}
+.ab-cta p{font-size:15px;color:rgba(255,255,255,.40);margin:0 0 28px;}
+.ab-cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.ab-cta-primary{display:inline-flex;align-items:center;gap:6px;padding:14px 32px;border-radius:14px;background:linear-gradient(135deg,rgba(61,240,255,.14),rgba(139,92,246,.08));border:1px solid rgba(61,240,255,.35);color:rgba(61,240,255,.92);text-decoration:none;font-size:15px;font-weight:700;transition:all 200ms;position:relative;overflow:hidden;}
+.ab-cta-primary::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:abShim 4s ease-in-out infinite;}
+@keyframes abShim{0%{left:-100%}40%{left:100%}100%{left:100%}}
+.ab-cta-primary:hover{border-color:rgba(61,240,255,.55);box-shadow:0 0 28px rgba(61,240,255,.10);transform:translateY(-2px);}
+.ab-cta-secondary{display:inline-flex;align-items:center;gap:6px;padding:14px 32px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:rgba(255,255,255,.65);text-decoration:none;font-size:15px;font-weight:600;transition:all 180ms;}
+.ab-cta-secondary:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);color:#fff;}
+      `}</style>
+
+      <main className="ab-page">
+        <SiteNav />
+
+        {/* Hero */}
+        <div className="ab-hero">
+          <div className="ab-badge ab-a">ABOUT</div>
+          <h1 className="ab-h1 ab-a ab-d1">
+            Every business deserves<br />a world-class website.
+          </h1>
+          <p className="ab-sub ab-a ab-d2">
+            We started Dominat8 because great design was locked behind agencies, budgets, and timelines.
+            AI has changed that forever — and we&apos;re leading the charge.
+          </p>
         </div>
-        <h1 style={{ fontSize: "clamp(32px,5vw,52px)", fontWeight: 800, margin: "0 0 20px", letterSpacing: "-0.04em", lineHeight: 1.05 }}>
-          Every business deserves<br />a world-class website.
-        </h1>
-        <p style={{ fontSize: 18, color: "rgba(255,255,255,0.55)", margin: 0, lineHeight: 1.7, maxWidth: 600, marginLeft: "auto", marginRight: "auto" }}>
-          We started Dominat8 because great design was locked behind agencies, budgets, and timelines.
-          AI has changed that forever — and we're leading the charge.
-        </p>
-      </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 1, maxWidth: 900, margin: "0 auto 64px", padding: "0 24px", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" }}>
-        {STATS.map((s, i) => (
-          <div key={i} style={{
-            padding: "28px 20px",
-            textAlign: "center",
-            background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent",
-            borderRight: i < STATS.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
-          }}>
-            <div style={{ fontSize: "clamp(24px,3vw,36px)", fontWeight: 900, letterSpacing: "-0.03em", color: "rgba(61,240,255,0.90)", marginBottom: 6 }}>{s.value}</div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
+        {/* Stats */}
+        <div className="ab-stats ab-a ab-d3">
+          {STATS.map((s, i) => (
+            <div key={i} className="ab-stat">
+              <div className="ab-stat-val">{s.value}</div>
+              <div className="ab-stat-label">{s.label}</div>
+            </div>
+          ))}
+        </div>
 
-      {/* Story */}
-      <div style={{ maxWidth: 720, margin: "0 auto 72px", padding: "0 24px" }}>
-        <div style={{ padding: "1px 0 1px 24px", borderLeft: "2px solid rgba(61,240,255,0.35)", marginBottom: 32 }}>
-          <h2 style={{ fontSize: "clamp(22px,3vw,30px)", fontWeight: 800, margin: "0 0 16px", letterSpacing: "-0.03em" }}>Why we built this</h2>
-          <div style={{ fontSize: 16, color: "rgba(255,255,255,0.62)", lineHeight: 1.8, display: "flex", flexDirection: "column", gap: 16 }}>
-            <p style={{ margin: 0 }}>
-              In 2024, most small businesses still didn't have a real website. Not because they didn't want one — but because the
+        {/* Story */}
+        <div className="ab-story ab-a ab-d4">
+          <div className="ab-story-border">
+            <h2>Why we built this</h2>
+            <p>
+              In 2024, most small businesses still didn&apos;t have a real website. Not because they didn&apos;t want one — but because the
               process was too slow, too expensive, or too complicated. Agencies quoted $5,000 minimum. Website builders
               required hours of dragging and dropping. Templates looked like templates.
             </p>
-            <p style={{ margin: 0 }}>
+            <p>
               We asked a different question: what if you could just <em>describe</em> your business,
               and the website appeared? Not a wireframe. Not a generic template. A complete, production-ready site
               with your brand identity, your services, your story — built in the time it takes to brew a coffee.
             </p>
-            <p style={{ margin: 0 }}>
-              That's Dominat8. We've now generated over 50,000 websites across 180 countries.
+            <p>
+              That&apos;s Dominat8. We&apos;ve now generated over 50,000 websites across 180 countries.
               From solo freelancers to agencies. From coffee shops in Wellington to law firms in Chicago.
-              And we're just getting started.
+              And we&apos;re just getting started.
             </p>
           </div>
         </div>
-      </div>
 
-      {/* Values */}
-      <div style={{ maxWidth: 1000, margin: "0 auto 72px", padding: "0 24px" }}>
-        <h2 style={{ textAlign: "center", fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 36px" }}>What we believe</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
-          {VALUES.map((v, i) => (
-            <div key={i} style={{
-              padding: 24,
-              borderRadius: 16,
-              border: "1px solid rgba(255,255,255,0.08)",
-              background: "rgba(255,255,255,0.02)",
-            }}>
-              <div style={{ fontSize: 28, marginBottom: 12 }}>{v.icon}</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px", letterSpacing: "-0.02em" }}>{v.title}</h3>
-              <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1.7 }}>{v.body}</p>
-            </div>
-          ))}
+        {/* Values */}
+        <div className="ab-values">
+          <h2 className="ab-values-h2 ab-a ab-d4">What we believe</h2>
+          <div className="ab-values-grid">
+            {VALUES.map((v, i) => (
+              <div key={i} className={`ab-value ab-a ab-d${Math.min(i + 2, 5)}`}>
+                <span className="ab-value-icon">{v.icon}</span>
+                <h3>{v.title}</h3>
+                <p>{v.body}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Timeline */}
-      <div style={{ maxWidth: 600, margin: "0 auto 72px", padding: "0 24px" }}>
-        <h2 style={{ textAlign: "center", fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 36px" }}>How we got here</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        {/* Timeline */}
+        <div className="ab-timeline">
+          <h2 className="ab-timeline-h2 ab-a ab-d4">How we got here</h2>
           {TIMELINE.map((t, i) => (
-            <div key={i} style={{ display: "flex", gap: 20, position: "relative" }}>
-              {/* Line */}
-              {i < TIMELINE.length - 1 && (
-                <div style={{ position: "absolute", left: 52, top: 28, bottom: -8, width: 1, background: "rgba(255,255,255,0.08)" }} />
-              )}
-              <div style={{ width: 84, flexShrink: 0, paddingTop: 4 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(61,240,255,0.80)", whiteSpace: "nowrap" }}>{t.year}</span>
-              </div>
-              <div style={{ paddingBottom: 28, flex: 1 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(61,240,255,0.60)", marginBottom: 8, border: "1px solid rgba(61,240,255,0.30)" }} />
-                <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>{t.event}</p>
-              </div>
+            <div key={i} className={`ab-tl-item ab-a ab-d${Math.min(i + 1, 5)}`}>
+              <div className="ab-tl-year"><span>{t.year}</span></div>
+              <div className="ab-tl-dot" />
+              <div className="ab-tl-body">{t.event}</div>
             </div>
           ))}
         </div>
-      </div>
 
-      {/* CTA */}
-      <div style={{ textAlign: "center", padding: "0 24px" }}>
-        <h2 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 12px" }}>Be part of what comes next.</h2>
-        <p style={{ fontSize: 15, color: "rgba(255,255,255,0.45)", margin: "0 0 24px" }}>Questions? Ideas? We'd love to hear from you.</p>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <a href="/build" style={{ display: "inline-block", padding: "14px 32px", borderRadius: 14, background: "rgba(61,240,255,0.14)", border: "1px solid rgba(61,240,255,0.40)", color: "rgba(61,240,255,0.95)", textDecoration: "none", fontSize: 15, fontWeight: 700 }}>
-            Start building →
-          </a>
-          <a href="mailto:hello@dominat8.io" style={{ display: "inline-block", padding: "14px 32px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.70)", textDecoration: "none", fontSize: 15, fontWeight: 600 }}>
-            Say hello
-          </a>
+        {/* CTA */}
+        <div className="ab-cta">
+          <h2 className="ab-a">Be part of what comes next.</h2>
+          <p className="ab-a ab-d1">Questions? Ideas? We&apos;d love to hear from you.</p>
+          <div className="ab-cta-row ab-a ab-d2">
+            <Link href="/build" className="ab-cta-primary">Start building →</Link>
+            <a href="mailto:hello@dominat8.io" className="ab-cta-secondary">Say hello</a>
+          </div>
         </div>
-      </div>
 
-      <style>{`
-        @media (max-width: 700px) {
-          div[style*="gridTemplateColumns: repeat(4"] { grid-template-columns: 1fr 1fr !important; }
-          div[style*="gridTemplateColumns: repeat(2"] { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 400px) {
-          div[style*="gridTemplateColumns: repeat(4"] { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-      <SiteFooter />
-    </main>
+        <SiteFooter />
+      </main>
+    </>
   );
 }

@@ -27,7 +27,7 @@ export default function GalleryGrid() {
       {EXAMPLES.map((ex, i) => (
         <a
           key={i}
-          href={`/?prompt=${encodeURIComponent(ex.prompt)}`}
+          href={`/build?prompt=${encodeURIComponent(ex.prompt)}`}
           style={{
             borderRadius: 18,
             border: "1px solid rgba(255,255,255,0.08)",

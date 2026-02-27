@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { SiteNav } from "@/components/shared/SiteNav";
 import { SiteFooter } from "@/components/shared/SiteFooter";
 
@@ -7,104 +6,100 @@ export const metadata = {
   description: "The terms and conditions governing your use of Dominat8.io.",
 };
 
-const P = { fontSize: 15, lineHeight: 1.75, color: "rgba(255,255,255,0.55)", margin: "0 0 12px" } as const;
-const H2 = { fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" as const, margin: "0 0 12px", color: "rgba(255,255,255,0.90)" };
-const UL = { paddingLeft: 20, margin: "0 0 12px", color: "rgba(255,255,255,0.55)", fontSize: 15, lineHeight: 1.75 } as const;
-const STRONG: CSSProperties = { color: "rgba(255,255,255,0.80)" };
-
 export default function TermsPage() {
   return (
-    <main style={{
-      minHeight: "100vh",
-      background: "#06080e",
-      color: "#e9eef7",
-      fontFamily: "'Outfit', ui-sans-serif,system-ui,-apple-system,sans-serif",
-      padding: "0 0 80px",
-    }}>
-      <SiteNav />
-
-      {/* Content */}
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "100px 24px 0" }}>
-        <div style={{ marginBottom: 48 }}>
-          <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(61,240,255,0.25)", background: "rgba(61,240,255,0.06)", color: "rgba(61,240,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
-            TERMS OF SERVICE
+    <>
+      <style>{`
+@keyframes lgFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.lg-a{animation:lgFade 700ms cubic-bezier(.16,1,.3,1) both}
+.lg-d1{animation-delay:80ms}
+.lg-page{min-height:100vh;background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;}
+.lg-wrap{max-width:720px;margin:0 auto;padding:120px 24px 80px;}
+.lg-badge{display:inline-block;padding:5px 16px;border-radius:999px;border:1px solid rgba(61,240,255,.20);background:rgba(61,240,255,.05);color:rgba(61,240,255,.80);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px;}
+.lg-h1{font-size:clamp(28px,4.5vw,42px);font-weight:800;margin:0 0 14px;letter-spacing:-.04em;}
+.lg-updated{font-size:16px;color:rgba(255,255,255,.45);line-height:1.7;margin:0 0 48px;}
+.lg-section{margin-bottom:40px;}
+.lg-h2{font-size:18px;font-weight:700;letter-spacing:-.02em;margin:0 0 14px;color:rgba(255,255,255,.88);}
+.lg-p{font-size:15px;line-height:1.80;color:rgba(255,255,255,.52);margin:0 0 14px;}
+.lg-p:last-child{margin:0;}
+.lg-p strong{color:rgba(255,255,255,.78);}
+.lg-p a{color:rgba(61,240,255,.70);text-decoration:none;transition:color 150ms;}
+.lg-p a:hover{color:rgba(61,240,255,.90);}
+.lg-ul{padding-left:20px;margin:0 0 14px;color:rgba(255,255,255,.52);font-size:15px;line-height:1.80;}
+.lg-ul strong{color:rgba(255,255,255,.78);}
+.lg-contact{padding:24px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);margin-top:32px;}
+      `}</style>
+      <main className="lg-page">
+        <SiteNav />
+        <div className="lg-wrap">
+          <div className="lg-a">
+            <div className="lg-badge">TERMS OF SERVICE</div>
+            <h1 className="lg-h1">Terms of Service</h1>
+            <p className="lg-updated">Last updated: February 2026. By using Dominat8.io, you agree to these terms.</p>
           </div>
-          <h1 style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 800, margin: "0 0 14px", letterSpacing: "-0.04em" }}>Terms of Service</h1>
-          <p style={{ ...P, fontSize: 16 }}>Last updated: February 2026. By using Dominat8.io, you agree to these terms. Please read them carefully.</p>
+          <div className="lg-a lg-d1">
+            <div className="lg-section">
+              <h2 className="lg-h2">1. Acceptance of terms</h2>
+              <p className="lg-p">By accessing or using Dominat8.io (&ldquo;Service&rdquo;), you agree to be bound by these Terms and our Privacy Policy. If you do not agree, do not use the Service.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">2. The Service</h2>
+              <p className="lg-p">Dominat8.io is an AI-powered website generation tool. You provide a text prompt and our system generates HTML code. The generated output is provided &ldquo;as-is&rdquo; and we make no guarantees about its fitness for any particular purpose.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">3. Your content and prompts</h2>
+              <p className="lg-p">You retain ownership of your prompts and generated websites. You grant us a limited licence to process your prompts to provide the Service.</p>
+              <p className="lg-p">You <strong>must not</strong> use the Service to generate:</p>
+              <ul className="lg-ul">
+                <li>Content that is illegal, defamatory, or violates any law</li>
+                <li>Phishing pages, scam sites, or deceptive content</li>
+                <li>Content that infringes intellectual property rights</li>
+                <li>Malware, spam, or harmful content</li>
+                <li>Adult content or content harmful to minors</li>
+              </ul>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">4. Acceptable use</h2>
+              <p className="lg-p">You agree not to:</p>
+              <ul className="lg-ul">
+                <li>Attempt to circumvent rate limits or access restrictions</li>
+                <li>Use automated tools to send bulk requests to the generation API</li>
+                <li>Resell or white-label the Service without a Business plan</li>
+                <li>Reverse engineer or attempt to extract the underlying AI models</li>
+                <li>Use the Service to damage, disable, or impair our infrastructure</li>
+              </ul>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">5. Subscriptions and billing</h2>
+              <p className="lg-p">Paid plans are billed monthly or annually. Cancel anytime; your plan remains active until the end of the billing period. Prices are in USD and exclusive of taxes where applicable. We reserve the right to change pricing with 30 days&apos; notice.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">6. Intellectual property</h2>
+              <p className="lg-p">The Dominat8.io brand and platform are our intellectual property. Generated HTML is yours — host it, sell it, modify it without restriction, subject to the acceptable use policy above.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">7. Disclaimers and limitation of liability</h2>
+              <p className="lg-p">THE SERVICE IS PROVIDED &ldquo;AS IS&rdquo; WITHOUT WARRANTY OF ANY KIND. OUR LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">8. Termination</h2>
+              <p className="lg-p">We may suspend or terminate your access if you violate these terms. You may stop using the Service and close your account at any time.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">9. Changes to terms</h2>
+              <p className="lg-p">We may update these terms from time to time. Material changes will be communicated by email. Continued use constitutes acceptance.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">10. Governing law</h2>
+              <p className="lg-p">These terms are governed by the laws of New Zealand. Disputes shall be resolved in the courts of Auckland, New Zealand.</p>
+            </div>
+            <div className="lg-contact">
+              <p className="lg-p">Questions? Email <a href="mailto:legal@dominat8.io"><strong>legal@dominat8.io</strong></a></p>
+            </div>
+          </div>
         </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>1. Acceptance of terms</h2>
-          <p style={P}>By accessing or using Dominat8.io ("Service"), you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree, do not use the Service. These terms apply to all visitors, users, and others who access the Service.</p>
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>2. The Service</h2>
-          <p style={P}>Dominat8.io is an AI-powered website generation tool. You provide a text prompt describing a website, and our system generates HTML code for that website. The generated output is provided "as-is" and we make no guarantees about its fitness for any particular purpose.</p>
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>3. Your content and prompts</h2>
-          <p style={P}>You retain ownership of the prompts you enter and the websites generated from them. By using the Service, you grant us a limited licence to process your prompts to provide the Service.</p>
-          <p style={P}>You are responsible for ensuring your use of generated content does not infringe third-party rights. You <strong style={STRONG}>must not</strong> use the Service to generate:</p>
-          <ul style={UL}>
-            <li>Content that is illegal, defamatory, or violates any law</li>
-            <li>Phishing pages, scam sites, or deceptive content intended to mislead</li>
-            <li>Content that infringes intellectual property rights</li>
-            <li>Malware, spam, or otherwise harmful content</li>
-            <li>Adult content or content harmful to minors</li>
-          </ul>
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>4. Acceptable use</h2>
-          <p style={P}>You agree not to:</p>
-          <ul style={UL}>
-            <li>Attempt to circumvent rate limits or access restrictions</li>
-            <li>Use automated tools to send bulk requests to the generation API</li>
-            <li>Resell or white-label the Service without a Business plan or explicit written agreement</li>
-            <li>Reverse engineer or attempt to extract the underlying AI models or prompts</li>
-            <li>Use the Service in any way that could damage, disable, or impair our infrastructure</li>
-          </ul>
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>5. Subscriptions and billing</h2>
-          <p style={P}>Paid plans are billed monthly or annually. You may cancel at any time; your plan remains active until the end of the current billing period. We do not offer refunds for partial months. All prices are in USD and exclusive of taxes where applicable.</p>
-          <p style={P}>We reserve the right to change pricing with 30 days' notice to existing subscribers.</p>
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>6. Intellectual property</h2>
-          <p style={P}>The Dominat8.io brand, logo, and underlying platform are our intellectual property. The HTML generated for you is yours to use freely — you may host it, sell it, or modify it without restriction, subject to the acceptable use policy above.</p>
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>7. Disclaimers and limitation of liability</h2>
-          <p style={P}>THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. WE DO NOT WARRANT THAT GENERATED WEBSITES WILL BE ERROR-FREE, ACCESSIBLE, OR FIT FOR A PARTICULAR PURPOSE.</p>
-          <p style={P}>TO THE MAXIMUM EXTENT PERMITTED BY LAW, OUR LIABILITY TO YOU FOR ANY CLAIM ARISING FROM THESE TERMS OR YOUR USE OF THE SERVICE SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM.</p>
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>8. Termination</h2>
-          <p style={P}>We may suspend or terminate your access to the Service at any time if you violate these terms. You may stop using the Service and close your account at any time.</p>
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>9. Changes to terms</h2>
-          <p style={P}>We may update these terms from time to time. We will notify you of material changes by email. Continued use of the Service after the effective date of any changes constitutes acceptance.</p>
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <h2 style={H2}>10. Governing law</h2>
-          <p style={P}>These terms are governed by the laws of New Zealand, without regard to conflict of law principles. Any disputes shall be resolved in the courts of Auckland, New Zealand.</p>
-        </div>
-
-        <div style={{ padding: "24px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", marginTop: 24 }}>
-          <p style={{ ...P, margin: 0 }}>Questions? Email us at <a href="mailto:legal@dominat8.io" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none", fontWeight: 600 }}>legal@dominat8.io</a></p>
-        </div>
-      </div>
-      <SiteFooter />
-    </main>
+        <SiteFooter />
+      </main>
+    </>
   );
 }
