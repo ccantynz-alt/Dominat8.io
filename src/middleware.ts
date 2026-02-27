@@ -1,6 +1,11 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
+// Subdomains that serve the main app (not user-deployed sites)
+const RESERVED_SUBDOMAINS = new Set([
+  "www", "staging", "preview", "dev", "api", "app", "admin", "mail",
+]);
+
 // Exact paths served directly (not rewritten to /io)
 const DIRECT_PATHS = new Set([
   "/",
@@ -47,9 +52,12 @@ export default clerkMiddleware((_auth, request: NextRequest) => {
     // Check if it's a subdomain of our app
     if (hostname.endsWith(`.${appHost}`)) {
       const slug = hostname.replace(`.${appHost}`, "");
-      const url = request.nextUrl.clone();
-      url.pathname = `/api/subdomain/${encodeURIComponent(slug)}`;
-      return NextResponse.rewrite(url);
+      // Reserved subdomains (staging, www, etc.) serve the main app
+      if (!RESERVED_SUBDOMAINS.has(slug)) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/api/subdomain/${encodeURIComponent(slug)}`;
+        return NextResponse.rewrite(url);
+      }
     }
   }
 
