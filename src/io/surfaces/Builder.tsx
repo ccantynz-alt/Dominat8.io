@@ -1370,7 +1370,7 @@ export function Builder() {
                 ) : (
                   <iframe
                     ref={iframeRef}
-                    srcDoc={html || "<html><body style='background:#07090f'></body></html>"}
+                    srcDoc={html || "<html><body style='background:#08080c'></body></html>"}
                     sandbox="allow-scripts"
                     className="d8b-iframe"
                     title="Generated website preview"
@@ -1622,7 +1622,7 @@ function BuilderStyles() {
         display: flex;
         height: 100vh;
         width: 100vw;
-        background: #07090f;
+        background: #08080c;
         color: #d7dbea;
         font-family: 'Outfit', 'Inter', system-ui, sans-serif;
         overflow: hidden;
@@ -1926,7 +1926,7 @@ function BuilderStyles() {
         justify-content: center;
         background:
           radial-gradient(800px 600px at 50% 30%, rgba(124,90,255,0.03), transparent 60%),
-          #07090f;
+          #08080c;
       }
       .d8b-splash { text-align: center; max-width: 520px; padding: 0 24px; }
       .d8b-splash-mark {
@@ -1982,7 +1982,7 @@ function BuilderStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #07090f;
+        background: #08080c;
       }
       .d8b-gen-anim { display: flex; flex-direction: column; align-items: center; gap: 16px; }
       .d8b-gen-ring { position: relative; width: 80px; height: 80px; }
@@ -2054,7 +2054,7 @@ function BuilderStyles() {
         justify-content: center;
         background:
           radial-gradient(800px 600px at 50% 30%, rgba(255,100,100,0.02), transparent 60%),
-          #07090f;
+          #08080c;
       }
       .d8b-error-content {
         display: flex;
@@ -2262,7 +2262,7 @@ function BuilderStyles() {
         position: absolute;
         inset: 0;
         z-index: 10;
-        background: #07090f;
+        background: #08080c;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2394,7 +2394,7 @@ function BuilderStyles() {
       .d8b-deploy-option-sub { font-size: 12px; color: rgba(255,255,255,0.45); }
 
       .d8b-deploy-log {
-        background: #070a10; border-radius: 12px;
+        background: #08080c; border-radius: 12px;
         border: 1px solid rgba(255,255,255,0.07);
         padding: 14px 16px; min-height: 160px;
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

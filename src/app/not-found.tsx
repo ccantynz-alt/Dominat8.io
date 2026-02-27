@@ -2,8 +2,8 @@ export default function NotFound() {
   return (
     <main style={{
       minHeight: "100vh",
-      background: "#06080e",
-      color: "#e9eef7",
+      background: "#08080c",
+      color: "#c8c8d4",
       fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
       display: "flex",
       flexDirection: "column",
@@ -17,21 +17,21 @@ export default function NotFound() {
         width: 120,
         height: 120,
         borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(61,240,255,0.25) 0%, rgba(61,240,255,0.05) 60%, transparent 100%)",
-        border: "1px solid rgba(61,240,255,0.20)",
+        background: "radial-gradient(circle, rgba(124,90,255,0.25) 0%, rgba(124,90,255,0.05) 60%, transparent 100%)",
+        border: "1px solid rgba(124,90,255,0.20)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         marginBottom: 32,
         position: "relative",
       }}>
-        <span style={{ fontSize: 42, fontWeight: 900, letterSpacing: "-0.05em", color: "rgba(61,240,255,0.90)" }}>404</span>
+        <span style={{ fontSize: 42, fontWeight: 900, letterSpacing: "-0.05em", color: "rgba(124,90,255,0.90)" }}>404</span>
         {/* Pulse ring */}
         <div style={{
           position: "absolute",
           inset: -8,
           borderRadius: "50%",
-          border: "1px solid rgba(61,240,255,0.12)",
+          border: "1px solid rgba(124,90,255,0.12)",
           animation: "nf-pulse 2.5s ease-in-out infinite",
         }} />
       </div>
@@ -63,12 +63,12 @@ export default function NotFound() {
           gap: 6,
           padding: "12px 24px",
           borderRadius: 12,
-          background: "linear-gradient(135deg,#00C97A,#00B36B)",
+          background: "linear-gradient(135deg,#7C5AFF,#6347FF)",
           color: "#fff",
           textDecoration: "none",
           fontSize: 14,
           fontWeight: 700,
-          boxShadow: "0 4px 20px rgba(0,201,122,0.35)",
+          boxShadow: "0 4px 20px rgba(124,90,255,0.35)",
         }}>
           ← Back to builder
         </a>

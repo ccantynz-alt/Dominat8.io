@@ -139,19 +139,19 @@ const FEATURES = [
     icon: "⚡",
     title: "Under 30 seconds",
     desc: "Not a prototype. A publish-ready, multi-section website generated from a single sentence.",
-    accent: "#3DF0FF",
+    accent: "#7C5AFF",
   },
   {
     icon: "🎨",
     title: "6 distinct styles",
     desc: "Minimal, Bold, Luxury, Dark, Playful, Corporate — each a complete design language.",
-    accent: "#FFD166",
+    accent: "#E8B44F",
   },
   {
     icon: "📱",
     title: "Mobile-first output",
     desc: "Every generated site is fully responsive. Looks great on any screen, out of the box.",
-    accent: "#38F8A6",
+    accent: "#34D399",
   },
   {
     icon: "🔍",
@@ -169,19 +169,19 @@ const FEATURES = [
     icon: "📦",
     title: "Clean HTML export",
     desc: "Download the source. No lock-in. Host anywhere — Vercel, Netlify, your own server.",
-    accent: "#3DF0FF",
+    accent: "#7C5AFF",
   },
   {
     icon: "🛡️",
     title: "Zero lorem ipsum",
     desc: "Real content drawn from your brief. No placeholder text ever shipped to production.",
-    accent: "#38F8A6",
+    accent: "#34D399",
   },
   {
     icon: "🚀",
     title: "1-click deploy",
     desc: "Push straight to your domain from the cockpit. Auto-SSL, CDN edge, instant propagation.",
-    accent: "#FFD166",
+    accent: "#E8B44F",
   },
 ];
 
@@ -216,7 +216,7 @@ const TESTIMONIALS = [
     name: "Marcus T.",
     role: "Principal, Henderson Law",
     avatar: "MT",
-    color: "#3DF0FF",
+    color: "#7C5AFF",
     stars: 5,
   },
   {
@@ -224,7 +224,7 @@ const TESTIMONIALS = [
     name: "Sarah K.",
     role: "Creative Director, Studio Nine",
     avatar: "SK",
-    color: "#38F8A6",
+    color: "#34D399",
     stars: 5,
   },
   {
@@ -232,7 +232,7 @@ const TESTIMONIALS = [
     name: "Liam O.",
     role: "Founder, Apex Fitness",
     avatar: "LO",
-    color: "#FFD166",
+    color: "#E8B44F",
     stars: 5,
   },
 ];
@@ -242,9 +242,9 @@ const TESTIMONIALS = [
 const STYLE_CARDS = [
   { label: "Minimal",   preview: ["◽ Clean. Precise.", "One typeface.", "Maximum whitespace."],     bg: "linear-gradient(135deg, #0a0d16 0%, #111520 100%)", accent: "#ffffff", border: "rgba(255,255,255,0.14)" },
   { label: "Bold",      preview: ["■ High contrast.", "Oversized type.", "Zero decoration."],       bg: "linear-gradient(135deg, #0d0808 0%, #1a0505 100%)", accent: "#FF4D4D", border: "rgba(255,80,80,0.25)" },
-  { label: "Luxury",    preview: ["◆ Dark + gold.", "Editorial spacing.", "Premium serif."],        bg: "linear-gradient(135deg, #080610 0%, #100d1a 100%)", accent: "#C09A5C", border: "rgba(192,154,92,0.30)" },
-  { label: "Dark",      preview: ["◉ Neon accents.", "Grid background.", "Cyberpunk-adjacent."],    bg: "linear-gradient(135deg, #030610 0%, #060b1c 100%)", accent: "#3DF0FF", border: "rgba(61,240,255,0.28)" },
-  { label: "Playful",   preview: ["✦ Vibrant.", "Rounded shapes.", "Warm personality."],            bg: "linear-gradient(135deg, #100a06 0%, #1c1006 100%)", accent: "#FFD166", border: "rgba(255,209,102,0.28)" },
+  { label: "Luxury",    preview: ["◆ Dark + gold.", "Editorial spacing.", "Premium serif."],        bg: "linear-gradient(135deg, #080610 0%, #100d1a 100%)", accent: "#C49B52", border: "rgba(196,155,82,0.30)" },
+  { label: "Dark",      preview: ["◉ Neon accents.", "Grid background.", "Cyberpunk-adjacent."],    bg: "linear-gradient(135deg, #030610 0%, #060b1c 100%)", accent: "#7C5AFF", border: "rgba(124,90,255,0.28)" },
+  { label: "Playful",   preview: ["✦ Vibrant.", "Rounded shapes.", "Warm personality."],            bg: "linear-gradient(135deg, #100a06 0%, #1c1006 100%)", accent: "#E8B44F", border: "rgba(232,180,79,0.28)" },
   { label: "Corporate", preview: ["▲ Structured.", "Clear hierarchy.", "Enterprise-ready."],        bg: "linear-gradient(135deg, #06080d 0%, #0a0e18 100%)", accent: "#4A90E2", border: "rgba(74,144,226,0.28)" },
 ];
 

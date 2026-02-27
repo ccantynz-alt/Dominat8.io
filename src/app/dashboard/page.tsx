@@ -119,10 +119,10 @@ function DashboardInner() {
 
   const PLAN_COLORS: Record<string, string> = {
     free: "rgba(255,255,255,0.50)",
-    starter: "rgba(61,240,255,0.85)",
-    pro: "rgba(139,92,246,0.90)",
+    starter: "rgba(124,90,255,0.85)",
+    pro: "rgba(80,70,228,0.90)",
     agency: "rgba(251,191,36,0.90)",
-    admin: "rgba(56,248,166,0.90)",
+    admin: "rgba(52,211,153,0.90)",
   };
 
   const PLAN_LABELS: Record<string, string> = {
@@ -182,7 +182,7 @@ function DashboardInner() {
         .db-sites-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 48px; }
         .db-site-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 14px; overflow: hidden; transition: all 150ms; }
         .db-site-card:hover { border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.06); }
-        .db-site-preview { height: 140px; background: linear-gradient(135deg, rgba(61,240,255,0.08), rgba(139,92,246,0.08)); display: flex; align-items: center; justify-content: center; font-size: 32px; position: relative; overflow: hidden; }
+        .db-site-preview { height: 140px; background: linear-gradient(135deg, rgba(124,90,255,0.08), rgba(80,70,228,0.08)); display: flex; align-items: center; justify-content: center; font-size: 32px; position: relative; overflow: hidden; }
         .db-site-preview-iframe { width: 100%; height: 100%; border: none; pointer-events: none; transform: scale(0.5); transform-origin: top left; width: 200%; height: 200%; }
         .db-site-body { padding: 14px 16px; }
         .db-site-title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -190,11 +190,11 @@ function DashboardInner() {
         .db-site-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .db-site-btn { padding: 5px 10px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.65); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; transition: all 120ms; display: inline-flex; align-items: center; gap: 4px; }
         .db-site-btn:hover { background: rgba(255,255,255,0.10); color: #fff; border-color: rgba(255,255,255,0.20); }
-        .db-site-btn--cyan { border-color: rgba(61,240,255,0.30); color: rgba(61,240,255,0.85); background: rgba(61,240,255,0.07); }
-        .db-site-btn--cyan:hover { background: rgba(61,240,255,0.14); border-color: rgba(61,240,255,0.50); color: rgba(61,240,255,0.97); }
+        .db-site-btn--cyan { border-color: rgba(124,90,255,0.30); color: rgba(124,90,255,0.85); background: rgba(124,90,255,0.07); }
+        .db-site-btn--cyan:hover { background: rgba(124,90,255,0.14); border-color: rgba(124,90,255,0.50); color: rgba(124,90,255,0.97); }
         .db-site-btn--red { border-color: rgba(255,80,80,0.25); color: rgba(255,100,100,0.75); background: transparent; }
         .db-site-btn--red:hover { background: rgba(255,80,80,0.10); color: rgba(255,120,120,0.95); }
-        .db-site-slug { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; background: rgba(56,248,166,0.08); border: 1px solid rgba(56,248,166,0.20); color: rgba(56,248,166,0.80); font-size: 10px; font-weight: 600; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; }
+        .db-site-slug { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.20); color: rgba(52,211,153,0.80); font-size: 10px; font-weight: 600; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; }
         .db-empty { text-align: center; padding: 48px 24px; border: 1px dashed rgba(255,255,255,0.10); border-radius: 16px; margin-bottom: 48px; }
         .db-empty-icon { font-size: 40px; margin-bottom: 12px; }
         .db-empty-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
@@ -206,20 +206,20 @@ function DashboardInner() {
         .db-modal-title { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; }
         .db-modal-sub { font-size: 14px; color: rgba(255,255,255,0.45); margin-bottom: 24px; line-height: 1.5; }
         .db-modal-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.50); margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; }
-        .db-modal-input-row { display: flex; align-items: center; gap: 0; border: 1px solid rgba(61,240,255,0.35); border-radius: 10px; overflow: hidden; margin-bottom: 20px; background: rgba(255,255,255,0.04); }
-        .db-modal-input { flex: 1; padding: 12px 14px; background: transparent; border: none; color: #e9eef7; font-size: 15px; font-family: inherit; outline: none; }
+        .db-modal-input-row { display: flex; align-items: center; gap: 0; border: 1px solid rgba(124,90,255,0.35); border-radius: 10px; overflow: hidden; margin-bottom: 20px; background: rgba(255,255,255,0.04); }
+        .db-modal-input { flex: 1; padding: 12px 14px; background: transparent; border: none; color: #c8c8d4; font-size: 15px; font-family: inherit; outline: none; }
         .db-modal-suffix { padding: 12px 14px; color: rgba(255,255,255,0.35); font-size: 13px; white-space: nowrap; border-left: 1px solid rgba(255,255,255,0.08); }
         .db-modal-actions { display: flex; gap: 10px; }
         .db-modal-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 130ms; border: 1px solid; }
-        .db-modal-btn--primary { background: linear-gradient(135deg, rgba(61,240,255,0.20), rgba(139,92,246,0.20)); border-color: rgba(61,240,255,0.45); color: rgba(61,240,255,0.97); }
-        .db-modal-btn--primary:hover { background: linear-gradient(135deg, rgba(61,240,255,0.30), rgba(139,92,246,0.30)); }
+        .db-modal-btn--primary { background: linear-gradient(135deg, rgba(124,90,255,0.20), rgba(80,70,228,0.20)); border-color: rgba(124,90,255,0.45); color: rgba(124,90,255,0.97); }
+        .db-modal-btn--primary:hover { background: linear-gradient(135deg, rgba(124,90,255,0.30), rgba(80,70,228,0.30)); }
         .db-modal-btn--ghost { background: transparent; border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.55); }
         .db-modal-btn--ghost:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.80); }
         .db-modal-btn:disabled { opacity: 0.4; cursor: default; }
         .db-modal-success { text-align: center; padding: 8px 0; }
         .db-modal-success-icon { font-size: 40px; margin-bottom: 12px; }
         .db-modal-success-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
-        .db-modal-success-url { display: inline-block; padding: 10px 16px; border-radius: 8px; background: rgba(56,248,166,0.10); border: 1px solid rgba(56,248,166,0.25); color: rgba(56,248,166,0.90); font-size: 14px; font-weight: 600; text-decoration: none; word-break: break-all; margin-bottom: 20px; }
+        .db-modal-success-url { display: inline-block; padding: 10px 16px; border-radius: 8px; background: rgba(52,211,153,0.10); border: 1px solid rgba(52,211,153,0.25); color: rgba(52,211,153,0.90); font-size: 14px; font-weight: 600; text-decoration: none; word-break: break-all; margin-bottom: 20px; }
 
         /* ── Delete confirm ── */
         .db-delete-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.60); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -285,14 +285,14 @@ function DashboardInner() {
                 <div className="db-card">
                   <div className="db-card-label">Agent credits</div>
                   {creditInfo?.admin ? (
-                    <div className="db-card-value" style={{ color: "rgba(56,248,166,0.90)" }}>∞</div>
+                    <div className="db-card-value" style={{ color: "rgba(52,211,153,0.90)" }}>∞</div>
                   ) : (
                     <>
-                      <div className="db-card-value" style={{ color: total > 10 ? "rgba(56,248,166,0.90)" : total > 0 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)" }}>
+                      <div className="db-card-value" style={{ color: total > 10 ? "rgba(52,211,153,0.90)" : total > 0 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)" }}>
                         {total}
                       </div>
                       <div className="db-progress-track">
-                        <div className="db-progress-fill" style={{ width: `${100 - usagePct}%`, background: total > 10 ? "rgba(56,248,166,0.70)" : "rgba(255,180,0,0.70)" }} />
+                        <div className="db-progress-fill" style={{ width: `${100 - usagePct}%`, background: total > 10 ? "rgba(52,211,153,0.70)" : "rgba(255,180,0,0.70)" }} />
                       </div>
                       <div className="db-card-sub">
                         {creditInfo?.balance.monthlyRemaining ?? 0} monthly + {creditInfo?.balance.purchased ?? 0} purchased
@@ -309,7 +309,7 @@ function DashboardInner() {
                       {monthlyUsed} <span style={{ fontSize: 16, color: "rgba(255,255,255,0.40)", fontWeight: 400 }}>/ {monthlyAllowance}</span>
                     </div>
                     <div className="db-progress-track">
-                      <div className="db-progress-fill" style={{ width: `${usagePct}%`, background: usagePct > 80 ? "rgba(255,100,100,0.70)" : "rgba(61,240,255,0.60)" }} />
+                      <div className="db-progress-fill" style={{ width: `${usagePct}%`, background: usagePct > 80 ? "rgba(255,100,100,0.70)" : "rgba(124,90,255,0.60)" }} />
                     </div>
                     <div className="db-card-sub">Resets on the 1st of next month</div>
                   </div>
@@ -334,10 +334,10 @@ function DashboardInner() {
                       </div>
                     </Link>
                     {!creditInfo?.admin && plan === "free" && (
-                      <Link href="/pricing" className="db-action-btn" style={{ borderColor: "rgba(61,240,255,0.25)", background: "rgba(61,240,255,0.06)" }}>
+                      <Link href="/pricing" className="db-action-btn" style={{ borderColor: "rgba(124,90,255,0.25)", background: "rgba(124,90,255,0.06)" }}>
                         <span className="db-action-icon">🚀</span>
                         <div className="db-action-text">
-                          <div className="db-action-title" style={{ color: "rgba(61,240,255,0.90)" }}>Upgrade your plan</div>
+                          <div className="db-action-title" style={{ color: "rgba(124,90,255,0.90)" }}>Upgrade your plan</div>
                           <div className="db-action-desc">Unlock agents, credits, and deployment</div>
                         </div>
                       </Link>
@@ -356,7 +356,7 @@ function DashboardInner() {
                       <Link href="/admin" className="db-action-btn" style={{ borderColor: "rgba(56,248,166,0.25)", background: "rgba(56,248,166,0.06)" }}>
                         <span className="db-action-icon">⚙️</span>
                         <div className="db-action-text">
-                          <div className="db-action-title" style={{ color: "rgba(56,248,166,0.90)" }}>Admin panel</div>
+                          <div className="db-action-title" style={{ color: "rgba(52,211,153,0.90)" }}>Admin panel</div>
                           <div className="db-action-desc">Manage users, credits, plans</div>
                         </div>
                       </Link>

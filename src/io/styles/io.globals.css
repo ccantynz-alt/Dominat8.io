@@ -1,4 +1,4 @@
-/* ===== ROCKET_COCKPIT_IO_v2_GLASS : IO GLOBALS — BRIGHT GLASS EDITION ===== */
+/* ===== ROCKET_COCKPIT_IO_v2_GLASS : IO GLOBALS — OBSIDIAN VIOLET EDITION ===== */
 @import "./io.tokens.css";
 
 @keyframes mic-pulse {
@@ -19,10 +19,10 @@ body{
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
   color: var(--io-ink);
   background:
-    radial-gradient(1400px 900px at 14% 12%, rgba(139,111,255,0.32), transparent 55%),
-    radial-gradient(1000px 800px at 80% 16%, rgba(61,240,255,0.22), transparent 56%),
-    radial-gradient(1100px 800px at 52% 94%, rgba(255,77,109,0.18), transparent 62%),
-    radial-gradient(800px 600px at 50% 50%, rgba(139,111,255,0.08), transparent 70%),
+    radial-gradient(1400px 900px at 14% 12%, rgba(80,70,228,0.32), transparent 55%),
+    radial-gradient(1000px 800px at 80% 16%, rgba(124,90,255,0.22), transparent 56%),
+    radial-gradient(1100px 800px at 52% 94%, rgba(255,107,138,0.18), transparent 62%),
+    radial-gradient(800px 600px at 50% 50%, rgba(80,70,228,0.08), transparent 70%),
     linear-gradient(180deg, var(--io-bg0), var(--io-bg1));
 }
 
@@ -33,9 +33,9 @@ button{ font:inherit; }
 .io-mesh{
   position:fixed; inset:-180px;
   background:
-    radial-gradient(900px 560px at 20% 24%, rgba(139,111,255,0.24), transparent 64%),
-    radial-gradient(820px 560px at 78% 26%, rgba(61,240,255,0.18), transparent 64%),
-    radial-gradient(1000px 640px at 56% 90%, rgba(255,77,109,0.15), transparent 68%);
+    radial-gradient(900px 560px at 20% 24%, rgba(80,70,228,0.24), transparent 64%),
+    radial-gradient(820px 560px at 78% 26%, rgba(124,90,255,0.18), transparent 64%),
+    radial-gradient(1000px 640px at 56% 90%, rgba(255,107,138,0.15), transparent 68%);
   filter: blur(22px);
   opacity: 1;
   pointer-events:none;
@@ -125,20 +125,20 @@ button{ font:inherit; }
   display:inline-flex; align-items:center; justify-content:center; gap:6px;
   padding: 10px 16px;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(139,111,255,0.38) 0%, rgba(100,74,255,0.28) 100%);
-  border: 1px solid rgba(139,111,255,0.55);
+  background: linear-gradient(135deg, rgba(80,70,228,0.38) 0%, rgba(80,70,228,0.28) 100%);
+  border: 1px solid rgba(80,70,228,0.55);
   color: rgba(255,255,255,0.96);
   cursor:pointer;
   backdrop-filter: blur(var(--io-blur-sm));
   box-shadow:
-    0 4px 18px rgba(139,111,255,0.28),
+    0 4px 18px rgba(80,70,228,0.28),
     inset 0 1px 0 rgba(255,255,255,0.22);
   transition: all 0.16s ease;
   font-size: 13px;
 }
 .io-btn:hover{
-  background: linear-gradient(135deg, rgba(139,111,255,0.50) 0%, rgba(100,74,255,0.38) 100%);
-  box-shadow: 0 6px 24px rgba(139,111,255,0.40), inset 0 1px 0 rgba(255,255,255,0.28);
+  background: linear-gradient(135deg, rgba(80,70,228,0.50) 0%, rgba(80,70,228,0.38) 100%);
+  box-shadow: 0 6px 24px rgba(80,70,228,0.40), inset 0 1px 0 rgba(255,255,255,0.28);
   transform: translateY(-1px);
 }
 .io-btn:active{ transform: translateY(0); }
@@ -204,22 +204,22 @@ button{ font:inherit; }
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
 }
 .io-badge.ok{
-  border-color: rgba(56,248,166,0.50);
-  background: rgba(56,248,166,0.16);
-  color: rgba(56,248,166,0.96);
-  box-shadow: 0 0 10px rgba(56,248,166,0.20);
+  border-color: rgba(52,211,153,0.50);
+  background: rgba(52,211,153,0.16);
+  color: rgba(52,211,153,0.96);
+  box-shadow: 0 0 10px rgba(52,211,153,0.20);
 }
 .io-badge.warn{
-  border-color: rgba(255,209,102,0.50);
-  background: rgba(255,209,102,0.16);
-  color: rgba(255,209,102,0.96);
-  box-shadow: 0 0 10px rgba(255,209,102,0.20);
+  border-color: rgba(232,180,79,0.50);
+  background: rgba(232,180,79,0.16);
+  color: rgba(232,180,79,0.96);
+  box-shadow: 0 0 10px rgba(232,180,79,0.20);
 }
 .io-badge.hot{
-  border-color: rgba(255,77,109,0.50);
-  background: rgba(255,77,109,0.16);
-  color: rgba(255,77,109,0.96);
-  box-shadow: 0 0 10px rgba(255,77,109,0.22);
+  border-color: rgba(255,107,138,0.50);
+  background: rgba(255,107,138,0.16);
+  color: rgba(255,107,138,0.96);
+  box-shadow: 0 0 10px rgba(255,107,138,0.22);
 }
 
 .io-foot{ margin-top: 14px; font-size: 11px; color: rgba(255,255,255,0.55); }
