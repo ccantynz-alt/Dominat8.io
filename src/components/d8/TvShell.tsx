@@ -26,13 +26,13 @@ async function pingUrl(url: string): Promise<PingResult> {
 type Deployment = { domain: string; desc: string; status: string; pill: string; progress: number; icon: string };
 
 function pillColor(p: string) {
-  if (p === 'OK' || p === 'LIVE') return { fg: '#38F8A6', bg: 'rgba(56,248,166,0.12)', bd: 'rgba(56,248,166,0.28)' };
+  if (p === 'OK' || p === 'LIVE') return { fg: '#34D399', bg: 'rgba(52,211,153,0.12)', bd: 'rgba(52,211,153,0.28)' };
   if (p === 'TODO' || p === 'PENDING') return { fg: '#FFD166', bg: 'rgba(255,209,102,0.12)', bd: 'rgba(255,209,102,0.28)' };
   return { fg: 'rgba(255,255,255,0.60)', bg: 'rgba(255,255,255,0.06)', bd: 'rgba(255,255,255,0.14)' };
 }
 
 function barGrad(status: string, prog: number) {
-  if (status === 'LIVE' || status === 'OK') return 'linear-gradient(90deg,#38F8A6,#29E09A)';
+  if (status === 'LIVE' || status === 'OK') return 'linear-gradient(90deg,#34D399,#29E09A)';
   if (prog > 60) return 'linear-gradient(90deg,#F0924A,#E07A38)';
   return 'linear-gradient(90deg,#4A90E2,#6AABF0)';
 }
@@ -98,8 +98,8 @@ export default function TvShell() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
             display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
-            background: health ? '#38F8A6' : 'rgba(255,77,109,0.9)',
-            boxShadow: health ? '0 0 6px #38F8A6' : '0 0 6px rgba(255,77,109,0.9)',
+            background: health ? '#34D399' : 'rgba(255,77,109,0.9)',
+            boxShadow: health ? '0 0 6px #34D399' : '0 0 6px rgba(255,77,109,0.9)',
           }} />
           <span style={{ fontWeight: 700, letterSpacing: '-0.01em' }}>D8 TV</span>
           <span style={{ opacity: 0.40, fontSize: 11 }}>tick {tick}</span>
@@ -130,9 +130,9 @@ export default function TvShell() {
             </span>
             <span style={{
               padding: '2px 8px', borderRadius: 999, fontWeight: 600, fontSize: 10,
-              background: health ? 'rgba(56,248,166,0.12)' : 'rgba(255,77,109,0.12)',
-              color: health ? '#38F8A6' : 'rgba(255,77,109,0.90)',
-              border: `1px solid ${health ? 'rgba(56,248,166,0.25)' : 'rgba(255,77,109,0.25)'}`,
+              background: health ? 'rgba(52,211,153,0.12)' : 'rgba(255,77,109,0.12)',
+              color: health ? '#34D399' : 'rgba(255,77,109,0.90)',
+              border: `1px solid ${health ? 'rgba(52,211,153,0.25)' : 'rgba(255,77,109,0.25)'}`,
               flexShrink: 0,
             }}>
               {stamp ? (stamp.ok ? 'OK' : 'ERR') : '…'}

@@ -258,11 +258,11 @@ export function HomeSections() {
       {/* ── Stats Strip ── */}
       <section className="d8hs-stats-section">
         <div className="d8hs-stats-inner">
-          <StatCard value={50000} suffix="+" label="Sites generated" color="#3DF0FF" />
+          <StatCard value={50000} suffix="+" label="Sites generated" color="#7C5AFF" />
           <div className="d8hs-stats-div" />
-          <StatCard value={180} suffix="+" label="Countries" color="#38F8A6" />
+          <StatCard value={180} suffix="+" label="Countries" color="#34D399" />
           <div className="d8hs-stats-div" />
-          <StatCard prefix="<" value={28} suffix="s" label="Avg build time" color="#FFD166" />
+          <StatCard prefix="<" value={28} suffix="s" label="Avg build time" color="#E8B44F" />
           <div className="d8hs-stats-div" />
           <StatCard value={4.9} suffix="★" label="Avg rating" color="#FF9A3C" decimals={1} />
         </div>
@@ -427,7 +427,7 @@ function HomeSectionsStyles() {
         font-weight: 700;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: rgba(61,240,255,0.65);
+        color: rgba(124,90,255,0.65);
         margin-bottom: 12px;
       }
       .d8hs-h2 {
@@ -501,20 +501,20 @@ function HomeSectionsStyles() {
       .d8hs-live-pulse {
         width: 7px; height: 7px;
         border-radius: 50%;
-        background: #38F8A6;
+        background: #34D399;
         flex-shrink: 0;
         animation: d8hs-live-pulse 2s ease-in-out infinite;
       }
       @keyframes d8hs-live-pulse {
-        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(56,248,166,0.4); }
-        50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(56,248,166,0); }
+        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52,211,153,0.4); }
+        50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(52,211,153,0); }
       }
       .d8hs-live-label {
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: rgba(56,248,166,0.60);
+        color: rgba(52,211,153,0.60);
       }
       .d8hs-feed-list {
         display: flex;
@@ -544,9 +544,9 @@ function HomeSectionsStyles() {
       .d8hs-feed-vibe {
         padding: 2px 8px;
         border-radius: 999px;
-        background: rgba(61,240,255,0.07);
-        border: 1px solid rgba(61,240,255,0.15);
-        color: rgba(61,240,255,0.70);
+        background: rgba(124,90,255,0.07);
+        border: 1px solid rgba(124,90,255,0.15);
+        color: rgba(124,90,255,0.70);
         font-size: 10px;
         font-weight: 600;
         letter-spacing: 0.04em;
@@ -591,7 +591,7 @@ function HomeSectionsStyles() {
         font-size: 11px;
         font-weight: 800;
         letter-spacing: 0.10em;
-        color: rgba(61,240,255,0.45);
+        color: rgba(124,90,255,0.45);
       }
       .d8hs-step-title {
         font-size: 17px;
@@ -606,7 +606,7 @@ function HomeSectionsStyles() {
       }
       .d8hs-step-detail {
         font-size: 11px;
-        color: rgba(61,240,255,0.45);
+        color: rgba(124,90,255,0.45);
         font-family: 'JetBrains Mono', ui-monospace, monospace;
         border-top: 1px solid rgba(255,255,255,0.06);
         padding-top: 10px;
@@ -724,7 +724,7 @@ function HomeSectionsStyles() {
         border-color: rgba(255,255,255,0.13);
         background: rgba(255,255,255,0.04);
       }
-      .d8hs-testimonial-stars { font-size: 14px; color: #FFD166; letter-spacing: 2px; }
+      .d8hs-testimonial-stars { font-size: 14px; color: #E8B44F; letter-spacing: 2px; }
       .d8hs-testimonial-quote {
         margin: 0;
         font-size: 14px;
@@ -773,7 +773,7 @@ function HomeSectionsStyles() {
         width: 400px; height: 200px;
         top: 50%; left: 50%;
         transform: translate(-50%, -50%);
-        background: radial-gradient(ellipse, rgba(61,240,255,0.07) 0%, transparent 70%);
+        background: radial-gradient(ellipse, rgba(124,90,255,0.07) 0%, transparent 70%);
         pointer-events: none;
         border-radius: 50%;
       }
@@ -782,7 +782,7 @@ function HomeSectionsStyles() {
         font-weight: 700;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: rgba(61,240,255,0.55);
+        color: rgba(124,90,255,0.55);
         margin-bottom: 14px;
       }
       .d8hs-cta-title {

@@ -54,16 +54,16 @@ function notFound(slug: string) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;
+    body{background:#08080c;color:#c8c8d4;font-family:'Outfit',system-ui,sans-serif;
       display:flex;align-items:center;justify-content:center;min-height:100vh}
     .c{text-align:center;padding:40px 24px}
-    .n{font-size:80px;font-weight:900;background:linear-gradient(135deg,#3DF0FF,#8B5CF6);
+    .n{font-size:80px;font-weight:900;background:linear-gradient(135deg,#7C5AFF,#5046E4);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
     h1{font-size:28px;font-weight:700;margin-bottom:8px}
     p{color:rgba(255,255,255,0.45);margin-bottom:28px;font-size:16px}
     a{display:inline-block;padding:12px 28px;border-radius:12px;
-      background:linear-gradient(135deg,rgba(61,240,255,0.2),rgba(139,92,246,0.2));
-      border:1px solid rgba(61,240,255,0.35);color:rgba(61,240,255,0.95);
+      background:linear-gradient(135deg,rgba(124,90,255,0.2),rgba(80,70,228,0.2));
+      border:1px solid rgba(124,90,255,0.35);color:rgba(124,90,255,0.95);
       text-decoration:none;font-weight:700;font-size:15px}
   </style>
 </head>

@@ -22,9 +22,9 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     if (!meta?.blobUrl) {
       return new Response(
         `<!DOCTYPE html><html><head><title>Not Found — Dominat8.io</title>
-        <style>body{background:#06080e;color:#e9eef7;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-        .c{text-align:center}.n{font-size:72px;font-weight:900;color:rgba(61,240,255,0.8)}h2{font-size:24px;margin:0 0 8px}p{color:rgba(255,255,255,0.4);margin:0 0 24px}
-        a{display:inline-block;padding:10px 22px;border-radius:10px;background:linear-gradient(135deg,#00C97A,#00B36B);color:#fff;text-decoration:none;font-weight:700}
+        <style>body{background:#08080c;color:#c8c8d4;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+        .c{text-align:center}.n{font-size:72px;font-weight:900;color:rgba(124,90,255,0.8)}h2{font-size:24px;margin:0 0 8px}p{color:rgba(255,255,255,0.4);margin:0 0 24px}
+        a{display:inline-block;padding:10px 22px;border-radius:10px;background:linear-gradient(135deg,#7C5AFF,#6347FF);color:#fff;text-decoration:none;font-weight:700}
         </style></head><body><div class="c"><div class="n">404</div><h2>Site not found</h2>
         <p>This site may have expired or been removed.</p><a href="/">Build a new site →</a></div></body></html>`,
         { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } }

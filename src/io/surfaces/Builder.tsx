@@ -1634,7 +1634,7 @@ function BuilderStyles() {
         min-width: 300px;
         display: flex;
         flex-direction: column;
-        background: linear-gradient(180deg, #0a0d18 0%, #080b15 100%);
+        background: linear-gradient(180deg, #08080c 0%, #08080c 100%);
         border-right: 1px solid rgba(255,255,255,0.07);
         overflow: hidden;
       }
@@ -2278,7 +2278,7 @@ function BuilderStyles() {
       .d8b-code-wrap {
         flex: 1;
         overflow: auto;
-        background: #0a0d18;
+        background: #08080c;
       }
       .d8b-code {
         padding: 20px 24px;
@@ -2313,7 +2313,7 @@ function BuilderStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #0a0d18;
+        background: #08080c;
         overflow: hidden;
         padding: 24px 0 16px;
       }
@@ -2352,7 +2352,7 @@ function BuilderStyles() {
         width: min(480px, 100%);
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.12);
-        background: #0d1020;
+        background: #08080c;
         box-shadow: 0 32px 80px rgba(0,0,0,0.70);
         overflow: hidden;
         animation: d8b-modal-in 200ms ease;
@@ -2525,7 +2525,7 @@ function BuilderStyles() {
         width: min(520px, 100%);
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.12);
-        background: #0d1020;
+        background: #08080c;
         box-shadow: 0 32px 80px rgba(0,0,0,0.70);
         overflow: hidden;
         animation: d8b-modal-in 200ms ease;
@@ -3108,7 +3108,7 @@ function HomeStyles() {
         width: 500px; height: 400px;
         bottom: -100px; left: 30%;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(124,92,255,0.025) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(124,90,255,0.025) 0%, transparent 70%);
         animation: d8h-drift-a 35s ease-in-out infinite reverse;
       }
       @keyframes d8h-drift-a {
@@ -3176,7 +3176,7 @@ function HomeStyles() {
         border-radius: 999px;
         border: 1px solid rgba(124,90,255,0.35);
         background: rgba(124,90,255,0.10);
-        color: rgba(0,220,140,0.90);
+        color: rgba(52,211,153,0.90);
         font-size: 12px; font-weight: 600; font-family: inherit;
         cursor: pointer; transition: all 140ms ease;
       }

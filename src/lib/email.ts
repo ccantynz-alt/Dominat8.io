@@ -35,10 +35,10 @@ export async function sendWelcomeEmail(to: string, firstName?: string) {
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;margin:0;padding:40px 24px">
+<body style="background:#08080c;color:#c8c8d4;font-family:'Outfit',system-ui,sans-serif;margin:0;padding:40px 24px">
   <div style="max-width:520px;margin:0 auto">
     <div style="font-size:24px;font-weight:900;letter-spacing:-0.03em;margin-bottom:32px">
-      Dominat8<span style="color:#3DF0FF">.io</span>
+      Dominat8<span style="color:#7C5AFF">.io</span>
     </div>
     <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.03em;margin:0 0 12px">
       Hey ${name} 👋
@@ -49,7 +49,7 @@ export async function sendWelcomeEmail(to: string, firstName?: string) {
     <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.6;margin:0 0 32px">
       Describe any business in one sentence. Watch a complete, professional website appear in under 30 seconds — full HTML, real content, zero templates.
     </p>
-    <a href="${APP_URL}/build" style="display:inline-block;padding:14px 32px;border-radius:12px;background:linear-gradient(135deg,rgba(61,240,255,0.25),rgba(139,92,246,0.25));border:1px solid rgba(61,240,255,0.45);color:rgba(61,240,255,0.97);text-decoration:none;font-weight:700;font-size:16px;letter-spacing:-0.01em">
+    <a href="${APP_URL}/build" style="display:inline-block;padding:14px 32px;border-radius:12px;background:linear-gradient(135deg,rgba(124,90,255,0.25),rgba(80,70,228,0.25));border:1px solid rgba(124,90,255,0.45);color:rgba(124,90,255,0.97);text-decoration:none;font-weight:700;font-size:16px;letter-spacing:-0.01em">
       Build your first site →
     </a>
     <p style="color:rgba(255,255,255,0.25);font-size:12px;margin-top:48px">
@@ -83,10 +83,10 @@ export async function sendUpgradeEmail(
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;margin:0;padding:40px 24px">
+<body style="background:#08080c;color:#c8c8d4;font-family:'Outfit',system-ui,sans-serif;margin:0;padding:40px 24px">
   <div style="max-width:520px;margin:0 auto">
     <div style="font-size:24px;font-weight:900;letter-spacing:-0.03em;margin-bottom:32px">
-      Dominat8<span style="color:#3DF0FF">.io</span>
+      Dominat8<span style="color:#7C5AFF">.io</span>
     </div>
     <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.03em;margin:0 0 12px">
       ${planLabel} activated 🎉
@@ -100,7 +100,7 @@ export async function sendUpgradeEmail(
       ${plan === "agency" ? '<div style="margin-bottom:10px">✓ &nbsp;<strong>Bulk generation + API access</strong></div>' : ""}
       <div>✓ &nbsp;<strong>All 6 AI agents unlocked</strong></div>
     </div>
-    <a href="${APP_URL}/build" style="display:inline-block;padding:14px 32px;border-radius:12px;background:linear-gradient(135deg,rgba(61,240,255,0.25),rgba(139,92,246,0.25));border:1px solid rgba(61,240,255,0.45);color:rgba(61,240,255,0.97);text-decoration:none;font-weight:700;font-size:16px">
+    <a href="${APP_URL}/build" style="display:inline-block;padding:14px 32px;border-radius:12px;background:linear-gradient(135deg,rgba(124,90,255,0.25),rgba(80,70,228,0.25));border:1px solid rgba(124,90,255,0.45);color:rgba(124,90,255,0.97);text-decoration:none;font-weight:700;font-size:16px">
       Start building →
     </a>
     <p style="color:rgba(255,255,255,0.25);font-size:12px;margin-top:48px">
@@ -128,15 +128,15 @@ export async function sendUsageWarningEmail(
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="background:#060810;color:#e9eef7;font-family:system-ui,sans-serif;margin:0;padding:40px 24px">
+<body style="background:#08080c;color:#c8c8d4;font-family:system-ui,sans-serif;margin:0;padding:40px 24px">
   <div style="max-width:520px;margin:0 auto">
-    <div style="font-size:24px;font-weight:900;margin-bottom:32px">Dominat8<span style="color:#3DF0FF">.io</span></div>
+    <div style="font-size:24px;font-weight:900;margin-bottom:32px">Dominat8<span style="color:#7C5AFF">.io</span></div>
     <h1 style="font-size:24px;font-weight:800;margin:0 0 12px">Running low on credits</h1>
     <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.6;margin:0 0 24px">
       Hey ${name}, you've used <strong>${pctUsed}%</strong> of your monthly agent credits on the ${plan} plan.
       Top up now to keep building without interruption.
     </p>
-    <a href="${APP_URL}/pricing" style="display:inline-block;padding:14px 32px;border-radius:12px;background:rgba(61,240,255,0.15);border:1px solid rgba(61,240,255,0.40);color:rgba(61,240,255,0.97);text-decoration:none;font-weight:700;font-size:16px">
+    <a href="${APP_URL}/pricing" style="display:inline-block;padding:14px 32px;border-radius:12px;background:rgba(124,90,255,0.15);border:1px solid rgba(124,90,255,0.40);color:rgba(124,90,255,0.97);text-decoration:none;font-weight:700;font-size:16px">
       Buy credits or upgrade →
     </a>
   </div>

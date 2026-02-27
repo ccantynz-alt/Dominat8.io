@@ -58,7 +58,7 @@ export default function VideoPage() {
     <>
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #060810; color: #e9eef7; font-family: 'Outfit', system-ui, sans-serif; }
+        body { background: #08080c; color: #c8c8d4; font-family: 'Outfit', system-ui, sans-serif; }
         .vp-root { min-height: 100vh; }
         .vp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(24px); background: rgba(6,8,16,0.82); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 56px; }
         .vp-logo { font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.03em; }
@@ -71,11 +71,11 @@ export default function VideoPage() {
         .vp-platform-row { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
         .vp-platform-btn { padding: 10px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.60); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 150ms; display: flex; align-items: center; gap: 6px; }
         .vp-platform-btn.active { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.30); color: #fff; }
-        .vp-select { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #e9eef7; font-size: 14px; font-family: inherit; margin-bottom: 24px; outline: none; appearance: none; }
-        .vp-textarea { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #e9eef7; font-size: 15px; font-family: inherit; resize: vertical; min-height: 80px; outline: none; line-height: 1.5; margin-bottom: 20px; transition: border-color 150ms; }
+        .vp-select { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #c8c8d4; font-size: 14px; font-family: inherit; margin-bottom: 24px; outline: none; appearance: none; }
+        .vp-textarea { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #c8c8d4; font-size: 15px; font-family: inherit; resize: vertical; min-height: 80px; outline: none; line-height: 1.5; margin-bottom: 20px; transition: border-color 150ms; }
         .vp-textarea:focus { border-color: rgba(255,0,80,0.40); }
-        .vp-generate-btn { width: 100%; padding: 15px; border-radius: 12px; background: linear-gradient(135deg, rgba(255,0,80,0.25), rgba(139,92,246,0.25)); border: 1px solid rgba(255,0,80,0.45); color: rgba(255,80,120,0.97); font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit; transition: all 150ms; letter-spacing: -0.01em; margin-bottom: 40px; }
-        .vp-generate-btn:hover:not(:disabled) { background: linear-gradient(135deg, rgba(255,0,80,0.35), rgba(139,92,246,0.35)); transform: translateY(-1px); }
+        .vp-generate-btn { width: 100%; padding: 15px; border-radius: 12px; background: linear-gradient(135deg, rgba(255,0,80,0.25), rgba(80,70,228,0.25)); border: 1px solid rgba(255,0,80,0.45); color: rgba(255,80,120,0.97); font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit; transition: all 150ms; letter-spacing: -0.01em; margin-bottom: 40px; }
+        .vp-generate-btn:hover:not(:disabled) { background: linear-gradient(135deg, rgba(255,0,80,0.35), rgba(80,70,228,0.35)); transform: translateY(-1px); }
         .vp-generate-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
         .vp-error { padding: 14px 18px; border-radius: 10px; border: 1px solid rgba(255,80,80,0.30); background: rgba(255,80,80,0.08); color: rgba(255,120,120,0.90); font-size: 14px; margin-bottom: 24px; }
         .vp-script { display: flex; flex-direction: column; gap: 12px; }
@@ -85,7 +85,7 @@ export default function VideoPage() {
         .vp-section-time { font-size: 11px; color: rgba(255,255,255,0.25); }
         .vp-copy-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: rgba(255,255,255,0.45); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 120ms; }
         .vp-copy-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.80); }
-        .vp-copy-btn.copied { border-color: rgba(56,248,166,0.35); color: rgba(56,248,166,0.80); }
+        .vp-copy-btn.copied { border-color: rgba(52,211,153,0.35); color: rgba(52,211,153,0.80); }
         .vp-section-body { padding: 16px 18px; font-size: 15px; line-height: 1.6; color: rgba(255,255,255,0.80); }
         .vp-voiceover { font-style: italic; color: rgba(255,255,255,0.70); }
         .vp-caption-body { font-size: 14px; }
@@ -96,7 +96,7 @@ export default function VideoPage() {
         .vp-overlay-num { width: 22px; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
         .vp-overlay-text { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.4; }
         .vp-timeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; margin-bottom: 24px; background: rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; }
-        .vp-tl-cell { background: #060810; padding: 12px 10px; text-align: center; }
+        .vp-tl-cell { background: #08080c; padding: 12px 10px; text-align: center; }
         .vp-tl-time { font-size: 10px; color: rgba(255,255,255,0.30); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
         .vp-tl-label { font-size: 11px; font-weight: 700; color: rgba(255,0,80,0.75); }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -114,7 +114,7 @@ export default function VideoPage() {
 
         <main className="vp-main">
           <div className="vp-badge">🎵 AI Video Generator</div>
-          <h1 className="vp-title">Turn your site into a<br /><span style={{ background: "linear-gradient(135deg,#FF0050,#8B5CF6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>viral video</span></h1>
+          <h1 className="vp-title">Turn your site into a<br /><span style={{ background: "linear-gradient(135deg,#FF0050,#5046E4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>viral video</span></h1>
           <p className="vp-sub">Generate a complete TikTok or Reels script — hook, voiceover, captions, hashtags — in seconds. Built to convert.</p>
 
           <div className="vp-label">Platform</div>

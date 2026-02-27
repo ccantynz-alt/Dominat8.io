@@ -62,7 +62,7 @@ function PatchCapsulePanel() {
       {log.length > 0 && (
         <div style={{ background: "rgba(0,0,0,0.35)", borderRadius: 10, padding: "10px 12px", maxHeight: 130, overflowY: "auto", border: "1px solid rgba(255,255,255,0.07)" }}>
           {log.map((l, i) => (
-            <div key={i} style={{ fontSize: 11, lineHeight: 1.6, fontFamily: "ui-monospace,monospace", color: l.startsWith("✓") ? "rgba(56,248,166,0.90)" : "rgba(255,255,255,0.65)" }}>
+            <div key={i} style={{ fontSize: 11, lineHeight: 1.6, fontFamily: "ui-monospace,monospace", color: l.startsWith("✓") ? "rgba(52,211,153,0.90)" : "rgba(255,255,255,0.65)" }}>
               {l}
             </div>
           ))}
@@ -115,11 +115,11 @@ function DomainOnboardingPanel() {
 
       {step === "verified" && (
         <>
-          <div style={{ fontSize: 12, color: "rgba(56,248,166,0.90)", marginBottom: 10 }}>✓ DNS records for <strong>{domain}</strong></div>
+          <div style={{ fontSize: 12, color: "rgba(52,211,153,0.90)", marginBottom: 10 }}>✓ DNS records for <strong>{domain}</strong></div>
           <div style={{ display: "grid", gap: 6 }}>
             {records.map((r, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "48px 56px 1fr", gap: 8, alignItems: "center", background: "rgba(0,0,0,0.25)", borderRadius: 8, padding: "7px 10px", fontSize: 11, fontFamily: "ui-monospace,monospace" }}>
-                <span style={{ background: "rgba(61,240,255,0.10)", color: "rgba(61,240,255,0.90)", borderRadius: 4, padding: "2px 6px", fontWeight: 700, textAlign: "center" }}>{r.type}</span>
+                <span style={{ background: "rgba(124,90,255,0.10)", color: "rgba(124,90,255,0.90)", borderRadius: 4, padding: "2px 6px", fontWeight: 700, textAlign: "center" }}>{r.type}</span>
                 <span style={{ color: "rgba(255,255,255,0.55)" }}>{r.name}</span>
                 <span style={{ color: "rgba(255,255,255,0.80)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.value}</span>
               </div>
@@ -164,7 +164,7 @@ function SystemMetricsPanel({ patchId }: { patchId: string }) {
       <div style={{ marginTop: 12, padding: 12, borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}>
         <div className="kicker">build stamp</div>
         <div style={{ marginTop: 8, fontSize: 11, color: "rgba(255,255,255,0.65)", display: "grid", gap: 4 }}>
-          <div>PatchId: <span style={{ color: "rgba(61,240,255,0.90)", fontFamily: "ui-monospace,monospace" }}>{patchId}</span></div>
+          <div>PatchId: <span style={{ color: "rgba(124,90,255,0.90)", fontFamily: "ui-monospace,monospace" }}>{patchId}</span></div>
           <div>Time: <span style={{ fontFamily: "ui-monospace,monospace", fontSize: 10 }}>{ts}</span></div>
         </div>
       </div>
@@ -245,7 +245,7 @@ function QuickActionsPanel() {
                 </span>
               </div>
               {res?.summary && (
-                <div style={{ fontSize: 10, color: "rgba(56,248,166,0.85)", fontFamily: "ui-monospace,monospace", paddingLeft: 2, lineHeight: 1.4 }}>
+                <div style={{ fontSize: 10, color: "rgba(52,211,153,0.85)", fontFamily: "ui-monospace,monospace", paddingLeft: 2, lineHeight: 1.4 }}>
                   ✓ {res.summary}
                 </div>
               )}

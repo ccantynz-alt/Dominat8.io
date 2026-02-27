@@ -66,20 +66,20 @@ export function VoiceMicButton({ onTranscript, size = 40 }: VoiceMicButtonProps)
     "Mic";
 
   const glowColor =
-    state === "listening" ? "rgba(255,77,109,0.65)" :
-    state === "processing" ? "rgba(61,240,255,0.55)" :
+    state === "listening" ? "rgba(255,107,138,0.65)" :
+    state === "processing" ? "rgba(124,90,255,0.55)" :
     state === "error" ? "rgba(255,209,102,0.55)" :
-    "rgba(124,92,255,0.40)";
+    "rgba(80,70,228,0.40)";
 
   const borderColor =
-    state === "listening" ? "rgba(255,77,109,0.70)" :
-    state === "processing" ? "rgba(61,240,255,0.60)" :
+    state === "listening" ? "rgba(255,107,138,0.70)" :
+    state === "processing" ? "rgba(124,90,255,0.60)" :
     state === "error" ? "rgba(255,209,102,0.60)" :
     "rgba(255,255,255,0.22)";
 
   const bgColor =
-    state === "listening" ? "rgba(255,77,109,0.18)" :
-    state === "processing" ? "rgba(61,240,255,0.14)" :
+    state === "listening" ? "rgba(255,107,138,0.18)" :
+    state === "processing" ? "rgba(124,90,255,0.14)" :
     state === "error" ? "rgba(255,209,102,0.14)" :
     "rgba(255,255,255,0.08)";
 
@@ -107,19 +107,19 @@ export function VoiceMicButton({ onTranscript, size = 40 }: VoiceMicButtonProps)
         {state === "listening" ? (
           /* Animated waveform bars */
           <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
-            <rect x="1" y="4" width="2.5" height="8" rx="1.2" fill="rgba(255,77,109,0.9)">
+            <rect x="1" y="4" width="2.5" height="8" rx="1.2" fill="rgba(255,107,138,0.9)">
               <animate attributeName="height" values="8;14;6;12;8" dur="0.7s" repeatCount="indefinite"/>
               <animate attributeName="y" values="4;1;5;2;4" dur="0.7s" repeatCount="indefinite"/>
             </rect>
-            <rect x="5.5" y="2" width="2.5" height="12" rx="1.2" fill="rgba(255,77,109,0.9)">
+            <rect x="5.5" y="2" width="2.5" height="12" rx="1.2" fill="rgba(255,107,138,0.9)">
               <animate attributeName="height" values="12;6;14;8;12" dur="0.6s" repeatCount="indefinite"/>
               <animate attributeName="y" values="2;5;1;4;2" dur="0.6s" repeatCount="indefinite"/>
             </rect>
-            <rect x="10" y="1" width="2.5" height="14" rx="1.2" fill="rgba(255,77,109,1)">
+            <rect x="10" y="1" width="2.5" height="14" rx="1.2" fill="rgba(255,107,138,1)">
               <animate attributeName="height" values="14;8;12;6;14" dur="0.5s" repeatCount="indefinite"/>
               <animate attributeName="y" values="1;4;2;5;1" dur="0.5s" repeatCount="indefinite"/>
             </rect>
-            <rect x="14.5" y="3" width="2.5" height="10" rx="1.2" fill="rgba(255,77,109,0.9)">
+            <rect x="14.5" y="3" width="2.5" height="10" rx="1.2" fill="rgba(255,107,138,0.9)">
               <animate attributeName="height" values="10;14;6;12;10" dur="0.65s" repeatCount="indefinite"/>
               <animate attributeName="y" values="3;1;5;2;3" dur="0.65s" repeatCount="indefinite"/>
             </rect>
@@ -146,7 +146,7 @@ export function VoiceMicButton({ onTranscript, size = 40 }: VoiceMicButtonProps)
           position: "absolute",
           inset: -4,
           borderRadius: "50%",
-          border: "1.5px solid rgba(255,77,109,0.45)",
+          border: "1.5px solid rgba(255,107,138,0.45)",
           animation: "mic-pulse 1s ease-out infinite",
           pointerEvents: "none",
         }} />

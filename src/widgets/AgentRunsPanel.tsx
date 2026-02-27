@@ -23,10 +23,10 @@ type AgentRunsPanelProps = {
 };
 
 function statusDot(s: AgentRun['status']): { color: string; bg: string; label: string } {
-  if (s === 'succeeded') return { color: 'rgba(56,248,166,0.95)', bg: 'rgba(56,248,166,0.12)', label: 'Done' };
-  if (s === 'running')   return { color: 'rgba(61,240,255,0.95)',  bg: 'rgba(61,240,255,0.12)',  label: 'Running' };
-  if (s === 'queued')    return { color: 'rgba(255,209,102,0.95)', bg: 'rgba(255,209,102,0.12)', label: 'Queued' };
-  return                        { color: 'rgba(255,77,109,0.95)',  bg: 'rgba(255,77,109,0.12)',  label: 'Failed' };
+  if (s === 'succeeded') return { color: 'rgba(52,211,153,0.95)', bg: 'rgba(52,211,153,0.12)', label: 'Done' };
+  if (s === 'running')   return { color: 'rgba(124,90,255,0.95)',  bg: 'rgba(124,90,255,0.12)',  label: 'Running' };
+  if (s === 'queued')    return { color: 'rgba(232,180,79,0.95)', bg: 'rgba(232,180,79,0.12)', label: 'Queued' };
+  return                        { color: 'rgba(255,107,138,0.95)',  bg: 'rgba(255,107,138,0.12)',  label: 'Failed' };
 }
 
 function fmtDuration(ms?: number): string {
@@ -107,13 +107,13 @@ export default function AgentRunsPanel({ projectId, className }: AgentRunsPanelP
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
               padding: '2px 8px', borderRadius: 999,
-              background: 'rgba(61,240,255,0.12)',
-              border: '1px solid rgba(61,240,255,0.28)',
-              fontSize: 11, color: 'rgba(61,240,255,0.90)', fontWeight: 600,
+              background: 'rgba(124,90,255,0.12)',
+              border: '1px solid rgba(124,90,255,0.28)',
+              fontSize: 11, color: 'rgba(124,90,255,0.90)', fontWeight: 600,
             }}>
               <span style={{
                 width: 5, height: 5, borderRadius: '50%',
-                background: 'rgba(61,240,255,0.9)', display: 'inline-block',
+                background: 'rgba(124,90,255,0.9)', display: 'inline-block',
                 animation: 'arp-blink 1.2s ease-in-out infinite',
               }} />
               {running} running
@@ -133,7 +133,7 @@ export default function AgentRunsPanel({ projectId, className }: AgentRunsPanelP
           </div>
         )}
         {!loading && error && (
-          <div style={{ padding: '14px 16px', fontSize: 12, color: 'rgba(255,77,109,0.80)' }}>
+          <div style={{ padding: '14px 16px', fontSize: 12, color: 'rgba(255,107,138,0.80)' }}>
             Error: {error}
           </div>
         )}

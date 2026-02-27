@@ -18,10 +18,10 @@ type AgentRun = {
 };
 
 function dot(s: AgentRun['status']) {
-  if (s === 'succeeded') return { c: 'rgba(56,248,166,0.95)', bg: 'rgba(56,248,166,0.12)', label: 'Done' };
-  if (s === 'running')   return { c: 'rgba(61,240,255,0.95)',  bg: 'rgba(61,240,255,0.12)',  label: 'Running' };
-  if (s === 'queued')    return { c: 'rgba(255,209,102,0.95)', bg: 'rgba(255,209,102,0.12)', label: 'Queued' };
-  return                        { c: 'rgba(255,77,109,0.95)',  bg: 'rgba(255,77,109,0.12)',  label: 'Failed' };
+  if (s === 'succeeded') return { c: 'rgba(52,211,153,0.95)', bg: 'rgba(52,211,153,0.12)', label: 'Done' };
+  if (s === 'running')   return { c: 'rgba(124,90,255,0.95)',  bg: 'rgba(124,90,255,0.12)',  label: 'Running' };
+  if (s === 'queued')    return { c: 'rgba(232,180,79,0.95)', bg: 'rgba(232,180,79,0.12)', label: 'Queued' };
+  return                        { c: 'rgba(255,107,138,0.95)',  bg: 'rgba(255,107,138,0.12)',  label: 'Failed' };
 }
 
 function age(iso: string) {
@@ -66,8 +66,8 @@ export default function AgentRunsPanel() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div className="kicker">agent runs</div>
           {running > 0 && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 999, background: 'rgba(61,240,255,0.10)', border: '1px solid rgba(61,240,255,0.25)', fontSize: 11, color: 'rgba(61,240,255,0.90)' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(61,240,255,0.9)', display: 'inline-block', animation: 'arp-pulse 1.2s ease-in-out infinite' }} />
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 999, background: 'rgba(124,90,255,0.10)', border: '1px solid rgba(124,90,255,0.25)', fontSize: 11, color: 'rgba(124,90,255,0.90)' }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(124,90,255,0.9)', display: 'inline-block', animation: 'arp-pulse 1.2s ease-in-out infinite' }} />
               {running}
             </span>
           )}

@@ -76,18 +76,18 @@ export default function AdminPage() {
         .adm-field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px; }
         .adm-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.40); text-transform: uppercase; letter-spacing: 0.05em; }
         .adm-input { padding: 9px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font-size: 13px; font-family: ui-monospace,monospace; outline: none; transition: border 120ms; width: 100%; }
-        .adm-input:focus { border-color: rgba(61,240,255,0.40); }
+        .adm-input:focus { border-color: rgba(124,90,255,0.40); }
         .adm-select { padding: 9px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.12); background: rgba(30,30,50,0.80); color: #fff; font-size: 13px; font-family: inherit; outline: none; cursor: pointer; width: 100%; }
         .adm-btn { padding: 9px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; border: none; transition: all 130ms; white-space: nowrap; }
-        .adm-btn--teal { background: rgba(61,240,255,0.15); border: 1px solid rgba(61,240,255,0.35); color: rgba(61,240,255,0.90); }
-        .adm-btn--teal:hover { background: rgba(61,240,255,0.25); }
-        .adm-btn--green { background: rgba(56,248,166,0.12); border: 1px solid rgba(56,248,166,0.35); color: rgba(56,248,166,0.90); }
-        .adm-btn--green:hover { background: rgba(56,248,166,0.22); }
-        .adm-btn--purple { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.35); color: rgba(139,92,246,0.90); }
-        .adm-btn--purple:hover { background: rgba(139,92,246,0.22); }
+        .adm-btn--teal { background: rgba(124,90,255,0.15); border: 1px solid rgba(124,90,255,0.35); color: rgba(124,90,255,0.90); }
+        .adm-btn--teal:hover { background: rgba(124,90,255,0.25); }
+        .adm-btn--green { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.35); color: rgba(52,211,153,0.90); }
+        .adm-btn--green:hover { background: rgba(52,211,153,0.22); }
+        .adm-btn--purple { background: rgba(80,70,228,0.12); border: 1px solid rgba(80,70,228,0.35); color: rgba(80,70,228,0.90); }
+        .adm-btn--purple:hover { background: rgba(80,70,228,0.22); }
         .adm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .adm-msg { margin-top: 14px; padding: 10px 14px; border-radius: 9px; font-size: 13px; font-family: ui-monospace,monospace; }
-        .adm-msg--ok { background: rgba(56,248,166,0.08); border: 1px solid rgba(56,248,166,0.25); color: rgba(56,248,166,0.90); }
+        .adm-msg--ok { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.25); color: rgba(52,211,153,0.90); }
         .adm-msg--err { background: rgba(255,100,100,0.08); border: 1px solid rgba(255,100,100,0.25); color: rgba(255,100,100,0.90); }
         .adm-result { margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .adm-stat { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
@@ -144,7 +144,7 @@ export default function AdminPage() {
                 </div>
                 <div className="adm-stat">
                   <div className="adm-stat-label">Credits total</div>
-                  <div className="adm-stat-val" style={{ color: result.balance.total > 0 ? "rgba(56,248,166,0.90)" : "rgba(255,100,100,0.90)" }}>
+                  <div className="adm-stat-val" style={{ color: result.balance.total > 0 ? "rgba(52,211,153,0.90)" : "rgba(255,100,100,0.90)" }}>
                     {result.balance.total}
                   </div>
                   <div className="adm-stat-sub">{result.balance.monthlyRemaining} mo + {result.balance.purchased} bought</div>

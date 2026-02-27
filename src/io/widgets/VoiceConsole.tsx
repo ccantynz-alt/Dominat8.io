@@ -49,8 +49,8 @@ export function VoiceConsole() {
   }
 
   const lineColor = (type: ConsoleLine["type"]) => {
-    if (type === "voice") return "rgba(61,240,255,0.90)";
-    if (type === "response") return "rgba(56,248,166,0.88)";
+    if (type === "voice") return "rgba(124,90,255,0.90)";
+    if (type === "response") return "rgba(52,211,153,0.88)";
     return "rgba(255,255,255,0.52)";
   };
 
@@ -84,8 +84,8 @@ export function VoiceConsole() {
         </div>
         <span style={{
           fontSize: 10, padding: "4px 8px", borderRadius: 999,
-          border: "1px solid rgba(56,248,166,0.35)", background: "rgba(56,248,166,0.10)",
-          color: "rgba(56,248,166,0.92)",
+          border: "1px solid rgba(52,211,153,0.35)", background: "rgba(52,211,153,0.10)",
+          color: "rgba(52,211,153,0.92)",
         }}>LIVE</span>
       </div>
 
@@ -139,7 +139,7 @@ export function VoiceConsole() {
             outline: "none",
             fontFamily: "inherit",
           }}
-          onFocus={(e) => { e.target.style.borderColor = "rgba(61,240,255,0.45)"; e.target.style.boxShadow = "0 0 0 2px rgba(61,240,255,0.12)"; }}
+          onFocus={(e) => { e.target.style.borderColor = "rgba(124,90,255,0.45)"; e.target.style.boxShadow = "0 0 0 2px rgba(124,90,255,0.12)"; }}
           onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.14)"; e.target.style.boxShadow = "none"; }}
         />
         <button
@@ -147,8 +147,8 @@ export function VoiceConsole() {
           style={{
             padding: "8px 14px",
             borderRadius: 10,
-            border: "1px solid rgba(124,92,255,0.45)",
-            background: "rgba(124,92,255,0.22)",
+            border: "1px solid rgba(80,70,228,0.45)",
+            background: "rgba(80,70,228,0.22)",
             color: "rgba(255,255,255,0.92)",
             fontSize: 12,
             cursor: "pointer",
