@@ -1,4 +1,6 @@
 import { CheckoutButton } from "./CheckoutButton";
+import { Nav } from "@/app/_client/Nav";
+import { Footer } from "@/app/_client/Footer";
 
 export const metadata = {
   title: "Pricing — Dominat8.io",
@@ -132,21 +134,9 @@ export default function PricingPage() {
       background: "radial-gradient(1000px 700px at 50% -10%, rgba(124,90,255,0.05), transparent 55%), #08080c",
       color: "#c8c8d4",
       fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
-      padding: "0 0 80px",
+      padding: 0,
     }}>
-      {/* Nav */}
-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "inherit" }}>
-          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.04em" }}>D8</span>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(124,90,255,0.7)", display: "inline-block" }} />
-          <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
-        </a>
-        <div style={{ display: "flex", gap: 8 }}>
-          <a href="/templates" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Templates</a>
-          <a href="/gallery" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Gallery</a>
-          <a href="/build" style={{ padding: "8px 18px", borderRadius: 999, background: "linear-gradient(135deg,#7C5AFF,#6347FF)", color: "#fff", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Start building →</a>
-        </div>
-      </nav>
+      <Nav />
 
       {/* Hero */}
       <div style={{ textAlign: "center", padding: "64px 24px 48px" }}>
@@ -251,6 +241,9 @@ export default function PricingPage() {
           All plans include a <strong style={{ color: "rgba(255,255,255,0.60)" }}>14-day money-back guarantee</strong>. Questions? <a href="mailto:hello@dominat8.io" style={{ color: "rgba(124,90,255,0.75)" }}>hello@dominat8.io</a>
         </p>
       </div>
+
+      <div style={{ height: 80 }} />
+      <Footer />
 
       <style>{`
         @media (max-width: 900px) {

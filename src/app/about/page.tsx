@@ -1,3 +1,6 @@
+import { Nav } from "@/app/_client/Nav";
+import { Footer } from "@/app/_client/Footer";
+
 export const metadata = {
   title: "About — Dominat8.io",
   description: "We're building the future of websites. Every business deserves a world-class online presence, built in seconds.",
@@ -48,20 +51,9 @@ export default function AboutPage() {
       background: "#08080c",
       color: "#c8c8d4",
       fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
-      padding: "0 0 80px",
+      padding: 0,
     }}>
-      {/* Nav */}
-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "inherit" }}>
-          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.04em" }}>D8</span>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(124,90,255,0.7)", display: "inline-block" }} />
-          <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
-        </a>
-        <div style={{ display: "flex", gap: 8 }}>
-          <a href="/pricing" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Pricing</a>
-          <a href="/" style={{ padding: "8px 18px", borderRadius: 999, background: "linear-gradient(135deg,#7C5AFF,#6347FF)", color: "#fff", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Start building →</a>
-        </div>
-      </nav>
+      <Nav />
 
       {/* Hero */}
       <div style={{ maxWidth: 800, margin: "0 auto", padding: "72px 24px 56px", textAlign: "center" }}>
@@ -162,7 +154,7 @@ export default function AboutPage() {
         <h2 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 12px" }}>Be part of what comes next.</h2>
         <p style={{ fontSize: 15, color: "rgba(255,255,255,0.45)", margin: "0 0 24px" }}>Questions? Ideas? We'd love to hear from you.</p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <a href="/" style={{ display: "inline-block", padding: "14px 32px", borderRadius: 14, background: "linear-gradient(135deg,#7C5AFF,#6347FF)", color: "#fff", textDecoration: "none", fontSize: 15, fontWeight: 700, boxShadow: "0 4px 20px rgba(124,90,255,0.40)" }}>
+          <a href="/build" style={{ display: "inline-block", padding: "14px 32px", borderRadius: 14, background: "linear-gradient(135deg,#7C5AFF,#6347FF)", color: "#fff", textDecoration: "none", fontSize: 15, fontWeight: 700, boxShadow: "0 4px 20px rgba(124,90,255,0.40)" }}>
             Start building →
           </a>
           <a href="mailto:hello@dominat8.io" style={{ display: "inline-block", padding: "14px 32px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.70)", textDecoration: "none", fontSize: 15, fontWeight: 600 }}>
@@ -170,6 +162,9 @@ export default function AboutPage() {
           </a>
         </div>
       </div>
+
+      <div style={{ height: 80 }} />
+      <Footer />
 
       <style>{`
         @media (max-width: 700px) {

@@ -3,6 +3,9 @@
 import React, { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useUser, RedirectToSignIn } from "@clerk/nextjs";
+import { Nav } from "@/app/_client/Nav";
+import { Footer } from "@/app/_client/Footer";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -32,8 +35,11 @@ interface SiteMeta {
 // ── Inner component (needs useSearchParams) ─────────────────────────────────
 
 function DashboardInner() {
+  const { isSignedIn, isLoaded } = useUser();
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  if (isLoaded && !isSignedIn) return <RedirectToSignIn />;
 
   const paymentSuccess = searchParams?.get("payment") === "success";
   const newPlan = searchParams?.get("plan") ?? "";
@@ -139,14 +145,7 @@ function DashboardInner() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #08080c; color: #c8c8d4; font-family: 'Outfit', 'Inter', system-ui, sans-serif; }
         .db-root { min-height: 100vh; background: #08080c; }
-        .db-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(24px); background: rgba(8,8,12,0.82); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 56px; }
-        .db-logo { font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.03em; }
-        .db-nav-links { display: flex; gap: 8px; align-items: center; }
-        .db-nav-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 500; text-decoration: none; cursor: pointer; font-family: inherit; transition: all 120ms; }
-        .db-nav-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
-        .db-nav-btn--primary { background: rgba(124,90,255,0.12); border-color: rgba(124,90,255,0.35); color: rgba(124,90,255,0.95); }
-        .db-nav-btn--primary:hover { background: rgba(124,90,255,0.22); }
-        .db-main { max-width: 960px; margin: 0 auto; padding: 88px 24px 80px; }
+        .db-main { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
         .db-page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 32px; }
         .db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
         @media (max-width: 640px) { .db-grid { grid-template-columns: 1fr; } }
@@ -232,14 +231,7 @@ function DashboardInner() {
       `}</style>
 
       <div className="db-root">
-        <nav className="db-nav">
-          <Link href="/" className="db-logo">Dominat8.io</Link>
-          <div className="db-nav-links">
-            <Link href="/build" className="db-nav-btn db-nav-btn--primary">⚡ Builder</Link>
-            <Link href="/video" className="db-nav-btn">🎵 Video</Link>
-            <Link href="/pricing" className="db-nav-btn">Pricing</Link>
-          </div>
-        </nav>
+        <Nav />
 
         <main className="db-main">
           <div className="db-page-title">Dashboard</div>
@@ -457,6 +449,7 @@ function DashboardInner() {
             </div>
           )}
         </main>
+        <Footer />
       </div>
 
       {/* ── Deploy modal ── */}

@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import type { VideoScript } from "@/app/api/video/script/route";
+import { Nav } from "@/app/_client/Nav";
+import { Footer } from "@/app/_client/Footer";
 
 const PLATFORMS = [
   { id: "tiktok", label: "TikTok", icon: "🎵", color: "rgba(255,0,80,0.85)" },
@@ -60,10 +62,7 @@ export default function VideoPage() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #08080c; color: #c8c8d4; font-family: 'Outfit', system-ui, sans-serif; }
         .vp-root { min-height: 100vh; }
-        .vp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(24px); background: rgba(6,8,16,0.82); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 56px; }
-        .vp-logo { font-size: 18px; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.03em; }
-        .vp-nav-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 500; text-decoration: none; }
-        .vp-main { max-width: 760px; margin: 0 auto; padding: 80px 24px 80px; }
+        .vp-main { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
         .vp-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; border: 1px solid rgba(255,0,80,0.30); background: rgba(255,0,80,0.08); color: rgba(255,80,120,0.90); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 16px; }
         .vp-title { font-size: clamp(28px,5vw,44px); font-weight: 900; letter-spacing: -0.04em; line-height: 1.05; margin-bottom: 10px; }
         .vp-sub { font-size: 16px; color: rgba(255,255,255,0.50); margin-bottom: 40px; line-height: 1.5; }
@@ -104,13 +103,7 @@ export default function VideoPage() {
       `}</style>
 
       <div className="vp-root">
-        <nav className="vp-nav">
-          <a href="/" className="vp-logo">Dominat8.io</a>
-          <div style={{ display: "flex", gap: 8 }}>
-            <a href="/dashboard" className="vp-nav-btn">Dashboard</a>
-            <a href="/build" className="vp-nav-btn" style={{ background: "rgba(255,0,80,0.12)", borderColor: "rgba(255,0,80,0.30)", color: "rgba(255,80,120,0.90)" }}>⚡ Builder</a>
-          </div>
-        </nav>
+        <Nav />
 
         <main className="vp-main">
           <div className="vp-badge">🎵 AI Video Generator</div>
@@ -270,6 +263,7 @@ export default function VideoPage() {
             </div>
           )}
         </main>
+        <Footer />
       </div>
     </>
   );

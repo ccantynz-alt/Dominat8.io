@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { Nav } from "@/app/_client/Nav";
+import { Footer } from "@/app/_client/Footer";
 
 type Template = {
   name: string;
@@ -92,21 +94,9 @@ export default function TemplatesPage() {
       background: "#08080c",
       color: "#c8c8d4",
       fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
-      padding: "0 0 80px",
+      padding: 0,
     }}>
-      {/* Nav */}
-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "inherit" }}>
-          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.04em" }}>D8</span>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(124,90,255,0.7)", display: "inline-block" }} />
-          <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
-        </a>
-        <div style={{ display: "flex", gap: 8 }}>
-          <a href="/gallery" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Gallery</a>
-          <a href="/pricing" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Pricing</a>
-          <a href="/" style={{ padding: "8px 18px", borderRadius: 999, background: "linear-gradient(135deg,#7C5AFF,#6347FF)", color: "#fff", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Start building →</a>
-        </div>
-      </nav>
+      <Nav />
 
       {/* Hero */}
       <div style={{ textAlign: "center", padding: "56px 24px 36px" }}>
@@ -170,7 +160,7 @@ export default function TemplatesPage() {
         {filtered.map((t, i) => (
           <a
             key={i}
-            href={`/?prompt=${encodeURIComponent(t.prompt)}`}
+            href={`/build?prompt=${encodeURIComponent(t.prompt)}`}
             style={{
               borderRadius: 16,
               border: "1px solid rgba(255,255,255,0.08)",
@@ -227,10 +217,13 @@ export default function TemplatesPage() {
       <div style={{ textAlign: "center", padding: "56px 24px 0" }}>
         <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 10px" }}>Don't see what you need?</h2>
         <p style={{ fontSize: 15, color: "rgba(255,255,255,0.45)", margin: "0 0 22px" }}>Describe your business in your own words and our AI will build it.</p>
-        <a href="/" style={{ display: "inline-block", padding: "14px 32px", borderRadius: 14, background: "linear-gradient(135deg,#7C5AFF,#6347FF)", color: "#fff", textDecoration: "none", fontSize: 15, fontWeight: 700, boxShadow: "0 4px 20px rgba(124,90,255,0.40)", letterSpacing: "-0.01em" }}>
+        <a href="/build" style={{ display: "inline-block", padding: "14px 32px", borderRadius: 14, background: "linear-gradient(135deg,#7C5AFF,#6347FF)", color: "#fff", textDecoration: "none", fontSize: 15, fontWeight: 700, boxShadow: "0 4px 20px rgba(124,90,255,0.40)", letterSpacing: "-0.01em" }}>
           Build from scratch →
         </a>
       </div>
+
+      <div style={{ height: 80 }} />
+      <Footer />
 
       <style>{`
         @media (max-width: 900px) {
