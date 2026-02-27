@@ -1,6 +1,6 @@
-name: Auto Approve + Merge (Claude PRs)
+name: Auto Approve + Merge (All PRs)
 
-# Runs on every PR from claude/* branches.
+# Runs on every PR targeting main.
 # Approves + squash-merges once all required checks pass.
 
 on:
@@ -26,14 +26,23 @@ permissions:
 
 jobs:
   auto-approve-merge:
-    name: Auto-approve and merge Claude PRs
+    name: Auto-approve and merge PRs
     runs-on: ubuntu-latest
-    # Only act on claude/* branches
     if: |
-      (github.event_name == 'pull_request' &&
-        startsWith(github.head_ref, 'claude/')) ||
-      (github.event_name == 'workflow_run' &&
-        startsWith(github.event.workflow_run.head_branch, 'claude/')) ||
+      (github.event_name == 'pull_request' && (
+        startsWith(github.head_ref, 'claude/') ||
+        startsWith(github.head_ref, 'copilot/') ||
+        startsWith(github.head_ref, 'ops/') ||
+        startsWith(github.head_ref, 'agent/') ||
+        startsWith(github.head_ref, 'fix/') ||
+        startsWith(github.head_ref, 'finish/'))) ||
+      (github.event_name == 'workflow_run' && (
+        startsWith(github.event.workflow_run.head_branch, 'claude/') ||
+        startsWith(github.event.workflow_run.head_branch, 'copilot/') ||
+        startsWith(github.event.workflow_run.head_branch, 'ops/') ||
+        startsWith(github.event.workflow_run.head_branch, 'agent/') ||
+        startsWith(github.event.workflow_run.head_branch, 'fix/') ||
+        startsWith(github.event.workflow_run.head_branch, 'finish/'))) ||
       github.event_name == 'workflow_dispatch'
     steps:
       - name: Find open PR for branch
@@ -61,7 +70,7 @@ jobs:
           PR="${{ steps.find_pr.outputs.pr_number }}"
           # GITHUB_TOKEN can't approve its own PRs; GH_CLAUDE_PAT is a separate account token
           gh pr review "$PR" --repo ${{ github.repository }} \
-            --approve --body "Auto-approved: all checks green on claude/* branch." || \
+            --approve --body "Auto-approved by workflow: all required checks passed." || \
             echo "Approval skipped (may already be approved or same-actor restriction)"
 
       - name: Wait for all checks to pass
