@@ -52,19 +52,19 @@ export default function AdminPage() {
   }
 
   const PLAN_COL: Record<string, string> = {
-    free: "rgba(255,255,255,0.55)", starter: "rgba(61,240,255,0.85)",
-    pro: "rgba(139,92,246,0.90)", agency: "rgba(251,191,36,0.90)",
+    free: "rgba(255,255,255,0.55)", starter: "rgba(124,90,255,0.85)",
+    pro: "rgba(80,70,228,0.90)", agency: "rgba(251,191,36,0.90)",
   };
 
   return (
     <>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #060810; color: #e9eef7; font-family: 'Outfit', 'Inter', system-ui, sans-serif; }
+        body { background: #08080c; color: #c8c8d4; font-family: 'Outfit', 'Inter', system-ui, sans-serif; }
         .adm-root { min-height: 100vh; }
-        .adm-nav { position: sticky; top: 0; z-index: 100; backdrop-filter: blur(24px); background: rgba(6,8,16,0.90); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 54px; }
+        .adm-nav { position: sticky; top: 0; z-index: 100; backdrop-filter: blur(24px); background: rgba(8,8,12,0.90); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 54px; }
         .adm-logo { font-size: 16px; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.03em; }
-        .adm-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 8px; border-radius: 5px; background: rgba(56,248,166,0.12); border: 1px solid rgba(56,248,166,0.30); color: rgba(56,248,166,0.85); margin-left: 10px; }
+        .adm-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 8px; border-radius: 5px; background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.30); color: rgba(52,211,153,0.85); margin-left: 10px; }
         .adm-nav-right { display: flex; gap: 8px; }
         .adm-link { padding: 5px 12px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.65); font-size: 13px; text-decoration: none; }
         .adm-main { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }

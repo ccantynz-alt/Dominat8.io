@@ -16,7 +16,7 @@ export default function OGImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#06080e",
+          background: "#08080c",
           position: "relative",
           overflow: "hidden",
         }}
@@ -31,7 +31,7 @@ export default function OGImage() {
             width: 800,
             height: 600,
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(61,240,255,0.12) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(124,90,255,0.12) 0%, transparent 70%)",
           }}
         />
 
@@ -44,8 +44,8 @@ export default function OGImage() {
             marginBottom: 40,
           }}
         >
-          <span style={{ fontSize: 32, fontWeight: 900, color: "#e9eef7", letterSpacing: "-0.04em" }}>D8</span>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "rgba(61,240,255,0.8)" }} />
+          <span style={{ fontSize: 32, fontWeight: 900, color: "#c8c8d4", letterSpacing: "-0.04em" }}>D8</span>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "rgba(124,90,255,0.8)" }} />
           <span style={{ fontSize: 20, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
         </div>
 
@@ -54,7 +54,7 @@ export default function OGImage() {
           style={{
             fontSize: 72,
             fontWeight: 900,
-            color: "#e9eef7",
+            color: "#c8c8d4",
             textAlign: "center",
             letterSpacing: "-0.04em",
             lineHeight: 1.05,
@@ -66,7 +66,7 @@ export default function OGImage() {
           }}
         >
           <span>Build a world-class</span>
-          <span style={{ color: "rgba(61,240,255,0.90)" }}>website in seconds.</span>
+          <span style={{ color: "rgba(124,90,255,0.90)" }}>website in seconds.</span>
         </div>
 
         {/* Subline */}
@@ -89,7 +89,7 @@ export default function OGImage() {
             display: "flex",
             padding: "14px 32px",
             borderRadius: 999,
-            background: "linear-gradient(135deg, #00C97A, #00B36B)",
+            background: "linear-gradient(135deg, #7C5AFF, #6347FF)",
             color: "#fff",
             fontSize: 18,
             fontWeight: 700,

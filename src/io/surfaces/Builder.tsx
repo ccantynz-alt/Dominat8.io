@@ -1868,7 +1868,7 @@ function BuilderStyles() {
         gap: 4px;
       }
       .d8b-stat-val { font-size: 15px; font-weight: 700; color: #fff; }
-      .d8b-stat-val.green { color: rgba(61,240,180,0.9); }
+      .d8b-stat-val.green { color: rgba(52,211,153,0.9); }
       .d8b-stat-label { font-size: 10px; color: rgba(255,255,255,0.35); text-align: center; }
 
       /* ── History ── */
@@ -2116,7 +2116,7 @@ function BuilderStyles() {
         text-decoration: none; cursor: pointer;
         transition: all 140ms ease;
       }
-      .d8b-error-upgrade-btn:hover { background: linear-gradient(135deg, #00DD8A, #00C47A); transform: translateY(-1px); }
+      .d8b-error-upgrade-btn:hover { background: linear-gradient(135deg, #7C5AFF, #6347FF); transform: translateY(-1px); }
 
       /* ── Dots animation ── */
       .d8b-dots { display: inline-flex; gap: 2px; margin-left: 4px; }
@@ -2179,13 +2179,13 @@ function BuilderStyles() {
       @keyframes d8b-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
       .d8b-done-badge {
-        background: rgba(61,240,180,0.1);
-        border: 1px solid rgba(61,240,180,0.3);
+        background: rgba(52,211,153,0.1);
+        border: 1px solid rgba(52,211,153,0.3);
         border-radius: 999px;
         padding: 3px 8px;
         font-size: 10px;
         font-weight: 700;
-        color: rgba(61,240,180,0.9);
+        color: rgba(52,211,153,0.9);
         letter-spacing: 0.04em;
       }
 
@@ -3293,7 +3293,7 @@ function HomeStyles() {
         box-shadow: 0 2px 12px rgba(124,90,255,0.35);
       }
       .d8h-gen-btn:hover:not(:disabled) {
-        background: linear-gradient(135deg, #00DD88, #00C47A);
+        background: linear-gradient(135deg, #7C5AFF, #6347FF);
         box-shadow: 0 4px 18px rgba(124,90,255,0.50);
         transform: translateY(-1px);
       }

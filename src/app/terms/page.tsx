@@ -14,8 +14,8 @@ export default function TermsPage() {
   return (
     <main style={{
       minHeight: "100vh",
-      background: "#06080e",
-      color: "#e9eef7",
+      background: "#08080c",
+      color: "#c8c8d4",
       fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
       padding: "0 0 80px",
     }}>
@@ -23,7 +23,7 @@ export default function TermsPage() {
       <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "inherit" }}>
           <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.04em" }}>D8</span>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(61,240,255,0.7)", display: "inline-block" }} />
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(124,90,255,0.7)", display: "inline-block" }} />
           <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
         </a>
         <a href="/" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>← Back</a>
@@ -32,7 +32,7 @@ export default function TermsPage() {
       {/* Content */}
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "56px 24px 0" }}>
         <div style={{ marginBottom: 48 }}>
-          <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(61,240,255,0.25)", background: "rgba(61,240,255,0.06)", color: "rgba(61,240,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
+          <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(124,90,255,0.25)", background: "rgba(124,90,255,0.06)", color: "rgba(124,90,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
             TERMS OF SERVICE
           </div>
           <h1 style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 800, margin: "0 0 14px", letterSpacing: "-0.04em" }}>Terms of Service</h1>
@@ -107,7 +107,7 @@ export default function TermsPage() {
         </div>
 
         <div style={{ padding: "24px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", marginTop: 24 }}>
-          <p style={{ ...P, margin: 0 }}>Questions? Email us at <a href="mailto:legal@dominat8.io" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none", fontWeight: 600 }}>legal@dominat8.io</a></p>
+          <p style={{ ...P, margin: 0 }}>Questions? Email us at <a href="mailto:legal@dominat8.io" style={{ color: "rgba(124,90,255,0.75)", textDecoration: "none", fontWeight: 600 }}>legal@dominat8.io</a></p>
         </div>
       </div>
     </main>
