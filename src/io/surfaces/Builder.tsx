@@ -1623,7 +1623,7 @@ function BuilderStyles() {
         height: 100vh;
         width: 100vw;
         background: #08080c;
-        color: #d7dbea;
+        color: #c8c8d4;
         font-family: 'Outfit', 'Inter', system-ui, sans-serif;
         overflow: hidden;
       }
@@ -1720,7 +1720,7 @@ function BuilderStyles() {
         background: rgba(0,0,0,0.3);
         border: 1px solid rgba(255,255,255,0.10);
         border-radius: 10px;
-        color: #e8eaf6;
+        color: #c8c8d4;
         font-size: 13px;
         line-height: 1.6;
         padding: 10px 12px;
@@ -2284,7 +2284,7 @@ function BuilderStyles() {
         padding: 20px 24px;
         font-size: 12px;
         line-height: 1.7;
-        color: #9aa3c7;
+        color: #c8c8d4;
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
         white-space: pre-wrap;
         word-break: break-all;
@@ -3449,7 +3449,7 @@ function HomeStyles() {
         padding: 8px 10px;
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(8,10,18,0.85);
+        background: rgba(8,8,12,0.85);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         z-index: 100;

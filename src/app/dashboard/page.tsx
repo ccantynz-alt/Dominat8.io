@@ -254,7 +254,7 @@ function DashboardInner() {
                 </div>
                 <div className="db-banner-sub">
                   Your credits and plan access have been updated.{" "}
-                  <Link href="/build" style={{ color: "rgba(61,240,255,0.80)", textDecoration: "underline" }}>
+                  <Link href="/build" style={{ color: "rgba(124,90,255,0.80)", textDecoration: "underline" }}>
                     Start building →
                   </Link>
                 </div>
@@ -353,7 +353,7 @@ function DashboardInner() {
                       </button>
                     )}
                     {creditInfo?.admin && (
-                      <Link href="/admin" className="db-action-btn" style={{ borderColor: "rgba(56,248,166,0.25)", background: "rgba(56,248,166,0.06)" }}>
+                      <Link href="/admin" className="db-action-btn" style={{ borderColor: "rgba(52,211,153,0.25)", background: "rgba(52,211,153,0.06)" }}>
                         <span className="db-action-icon">⚙️</span>
                         <div className="db-action-text">
                           <div className="db-action-title" style={{ color: "rgba(52,211,153,0.90)" }}>Admin panel</div>
@@ -482,7 +482,7 @@ function DashboardInner() {
                 <div className="db-modal-title">Deploy to subdomain</div>
                 <div className="db-modal-sub">
                   Choose a slug for your site. It will be live at<br />
-                  <strong style={{ color: "rgba(61,240,255,0.85)" }}>{deploySlug || "your-slug"}.dominat8.io</strong>
+                  <strong style={{ color: "rgba(124,90,255,0.85)" }}>{deploySlug || "your-slug"}.dominat8.io</strong>
                 </div>
                 <div className="db-modal-label">Slug</div>
                 <div className="db-modal-input-row">
@@ -533,7 +533,7 @@ function DashboardInner() {
 export default function DashboardPage() {
   return (
     <Suspense fallback={
-      <div style={{ background: "#060810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.40)", fontFamily: "system-ui" }}>
+      <div style={{ background: "#08080c", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.40)", fontFamily: "system-ui" }}>
         Loading…
       </div>
     }>

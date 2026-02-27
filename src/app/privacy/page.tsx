@@ -34,8 +34,8 @@ export default function PrivacyPage() {
   return (
     <main style={{
       minHeight: "100vh",
-      background: "#06080e",
-      color: "#e9eef7",
+      background: "#08080c",
+      color: "#c8c8d4",
       fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
       padding: "0 0 80px",
     }}>
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
       <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "inherit" }}>
           <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.04em" }}>D8</span>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(61,240,255,0.7)", display: "inline-block" }} />
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(124,90,255,0.7)", display: "inline-block" }} />
           <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
         </a>
         <a href="/" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>← Back</a>
@@ -52,7 +52,7 @@ export default function PrivacyPage() {
       {/* Content */}
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "56px 24px 0" }}>
         <div style={{ marginBottom: 48 }}>
-          <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(61,240,255,0.25)", background: "rgba(61,240,255,0.06)", color: "rgba(61,240,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
+          <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(124,90,255,0.25)", background: "rgba(124,90,255,0.06)", color: "rgba(124,90,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
             PRIVACY POLICY
           </div>
           <h1 style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 800, margin: "0 0 14px", letterSpacing: "-0.04em" }}>Your privacy matters.</h1>
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
           <h2 style={H2_STYLE}>3. Third-party services</h2>
           <p style={P_STYLE}>We use the following third-party services, each with their own privacy policy:</p>
           <ul style={UL_STYLE}>
-            <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>OpenAI</strong> — processes your prompts to generate website HTML. Subject to <a href="https://openai.com/privacy" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none" }}>OpenAI's Privacy Policy</a>.</li>
+            <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>OpenAI</strong> — processes your prompts to generate website HTML. Subject to <a href="https://openai.com/privacy" style={{ color: "rgba(124,90,255,0.75)", textDecoration: "none" }}>OpenAI's Privacy Policy</a>.</li>
             <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>Vercel</strong> — hosts our application and stores shared site files.</li>
             <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>Stripe</strong> — processes payments for Pro and Business subscriptions.</li>
           </ul>
@@ -94,7 +94,7 @@ export default function PrivacyPage() {
 
         <div style={SECTION_STYLE}>
           <h2 style={H2_STYLE}>4. Data retention</h2>
-          <p style={P_STYLE}>Shared sites are automatically deleted after <strong style={{ color: "rgba(255,255,255,0.80)" }}>90 days</strong>. Account data is retained while your account is active and for 30 days after deletion. You can request deletion at any time by emailing <a href="mailto:privacy@dominat8.io" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none" }}>privacy@dominat8.io</a>.</p>
+          <p style={P_STYLE}>Shared sites are automatically deleted after <strong style={{ color: "rgba(255,255,255,0.80)" }}>90 days</strong>. Account data is retained while your account is active and for 30 days after deletion. You can request deletion at any time by emailing <a href="mailto:privacy@dominat8.io" style={{ color: "rgba(124,90,255,0.75)", textDecoration: "none" }}>privacy@dominat8.io</a>.</p>
         </div>
 
         <div style={SECTION_STYLE}>
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
 
         <div style={SECTION_STYLE}>
           <h2 style={H2_STYLE}>6. Your rights</h2>
-          <p style={P_STYLE}>Depending on your location, you may have rights under GDPR, CCPA, or other privacy laws. These include the right to access, correct, or delete your personal data. To exercise these rights, contact <a href="mailto:privacy@dominat8.io" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none" }}>privacy@dominat8.io</a>.</p>
+          <p style={P_STYLE}>Depending on your location, you may have rights under GDPR, CCPA, or other privacy laws. These include the right to access, correct, or delete your personal data. To exercise these rights, contact <a href="mailto:privacy@dominat8.io" style={{ color: "rgba(124,90,255,0.75)", textDecoration: "none" }}>privacy@dominat8.io</a>.</p>
         </div>
 
         <div style={SECTION_STYLE}>
@@ -113,7 +113,7 @@ export default function PrivacyPage() {
         </div>
 
         <div style={{ padding: "24px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", marginTop: 24 }}>
-          <p style={{ ...P_STYLE, margin: 0 }}>Questions about this policy? Email us at <a href="mailto:privacy@dominat8.io" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none", fontWeight: 600 }}>privacy@dominat8.io</a></p>
+          <p style={{ ...P_STYLE, margin: 0 }}>Questions about this policy? Email us at <a href="mailto:privacy@dominat8.io" style={{ color: "rgba(124,90,255,0.75)", textDecoration: "none", fontWeight: 600 }}>privacy@dominat8.io</a></p>
         </div>
       </div>
     </main>
