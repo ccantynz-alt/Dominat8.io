@@ -7,9 +7,10 @@ interface Props {
   plan: string;
   label: string;
   style?: React.CSSProperties;
+  className?: string;
 }
 
-export function CheckoutButton({ plan, label, style }: Props) {
+export function CheckoutButton({ plan, label, style, className }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -52,6 +53,7 @@ export function CheckoutButton({ plan, label, style }: Props) {
       onClick={handleClick}
       type="button"
       disabled={loading}
+      className={className}
       style={{
         ...style,
         opacity: loading ? 0.65 : 1,

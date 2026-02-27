@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { SiteNav } from "@/components/shared/SiteNav";
+import { SiteFooter } from "@/components/shared/SiteFooter";
 
 type Template = {
   name: string;
@@ -79,6 +81,9 @@ const CATEGORIES = ["All", ...Array.from(new Set(TEMPLATES.map(t => t.category))
 export default function TemplatesPage() {
   const [active, setActive] = React.useState("All");
   const [search, setSearch] = React.useState("");
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => { setMounted(true); }, []);
 
   const filtered = TEMPLATES.filter(t => {
     const matchCat = active === "All" || t.category === active;
@@ -87,161 +92,193 @@ export default function TemplatesPage() {
   });
 
   return (
-    <main style={{
-      minHeight: "100vh",
-      background: "#06080e",
-      color: "#e9eef7",
-      fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
-      padding: "0 0 80px",
-    }}>
-      {/* Nav */}
-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "inherit" }}>
-          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.04em" }}>D8</span>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(61,240,255,0.7)", display: "inline-block" }} />
-          <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
-        </a>
-        <div style={{ display: "flex", gap: 8 }}>
-          <a href="/gallery" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Gallery</a>
-          <a href="/pricing" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Pricing</a>
-          <a href="/" style={{ padding: "8px 18px", borderRadius: 999, background: "linear-gradient(135deg,#00C97A,#00B36B)", color: "#fff", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Start building →</a>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <div style={{ textAlign: "center", padding: "56px 24px 36px" }}>
-        <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(61,240,255,0.25)", background: "rgba(61,240,255,0.06)", color: "rgba(61,240,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
-          TEMPLATES
-        </div>
-        <h1 style={{ fontSize: "clamp(28px,5vw,48px)", fontWeight: 800, margin: "0 0 14px", letterSpacing: "-0.04em", lineHeight: 1.05 }}>
-          Start with a template.<br />Own the result.
-        </h1>
-        <p style={{ fontSize: 16, color: "rgba(255,255,255,0.42)", margin: "0 0 28px", lineHeight: 1.6, maxWidth: 480, marginLeft: "auto", marginRight: "auto" }}>
-          {TEMPLATES.length}+ expertly crafted prompts across every industry. Click one to generate your site instantly.
-        </p>
-
-        {/* Search */}
-        <div style={{ maxWidth: 400, margin: "0 auto" }}>
-          <input
-            type="text"
-            placeholder="Search templates…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px 16px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.05)",
-              color: "#e9eef7",
-              fontSize: 14,
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Category filter */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", padding: "0 24px 32px" }}>
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActive(cat)}
-            style={{
-              padding: "7px 16px",
-              borderRadius: 999,
-              border: `1px solid ${active === cat ? "rgba(61,240,255,0.40)" : "rgba(255,255,255,0.10)"}`,
-              background: active === cat ? "rgba(61,240,255,0.10)" : "rgba(255,255,255,0.03)",
-              color: active === cat ? "rgba(61,240,255,0.95)" : "rgba(255,255,255,0.55)",
-              fontSize: 13,
-              fontWeight: active === cat ? 600 : 400,
-              cursor: "pointer",
-              transition: "all 150ms ease",
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 14, maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-        {filtered.map((t, i) => (
-          <a
-            key={i}
-            href={`/?prompt=${encodeURIComponent(t.prompt)}`}
-            style={{
-              borderRadius: 16,
-              border: "1px solid rgba(255,255,255,0.08)",
-              overflow: "hidden",
-              textDecoration: "none",
-              color: "inherit",
-              display: "flex",
-              flexDirection: "column",
-              background: t.grad,
-              transition: "transform 180ms ease, border-color 180ms ease",
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.18)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)"; }}
-          >
-            {/* Mini preview */}
-            <div style={{ height: 100, padding: 12, display: "flex", flexDirection: "column", gap: 7 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 8px", borderRadius: 5, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <div style={{ width: 30, height: 4, borderRadius: 2, background: t.accent, opacity: 0.8 }} />
-                <div style={{ display: "flex", gap: 4 }}>
-                  {[0,1,2].map(j => <div key={j} style={{ width: 16, height: 3, borderRadius: 1, background: "rgba(255,255,255,0.20)" }} />)}
-                </div>
-              </div>
-              <div style={{ flex: 1, borderRadius: 5, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", padding: "8px 10px", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 4 }}>
-                <div style={{ width: "70%", height: 6, borderRadius: 3, background: "rgba(255,255,255,0.50)" }} />
-                <div style={{ width: "45%", height: 4, borderRadius: 2, background: "rgba(255,255,255,0.22)" }} />
-                <div style={{ display: "flex", gap: 4, marginTop: 3 }}>
-                  <div style={{ width: 40, height: 12, borderRadius: 3, background: t.accent }} />
-                </div>
-              </div>
-            </div>
-
-            {/* Meta */}
-            <div style={{ padding: "10px 14px 14px", borderTop: "1px solid rgba(255,255,255,0.06)", flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                <span style={{ fontSize: 11, padding: "2px 7px", borderRadius: 999, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "rgba(255,255,255,0.55)" }}>{t.category}</span>
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.90)", lineHeight: 1.3 }}>{t.name}</div>
-              <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.45)", lineHeight: 1.5, marginTop: "auto" }}>{t.desc}</div>
-              <div style={{ marginTop: 6, display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: t.accent, fontWeight: 600 }}>
-                Use template →
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
-
-      {filtered.length === 0 && (
-        <div style={{ textAlign: "center", padding: "60px 24px", color: "rgba(255,255,255,0.30)", fontSize: 15 }}>
-          No templates match your search. <button onClick={() => { setSearch(""); setActive("All"); }} style={{ background: "none", border: "none", color: "rgba(61,240,255,0.70)", cursor: "pointer", fontSize: 15 }}>Clear filters</button>
-        </div>
-      )}
-
-      {/* CTA */}
-      <div style={{ textAlign: "center", padding: "56px 24px 0" }}>
-        <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 10px" }}>Don't see what you need?</h2>
-        <p style={{ fontSize: 15, color: "rgba(255,255,255,0.45)", margin: "0 0 22px" }}>Describe your business in your own words and our AI will build it.</p>
-        <a href="/" style={{ display: "inline-block", padding: "14px 32px", borderRadius: 14, background: "linear-gradient(135deg,#00C97A,#00B36B)", color: "#fff", textDecoration: "none", fontSize: 15, fontWeight: 700, boxShadow: "0 4px 20px rgba(0,201,122,0.40)", letterSpacing: "-0.01em" }}>
-          Build from scratch →
-        </a>
-      </div>
-
+    <>
       <style>{`
-        @media (max-width: 900px) {
-          div[style*="gridTemplateColumns: repeat(3"] { grid-template-columns: 1fr 1fr !important; }
-        }
-        @media (max-width: 560px) {
-          div[style*="gridTemplateColumns: repeat(3"] { grid-template-columns: 1fr !important; }
-        }
-        input::placeholder { color: rgba(255,255,255,0.25); }
-        button:hover { opacity: 0.85; }
+@keyframes tpFade{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tpShim{0%{left:-100%}40%{left:100%}100%{left:100%}}
+@keyframes tpFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.tp-a{animation:tpFade 700ms cubic-bezier(.16,1,.3,1) both}
+.tp-d1{animation-delay:80ms}.tp-d2{animation-delay:160ms}.tp-d3{animation-delay:240ms}
+
+.tp-page{min-height:100vh;background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;}
+
+/* Ambient */
+.tp-ambient{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.tp-blob1{position:absolute;width:800px;height:600px;top:-250px;left:-200px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,255,.06) 0%,transparent 70%);}
+.tp-blob2{position:absolute;width:600px;height:500px;bottom:-200px;right:-150px;border-radius:50%;background:radial-gradient(circle,rgba(61,240,255,.04) 0%,transparent 70%);}
+
+/* Hero */
+.tp-hero{text-align:center;padding:120px 24px 20px;position:relative;z-index:1;}
+.tp-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 16px;border-radius:999px;border:1px solid rgba(61,240,255,.25);background:rgba(61,240,255,.05);color:rgba(61,240,255,.80);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px;}
+.tp-dot{width:6px;height:6px;border-radius:50%;background:rgba(61,240,255,.80);}
+.tp-h1{font-size:clamp(32px,5.5vw,54px);font-weight:900;margin:0 0 16px;letter-spacing:-.05em;line-height:1.05;}
+.tp-h1 span{background:linear-gradient(135deg,#3DF0FF,#8B5CF6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.tp-sub{font-size:17px;color:rgba(255,255,255,.45);margin:0 auto;line-height:1.7;max-width:520px;}
+.tp-count{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);margin-top:20px;font-size:13px;color:rgba(255,255,255,.50);}
+.tp-count strong{color:rgba(61,240,255,.80);font-weight:800;}
+
+/* Search */
+.tp-search-wrap{max-width:480px;margin:28px auto 0;position:relative;}
+.tp-search{width:100%;padding:13px 18px 13px 44px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#e9eef7;font-size:15px;font-family:inherit;outline:none;transition:border-color 200ms;}
+.tp-search:focus{border-color:rgba(61,240,255,.35);}
+.tp-search::placeholder{color:rgba(255,255,255,.25);}
+.tp-search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.25);font-size:16px;pointer-events:none;}
+
+/* Filters */
+.tp-filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:24px 24px 36px;position:relative;z-index:1;}
+.tp-filter{padding:8px 18px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:rgba(255,255,255,.50);font-size:13px;font-weight:500;cursor:pointer;transition:all 180ms;font-family:inherit;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.tp-filter:hover{border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.75);background:rgba(255,255,255,.06);}
+.tp-filter.active{border-color:rgba(61,240,255,.45);background:rgba(61,240,255,.10);color:rgba(61,240,255,.95);font-weight:600;}
+
+/* Grid */
+.tp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:1200px;margin:0 auto;padding:0 24px;position:relative;z-index:1;}
+@media(max-width:960px){.tp-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:560px){.tp-grid{grid-template-columns:1fr;}}
+
+/* Card */
+.tp-card{border-radius:20px;border:1px solid rgba(255,255,255,.08);overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;transition:all 280ms cubic-bezier(.16,1,.3,1);position:relative;}
+.tp-card::before{content:'';position:absolute;inset:0;border-radius:20px;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.02));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity 280ms;pointer-events:none;}
+.tp-card:hover{transform:translateY(-6px);box-shadow:0 24px 60px rgba(0,0,0,.30);border-color:rgba(255,255,255,.15);}
+.tp-card:hover::before{opacity:1;}
+
+/* Mini preview */
+.tp-preview{height:110px;padding:14px;display:flex;flex-direction:column;gap:7px;position:relative;}
+.tp-prev-nav{display:flex;justify-content:space-between;padding:5px 10px;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);}
+.tp-prev-logo{height:5px;border-radius:3px;opacity:.8;}
+.tp-prev-links{display:flex;gap:5px;}
+.tp-prev-link{width:18px;height:3px;border-radius:1px;background:rgba(255,255,255,.20);}
+.tp-prev-body{flex:1;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);padding:10px 12px;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;}
+.tp-prev-title{width:70%;height:7px;border-radius:4px;background:rgba(255,255,255,.50);}
+.tp-prev-text{width:45%;height:4px;border-radius:2px;background:rgba(255,255,255,.22);}
+.tp-prev-cta{width:44px;height:14px;border-radius:4px;margin-top:4px;}
+
+/* Meta */
+.tp-meta{padding:14px 16px 18px;border-top:1px solid rgba(255,255,255,.06);flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,.20);}
+.tp-cat{font-size:10px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.50);font-weight:600;letter-spacing:.04em;text-transform:uppercase;display:inline-flex;align-self:flex-start;}
+.tp-name{font-size:14px;font-weight:700;color:rgba(255,255,255,.92);line-height:1.3;letter-spacing:-.02em;}
+.tp-desc{font-size:12px;color:rgba(255,255,255,.42);line-height:1.55;margin-top:auto;}
+.tp-use{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;margin-top:8px;transition:gap 200ms;}
+.tp-card:hover .tp-use{gap:8px;}
+
+/* Empty */
+.tp-empty{text-align:center;padding:60px 24px;color:rgba(255,255,255,.30);font-size:15px;position:relative;z-index:1;}
+.tp-empty button{background:none;border:none;color:rgba(61,240,255,.70);cursor:pointer;font-size:15px;font-family:inherit;}
+.tp-empty button:hover{color:rgba(61,240,255,.90);}
+
+/* CTA */
+.tp-cta{text-align:center;padding:64px 24px 80px;position:relative;z-index:1;}
+.tp-cta h2{font-size:clamp(24px,3.5vw,34px);font-weight:800;letter-spacing:-.04em;margin:0 0 10px;}
+.tp-cta p{font-size:15px;color:rgba(255,255,255,.40);margin:0 0 24px;}
+.tp-cta-btn{display:inline-flex;align-items:center;gap:6px;padding:14px 36px;border-radius:14px;background:linear-gradient(135deg,rgba(61,240,255,.14),rgba(139,92,246,.08));border:1px solid rgba(61,240,255,.35);color:rgba(61,240,255,.92);text-decoration:none;font-size:15px;font-weight:700;transition:all 200ms;position:relative;overflow:hidden;}
+.tp-cta-btn::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:tpShim 4s ease-in-out infinite;}
+.tp-cta-btn:hover{border-color:rgba(61,240,255,.55);box-shadow:0 0 28px rgba(61,240,255,.10);transform:translateY(-2px);}
       `}</style>
-    </main>
+
+      <main className="tp-page">
+        <div className="tp-ambient">
+          <div className="tp-blob1" />
+          <div className="tp-blob2" />
+        </div>
+
+        <SiteNav />
+
+        {/* Hero */}
+        <div className="tp-hero">
+          <div className={`tp-badge${mounted ? " tp-a" : ""}`}>
+            <span className="tp-dot" />
+            {TEMPLATES.length} TEMPLATES
+          </div>
+          <h1 className={`tp-h1${mounted ? " tp-a tp-d1" : ""}`}>
+            Start with a template.<br /><span>Own the result.</span>
+          </h1>
+          <p className={`tp-sub${mounted ? " tp-a tp-d2" : ""}`}>
+            Expertly crafted prompts across every industry. Click one to generate your site instantly &mdash; then make it yours.
+          </p>
+          <div className={`tp-count${mounted ? " tp-a tp-d3" : ""}`}>
+            <strong>{TEMPLATES.length}+</strong> templates across <strong>{CATEGORIES.length - 1}</strong> industries
+          </div>
+
+          {/* Search */}
+          <div className={`tp-search-wrap${mounted ? " tp-a tp-d3" : ""}`}>
+            <span className="tp-search-icon">&#x1F50D;</span>
+            <input
+              type="text"
+              className="tp-search"
+              placeholder="Search templates..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Category filter */}
+        <div className="tp-filters">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              className={`tp-filter${active === cat ? " active" : ""}`}
+              onClick={() => setActive(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Grid */}
+        <div className="tp-grid">
+          {filtered.map((t, i) => (
+            <a
+              key={i}
+              href={`/build?prompt=${encodeURIComponent(t.prompt)}`}
+              className="tp-card"
+              style={{ background: t.grad, animationDelay: mounted ? `${Math.min(i * 40, 400)}ms` : undefined }}
+            >
+              {/* Mini preview */}
+              <div className="tp-preview">
+                <div className="tp-prev-nav">
+                  <div className="tp-prev-logo" style={{ width: 32, background: t.accent }} />
+                  <div className="tp-prev-links">
+                    {[0, 1, 2].map(j => <div key={j} className="tp-prev-link" />)}
+                  </div>
+                </div>
+                <div className="tp-prev-body">
+                  <div className="tp-prev-title" />
+                  <div className="tp-prev-text" />
+                  <div className="tp-prev-cta" style={{ background: t.accent }} />
+                </div>
+              </div>
+
+              {/* Meta */}
+              <div className="tp-meta">
+                <span className="tp-cat">{t.category}</span>
+                <div className="tp-name">{t.name}</div>
+                <div className="tp-desc">{t.desc}</div>
+                <div className="tp-use" style={{ color: t.accent }}>
+                  Use template <span>&rarr;</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <div className="tp-empty">
+            No templates match your search.{" "}
+            <button onClick={() => { setSearch(""); setActive("All"); }}>Clear filters</button>
+          </div>
+        )}
+
+        {/* CTA */}
+        <div className="tp-cta">
+          <h2>Don&apos;t see what you need?</h2>
+          <p>Describe your business in your own words and our AI will build it.</p>
+          <a href="/build" className="tp-cta-btn">
+            Build from scratch &rarr;
+          </a>
+        </div>
+
+        <SiteFooter />
+      </main>
+    </>
   );
 }

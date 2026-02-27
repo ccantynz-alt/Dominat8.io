@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const INDUSTRIES = [
@@ -31,9 +31,11 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [industry, setIndustry] = useState("");
   const [goal, setGoal] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   function finish() {
-    // Store selections so Builder can pre-fill
     if (typeof window !== "undefined") {
       if (industry) localStorage.setItem("d8_onboard_industry", industry);
       if (goal) localStorage.setItem("d8_onboard_goal", goal);
@@ -44,45 +46,87 @@ export default function OnboardingPage() {
   return (
     <>
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #060810; color: #e9eef7; font-family: 'Outfit', system-ui, sans-serif; }
-        .ob-root { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; }
-        .ob-logo { font-size: 22px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 48px; }
-        .ob-logo span { color: #3DF0FF; }
-        .ob-card { width: 100%; max-width: 560px; }
-        .ob-step { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(61,240,255,0.70); margin-bottom: 12px; }
-        .ob-title { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; }
-        .ob-sub { font-size: 15px; color: rgba(255,255,255,0.50); margin-bottom: 32px; }
-        .ob-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 32px; }
-        @media (max-width: 480px) { .ob-grid { grid-template-columns: repeat(2, 1fr); } }
-        .ob-chip { padding: 14px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04); cursor: pointer; text-align: center; transition: all 150ms; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.70); display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .ob-chip:hover { border-color: rgba(61,240,255,0.35); background: rgba(61,240,255,0.06); color: #fff; }
-        .ob-chip.selected { border-color: rgba(61,240,255,0.60); background: rgba(61,240,255,0.12); color: rgba(61,240,255,0.95); }
-        .ob-chip-icon { font-size: 22px; }
-        .ob-btn { width: 100%; padding: 15px; border-radius: 12px; background: linear-gradient(135deg, rgba(61,240,255,0.20), rgba(139,92,246,0.20)); border: 1px solid rgba(61,240,255,0.45); color: rgba(61,240,255,0.97); font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 150ms; letter-spacing: -0.01em; }
-        .ob-btn:hover { background: linear-gradient(135deg, rgba(61,240,255,0.28), rgba(139,92,246,0.28)); transform: translateY(-1px); }
-        .ob-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
-        .ob-skip { display: block; text-align: center; margin-top: 16px; font-size: 13px; color: rgba(255,255,255,0.30); cursor: pointer; background: none; border: none; font-family: inherit; }
-        .ob-skip:hover { color: rgba(255,255,255,0.55); }
-        .ob-progress { display: flex; gap: 6px; margin-bottom: 40px; }
-        .ob-dot { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.12); transition: all 300ms; }
-        .ob-dot.active { background: rgba(61,240,255,0.70); }
+@keyframes obFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes obShim{0%{left:-100%}40%{left:100%}100%{left:100%}}
+@keyframes obPulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes obFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ob-a{animation:obFade 700ms cubic-bezier(.16,1,.3,1) both}
+.ob-d1{animation-delay:80ms}.ob-d2{animation-delay:160ms}.ob-d3{animation-delay:240ms}.ob-d4{animation-delay:320ms}
+
+.ob-page{min-height:100vh;background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;position:relative;overflow:hidden;}
+
+/* Ambient blobs */
+.ob-ambient{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.ob-blob1{position:absolute;width:600px;height:400px;top:-150px;left:-100px;border-radius:50%;background:radial-gradient(circle,rgba(61,240,255,.06) 0%,transparent 70%);animation:obFloat 8s ease-in-out infinite;}
+.ob-blob2{position:absolute;width:500px;height:350px;bottom:-100px;right:-100px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.06) 0%,transparent 70%);animation:obFloat 10s ease-in-out infinite 1s;}
+
+/* Logo */
+.ob-logo{font-size:24px;font-weight:900;letter-spacing:-.03em;margin-bottom:48px;position:relative;z-index:1;}
+.ob-logo span{background:linear-gradient(135deg,#3DF0FF,#8B5CF6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+
+/* Card */
+.ob-card{width:100%;max-width:580px;position:relative;z-index:1;}
+
+/* Progress bar */
+.ob-progress{display:flex;gap:8px;margin-bottom:40px;}
+.ob-bar{height:4px;border-radius:3px;background:rgba(255,255,255,.08);transition:all 500ms cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;}
+.ob-bar.active{background:rgba(61,240,255,.20);}
+.ob-bar.active::after{content:'';position:absolute;inset:0;border-radius:3px;background:linear-gradient(90deg,rgba(61,240,255,.70),rgba(139,92,246,.60));animation:obShim 3s ease-in-out infinite;}
+.ob-bar.done{background:linear-gradient(90deg,rgba(61,240,255,.50),rgba(139,92,246,.40));}
+
+/* Step indicator */
+.ob-step{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.10em;color:rgba(61,240,255,.65);margin-bottom:14px;}
+
+.ob-title{font-size:clamp(28px,4.5vw,36px);font-weight:800;letter-spacing:-.04em;margin-bottom:10px;line-height:1.1;}
+.ob-sub{font-size:15px;color:rgba(255,255,255,.45);margin-bottom:36px;line-height:1.6;}
+
+/* Chips grid */
+.ob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:36px;}
+@media(max-width:500px){.ob-grid{grid-template-columns:repeat(2,1fr);}}
+
+.ob-chip{padding:16px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;text-align:center;transition:all 220ms cubic-bezier(.16,1,.3,1);font-size:13px;font-weight:600;color:rgba(255,255,255,.65);display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;overflow:hidden;}
+.ob-chip::before{content:'';position:absolute;inset:0;border-radius:14px;padding:1px;background:linear-gradient(135deg,rgba(61,240,255,.25),rgba(139,92,246,.20));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity 220ms;pointer-events:none;}
+.ob-chip:hover{border-color:rgba(61,240,255,.25);background:rgba(61,240,255,.05);color:#fff;transform:translateY(-2px);}
+.ob-chip:hover::before{opacity:.5;}
+.ob-chip.selected{border-color:rgba(61,240,255,.50);background:rgba(61,240,255,.10);color:rgba(61,240,255,.95);}
+.ob-chip.selected::before{opacity:1;}
+.ob-chip-icon{font-size:24px;}
+
+/* CTA button */
+.ob-btn{width:100%;padding:16px;border-radius:14px;background:linear-gradient(135deg,rgba(61,240,255,.18),rgba(139,92,246,.12));border:1px solid rgba(61,240,255,.40);color:rgba(61,240,255,.97);font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;transition:all 200ms;letter-spacing:-.01em;position:relative;overflow:hidden;}
+.ob-btn::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:obShim 4s ease-in-out infinite;}
+.ob-btn:hover{background:linear-gradient(135deg,rgba(61,240,255,.26),rgba(139,92,246,.18));transform:translateY(-2px);box-shadow:0 0 28px rgba(61,240,255,.10);}
+.ob-btn:disabled{opacity:.35;cursor:default;transform:none;box-shadow:none;}
+
+/* Skip / back */
+.ob-skip{display:block;text-align:center;margin-top:18px;font-size:13px;color:rgba(255,255,255,.28);cursor:pointer;background:none;border:none;font-family:inherit;transition:color 150ms;}
+.ob-skip:hover{color:rgba(255,255,255,.55);}
       `}</style>
 
-      <div className="ob-root">
-        <div className="ob-logo">Dominat8<span>.io</span></div>
+      <div className="ob-page">
+        <div className="ob-ambient">
+          <div className="ob-blob1" />
+          <div className="ob-blob2" />
+        </div>
+
+        <div className={`ob-logo${mounted ? " ob-a" : ""}`}>
+          Dominat8<span>.io</span>
+        </div>
 
         <div className="ob-card">
-          {/* Progress dots */}
-          <div className="ob-progress">
+          {/* Progress bar */}
+          <div className={`ob-progress${mounted ? " ob-a" : ""}`}>
             {[0, 1].map(i => (
-              <div key={i} className={`ob-dot ${i <= step ? "active" : ""}`}
-                style={{ flex: i === step ? 2 : 1 }} />
+              <div
+                key={i}
+                className={`ob-bar${i === step ? " active" : ""}${i < step ? " done" : ""}`}
+                style={{ flex: i === step ? 2.5 : 1 }}
+              />
             ))}
           </div>
 
           {step === 0 && (
-            <>
+            <div className={mounted ? "ob-a ob-d1" : ""}>
               <div className="ob-step">Step 1 of 2</div>
               <div className="ob-title">What kind of business?</div>
               <div className="ob-sub">We&apos;ll customise the AI for your industry.</div>
@@ -90,7 +134,7 @@ export default function OnboardingPage() {
                 {INDUSTRIES.map(ind => (
                   <div
                     key={ind.label}
-                    className={`ob-chip ${industry === ind.label ? "selected" : ""}`}
+                    className={`ob-chip${industry === ind.label ? " selected" : ""}`}
                     onClick={() => setIndustry(ind.label)}
                   >
                     <span className="ob-chip-icon">{ind.icon}</span>
@@ -103,14 +147,14 @@ export default function OnboardingPage() {
                 onClick={() => setStep(1)}
                 disabled={!industry}
               >
-                Continue →
+                Continue &rarr;
               </button>
               <button className="ob-skip" onClick={finish}>Skip for now</button>
-            </>
+            </div>
           )}
 
           {step === 1 && (
-            <>
+            <div className={mounted ? "ob-a" : ""}>
               <div className="ob-step">Step 2 of 2</div>
               <div className="ob-title">What&apos;s your main goal?</div>
               <div className="ob-sub">This helps the AI write better copy for you.</div>
@@ -118,7 +162,7 @@ export default function OnboardingPage() {
                 {GOALS.map(g => (
                   <div
                     key={g.label}
-                    className={`ob-chip ${goal === g.label ? "selected" : ""}`}
+                    className={`ob-chip${goal === g.label ? " selected" : ""}`}
                     onClick={() => setGoal(g.label)}
                   >
                     <span className="ob-chip-icon">{g.icon}</span>
@@ -131,10 +175,10 @@ export default function OnboardingPage() {
                 onClick={finish}
                 style={{ marginTop: 8 }}
               >
-                Build my site →
+                Build my site &rarr;
               </button>
-              <button className="ob-skip" onClick={() => setStep(0)}>← Back</button>
-            </>
+              <button className="ob-skip" onClick={() => setStep(0)}>&larr; Back</button>
+            </div>
           )}
         </div>
       </div>

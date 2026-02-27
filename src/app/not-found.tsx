@@ -1,107 +1,69 @@
+import Link from "next/link";
+
 export default function NotFound() {
   return (
-    <main style={{
-      minHeight: "100vh",
-      background: "#06080e",
-      color: "#e9eef7",
-      fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "24px",
-      textAlign: "center",
-    }}>
-      {/* Glowing orb */}
-      <div style={{
-        width: 120,
-        height: 120,
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(61,240,255,0.25) 0%, rgba(61,240,255,0.05) 60%, transparent 100%)",
-        border: "1px solid rgba(61,240,255,0.20)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: 32,
-        position: "relative",
-      }}>
-        <span style={{ fontSize: 42, fontWeight: 900, letterSpacing: "-0.05em", color: "rgba(61,240,255,0.90)" }}>404</span>
-        {/* Pulse ring */}
-        <div style={{
-          position: "absolute",
-          inset: -8,
-          borderRadius: "50%",
-          border: "1px solid rgba(61,240,255,0.12)",
-          animation: "nf-pulse 2.5s ease-in-out infinite",
-        }} />
-      </div>
-
-      <h1 style={{
-        fontSize: "clamp(28px,5vw,44px)",
-        fontWeight: 800,
-        margin: "0 0 12px",
-        letterSpacing: "-0.04em",
-        lineHeight: 1.1,
-      }}>
-        Page not found.
-      </h1>
-
-      <p style={{
-        fontSize: 16,
-        color: "rgba(255,255,255,0.42)",
-        margin: "0 0 36px",
-        lineHeight: 1.6,
-        maxWidth: 400,
-      }}>
-        The page you're looking for doesn't exist, or it may have been moved.
-      </p>
-
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-        <a href="/" style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "12px 24px",
-          borderRadius: 12,
-          background: "linear-gradient(135deg,#00C97A,#00B36B)",
-          color: "#fff",
-          textDecoration: "none",
-          fontSize: 14,
-          fontWeight: 700,
-          boxShadow: "0 4px 20px rgba(0,201,122,0.35)",
-        }}>
-          ← Back to builder
-        </a>
-        <a href="/gallery" style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "12px 24px",
-          borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.12)",
-          background: "rgba(255,255,255,0.04)",
-          color: "rgba(255,255,255,0.70)",
-          textDecoration: "none",
-          fontSize: 14,
-          fontWeight: 600,
-        }}>
-          Browse gallery
-        </a>
-      </div>
-
-      {/* Nav hint */}
-      <div style={{ marginTop: 56, display: "flex", gap: 20, opacity: 0.30, fontSize: 13 }}>
-        <a href="/pricing" style={{ color: "inherit", textDecoration: "none" }}>Pricing</a>
-        <a href="/gallery" style={{ color: "inherit", textDecoration: "none" }}>Gallery</a>
-        <a href="/templates" style={{ color: "inherit", textDecoration: "none" }}>Templates</a>
-      </div>
-
+    <>
       <style>{`
-        @keyframes nf-pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(1.08); }
-        }
+@keyframes nfFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes nfPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.12)}}
+@keyframes nfFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes nfGlow{0%{box-shadow:0 0 30px rgba(61,240,255,.12)}50%{box-shadow:0 0 60px rgba(139,92,246,.15)}100%{box-shadow:0 0 30px rgba(61,240,255,.12)}}
+
+.nf{min-height:100vh;background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;position:relative;overflow:hidden;}
+.nf-blob{position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none;}
+.nf-blob-1{width:500px;height:400px;background:radial-gradient(ellipse,rgba(61,240,255,.06),transparent 70%);top:-100px;left:-100px;}
+.nf-blob-2{width:400px;height:400px;background:radial-gradient(ellipse,rgba(139,92,246,.05),transparent 70%);bottom:-100px;right:-100px;}
+
+.nf-orb{width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(61,240,255,.20) 0%,rgba(139,92,246,.08) 60%,transparent 100%);border:1px solid rgba(61,240,255,.15);display:flex;align-items:center;justify-content:center;margin-bottom:36px;position:relative;animation:nfFloat 4s ease-in-out infinite,nfGlow 6s ease-in-out infinite,nfFade 800ms cubic-bezier(.16,1,.3,1) both;}
+.nf-orb-ring{position:absolute;inset:-10px;border-radius:50%;border:1px solid rgba(61,240,255,.08);animation:nfPulse 3s ease-in-out infinite;}
+.nf-orb-ring2{position:absolute;inset:-22px;border-radius:50%;border:1px solid rgba(139,92,246,.06);animation:nfPulse 3s ease-in-out infinite .5s;}
+.nf-404{font-size:48px;font-weight:900;letter-spacing:-.05em;background:linear-gradient(135deg,#3DF0FF,#8B5CF6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+
+.nf h1{font-size:clamp(28px,5vw,44px);font-weight:800;margin:0 0 12px;letter-spacing:-.04em;animation:nfFade 800ms cubic-bezier(.16,1,.3,1) both 150ms;}
+.nf-sub{font-size:16px;color:rgba(255,255,255,.40);margin:0 0 10px;line-height:1.65;max-width:420px;animation:nfFade 800ms cubic-bezier(.16,1,.3,1) both 250ms;}
+.nf-joke{font-size:13px;color:rgba(255,255,255,.22);margin:0 0 36px;font-style:italic;animation:nfFade 800ms cubic-bezier(.16,1,.3,1) both 350ms;}
+
+.nf-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;animation:nfFade 800ms cubic-bezier(.16,1,.3,1) both 400ms;}
+.nf-btn-primary{display:inline-flex;align-items:center;gap:6px;padding:14px 28px;border-radius:14px;background:linear-gradient(135deg,rgba(61,240,255,.14),rgba(139,92,246,.08));border:1px solid rgba(61,240,255,.35);color:rgba(61,240,255,.92);text-decoration:none;font-size:15px;font-weight:700;transition:all 200ms;position:relative;overflow:hidden;}
+.nf-btn-primary::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:nfShim 4s ease-in-out infinite;}
+@keyframes nfShim{0%{left:-100%}40%{left:100%}100%{left:100%}}
+.nf-btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 32px rgba(61,240,255,.12);border-color:rgba(61,240,255,.55);}
+.nf-btn-secondary{display:inline-flex;align-items:center;gap:6px;padding:14px 28px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:rgba(255,255,255,.60);text-decoration:none;font-size:15px;font-weight:600;transition:all 180ms;}
+.nf-btn-secondary:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);color:#fff;}
+
+.nf-links{margin-top:56px;display:flex;gap:24px;animation:nfFade 800ms cubic-bezier(.16,1,.3,1) both 500ms;}
+.nf-links a{color:rgba(255,255,255,.25);text-decoration:none;font-size:13px;transition:color 150ms;}
+.nf-links a:hover{color:rgba(255,255,255,.60);}
       `}</style>
-    </main>
+
+      <main className="nf">
+        <div className="nf-blob nf-blob-1" />
+        <div className="nf-blob nf-blob-2" />
+
+        <div className="nf-orb">
+          <div className="nf-orb-ring" />
+          <div className="nf-orb-ring2" />
+          <span className="nf-404">404</span>
+        </div>
+
+        <h1>Lost in the loop.</h1>
+        <p className="nf-sub">
+          The page you&apos;re looking for doesn&apos;t exist — but your future website does. It&apos;s just one prompt away.
+        </p>
+        <p className="nf-joke">Even our self-heal agent couldn&apos;t find this one.</p>
+
+        <div className="nf-btns">
+          <Link href="/build" className="nf-btn-primary">Start building →</Link>
+          <Link href="/gallery" className="nf-btn-secondary">Browse gallery</Link>
+        </div>
+
+        <div className="nf-links">
+          <Link href="/">Home</Link>
+          <Link href="/pricing">Pricing</Link>
+          <Link href="/templates">Templates</Link>
+          <Link href="/about">About</Link>
+        </div>
+      </main>
+    </>
   );
 }

@@ -1,121 +1,97 @@
+import { SiteNav } from "@/components/shared/SiteNav";
+import { SiteFooter } from "@/components/shared/SiteFooter";
+
 export const metadata = {
   title: "Privacy Policy — Dominat8.io",
   description: "How Dominat8.io collects, uses, and protects your data.",
 };
 
-const SECTION_STYLE = {
-  marginBottom: 36 as const,
-};
-
-const H2_STYLE = {
-  fontSize: 18,
-  fontWeight: 700,
-  letterSpacing: "-0.02em" as const,
-  margin: "0 0 12px",
-  color: "rgba(255,255,255,0.90)",
-};
-
-const P_STYLE = {
-  fontSize: 15,
-  lineHeight: 1.75,
-  color: "rgba(255,255,255,0.55)",
-  margin: "0 0 12px",
-};
-
-const UL_STYLE = {
-  paddingLeft: 20,
-  margin: "0 0 12px",
-  color: "rgba(255,255,255,0.55)",
-  fontSize: 15,
-  lineHeight: 1.75,
-};
-
 export default function PrivacyPage() {
   return (
-    <main style={{
-      minHeight: "100vh",
-      background: "#06080e",
-      color: "#e9eef7",
-      fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
-      padding: "0 0 80px",
-    }}>
-      {/* Nav */}
-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "inherit" }}>
-          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.04em" }}>D8</span>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(61,240,255,0.7)", display: "inline-block" }} />
-          <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
-        </a>
-        <a href="/" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>← Back</a>
-      </nav>
-
-      {/* Content */}
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "56px 24px 0" }}>
-        <div style={{ marginBottom: 48 }}>
-          <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(61,240,255,0.25)", background: "rgba(61,240,255,0.06)", color: "rgba(61,240,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
-            PRIVACY POLICY
+    <>
+      <style>{`
+@keyframes lgFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.lg-a{animation:lgFade 700ms cubic-bezier(.16,1,.3,1) both}
+.lg-d1{animation-delay:80ms}
+.lg-page{min-height:100vh;background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;}
+.lg-wrap{max-width:720px;margin:0 auto;padding:120px 24px 80px;}
+.lg-badge{display:inline-block;padding:5px 16px;border-radius:999px;border:1px solid rgba(61,240,255,.20);background:rgba(61,240,255,.05);color:rgba(61,240,255,.80);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px;}
+.lg-h1{font-size:clamp(28px,4.5vw,42px);font-weight:800;margin:0 0 14px;letter-spacing:-.04em;}
+.lg-updated{font-size:16px;color:rgba(255,255,255,.45);line-height:1.7;margin:0 0 48px;}
+.lg-section{margin-bottom:40px;}
+.lg-h2{font-size:18px;font-weight:700;letter-spacing:-.02em;margin:0 0 14px;color:rgba(255,255,255,.88);}
+.lg-p{font-size:15px;line-height:1.80;color:rgba(255,255,255,.52);margin:0 0 14px;}
+.lg-p:last-child{margin:0;}
+.lg-p strong{color:rgba(255,255,255,.78);}
+.lg-p a{color:rgba(61,240,255,.70);text-decoration:none;transition:color 150ms;}
+.lg-p a:hover{color:rgba(61,240,255,.90);}
+.lg-ul{padding-left:20px;margin:0 0 14px;color:rgba(255,255,255,.52);font-size:15px;line-height:1.80;}
+.lg-ul strong{color:rgba(255,255,255,.78);}
+.lg-ul a{color:rgba(61,240,255,.70);text-decoration:none;}
+.lg-contact{padding:24px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);margin-top:32px;}
+      `}</style>
+      <main className="lg-page">
+        <SiteNav />
+        <div className="lg-wrap">
+          <div className="lg-a">
+            <div className="lg-badge">PRIVACY POLICY</div>
+            <h1 className="lg-h1">Your privacy matters.</h1>
+            <p className="lg-updated">Last updated: February 2026. This policy explains how Dominat8.io (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) collects, uses, and protects information when you use our service.</p>
           </div>
-          <h1 style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 800, margin: "0 0 14px", letterSpacing: "-0.04em" }}>Your privacy matters.</h1>
-          <p style={{ ...P_STYLE, fontSize: 16 }}>Last updated: February 2026. This policy explains how Dominat8.io ("we", "us", "our") collects, uses, and protects information when you use our service.</p>
+          <div className="lg-a lg-d1">
+            <div className="lg-section">
+              <h2 className="lg-h2">1. Information we collect</h2>
+              <p className="lg-p">We collect the minimum information necessary to provide our service:</p>
+              <ul className="lg-ul">
+                <li><strong>Prompts you enter</strong> — the text you type to describe the website you want to build. These are sent to OpenAI to generate your site.</li>
+                <li><strong>Generated HTML</strong> — when you use the Share feature, your site HTML is stored on our servers for up to 90 days.</li>
+                <li><strong>Usage data</strong> — standard server logs including IP address, browser type, and pages visited.</li>
+                <li><strong>Account information</strong> — if you create an account: email address and subscription status.</li>
+              </ul>
+              <p className="lg-p">We do <strong>not</strong> collect payment card data (handled by Stripe), sell your data to third parties, or use your prompts to train AI models.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">2. How we use your information</h2>
+              <ul className="lg-ul">
+                <li>To generate websites from your prompts via OpenAI&apos;s API</li>
+                <li>To store and serve shared sites you publish</li>
+                <li>To send transactional emails (e.g. subscription receipts)</li>
+                <li>To detect and prevent abuse</li>
+                <li>To improve the reliability and performance of our service</li>
+              </ul>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">3. Third-party services</h2>
+              <p className="lg-p">We use the following third-party services:</p>
+              <ul className="lg-ul">
+                <li><strong>OpenAI</strong> — processes your prompts. Subject to <a href="https://openai.com/privacy">OpenAI&apos;s Privacy Policy</a>.</li>
+                <li><strong>Vercel</strong> — hosts our application and stores shared site files.</li>
+                <li><strong>Stripe</strong> — processes payments for paid subscriptions.</li>
+              </ul>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">4. Data retention</h2>
+              <p className="lg-p">Shared sites are automatically deleted after <strong>90 days</strong>. Account data is retained while your account is active and for 30 days after deletion. Request deletion anytime at <a href="mailto:privacy@dominat8.io">privacy@dominat8.io</a>.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">5. Cookies</h2>
+              <p className="lg-p">We use only essential cookies required for authentication and session management. No advertising or tracking cookies.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">6. Your rights</h2>
+              <p className="lg-p">Depending on your location, you may have rights under GDPR, CCPA, or other privacy laws including the right to access, correct, or delete your personal data. Contact <a href="mailto:privacy@dominat8.io">privacy@dominat8.io</a>.</p>
+            </div>
+            <div className="lg-section">
+              <h2 className="lg-h2">7. Changes to this policy</h2>
+              <p className="lg-p">We may update this policy occasionally. Material changes will be communicated by email. Continued use constitutes acceptance.</p>
+            </div>
+            <div className="lg-contact">
+              <p className="lg-p">Questions? Email <a href="mailto:privacy@dominat8.io"><strong>privacy@dominat8.io</strong></a></p>
+            </div>
+          </div>
         </div>
-
-        <div style={SECTION_STYLE}>
-          <h2 style={H2_STYLE}>1. Information we collect</h2>
-          <p style={P_STYLE}>We collect the minimum information necessary to provide our service:</p>
-          <ul style={UL_STYLE}>
-            <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>Prompts you enter</strong> — the text you type to describe the website you want to build. These are sent to OpenAI to generate your site.</li>
-            <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>Generated HTML</strong> — when you use the Share feature, your site HTML is stored on our servers for up to 90 days.</li>
-            <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>Usage data</strong> — standard server logs including IP address, browser type, and pages visited. Used for security and performance monitoring only.</li>
-            <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>Account information</strong> — if you create an account: email address and subscription status.</li>
-          </ul>
-          <p style={P_STYLE}>We do <strong style={{ color: "rgba(255,255,255,0.80)" }}>not</strong> collect payment card data (handled by Stripe), sell your data to third parties, or use your prompts to train AI models.</p>
-        </div>
-
-        <div style={SECTION_STYLE}>
-          <h2 style={H2_STYLE}>2. How we use your information</h2>
-          <ul style={UL_STYLE}>
-            <li>To generate websites from your prompts via OpenAI's API</li>
-            <li>To store and serve shared sites you publish via the Share feature</li>
-            <li>To send transactional emails (e.g. subscription receipts)</li>
-            <li>To detect and prevent abuse</li>
-            <li>To improve the reliability and performance of our service</li>
-          </ul>
-        </div>
-
-        <div style={SECTION_STYLE}>
-          <h2 style={H2_STYLE}>3. Third-party services</h2>
-          <p style={P_STYLE}>We use the following third-party services, each with their own privacy policy:</p>
-          <ul style={UL_STYLE}>
-            <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>OpenAI</strong> — processes your prompts to generate website HTML. Subject to <a href="https://openai.com/privacy" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none" }}>OpenAI's Privacy Policy</a>.</li>
-            <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>Vercel</strong> — hosts our application and stores shared site files.</li>
-            <li><strong style={{ color: "rgba(255,255,255,0.80)" }}>Stripe</strong> — processes payments for Pro and Business subscriptions.</li>
-          </ul>
-        </div>
-
-        <div style={SECTION_STYLE}>
-          <h2 style={H2_STYLE}>4. Data retention</h2>
-          <p style={P_STYLE}>Shared sites are automatically deleted after <strong style={{ color: "rgba(255,255,255,0.80)" }}>90 days</strong>. Account data is retained while your account is active and for 30 days after deletion. You can request deletion at any time by emailing <a href="mailto:privacy@dominat8.io" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none" }}>privacy@dominat8.io</a>.</p>
-        </div>
-
-        <div style={SECTION_STYLE}>
-          <h2 style={H2_STYLE}>5. Cookies</h2>
-          <p style={P_STYLE}>We use only essential cookies required for authentication and session management. We do not use advertising or tracking cookies.</p>
-        </div>
-
-        <div style={SECTION_STYLE}>
-          <h2 style={H2_STYLE}>6. Your rights</h2>
-          <p style={P_STYLE}>Depending on your location, you may have rights under GDPR, CCPA, or other privacy laws. These include the right to access, correct, or delete your personal data. To exercise these rights, contact <a href="mailto:privacy@dominat8.io" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none" }}>privacy@dominat8.io</a>.</p>
-        </div>
-
-        <div style={SECTION_STYLE}>
-          <h2 style={H2_STYLE}>7. Changes to this policy</h2>
-          <p style={P_STYLE}>We may update this policy occasionally. We'll notify you of material changes by email or by prominently displaying a notice on our site. Continued use of Dominat8.io after changes take effect constitutes acceptance.</p>
-        </div>
-
-        <div style={{ padding: "24px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", marginTop: 24 }}>
-          <p style={{ ...P_STYLE, margin: 0 }}>Questions about this policy? Email us at <a href="mailto:privacy@dominat8.io" style={{ color: "rgba(61,240,255,0.75)", textDecoration: "none", fontWeight: 600 }}>privacy@dominat8.io</a></p>
-        </div>
-      </div>
-    </main>
+        <SiteFooter />
+      </main>
+    </>
   );
 }
