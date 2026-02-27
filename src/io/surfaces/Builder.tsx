@@ -166,7 +166,7 @@ function SocialProof() {
     return () => clearInterval(id);
   }, []);
 
-  const AVATAR_COLORS = ["#7C5AFF", "#34D399", "#FF6B8A", "#7C5AFF", "#E8B44F", "#C49B52"];
+  const AVATAR_COLORS = ["#7C5AFF", "#34D399", "#FF6B8A", "#3B82F6", "#E8B44F", "#C49B52"];
 
   return (
     <div className="d8h-social-proof">
