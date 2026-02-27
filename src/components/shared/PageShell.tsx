@@ -11,7 +11,7 @@ interface PageShellProps {
 
 export function PageShell({ children, padTop = 72 }: PageShellProps) {
   return (
-    <div style={{ minHeight: "100vh", background: "#060810", color: "#e9eef7" }}>
+    <div style={{ minHeight: "100vh", background: "#08070B", color: "#F5F0EB" }}>
       <SiteNav />
       <div style={{ paddingTop: padTop }}>{children}</div>
       <SiteFooter />

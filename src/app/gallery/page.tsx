@@ -17,38 +17,38 @@ export default function GalleryPage() {
 .gl-a{animation:glFade 700ms cubic-bezier(.16,1,.3,1) both}
 .gl-d1{animation-delay:80ms}.gl-d2{animation-delay:160ms}.gl-d3{animation-delay:240ms}
 
-.gl-page{min-height:100vh;background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;}
+.gl-page{min-height:100vh;background:#08070B;color:#F5F0EB;font-family:'Outfit',system-ui,sans-serif;}
 
-/* Ambient */
+/* Ambient — warm mesh orbs */
 .gl-ambient{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
-.gl-blob1{position:absolute;width:800px;height:600px;top:-250px;left:-200px;border-radius:50%;background:radial-gradient(circle,rgba(61,240,255,.05) 0%,transparent 70%);}
-.gl-blob2{position:absolute;width:600px;height:500px;top:100px;right:-200px;border-radius:50%;background:radial-gradient(circle,rgba(56,248,166,.04) 0%,transparent 70%);}
+.gl-blob1{position:absolute;width:800px;height:600px;top:-250px;left:-200px;border-radius:50%;background:radial-gradient(circle,rgba(240,179,90,.06) 0%,rgba(232,113,90,.03) 40%,transparent 70%);}
+.gl-blob2{position:absolute;width:600px;height:500px;top:100px;right:-200px;border-radius:50%;background:radial-gradient(circle,rgba(232,113,90,.05) 0%,rgba(240,179,90,.02) 40%,transparent 70%);}
 
 /* Hero */
 .gl-hero{text-align:center;padding:120px 24px 48px;position:relative;z-index:1;}
-.gl-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 16px;border-radius:999px;border:1px solid rgba(61,240,255,.25);background:rgba(61,240,255,.05);color:rgba(61,240,255,.80);font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;margin-bottom:22px;}
-.gl-badge-dot{width:6px;height:6px;border-radius:50%;background:rgba(61,240,255,.80);animation:glPulse 2s ease-in-out infinite;}
-.gl-h1{font-size:clamp(34px,5.5vw,58px);font-weight:900;margin:0 0 16px;letter-spacing:-.05em;line-height:1.05;}
-.gl-h1 span{background:linear-gradient(95deg,#3DF0FF 0%,#38F8A6 55%,#00D47A 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-.gl-sub{font-size:17px;color:rgba(255,255,255,.42);margin:0 auto;line-height:1.7;max-width:520px;}
+.gl-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 16px;border-radius:999px;border:1px solid rgba(240,179,90,.30);background:rgba(240,179,90,.06);color:rgba(240,179,90,.85);font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;margin-bottom:22px;font-family:'JetBrains Mono','Fira Code',monospace;}
+.gl-badge-dot{width:6px;height:6px;border-radius:50%;background:rgba(240,179,90,.85);animation:glPulse 2s ease-in-out infinite;}
+.gl-h1{font-size:clamp(34px,5.5vw,58px);font-weight:900;margin:0 0 16px;letter-spacing:-.05em;line-height:1.05;color:#F5F0EB;}
+.gl-h1 span{background:linear-gradient(95deg,#F0B35A 0%,#E8715A 55%,#E8A040 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.gl-sub{font-size:17px;color:rgba(245,240,235,.42);margin:0 auto;line-height:1.7;max-width:520px;font-family:'Inter',system-ui,sans-serif;}
 
 /* Stats */
 .gl-stats{display:flex;align-items:center;justify-content:center;gap:40px;margin-top:36px;flex-wrap:wrap;}
 .gl-stat{text-align:center;}
-.gl-stat-val{font-size:24px;font-weight:900;letter-spacing:-.03em;background:linear-gradient(135deg,#3DF0FF,#8B5CF6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-.gl-stat-label{font-size:11px;color:rgba(255,255,255,.32);margin-top:3px;letter-spacing:.03em;}
+.gl-stat-val{font-size:24px;font-weight:900;letter-spacing:-.03em;background:linear-gradient(135deg,#F0B35A,#E8715A);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.gl-stat-label{font-size:11px;color:rgba(245,240,235,.30);margin-top:3px;letter-spacing:.03em;font-family:'Inter',system-ui,sans-serif;}
 
 /* Grid wrapper */
 .gl-grid-wrap{position:relative;z-index:1;}
 
 /* CTA */
 .gl-cta{text-align:center;padding:72px 24px 80px;position:relative;z-index:1;}
-.gl-cta-badge{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(61,240,255,.50);margin-bottom:14px;}
-.gl-cta h2{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.04em;margin:0 0 12px;}
-.gl-cta p{font-size:15px;color:rgba(255,255,255,.40);margin:0 0 28px;line-height:1.6;}
-.gl-cta-btn{display:inline-flex;align-items:center;gap:6px;padding:15px 36px;border-radius:14px;background:linear-gradient(135deg,rgba(61,240,255,.14),rgba(139,92,246,.08));border:1px solid rgba(61,240,255,.35);color:rgba(61,240,255,.92);text-decoration:none;font-size:15px;font-weight:700;transition:all 200ms;position:relative;overflow:hidden;}
-.gl-cta-btn::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:glShim 4s ease-in-out infinite;}
-.gl-cta-btn:hover{border-color:rgba(61,240,255,.55);box-shadow:0 0 28px rgba(61,240,255,.10);transform:translateY(-2px);}
+.gl-cta-badge{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,179,90,.55);margin-bottom:14px;font-family:'JetBrains Mono','Fira Code',monospace;}
+.gl-cta h2{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.04em;margin:0 0 12px;color:#F5F0EB;}
+.gl-cta p{font-size:15px;color:rgba(245,240,235,.40);margin:0 0 28px;line-height:1.6;font-family:'Inter',system-ui,sans-serif;}
+.gl-cta-btn{display:inline-flex;align-items:center;gap:6px;padding:15px 36px;border-radius:14px;background:linear-gradient(135deg,#F0B35A,#E8A040);border:1px solid rgba(240,179,90,.60);color:#0F0D15;text-decoration:none;font-size:15px;font-weight:700;transition:all 200ms;position:relative;overflow:hidden;}
+.gl-cta-btn::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);animation:glShim 4s ease-in-out infinite;}
+.gl-cta-btn:hover{box-shadow:0 0 28px rgba(240,179,90,.25);transform:translateY(-2px);}
       `}</style>
 
       <main className="gl-page">

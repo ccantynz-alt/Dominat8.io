@@ -1,40 +1,45 @@
 /* =========================================================
    Dominat8.io — Global Design Tokens
-   Premium dark theme — consistent across all pages
+   "Midnight Ember" — warm dark premium theme
    ========================================================= */
 
 :root {
   /* ── Background ── */
-  --d8-bg: #060810;
-  --d8-bg-surface: rgba(255,255,255,0.022);
+  --d8-bg: #08070B;
+  --d8-bg-elevated: #0F0D15;
+  --d8-bg-surface: rgba(245,240,235,0.03);
 
   /* ── Brand Colors ── */
-  --d8-cyan: #3DF0FF;
-  --d8-purple: #8B5CF6;
-  --d8-green: #38F8A6;
-  --d8-amber: #FFD166;
-  --d8-red: #FF4D6D;
+  --d8-amber: #F0B35A;
+  --d8-amber-glow: rgba(240,179,90,0.15);
+  --d8-coral: #E8715A;
+  --d8-violet: #9B8AFF;
+  --d8-emerald: #4ADE80;
+  --d8-rose: #FF7A63;
+  --d8-red: #FF5C5C;
 
   /* ── Text ── */
-  --d8-text: rgba(255,255,255,0.92);
-  --d8-text-secondary: rgba(255,255,255,0.55);
-  --d8-text-muted: rgba(255,255,255,0.35);
+  --d8-text: #F5F0EB;
+  --d8-text-secondary: rgba(245,240,235,0.55);
+  --d8-text-muted: rgba(245,240,235,0.30);
 
   /* ── Surfaces ── */
-  --d8-panel: rgba(255,255,255,0.04);
-  --d8-panel-hover: rgba(255,255,255,0.07);
-  --d8-border: rgba(255,255,255,0.08);
-  --d8-border-strong: rgba(255,255,255,0.14);
+  --d8-panel: rgba(245,240,235,0.035);
+  --d8-panel-hover: rgba(245,240,235,0.065);
+  --d8-border: rgba(245,240,235,0.08);
+  --d8-border-strong: rgba(245,240,235,0.15);
 
   /* ── Typography ── */
-  --d8-font: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --d8-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --d8-font-display: 'Outfit', system-ui, sans-serif;
   --d8-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
   /* ── Radius ── */
-  --d8-r-sm: 8px;
-  --d8-r-md: 12px;
-  --d8-r-lg: 16px;
-  --d8-r-xl: 20px;
+  --d8-r-sm: 10px;
+  --d8-r-md: 14px;
+  --d8-r-lg: 18px;
+  --d8-r-xl: 24px;
+  --d8-r-2xl: 32px;
   --d8-r-full: 999px;
 }
 
@@ -54,8 +59,13 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid rgba(61,240,255,0.50);
+  outline: 2px solid rgba(240,179,90,0.50);
   outline-offset: 2px;
 }
 
 a { color: inherit; }
+
+::selection {
+  background: rgba(240,179,90,0.25);
+  color: #F5F0EB;
+}

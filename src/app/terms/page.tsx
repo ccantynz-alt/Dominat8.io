@@ -13,21 +13,21 @@ export default function TermsPage() {
 @keyframes lgFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .lg-a{animation:lgFade 700ms cubic-bezier(.16,1,.3,1) both}
 .lg-d1{animation-delay:80ms}
-.lg-page{min-height:100vh;background:#060810;color:#e9eef7;font-family:'Outfit',system-ui,sans-serif;}
+.lg-page{min-height:100vh;background:#08070B;color:#F5F0EB;font-family:'Outfit',system-ui,sans-serif;}
 .lg-wrap{max-width:720px;margin:0 auto;padding:120px 24px 80px;}
-.lg-badge{display:inline-block;padding:5px 16px;border-radius:999px;border:1px solid rgba(61,240,255,.20);background:rgba(61,240,255,.05);color:rgba(61,240,255,.80);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px;}
-.lg-h1{font-size:clamp(28px,4.5vw,42px);font-weight:800;margin:0 0 14px;letter-spacing:-.04em;}
-.lg-updated{font-size:16px;color:rgba(255,255,255,.45);line-height:1.7;margin:0 0 48px;}
+.lg-badge{display:inline-block;padding:5px 16px;border-radius:999px;border:1px solid rgba(240,179,90,.25);background:rgba(240,179,90,.06);color:rgba(240,179,90,.85);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px;}
+.lg-h1{font-size:clamp(28px,4.5vw,42px);font-weight:800;margin:0 0 14px;letter-spacing:-.04em;color:#F5F0EB;}
+.lg-updated{font-size:16px;color:rgba(245,240,235,0.55);line-height:1.7;margin:0 0 48px;}
 .lg-section{margin-bottom:40px;}
-.lg-h2{font-size:18px;font-weight:700;letter-spacing:-.02em;margin:0 0 14px;color:rgba(255,255,255,.88);}
-.lg-p{font-size:15px;line-height:1.80;color:rgba(255,255,255,.52);margin:0 0 14px;}
+.lg-h2{font-size:18px;font-weight:700;letter-spacing:-.02em;margin:0 0 14px;color:rgba(245,240,235,0.88);}
+.lg-p{font-size:15px;line-height:1.80;color:rgba(245,240,235,0.55);margin:0 0 14px;}
 .lg-p:last-child{margin:0;}
-.lg-p strong{color:rgba(255,255,255,.78);}
-.lg-p a{color:rgba(61,240,255,.70);text-decoration:none;transition:color 150ms;}
-.lg-p a:hover{color:rgba(61,240,255,.90);}
-.lg-ul{padding-left:20px;margin:0 0 14px;color:rgba(255,255,255,.52);font-size:15px;line-height:1.80;}
-.lg-ul strong{color:rgba(255,255,255,.78);}
-.lg-contact{padding:24px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);margin-top:32px;}
+.lg-p strong{color:rgba(245,240,235,0.78);}
+.lg-p a{color:rgba(240,179,90,.75);text-decoration:none;transition:color 150ms;}
+.lg-p a:hover{color:rgba(240,179,90,.95);}
+.lg-ul{padding-left:20px;margin:0 0 14px;color:rgba(245,240,235,0.55);font-size:15px;line-height:1.80;}
+.lg-ul strong{color:rgba(245,240,235,0.78);}
+.lg-contact{padding:24px;border-radius:18px;border:1px solid rgba(245,240,235,0.08);background:rgba(245,240,235,0.035);margin-top:32px;}
       `}</style>
       <main className="lg-page">
         <SiteNav />
