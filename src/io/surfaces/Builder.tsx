@@ -523,7 +523,7 @@ export function Builder() {
         setState("error");
       }
     }
-  }, [prompt, industry, vibe, state, isSignedIn, errorCode, errorMsg]);
+  }, [prompt, industry, vibe, genModel, state, isSignedIn, errorCode, errorMsg]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
