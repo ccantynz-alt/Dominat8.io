@@ -1,4 +1,6 @@
 import { CheckoutButton } from "./CheckoutButton";
+import { SiteNav } from "@/components/shared/SiteNav";
+import { SiteFooter } from "@/components/shared/SiteFooter";
 
 export const metadata = {
   title: "Pricing — Dominat8.io",
@@ -131,25 +133,13 @@ export default function PricingPage() {
       minHeight: "100vh",
       background: "radial-gradient(1000px 700px at 50% -10%, rgba(61,240,255,0.05), transparent 55%), #06080e",
       color: "#e9eef7",
-      fontFamily: "ui-sans-serif,system-ui,-apple-system,sans-serif",
+      fontFamily: "'Outfit', ui-sans-serif,system-ui,-apple-system,sans-serif",
       padding: "0 0 80px",
     }}>
-      {/* Nav */}
-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 32px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "inherit" }}>
-          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.04em" }}>D8</span>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(61,240,255,0.7)", display: "inline-block" }} />
-          <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Dominat8.io</span>
-        </a>
-        <div style={{ display: "flex", gap: 8 }}>
-          <a href="/templates" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Templates</a>
-          <a href="/gallery" style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.60)", textDecoration: "none", fontSize: 13 }}>Gallery</a>
-          <a href="/build" style={{ padding: "8px 18px", borderRadius: 999, background: "linear-gradient(135deg,#00C97A,#00B36B)", color: "#fff", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Start building →</a>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* Hero */}
-      <div style={{ textAlign: "center", padding: "64px 24px 48px" }}>
+      <div style={{ textAlign: "center", padding: "120px 24px 48px" }}>
         <div style={{ display: "inline-block", padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(61,240,255,0.25)", background: "rgba(61,240,255,0.06)", color: "rgba(61,240,255,0.85)", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 20 }}>
           PRICING
         </div>
@@ -263,6 +253,7 @@ export default function PricingPage() {
           div[style*="gridTemplateColumns: repeat(4"] { grid-template-columns: 1fr !important; }
         }
       `}</style>
+      <SiteFooter />
     </main>
   );
 }

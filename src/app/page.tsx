@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { SiteNav } from "@/components/shared/SiteNav";
+import { SiteFooter } from "@/components/shared/SiteFooter";
 
 // ── Loop steps ──────────────────────────────────────────────────────────────────
 
@@ -33,14 +35,7 @@ const PLANS = [
 // ── Component ───────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  const [scrolled, setScrolled]   = useState(false);
   const [activeStep, setActiveStep] = useState(0);
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
-  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setActiveStep(s => (s + 1) % LOOP_STEPS.length), 1800);
@@ -50,25 +45,6 @@ export default function LandingPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body { background: #060810; color: #e9eef7; font-family: 'Outfit', system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-
-        /* ── Nav ── */
-        .ln-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 48px); transition: all 200ms; }
-        .ln-nav--scrolled { backdrop-filter: blur(24px); background: rgba(6,8,16,0.90); border-bottom: 1px solid rgba(255,255,255,0.07); }
-        .ln-logo { font-size: 20px; font-weight: 900; color: #fff; text-decoration: none; letter-spacing: -0.04em; }
-        .ln-logo span { color: rgba(61,240,255,0.90); }
-        .ln-nav-links { display: flex; gap: 6px; align-items: center; }
-        .ln-nav-link { padding: 6px 14px; border-radius: 8px; color: rgba(255,255,255,0.55); font-size: 14px; font-weight: 500; text-decoration: none; transition: color 120ms; }
-        .ln-nav-link:hover { color: #fff; }
-        .ln-nav-ext { padding: 6px 14px; border-radius: 8px; color: rgba(255,255,255,0.35); font-size: 13px; font-weight: 500; text-decoration: none; transition: color 120ms; }
-        .ln-nav-ext:hover { color: rgba(255,255,255,0.70); }
-        .ln-nav-cta { padding: 7px 18px; border-radius: 10px; background: rgba(61,240,255,0.12); border: 1px solid rgba(61,240,255,0.35); color: rgba(61,240,255,0.95); font-size: 14px; font-weight: 600; text-decoration: none; transition: all 130ms; }
-        .ln-nav-cta:hover { background: rgba(61,240,255,0.22); border-color: rgba(61,240,255,0.60); }
-        @media (max-width: 640px) { .ln-nav-ext, .ln-nav-link { display: none; } }
-
         /* ── Hero ── */
         .ln-hero { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: clamp(80px,15vh,140px) clamp(20px,5vw,64px) 80px; position: relative; overflow: hidden; }
         .ln-blob { position: absolute; border-radius: 50%; filter: blur(110px); opacity: 0.15; pointer-events: none; }
@@ -196,26 +172,10 @@ export default function LandingPage() {
         .ln-final-h2 { font-size: clamp(32px, 5vw, 56px); font-weight: 900; letter-spacing: -0.05em; margin-bottom: 16px; }
         .ln-final-sub { font-size: 16px; color: rgba(255,255,255,0.45); line-height: 1.70; margin-bottom: 36px; }
 
-        /* ── Footer ── */
-        .ln-footer { border-top: 1px solid rgba(255,255,255,0.06); padding: 32px clamp(20px,5vw,64px); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-        .ln-footer-copy { font-size: 13px; color: rgba(255,255,255,0.28); }
-        .ln-footer-links { display: flex; gap: 20px; }
-        .ln-footer-link { font-size: 13px; color: rgba(255,255,255,0.32); text-decoration: none; transition: color 120ms; }
-        .ln-footer-link:hover { color: rgba(255,255,255,0.65); }
       `}</style>
 
       {/* ── Nav ── */}
-      <nav className={`ln-nav${scrolled ? " ln-nav--scrolled" : ""}`}>
-        <a href="/" className="ln-logo">Dominat<span>8</span>.io</a>
-        <div className="ln-nav-links">
-          <a href="https://dominat8.com" target="_blank" rel="noopener noreferrer" className="ln-nav-ext">dominat8.com ↗</a>
-          <a href="#loop" className="ln-nav-link">The Loop</a>
-          <a href="#agents" className="ln-nav-link">Agents</a>
-          <Link href="/pricing" className="ln-nav-link">Pricing</Link>
-          <Link href="/video" className="ln-nav-link">🎵 Video</Link>
-          <Link href="/build" className="ln-nav-cta">Launch builder →</Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* ── Hero ── */}
       <section className="ln-hero">
@@ -462,15 +422,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="ln-footer">
-        <div className="ln-footer-copy">© 2026 Dominat8.io · Builder by <a href="https://dominat8.com" target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.45)", textDecoration: "none" }}>Dominat8.com</a></div>
-        <div className="ln-footer-links">
-          <Link href="/pricing" className="ln-footer-link">Pricing</Link>
-          <Link href="/dashboard" className="ln-footer-link">Dashboard</Link>
-          <Link href="/privacy" className="ln-footer-link">Privacy</Link>
-          <Link href="/terms" className="ln-footer-link">Terms</Link>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
