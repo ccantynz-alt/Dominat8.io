@@ -738,10 +738,10 @@ export function Builder() {
             The world&apos;s fastest AI website builder
           </div>
           <h1 className="d8h-title">
-            One sentence.<br />
-            <span className="d8h-title-accent">A complete website.</span>
+            The AI that builds sites<br />
+            <span className="d8h-title-accent">CMOs pay $50K for.</span>
           </h1>
-          <p className="d8h-sub">Describe your business. Watch a full, professional site appear in under 30 seconds — no templates, no drag and drop.</p>
+          <p className="d8h-sub">Describe your business in one sentence. A complete, professional website appears in under 30 seconds — no templates, no drag-and-drop.</p>
 
           {/* Prompt row */}
           <div className="d8h-input-row">
@@ -751,6 +751,7 @@ export function Builder() {
               className="d8h-input"
               type="text"
               value={prompt}
+              placeholder={placeholder}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
             />
@@ -846,7 +847,11 @@ export function Builder() {
               );
             })}
             {loaded && deployments.length === 0 && (
-              <div className="d8h-deploys-empty">No active deployments</div>
+              <div className="d8h-deploys-empty">
+                <div className="d8h-deploys-empty-icon">◈</div>
+                <div className="d8h-deploys-empty-title">Your first site is one prompt away</div>
+                <div className="d8h-deploys-empty-sub">Describe your business above and hit Generate — live in under 30 seconds.</div>
+              </div>
             )}
           </div>
         </section>
@@ -3082,46 +3087,55 @@ function HomeStyles() {
         -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
       }
 
-      /* ── Animated ambient background ── */
+      /* ── Animated aurora background ── */
       .d8h-bg {
         position: fixed; inset: 0;
         pointer-events: none; z-index: 0; overflow: hidden;
+        animation: d8h-aurora-hue 35s ease-in-out infinite;
+      }
+      @keyframes d8h-aurora-hue {
+        0%   { filter: hue-rotate(0deg)   saturate(1.0); }
+        20%  { filter: hue-rotate(22deg)  saturate(1.12); }
+        45%  { filter: hue-rotate(-20deg) saturate(0.95); }
+        70%  { filter: hue-rotate(32deg)  saturate(1.18); }
+        100% { filter: hue-rotate(0deg)   saturate(1.0); }
       }
       .d8h-bg-a {
         position: absolute;
-        width: 800px; height: 600px;
-        top: -200px; left: -150px;
+        width: 900px; height: 700px;
+        top: -220px; left: -120px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(124,90,255,0.055) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(196,140,55,0.22) 0%, rgba(175,95,40,0.09) 50%, transparent 72%);
+        filter: blur(90px);
         animation: d8h-drift-a 22s ease-in-out infinite;
       }
       .d8h-bg-b {
         position: absolute;
-        width: 700px; height: 500px;
-        top: 100px; right: -200px;
+        width: 750px; height: 600px;
+        top: 0; right: -180px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(124,90,255,0.07) 0%, transparent 65%);
-        filter: blur(60px);
+        background: radial-gradient(circle, rgba(185,88,52,0.15) 0%, rgba(210,138,65,0.06) 50%, transparent 70%);
+        filter: blur(100px);
         animation: d8h-drift-b 28s ease-in-out infinite;
       }
       .d8h-bg-c {
         position: absolute;
-        width: 500px; height: 400px;
-        bottom: -100px; left: 30%;
+        width: 620px; height: 520px;
+        bottom: -130px; left: 26%;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(52,211,153,0.04) 0%, transparent 65%);
-        filter: blur(70px);
+        background: radial-gradient(circle, rgba(218,158,50,0.14) 0%, transparent 68%);
+        filter: blur(110px);
         animation: d8h-drift-a 35s ease-in-out infinite reverse;
       }
       @keyframes d8h-drift-a {
         0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(60px, 40px) scale(1.05); }
-        66% { transform: translate(-40px, 60px) scale(0.97); }
+        33% { transform: translate(70px, 50px) scale(1.06); }
+        66% { transform: translate(-45px, 70px) scale(0.96); }
       }
       @keyframes d8h-drift-b {
         0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(-70px, -30px) scale(1.08); }
-        66% { transform: translate(50px, 50px) scale(0.95); }
+        33% { transform: translate(-80px, -35px) scale(1.09); }
+        66% { transform: translate(55px, 55px) scale(0.94); }
       }
 
       /* ── Payment success banner ── */
@@ -3160,13 +3174,13 @@ function HomeStyles() {
       }
       .d8h-logo-dot {
         width: 5px; height: 5px; border-radius: 50%;
-        background: rgba(124,90,255,0.8);
-        box-shadow: 0 0 6px rgba(124,90,255,0.5);
+        background: rgba(196,155,82,0.90);
+        box-shadow: 0 0 8px rgba(196,155,82,0.60);
         animation: d8h-dot-pulse 3s ease-in-out infinite;
       }
       @keyframes d8h-dot-pulse {
-        0%, 100% { opacity: 0.75; box-shadow: 0 0 4px rgba(124,90,255,0.4); }
-        50% { opacity: 1; box-shadow: 0 0 10px rgba(124,90,255,0.75); }
+        0%, 100% { opacity: 0.75; box-shadow: 0 0 4px rgba(196,155,82,0.45); }
+        50% { opacity: 1; box-shadow: 0 0 12px rgba(196,155,82,0.85); }
       }
       .d8h-logo-text {
         font-size: 13px; font-weight: 500;
@@ -3176,15 +3190,15 @@ function HomeStyles() {
       .d8h-nav-signin {
         padding: 7px 14px;
         border-radius: 999px;
-        border: 1px solid rgba(124,90,255,0.35);
-        background: rgba(124,90,255,0.10);
-        color: rgba(52,211,153,0.90);
+        border: 1px solid rgba(196,155,82,0.38);
+        background: rgba(196,155,82,0.10);
+        color: rgba(220,178,100,0.92);
         font-size: 12px; font-weight: 600; font-family: inherit;
         cursor: pointer; transition: all 140ms ease;
       }
       .d8h-nav-signin:hover {
-        background: rgba(124,90,255,0.18);
-        border-color: rgba(124,90,255,0.55);
+        background: rgba(196,155,82,0.18);
+        border-color: rgba(196,155,82,0.58);
       }
       .d8h-nav-link {
         padding: 6px 14px;
@@ -3210,18 +3224,18 @@ function HomeStyles() {
       .d8h-eyebrow {
         display: inline-flex; align-items: center; gap: 10px;
         padding: 8px 22px; border-radius: 999px;
-        border: 1px solid rgba(124,90,255,0.20);
-        background: linear-gradient(135deg, rgba(124,90,255,0.08), rgba(124,90,255,0.03));
+        border: 1px solid rgba(196,155,82,0.25);
+        background: linear-gradient(135deg, rgba(196,155,82,0.10), rgba(196,155,82,0.03));
         backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-        color: rgba(155,127,255,0.85);
+        color: rgba(220,178,100,0.88);
         font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
         text-transform: uppercase;
-        box-shadow: 0 0 30px rgba(124,90,255,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+        box-shadow: 0 0 30px rgba(196,155,82,0.10), inset 0 1px 0 rgba(255,255,255,0.04);
       }
       .d8h-eyebrow-dot {
         width: 7px; height: 7px; border-radius: 50%;
-        background: #7C5AFF;
-        box-shadow: 0 0 12px rgba(124,90,255,0.65);
+        background: #C49B52;
+        box-shadow: 0 0 12px rgba(196,155,82,0.72);
         flex-shrink: 0;
         animation: d8h-dot-pulse 2.5s ease-in-out infinite;
       }
@@ -3235,12 +3249,12 @@ function HomeStyles() {
         line-height: 0.98;
       }
       .d8h-title-accent {
-        background: linear-gradient(135deg, #9B7FFF 0%, #7C5AFF 30%, #34D399 70%, #2BC48A 100%);
+        background: linear-gradient(135deg, #E8C87A 0%, #C49B52 28%, #D4852A 65%, #C49B52 100%);
         background-size: 200% 100%;
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-        animation: d8h-grad-shift 6s ease-in-out infinite alternate;
+        animation: d8h-grad-shift 8s ease-in-out infinite alternate;
         position: relative;
       }
       @keyframes d8h-grad-shift { 0%{background-position:0% 50%} 100%{background-position:100% 50%} }
@@ -3269,8 +3283,8 @@ function HomeStyles() {
         transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
       }
       .d8h-input-row:focus-within {
-        border-color: rgba(124,90,255,0.35);
-        box-shadow: 0 0 0 3px rgba(124,90,255,0.08), 0 0 40px rgba(124,90,255,0.08), 0 12px 40px rgba(0,0,0,0.4);
+        border-color: rgba(196,155,82,0.42);
+        box-shadow: 0 0 0 3px rgba(196,155,82,0.10), 0 0 40px rgba(196,155,82,0.10), 0 12px 40px rgba(0,0,0,0.4);
       }
       .d8h-input-icon { font-size: 20px; flex-shrink: 0; opacity: 0.7; }
       .d8h-input {
@@ -3287,10 +3301,10 @@ function HomeStyles() {
       .d8h-input::placeholder { color: rgba(255,255,255,0.28); }
       .d8h-gen-btn {
         flex-shrink: 0;
-        padding: 13px 26px;
+        padding: 13px 28px;
         border-radius: 14px;
-        border: none;
-        background: linear-gradient(135deg, #7C5AFF, #5C3FD6);
+        border: 1px solid rgba(220,178,100,0.25);
+        background: linear-gradient(135deg, #C49B52, #A67835);
         color: #fff;
         font-size: 13px;
         font-weight: 700;
@@ -3298,11 +3312,11 @@ function HomeStyles() {
         letter-spacing: 0.06em;
         cursor: pointer;
         transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
-        box-shadow: 0 0 24px rgba(124,90,255,0.30), 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12);
+        box-shadow: 0 0 28px rgba(196,155,82,0.38), 0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.18);
       }
       .d8h-gen-btn:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 0 40px rgba(124,90,255,0.40), 0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+        box-shadow: 0 0 48px rgba(196,155,82,0.55), 0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.22);
       }
       .d8h-gen-btn:disabled { opacity: 0.30; cursor: not-allowed; box-shadow: none; }
       .d8h-mic-btn {
@@ -3348,10 +3362,10 @@ function HomeStyles() {
         box-shadow: 0 4px 16px rgba(0,0,0,0.2);
       }
       .d8h-chip--active {
-        border-color: rgba(124,90,255,0.35);
-        background: linear-gradient(135deg, rgba(124,90,255,0.12), rgba(124,90,255,0.05));
-        color: rgba(155,127,255,0.95);
-        box-shadow: 0 0 20px rgba(124,90,255,0.10), inset 0 1px 0 rgba(124,90,255,0.10);
+        border-color: rgba(196,155,82,0.42);
+        background: linear-gradient(135deg, rgba(196,155,82,0.14), rgba(196,155,82,0.05));
+        color: rgba(220,178,100,0.95);
+        box-shadow: 0 0 20px rgba(196,155,82,0.12), inset 0 1px 0 rgba(196,155,82,0.10);
       }
 
       /* ── Social proof ── */
@@ -3462,8 +3476,21 @@ function HomeStyles() {
         letter-spacing: 0.04em; flex-shrink: 0;
       }
       .d8h-deploys-empty {
-        font-size: 13px; color: rgba(255,255,255,0.30);
-        text-align: center; padding: 20px 0;
+        text-align: center; padding: 32px 0 24px;
+        display: flex; flex-direction: column; align-items: center; gap: 8px;
+      }
+      .d8h-deploys-empty-icon {
+        font-size: 28px; color: rgba(196,155,82,0.25);
+        margin-bottom: 4px;
+      }
+      .d8h-deploys-empty-title {
+        font-size: 14px; font-weight: 600;
+        color: rgba(255,255,255,0.50);
+        letter-spacing: -0.01em;
+      }
+      .d8h-deploys-empty-sub {
+        font-size: 12px; color: rgba(255,255,255,0.28);
+        max-width: 340px; line-height: 1.6;
       }
 
       /* ── Bottom dock ── */
