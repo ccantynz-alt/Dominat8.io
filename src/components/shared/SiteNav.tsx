@@ -28,29 +28,29 @@ export function SiteNav() {
   return (
     <>
       <style>{`
-.sn{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 24px;height:56px;border-radius:999px;border:1px solid rgba(245,240,235,.06);background:rgba(8,7,11,.35);backdrop-filter:blur(32px) saturate(1.8);-webkit-backdrop-filter:blur(32px) saturate(1.8);transition:all 400ms cubic-bezier(.16,1,.3,1);width:auto;max-width:calc(100vw - 32px);gap:6px;}
-.sn--s{background:rgba(8,7,11,.88);border-color:rgba(245,240,235,.10);box-shadow:0 8px 40px rgba(0,0,0,.50),0 0 0 1px rgba(245,240,235,.04),inset 0 1px 0 rgba(245,240,235,.04);}
+.sn{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 24px;height:56px;border-radius:999px;border:1px solid rgba(100,180,255,.06);background:rgba(3,7,18,.35);backdrop-filter:blur(32px) saturate(1.8);-webkit-backdrop-filter:blur(32px) saturate(1.8);transition:all 400ms cubic-bezier(.16,1,.3,1);width:auto;max-width:calc(100vw - 32px);gap:6px;}
+.sn--s{background:rgba(3,7,18,.92);border-color:rgba(100,180,255,.12);box-shadow:0 8px 40px rgba(0,0,0,.50),0 0 0 1px rgba(100,180,255,.04),inset 0 1px 0 rgba(100,180,255,.04),0 0 60px rgba(0,212,255,.04);}
 
-.sn-logo{font-size:18px;font-weight:800;color:#F5F0EB;text-decoration:none;letter-spacing:-.03em;font-family:'Outfit',system-ui,sans-serif;display:flex;align-items:center;transition:opacity 150ms;white-space:nowrap;margin-right:12px;}
+.sn-logo{font-size:18px;font-weight:800;color:#E8F0FF;text-decoration:none;letter-spacing:-.03em;font-family:'Outfit',system-ui,sans-serif;display:flex;align-items:center;transition:opacity 150ms;white-space:nowrap;margin-right:12px;}
 .sn-logo:hover{text-decoration:none;opacity:.85;}
-.sn-logo-dot{color:#F0B35A;font-weight:900;}
+.sn-logo-dot{color:#00D4FF;font-weight:900;text-shadow:0 0 12px rgba(0,212,255,.50);}
 
 .sn-links{display:flex;gap:2px;align-items:center;}
 
-.sn-link{padding:8px 16px;border-radius:999px;color:rgba(245,240,235,.42);font-size:13.5px;font-weight:500;text-decoration:none;transition:all 200ms cubic-bezier(.16,1,.3,1);font-family:'Inter',system-ui,sans-serif;letter-spacing:-.01em;position:relative;}
-.sn-link:hover{color:rgba(245,240,235,.90);background:rgba(245,240,235,.06);text-decoration:none;}
-.sn-link--a{color:rgba(240,179,90,.92);font-weight:600;}
-.sn-link--a::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:18px;height:2px;border-radius:1px;background:rgba(240,179,90,.65);}
+.sn-link{padding:8px 16px;border-radius:999px;color:rgba(200,220,255,.42);font-size:13.5px;font-weight:500;text-decoration:none;transition:all 200ms cubic-bezier(.16,1,.3,1);font-family:'Inter',system-ui,sans-serif;letter-spacing:-.01em;position:relative;}
+.sn-link:hover{color:rgba(200,220,255,.90);background:rgba(100,180,255,.06);text-decoration:none;}
+.sn-link--a{color:rgba(0,212,255,.92);font-weight:600;}
+.sn-link--a::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:18px;height:2px;border-radius:1px;background:rgba(0,212,255,.65);}
 
-.sn-dash{padding:8px 16px;border-radius:999px;color:rgba(245,240,235,.38);font-size:13.5px;font-weight:500;text-decoration:none;transition:all 180ms;font-family:'Inter',system-ui,sans-serif;}
-.sn-dash:hover{color:rgba(245,240,235,.75);text-decoration:none;}
+.sn-dash{padding:8px 16px;border-radius:999px;color:rgba(200,220,255,.38);font-size:13.5px;font-weight:500;text-decoration:none;transition:all 180ms;font-family:'Inter',system-ui,sans-serif;}
+.sn-dash:hover{color:rgba(200,220,255,.75);text-decoration:none;}
 
-.sn-cta{padding:10px 24px;border-radius:999px;background:linear-gradient(135deg,#F0B35A,#E8A040);border:none;color:#0F0D15;font-size:13.5px;font-weight:700;text-decoration:none;transition:all 250ms cubic-bezier(.16,1,.3,1);font-family:'Inter',system-ui,sans-serif;letter-spacing:-.01em;margin-left:6px;white-space:nowrap;}
-.sn-cta:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(240,179,90,.35),0 0 0 1px rgba(240,179,90,.20);text-decoration:none;}
+.sn-cta{padding:10px 24px;border-radius:999px;background:linear-gradient(135deg,#00D4FF,#0066FF);border:none;color:#030712;font-size:13.5px;font-weight:700;text-decoration:none;transition:all 250ms cubic-bezier(.16,1,.3,1);font-family:'Inter',system-ui,sans-serif;letter-spacing:-.01em;margin-left:6px;white-space:nowrap;}
+.sn-cta:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,212,255,.35),0 0 0 1px rgba(0,212,255,.20),0 0 40px rgba(0,102,255,.15);text-decoration:none;}
 
 /* Hamburger */
-.sn-ham{display:none;background:none;border:none;cursor:pointer;padding:10px;color:rgba(245,240,235,.55);font-size:22px;line-height:1;transition:color 150ms;}
-.sn-ham:hover{color:rgba(245,240,235,.80);}
+.sn-ham{display:none;background:none;border:none;cursor:pointer;padding:10px;color:rgba(200,220,255,.55);font-size:22px;line-height:1;transition:color 150ms;}
+.sn-ham:hover{color:rgba(200,220,255,.80);}
 
 @media(max-width:768px){
   .sn-links,.sn-dash{display:none;}
@@ -59,12 +59,12 @@ export function SiteNav() {
 }
 
 /* Mobile menu */
-.sn-mob{position:fixed;inset:0;z-index:199;background:rgba(8,7,11,.96);backdrop-filter:blur(48px);-webkit-backdrop-filter:blur(48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;opacity:0;pointer-events:none;transition:opacity 350ms cubic-bezier(.16,1,.3,1);}
+.sn-mob{position:fixed;inset:0;z-index:199;background:rgba(3,7,18,.96);backdrop-filter:blur(48px);-webkit-backdrop-filter:blur(48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;opacity:0;pointer-events:none;transition:opacity 350ms cubic-bezier(.16,1,.3,1);}
 .sn-mob--open{opacity:1;pointer-events:auto;}
-.sn-mob-link{font-size:24px;font-weight:600;color:rgba(245,240,235,.55);text-decoration:none;padding:18px 36px;border-radius:18px;transition:all 180ms;letter-spacing:-.02em;font-family:'Outfit',system-ui,sans-serif;}
-.sn-mob-link:hover{color:#F5F0EB;background:rgba(245,240,235,.05);}
-.sn-mob-close{position:absolute;top:22px;right:26px;background:none;border:none;color:rgba(245,240,235,.45);font-size:30px;cursor:pointer;padding:10px;transition:color 150ms;}
-.sn-mob-close:hover{color:rgba(245,240,235,.75);}
+.sn-mob-link{font-size:24px;font-weight:600;color:rgba(200,220,255,.55);text-decoration:none;padding:18px 36px;border-radius:18px;transition:all 180ms;letter-spacing:-.02em;font-family:'Outfit',system-ui,sans-serif;}
+.sn-mob-link:hover{color:#E8F0FF;background:rgba(100,180,255,.05);}
+.sn-mob-close{position:absolute;top:22px;right:26px;background:none;border:none;color:rgba(200,220,255,.45);font-size:30px;cursor:pointer;padding:10px;transition:color 150ms;}
+.sn-mob-close:hover{color:rgba(200,220,255,.75);}
       `}</style>
 
       <nav className={`sn${scrolled ? " sn--s" : ""}`}>
@@ -96,7 +96,7 @@ export function SiteNav() {
           </Link>
         ))}
         <Link href="/dashboard" className="sn-mob-link" onClick={() => setMobileOpen(false)}>Dashboard</Link>
-        <Link href="/build" className="sn-mob-link" onClick={() => setMobileOpen(false)} style={{ color: "#F0B35A" }}>
+        <Link href="/build" className="sn-mob-link" onClick={() => setMobileOpen(false)} style={{ color: "#00D4FF" }}>
           Start building
         </Link>
       </div>
