@@ -5,8 +5,7 @@ export const dynamic = "force-dynamic";
 
 function mask(val: string | undefined): string {
   if (!val) return "NOT SET";
-  if (val.length <= 10) return val.slice(0, 3) + "***";
-  return val.slice(0, 6) + "..." + val.slice(-4);
+  return "***SET***";
 }
 
 type Result = {
@@ -181,7 +180,18 @@ function testEnvVars(): Result {
 
 // ── Main handler ─────────────────────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: Request) {
+  const secret = process.env.D8_DIAGNOSTICS_SECRET;
+  if (secret) {
+    const authHeader = request.headers.get("x-d8-secret");
+    if (authHeader !== secret) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
   const startAll = Date.now();
 
   const results = await Promise.all([

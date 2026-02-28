@@ -46,7 +46,6 @@ export default function OnboardingPage() {
   return (
     <>
       <style>{`
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @keyframes obFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes obShim{0%{left:-100%}40%{left:100%}100%{left:100%}}
 @keyframes obPulse{0%,100%{opacity:.5}50%{opacity:1}}

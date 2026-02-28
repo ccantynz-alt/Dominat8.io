@@ -136,7 +136,6 @@ function DashboardInner() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #030712; color: #E8F0FF; font-family: 'Outfit', 'Inter', system-ui, sans-serif; }
         @keyframes dbFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }

@@ -110,6 +110,10 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;
+  transition: opacity 200ms ease;
+}
+.d8-cta:hover::before {
+  opacity: 1;
 }
 @keyframes d8BorderShift {
   0% { background-position: 0% 50%; }
