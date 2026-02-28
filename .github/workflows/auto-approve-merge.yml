@@ -9,7 +9,6 @@ on:
     branches: [main]
   workflow_run:
     workflows:
-      - "d8-gate"
       - "d8-keep-green"
       - "Staging smoke check"
     types: [completed]
@@ -36,6 +35,16 @@ jobs:
         startsWith(github.event.workflow_run.head_branch, 'claude/')) ||
       github.event_name == 'workflow_dispatch'
     steps:
+      - name: Verify GH_CLAUDE_PAT is configured
+        env:
+          HAS_PAT: ${{ secrets.GH_CLAUDE_PAT != '' }}
+        run: |
+          if [ "$HAS_PAT" != "true" ]; then
+            echo "::error::GH_CLAUDE_PAT secret is not set. Auto-approve requires a PAT from a separate account (ccantyusa-hue). GITHUB_TOKEN cannot self-approve PRs."
+            exit 1
+          fi
+          echo "✓ GH_CLAUDE_PAT is configured"
+
       - name: Find open PR for branch
         id: find_pr
         env:
@@ -56,13 +65,12 @@ jobs:
       - name: Approve PR
         if: steps.find_pr.outputs.pr_number != ''
         env:
-          GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT }}
         run: |
           PR="${{ steps.find_pr.outputs.pr_number }}"
-          # GITHUB_TOKEN can't approve its own PRs; GH_CLAUDE_PAT is a separate account token
+          # GH_CLAUDE_PAT is from ccantyusa-hue — a separate account so it can approve ccantynz-alt PRs
           gh pr review "$PR" --repo ${{ github.repository }} \
-            --approve --body "Auto-approved: all checks green on claude/* branch." || \
-            echo "Approval skipped (may already be approved or same-actor restriction)"
+            --approve --body "Auto-approved: all checks green on claude/* branch."
 
       - name: Wait for all checks to pass
         if: steps.find_pr.outputs.pr_number != ''
@@ -90,7 +98,7 @@ jobs:
       - name: Merge PR
         if: steps.find_pr.outputs.pr_number != ''
         env:
-          GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT }}
         run: |
           PR="${{ steps.find_pr.outputs.pr_number }}"
           gh pr merge "$PR" --repo ${{ github.repository }} \
