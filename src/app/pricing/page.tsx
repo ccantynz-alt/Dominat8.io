@@ -64,10 +64,10 @@ export default function PricingPage() {
 .pr-d1{animation-delay:50ms}.pr-d2{animation-delay:150ms}.pr-d3{animation-delay:250ms}.pr-d4{animation-delay:350ms}.pr-d5{animation-delay:450ms}
 
 .pr-page{min-height:100vh;background:#08070B;color:#F5F0EB;font-family:'Outfit',system-ui,sans-serif;}
-.pr-hero{text-align:center;padding:120px 24px 52px;position:relative;overflow:hidden;}
-.pr-hero::before{content:'';position:absolute;width:800px;height:500px;top:-200px;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(240,179,90,.06),transparent 70%);pointer-events:none;}
-.pr-badge{display:inline-block;padding:5px 16px;border-radius:999px;border:1px solid rgba(240,179,90,.25);background:rgba(240,179,90,.06);color:rgba(240,179,90,.85);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px;font-family:'JetBrains Mono',monospace;}
-.pr-h1{font-size:clamp(36px,6vw,60px);font-weight:900;margin:0 0 16px;letter-spacing:-.05em;line-height:1.05;color:#F5F0EB;}
+.pr-hero{text-align:center;padding:140px 24px 64px;position:relative;overflow:hidden;}
+.pr-hero::before{content:'';position:absolute;width:1000px;height:600px;top:-250px;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(240,179,90,.10),rgba(232,113,90,.04) 45%,transparent 70%);pointer-events:none;}
+.pr-badge{display:inline-block;padding:6px 20px;border-radius:999px;border:1px solid rgba(240,179,90,.28);background:rgba(240,179,90,.07);color:rgba(240,179,90,.90);font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;margin-bottom:26px;font-family:'JetBrains Mono',monospace;backdrop-filter:blur(12px);}
+.pr-h1{font-size:clamp(42px,7vw,76px);font-weight:900;margin:0 0 18px;letter-spacing:-.06em;line-height:1;color:#F5F0EB;}
 .pr-sub{font-size:17px;color:rgba(245,240,235,.55);margin:0 auto 10px;line-height:1.65;max-width:520px;font-family:'Inter',system-ui,sans-serif;}
 .pr-sub2{font-size:13px;color:rgba(245,240,235,.30);margin:0;font-family:'Inter',system-ui,sans-serif;}
 
@@ -79,15 +79,15 @@ export default function PricingPage() {
 .pr-card{background:rgba(245,240,235,.035);border:1px solid rgba(245,240,235,.08);border-radius:24px;padding:30px 24px;position:relative;overflow:hidden;display:flex;flex-direction:column;transition:all 280ms cubic-bezier(.4,0,.2,1);}
 .pr-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.35);border-color:rgba(245,240,235,.14);}
 
-.pr-card--pro{background:linear-gradient(180deg,rgba(240,179,90,.05),rgba(232,113,90,.02));border-color:transparent;box-shadow:0 0 60px rgba(240,179,90,.06);}
+.pr-card--pro{background:linear-gradient(180deg,rgba(240,179,90,.06),rgba(232,113,90,.025));border-color:transparent;box-shadow:0 0 80px rgba(240,179,90,.08),0 30px 60px rgba(0,0,0,.25);}
 .pr-card--pro::before{content:'';position:absolute;inset:0;border-radius:24px;padding:1px;background:linear-gradient(135deg,rgba(240,179,90,.45),rgba(232,113,90,.30),rgba(74,222,128,.18));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;}
-.pr-card--pro:hover{box-shadow:0 0 80px rgba(240,179,90,.10),0 20px 60px rgba(0,0,0,.35);}
+.pr-card--pro:hover{box-shadow:0 0 100px rgba(240,179,90,.14),0 24px 60px rgba(0,0,0,.40);transform:translateY(-6px);}
 
 .pr-pop{position:absolute;top:14px;right:14px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:8px;background:linear-gradient(135deg,rgba(240,179,90,.22),rgba(232,113,90,.14));color:rgba(245,240,235,.90);border:1px solid rgba(240,179,90,.25);font-family:'JetBrains Mono',monospace;}
 .pr-plan-name{font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:rgba(245,240,235,.38);font-family:'JetBrains Mono',monospace;margin-bottom:10px;}
 .pr-card--pro .pr-plan-name{color:rgba(240,179,90,.80);}
 .pr-price{display:flex;align-items:baseline;gap:4px;margin-bottom:4px;}
-.pr-amount{font-size:42px;font-weight:900;letter-spacing:-.04em;color:#F5F0EB;}
+.pr-amount{font-size:48px;font-weight:900;letter-spacing:-.05em;color:#F5F0EB;}
 .pr-period{font-size:13px;color:rgba(245,240,235,.30);font-family:'Inter',system-ui,sans-serif;}
 .pr-desc{font-size:13px;color:rgba(245,240,235,.55);margin-bottom:20px;line-height:1.4;font-family:'Inter',system-ui,sans-serif;}
 

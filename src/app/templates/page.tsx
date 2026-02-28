@@ -104,14 +104,14 @@ export default function TemplatesPage() {
 
 /* Ambient — warm mesh orbs */
 .tp-ambient{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
-.tp-blob1{position:absolute;width:800px;height:600px;top:-250px;left:-200px;border-radius:50%;background:radial-gradient(circle,rgba(240,179,90,.06) 0%,rgba(232,113,90,.03) 40%,transparent 70%);}
-.tp-blob2{position:absolute;width:600px;height:500px;bottom:-200px;right:-150px;border-radius:50%;background:radial-gradient(circle,rgba(232,113,90,.05) 0%,rgba(240,179,90,.02) 40%,transparent 70%);}
+.tp-blob1{position:absolute;width:900px;height:700px;top:-300px;left:-250px;border-radius:50%;background:radial-gradient(circle,rgba(240,179,90,.10) 0%,rgba(232,113,90,.05) 40%,transparent 70%);filter:blur(60px);}
+.tp-blob2{position:absolute;width:700px;height:600px;bottom:-250px;right:-200px;border-radius:50%;background:radial-gradient(circle,rgba(232,113,90,.08) 0%,rgba(240,179,90,.03) 40%,transparent 70%);filter:blur(60px);}
 
 /* Hero */
-.tp-hero{text-align:center;padding:120px 24px 20px;position:relative;z-index:1;}
+.tp-hero{text-align:center;padding:140px 24px 24px;position:relative;z-index:1;}
 .tp-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 16px;border-radius:999px;border:1px solid rgba(240,179,90,.30);background:rgba(240,179,90,.06);color:rgba(240,179,90,.85);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px;font-family:'JetBrains Mono','Fira Code',monospace;}
 .tp-dot{width:6px;height:6px;border-radius:50%;background:rgba(240,179,90,.85);}
-.tp-h1{font-size:clamp(32px,5.5vw,54px);font-weight:900;margin:0 0 16px;letter-spacing:-.05em;line-height:1.05;color:#F5F0EB;}
+.tp-h1{font-size:clamp(38px,6.5vw,68px);font-weight:900;margin:0 0 18px;letter-spacing:-.06em;line-height:1;color:#F5F0EB;}
 .tp-h1 span{background:linear-gradient(135deg,#F0B35A,#E8715A);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
 .tp-sub{font-size:17px;color:rgba(245,240,235,.45);margin:0 auto;line-height:1.7;max-width:520px;font-family:'Inter',system-ui,sans-serif;}
 .tp-count{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:12px;border:1px solid rgba(245,240,235,.08);background:rgba(245,240,235,.035);margin-top:20px;font-size:13px;color:rgba(245,240,235,.50);font-family:'Inter',system-ui,sans-serif;}

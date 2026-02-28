@@ -28,41 +28,43 @@ export function SiteNav() {
   return (
     <>
       <style>{`
-.sn{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 20px;height:52px;border-radius:999px;border:1px solid rgba(245,240,235,.06);background:rgba(8,7,11,.40);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);transition:all 400ms cubic-bezier(.4,0,.2,1);width:auto;max-width:calc(100vw - 32px);gap:4px;}
-.sn--s{background:rgba(8,7,11,.85);border-color:rgba(245,240,235,.10);box-shadow:0 8px 32px rgba(0,0,0,.40),0 0 0 1px rgba(245,240,235,.04);}
+.sn{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 24px;height:56px;border-radius:999px;border:1px solid rgba(245,240,235,.06);background:rgba(8,7,11,.35);backdrop-filter:blur(32px) saturate(1.8);-webkit-backdrop-filter:blur(32px) saturate(1.8);transition:all 400ms cubic-bezier(.16,1,.3,1);width:auto;max-width:calc(100vw - 32px);gap:6px;}
+.sn--s{background:rgba(8,7,11,.88);border-color:rgba(245,240,235,.10);box-shadow:0 8px 40px rgba(0,0,0,.50),0 0 0 1px rgba(245,240,235,.04),inset 0 1px 0 rgba(245,240,235,.04);}
 
-.sn-logo{font-size:17px;font-weight:800;color:#F5F0EB;text-decoration:none;letter-spacing:-.03em;font-family:'Outfit',system-ui,sans-serif;display:flex;align-items:center;transition:opacity 150ms;white-space:nowrap;margin-right:8px;}
+.sn-logo{font-size:18px;font-weight:800;color:#F5F0EB;text-decoration:none;letter-spacing:-.03em;font-family:'Outfit',system-ui,sans-serif;display:flex;align-items:center;transition:opacity 150ms;white-space:nowrap;margin-right:12px;}
 .sn-logo:hover{text-decoration:none;opacity:.85;}
 .sn-logo-dot{color:#F0B35A;font-weight:900;}
 
-.sn-links{display:flex;gap:1px;align-items:center;}
+.sn-links{display:flex;gap:2px;align-items:center;}
 
-.sn-link{padding:7px 14px;border-radius:999px;color:rgba(245,240,235,.40);font-size:13px;font-weight:500;text-decoration:none;transition:all 180ms;font-family:'Inter',system-ui,sans-serif;letter-spacing:-.01em;position:relative;}
-.sn-link:hover{color:rgba(245,240,235,.85);background:rgba(245,240,235,.06);text-decoration:none;}
-.sn-link--a{color:rgba(240,179,90,.90);font-weight:600;}
-.sn-link--a::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:16px;height:2px;border-radius:1px;background:rgba(240,179,90,.60);}
+.sn-link{padding:8px 16px;border-radius:999px;color:rgba(245,240,235,.42);font-size:13.5px;font-weight:500;text-decoration:none;transition:all 200ms cubic-bezier(.16,1,.3,1);font-family:'Inter',system-ui,sans-serif;letter-spacing:-.01em;position:relative;}
+.sn-link:hover{color:rgba(245,240,235,.90);background:rgba(245,240,235,.06);text-decoration:none;}
+.sn-link--a{color:rgba(240,179,90,.92);font-weight:600;}
+.sn-link--a::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:18px;height:2px;border-radius:1px;background:rgba(240,179,90,.65);}
 
-.sn-dash{padding:7px 14px;border-radius:999px;color:rgba(245,240,235,.38);font-size:13px;font-weight:500;text-decoration:none;transition:all 150ms;font-family:'Inter',system-ui,sans-serif;}
-.sn-dash:hover{color:rgba(245,240,235,.70);text-decoration:none;}
+.sn-dash{padding:8px 16px;border-radius:999px;color:rgba(245,240,235,.38);font-size:13.5px;font-weight:500;text-decoration:none;transition:all 180ms;font-family:'Inter',system-ui,sans-serif;}
+.sn-dash:hover{color:rgba(245,240,235,.75);text-decoration:none;}
 
-.sn-cta{padding:8px 20px;border-radius:999px;background:linear-gradient(135deg,#F0B35A,#E8A040);border:none;color:#0F0D15;font-size:13px;font-weight:700;text-decoration:none;transition:all 220ms;font-family:'Inter',system-ui,sans-serif;letter-spacing:-.01em;margin-left:4px;white-space:nowrap;}
-.sn-cta:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(240,179,90,.30),0 0 0 1px rgba(240,179,90,.20);text-decoration:none;}
+.sn-cta{padding:10px 24px;border-radius:999px;background:linear-gradient(135deg,#F0B35A,#E8A040);border:none;color:#0F0D15;font-size:13.5px;font-weight:700;text-decoration:none;transition:all 250ms cubic-bezier(.16,1,.3,1);font-family:'Inter',system-ui,sans-serif;letter-spacing:-.01em;margin-left:6px;white-space:nowrap;}
+.sn-cta:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(240,179,90,.35),0 0 0 1px rgba(240,179,90,.20);text-decoration:none;}
 
 /* Hamburger */
-.sn-ham{display:none;background:none;border:none;cursor:pointer;padding:8px;color:rgba(245,240,235,.50);font-size:20px;line-height:1;}
+.sn-ham{display:none;background:none;border:none;cursor:pointer;padding:10px;color:rgba(245,240,235,.55);font-size:22px;line-height:1;transition:color 150ms;}
+.sn-ham:hover{color:rgba(245,240,235,.80);}
 
 @media(max-width:768px){
   .sn-links,.sn-dash{display:none;}
   .sn-ham{display:block;}
-  .sn{padding:0 12px 0 16px;}
+  .sn{padding:0 14px 0 18px;}
 }
 
 /* Mobile menu */
-.sn-mob{position:fixed;inset:0;z-index:199;background:rgba(8,7,11,.95);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;opacity:0;pointer-events:none;transition:opacity 300ms;}
+.sn-mob{position:fixed;inset:0;z-index:199;background:rgba(8,7,11,.96);backdrop-filter:blur(48px);-webkit-backdrop-filter:blur(48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;opacity:0;pointer-events:none;transition:opacity 350ms cubic-bezier(.16,1,.3,1);}
 .sn-mob--open{opacity:1;pointer-events:auto;}
-.sn-mob-link{font-size:22px;font-weight:600;color:rgba(245,240,235,.55);text-decoration:none;padding:16px 32px;border-radius:16px;transition:all 150ms;letter-spacing:-.02em;font-family:'Outfit',system-ui,sans-serif;}
+.sn-mob-link{font-size:24px;font-weight:600;color:rgba(245,240,235,.55);text-decoration:none;padding:18px 36px;border-radius:18px;transition:all 180ms;letter-spacing:-.02em;font-family:'Outfit',system-ui,sans-serif;}
 .sn-mob-link:hover{color:#F5F0EB;background:rgba(245,240,235,.05);}
-.sn-mob-close{position:absolute;top:20px;right:24px;background:none;border:none;color:rgba(245,240,235,.40);font-size:28px;cursor:pointer;padding:8px;}
+.sn-mob-close{position:absolute;top:22px;right:26px;background:none;border:none;color:rgba(245,240,235,.45);font-size:30px;cursor:pointer;padding:10px;transition:color 150ms;}
+.sn-mob-close:hover{color:rgba(245,240,235,.75);}
       `}</style>
 
       <nav className={`sn${scrolled ? " sn--s" : ""}`}>
