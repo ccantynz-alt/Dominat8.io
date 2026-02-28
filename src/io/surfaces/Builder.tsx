@@ -271,15 +271,15 @@ function useDeployments() {
 // ─── Dock icons ───────────────────────────────────────────────────────────────
 
 const DOCK_ITEMS = [
-  { label: "Deploy",    color: "#4A90E2", bg: "rgba(74,144,226,0.18)", icon: "🚀", href: null },
-  { label: "Domains",  color: "#C09A5C", bg: "rgba(192,154,92,0.18)",  icon: "🌐", href: "/io" },
-  { label: "SSL",      color: "#9B7FD4", bg: "rgba(155,127,212,0.18)", icon: "🔒", href: null },
-  { label: "Monitor",  color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "📊", href: "/tv" },
-  { label: "Logs",     color: "#38C9A4", bg: "rgba(56,201,164,0.18)",  icon: "💬", href: "/tv" },
-  { label: "Fix",      color: "#F0924A", bg: "rgba(240,146,74,0.18)",  icon: "🔧", href: "/io" },
-  { label: "Automate", color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "⚡", href: "/io" },
-  { label: "Integrate",color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "✏️", href: null },
-  { label: "Settings", color: "#8B8B8B", bg: "rgba(139,139,139,0.14)", icon: "⚙️", href: null },
+  { label: "Deploy",    color: "#00D4FF", bg: "rgba(0,212,255,0.15)",   icon: "🚀", href: "/build/deploy" },
+  { label: "Domains",   color: "#0088FF", bg: "rgba(0,136,255,0.15)",   icon: "🌐", href: "/build/domains" },
+  { label: "SSL",       color: "#7B61FF", bg: "rgba(123,97,255,0.15)",  icon: "🔒", href: "/build/ssl" },
+  { label: "Monitor",   color: "#00FFB2", bg: "rgba(0,255,178,0.12)",   icon: "📊", href: "/build/monitor" },
+  { label: "Logs",      color: "#00D4FF", bg: "rgba(0,212,255,0.12)",   icon: "💬", href: "/build/logs" },
+  { label: "Fix",       color: "#FF6B35", bg: "rgba(255,107,53,0.15)",  icon: "🔧", href: "/build/fix" },
+  { label: "Automate",  color: "#FFB800", bg: "rgba(255,184,0,0.12)",   icon: "⚡", href: "/build/automate" },
+  { label: "Integrate", color: "#B06EFF", bg: "rgba(176,110,255,0.15)", icon: "✏️", href: "/build/integrate" },
+  { label: "Settings",  color: "#8B9DC3", bg: "rgba(139,157,195,0.12)", icon: "⚙️", href: "/build/settings" },
 ];
 
 // ─── localStorage history persistence ─────────────────────────────────────────
@@ -655,30 +655,18 @@ export function Builder() {
   }, [seoState, html]);
 
   const handleDockClick = useCallback((label: string) => {
+    const item = DOCK_ITEMS.find(d => d.label === label);
+    if (item?.href) {
+      window.location.href = item.href;
+      return;
+    }
+    // Fallback for builder-context actions
     switch (label) {
       case "Deploy":
         if (html) setShowDeploy(true);
         break;
-      case "Domains":
-        setShowDomains(true);
-        break;
-      case "SSL":
-        setShowSSL(true);
-        break;
-      case "Settings":
-        setShowSettings(true);
-        break;
-      case "Automate":
-        setShowAutomate(true);
-        break;
       case "Fix":
         if (html) handleFix();
-        break;
-      case "Monitor":
-        window.location.href = "/tv";
-        break;
-      case "Logs":
-        window.location.href = "/tv";
         break;
     }
   }, [html, handleFix]);
