@@ -139,100 +139,114 @@ function DashboardInner() {
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #030712; color: #E8F0FF; font-family: 'Outfit', 'Inter', system-ui, sans-serif; }
-        .db-root { min-height: 100vh; background: #030712; }
-        .db-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); background: rgba(3,7,18,0.82); border-bottom: 1px solid rgba(100,180,255,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 56px; }
+        @keyframes dbFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .db-root { min-height: 100vh; background: #030712; position: relative; overflow: hidden; }
+        .db-root::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px); background-size: 60px 60px; -webkit-mask: radial-gradient(ellipse 60% 40% at 50% 30%, black 20%, transparent 70%); mask: radial-gradient(ellipse 60% 40% at 50% 30%, black 20%, transparent 70%); pointer-events: none; z-index: 0; }
+        .db-mesh { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .db-mesh-1 { position: absolute; width: 700px; height: 500px; top: -200px; left: -150px; border-radius: 50%; background: radial-gradient(ellipse, rgba(0,212,255,0.14), transparent 65%); filter: blur(80px); animation: dbFloat 14s ease-in-out infinite; }
+        .db-mesh-2 { position: absolute; width: 500px; height: 400px; bottom: -150px; right: -100px; border-radius: 50%; background: radial-gradient(ellipse, rgba(123,97,255,0.10), transparent 65%); filter: blur(80px); animation: dbFloat 18s ease-in-out infinite reverse; }
+        .db-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); background: rgba(3,7,18,0.85); border-bottom: 1px solid rgba(100,180,255,0.10); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 56px; }
         .db-logo { font-size: 18px; font-weight: 800; color: #E8F0FF; text-decoration: none; letter-spacing: -0.03em; }
         .db-nav-links { display: flex; gap: 8px; align-items: center; }
-        .db-nav-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(100,180,255,0.12); background: rgba(100,180,255,0.06); color: rgba(200,220,255,0.75); font-size: 13px; font-weight: 500; text-decoration: none; cursor: pointer; font-family: inherit; transition: all 120ms; }
-        .db-nav-btn:hover { background: rgba(100,180,255,0.12); color: #E8F0FF; }
-        .db-nav-btn--primary { background: rgba(0,212,255,0.12); border-color: rgba(0,212,255,0.35); color: #00D4FF; }
-        .db-nav-btn--primary:hover { background: rgba(0,212,255,0.22); }
-        .db-main { max-width: 960px; margin: 0 auto; padding: 88px 24px 80px; }
-        .db-page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 32px; color: #E8F0FF; }
+        .db-nav-btn { padding: 7px 16px; border-radius: 10px; border: 1px solid rgba(100,180,255,0.12); background: rgba(100,180,255,0.06); color: rgba(200,220,255,0.75); font-size: 13px; font-weight: 500; text-decoration: none; cursor: pointer; font-family: inherit; transition: all 150ms; }
+        .db-nav-btn:hover { background: rgba(100,180,255,0.12); color: #E8F0FF; transform: translateY(-1px); }
+        .db-nav-btn--primary { background: rgba(0,212,255,0.12); border-color: rgba(0,212,255,0.40); color: #00D4FF; }
+        .db-nav-btn--primary:hover { background: rgba(0,212,255,0.22); box-shadow: 0 0 16px rgba(0,212,255,0.12); }
+        .db-main { max-width: 960px; margin: 0 auto; padding: 88px 24px 80px; position: relative; z-index: 1; }
+        .db-page-title { font-size: 32px; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 32px; background: linear-gradient(135deg, #E8F0FF 30%, #00D4FF 80%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
         .db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
         @media (max-width: 640px) { .db-grid { grid-template-columns: 1fr; } }
-        .db-card { background: rgba(100,180,255,0.025); border: 1px solid rgba(100,180,255,0.08); border-radius: 18px; padding: 24px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        .db-card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(200,220,255,0.30); margin-bottom: 10px; font-family: 'Inter', system-ui, sans-serif; }
-        .db-card-value { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; }
-        .db-card-sub { font-size: 12px; color: rgba(200,220,255,0.30); margin-top: 4px; font-family: 'Inter', system-ui, sans-serif; }
-        .db-progress-track { height: 6px; background: rgba(100,180,255,0.08); border-radius: 3px; margin: 12px 0 6px; overflow: hidden; }
-        .db-progress-fill { height: 100%; border-radius: 3px; transition: width 400ms ease; }
+        .db-card { background: rgba(100,180,255,0.03); border: 1px solid rgba(100,180,255,0.10); border-radius: 20px; padding: 26px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: all 200ms; position: relative; overflow: hidden; }
+        .db-card::before { content: ''; position: absolute; inset: 0; border-radius: 20px; padding: 1px; background: linear-gradient(135deg, rgba(0,212,255,0.18), rgba(100,180,255,0.06)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 200ms; pointer-events: none; }
+        .db-card:hover { background: rgba(100,180,255,0.05); border-color: rgba(100,180,255,0.14); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.20); }
+        .db-card:hover::before { opacity: 1; }
+        .db-card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(0,212,255,0.50); margin-bottom: 10px; font-family: 'JetBrains Mono', monospace; }
+        .db-card-value { font-size: 38px; font-weight: 900; letter-spacing: -0.03em; }
+        .db-card-sub { font-size: 12px; color: rgba(200,220,255,0.35); margin-top: 4px; font-family: 'Inter', system-ui, sans-serif; }
+        .db-progress-track { height: 7px; background: rgba(100,180,255,0.08); border-radius: 4px; margin: 12px 0 6px; overflow: hidden; }
+        .db-progress-fill { height: 100%; border-radius: 4px; transition: width 400ms ease; box-shadow: 0 0 8px rgba(0,212,255,0.25); }
         .db-actions { display: flex; flex-direction: column; gap: 10px; }
-        .db-action-btn { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: rgba(100,180,255,0.025); border: 1px solid rgba(100,180,255,0.08); border-radius: 14px; color: rgba(200,220,255,0.80); font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; font-family: inherit; transition: all 130ms; text-align: left; width: 100%; }
-        .db-action-btn:hover { background: rgba(100,180,255,0.06); border-color: rgba(100,180,255,0.16); color: #E8F0FF; }
-        .db-action-icon { font-size: 18px; width: 32px; text-align: center; flex-shrink: 0; }
+        .db-action-btn { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: rgba(100,180,255,0.025); border: 1px solid rgba(100,180,255,0.10); border-radius: 14px; color: rgba(200,220,255,0.80); font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; font-family: inherit; transition: all 180ms; text-align: left; width: 100%; }
+        .db-action-btn:hover { background: rgba(100,180,255,0.07); border-color: rgba(100,180,255,0.20); color: #E8F0FF; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
+        .db-action-icon { font-size: 20px; width: 36px; text-align: center; flex-shrink: 0; }
         .db-action-text { flex: 1; }
-        .db-action-title { font-weight: 600; }
-        .db-action-desc { font-size: 12px; color: rgba(200,220,255,0.30); margin-top: 1px; font-family: 'Inter', system-ui, sans-serif; }
-        .db-spinner { width: 14px; height: 14px; border: 2px solid rgba(100,180,255,0.20); border-top-color: rgba(100,180,255,0.70); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .db-action-title { font-weight: 700; }
+        .db-action-desc { font-size: 12px; color: rgba(200,220,255,0.35); margin-top: 2px; font-family: 'Inter', system-ui, sans-serif; }
+        .db-spinner { width: 14px; height: 14px; border: 2px solid rgba(100,180,255,0.20); border-top-color: #00D4FF; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ── Banner ── */
-        .db-banner { border-radius: 18px; border: 1px solid rgba(0,255,178,0.30); background: rgba(0,255,178,0.08); padding: 18px 22px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px; animation: slideIn 300ms ease; }
+        .db-banner { border-radius: 18px; border: 1px solid rgba(0,255,178,0.35); background: rgba(0,255,178,0.08); padding: 20px 24px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px; animation: slideIn 300ms ease; box-shadow: 0 0 24px rgba(0,255,178,0.08); }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-        .db-banner-icon { font-size: 24px; flex-shrink: 0; }
+        .db-banner-icon { font-size: 28px; flex-shrink: 0; }
         .db-banner-body { flex: 1; }
-        .db-banner-title { font-size: 15px; font-weight: 700; color: #00FFB2; margin-bottom: 3px; }
-        .db-banner-sub { font-size: 13px; color: rgba(200,220,255,0.55); font-family: 'Inter', system-ui, sans-serif; }
-        .db-banner-close { background: none; border: none; color: rgba(200,220,255,0.30); font-size: 18px; cursor: pointer; padding: 4px; line-height: 1; }
-        .db-banner-close:hover { color: rgba(200,220,255,0.60); }
+        .db-banner-title { font-size: 16px; font-weight: 800; color: #00FFB2; margin-bottom: 3px; text-shadow: 0 0 8px rgba(0,255,178,0.20); }
+        .db-banner-sub { font-size: 13px; color: rgba(200,220,255,0.60); font-family: 'Inter', system-ui, sans-serif; }
+        .db-banner-close { background: none; border: none; color: rgba(200,220,255,0.35); font-size: 18px; cursor: pointer; padding: 4px; line-height: 1; }
+        .db-banner-close:hover { color: rgba(200,220,255,0.70); }
 
         /* ── My Sites ── */
-        .db-section-title { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; color: #E8F0FF; }
-        .db-section-count { font-size: 12px; font-weight: 500; color: rgba(200,220,255,0.30); padding: 2px 8px; border-radius: 6px; background: rgba(100,180,255,0.06); font-family: 'Inter', system-ui, sans-serif; }
-        .db-sites-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 48px; }
-        .db-site-card { background: rgba(100,180,255,0.025); border: 1px solid rgba(100,180,255,0.08); border-radius: 18px; overflow: hidden; transition: all 150ms; }
-        .db-site-card:hover { border-color: rgba(100,180,255,0.16); background: rgba(100,180,255,0.045); }
-        .db-site-preview { height: 140px; background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(0,102,255,0.08)); display: flex; align-items: center; justify-content: center; font-size: 32px; position: relative; overflow: hidden; }
+        .db-section-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #E8F0FF, #00D4FF); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .db-section-count { font-size: 12px; font-weight: 600; color: #00D4FF; padding: 3px 10px; border-radius: 8px; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.18); font-family: 'JetBrains Mono', monospace; -webkit-text-fill-color: #00D4FF; }
+        .db-sites-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 48px; }
+        .db-site-card { background: rgba(100,180,255,0.03); border: 1px solid rgba(100,180,255,0.10); border-radius: 20px; overflow: hidden; transition: all 200ms; position: relative; }
+        .db-site-card::before { content: ''; position: absolute; inset: 0; border-radius: 20px; padding: 1px; background: linear-gradient(135deg, rgba(0,212,255,0.22), rgba(0,102,255,0.12), rgba(0,255,178,0.08)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 200ms; pointer-events: none; z-index: 1; }
+        .db-site-card:hover { border-color: rgba(0,212,255,0.18); background: rgba(100,180,255,0.05); transform: translateY(-3px); box-shadow: 0 16px 48px rgba(0,0,0,0.25), 0 0 30px rgba(0,212,255,0.05); }
+        .db-site-card:hover::before { opacity: 1; }
+        .db-site-preview { height: 140px; background: linear-gradient(135deg, rgba(0,212,255,0.10), rgba(0,102,255,0.10)); display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; overflow: hidden; }
         .db-site-preview-iframe { width: 100%; height: 100%; border: none; pointer-events: none; transform: scale(0.5); transform-origin: top left; width: 200%; height: 200%; }
-        .db-site-body { padding: 14px 16px; }
-        .db-site-title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #E8F0FF; }
-        .db-site-meta { font-size: 11px; color: rgba(200,220,255,0.30); margin-bottom: 12px; font-family: 'Inter', system-ui, sans-serif; }
+        .db-site-body { padding: 16px 18px; }
+        .db-site-title { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #E8F0FF; }
+        .db-site-meta { font-size: 11px; color: rgba(200,220,255,0.35); margin-bottom: 12px; font-family: 'Inter', system-ui, sans-serif; }
         .db-site-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-        .db-site-btn { padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(100,180,255,0.12); background: rgba(100,180,255,0.05); color: rgba(200,220,255,0.65); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; transition: all 120ms; display: inline-flex; align-items: center; gap: 4px; }
-        .db-site-btn:hover { background: rgba(100,180,255,0.10); color: #E8F0FF; border-color: rgba(100,180,255,0.20); }
-        .db-site-btn--amber { border-color: rgba(0,212,255,0.30); color: #00D4FF; background: rgba(0,212,255,0.07); }
-        .db-site-btn--amber:hover { background: rgba(0,212,255,0.14); border-color: rgba(0,212,255,0.50); color: #00D4FF; }
-        .db-site-btn--red { border-color: rgba(255,71,87,0.25); color: rgba(255,100,100,0.75); background: transparent; }
-        .db-site-btn--red:hover { background: rgba(255,71,87,0.10); color: rgba(255,120,120,0.95); }
-        .db-site-slug { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; background: rgba(0,255,178,0.08); border: 1px solid rgba(0,255,178,0.20); color: rgba(0,255,178,0.80); font-size: 10px; font-weight: 600; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; }
-        .db-empty { text-align: center; padding: 48px 24px; border: 1px dashed rgba(100,180,255,0.10); border-radius: 18px; margin-bottom: 48px; }
-        .db-empty-icon { font-size: 40px; margin-bottom: 12px; }
-        .db-empty-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #E8F0FF; }
-        .db-empty-sub { font-size: 14px; color: rgba(200,220,255,0.40); margin-bottom: 20px; font-family: 'Inter', system-ui, sans-serif; }
+        .db-site-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(100,180,255,0.12); background: rgba(100,180,255,0.05); color: rgba(200,220,255,0.70); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; transition: all 150ms; display: inline-flex; align-items: center; gap: 4px; }
+        .db-site-btn:hover { background: rgba(100,180,255,0.12); color: #E8F0FF; border-color: rgba(100,180,255,0.25); transform: translateY(-1px); }
+        .db-site-btn--amber { border-color: rgba(0,212,255,0.35); color: #00D4FF; background: rgba(0,212,255,0.08); }
+        .db-site-btn--amber:hover { background: rgba(0,212,255,0.16); border-color: rgba(0,212,255,0.55); color: #00D4FF; box-shadow: 0 0 12px rgba(0,212,255,0.10); }
+        .db-site-btn--red { border-color: rgba(255,71,87,0.25); color: rgba(255,100,100,0.80); background: transparent; }
+        .db-site-btn--red:hover { background: rgba(255,71,87,0.12); color: rgba(255,120,120,0.95); }
+        .db-site-slug { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px; background: rgba(0,255,178,0.08); border: 1px solid rgba(0,255,178,0.25); color: #00FFB2; font-size: 10px; font-weight: 600; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 6px rgba(0,255,178,0.20); }
+        .db-empty { text-align: center; padding: 56px 24px; border: 1px dashed rgba(0,212,255,0.14); border-radius: 20px; margin-bottom: 48px; background: rgba(0,212,255,0.02); }
+        .db-empty-icon { font-size: 44px; margin-bottom: 14px; }
+        .db-empty-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: #E8F0FF; }
+        .db-empty-sub { font-size: 15px; color: rgba(200,220,255,0.45); margin-bottom: 22px; font-family: 'Inter', system-ui, sans-serif; }
 
         /* ── Deploy modal ── */
-        .db-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.70); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
-        .db-modal { background: #0a1628; border: 1px solid rgba(100,180,255,0.12); border-radius: 22px; padding: 32px; width: 100%; max-width: 440px; }
-        .db-modal-title { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; color: #E8F0FF; }
-        .db-modal-sub { font-size: 14px; color: rgba(200,220,255,0.45); margin-bottom: 24px; line-height: 1.5; font-family: 'Inter', system-ui, sans-serif; }
-        .db-modal-label { font-size: 12px; font-weight: 600; color: rgba(200,220,255,0.50); margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; font-family: 'Inter', system-ui, sans-serif; }
-        .db-modal-input-row { display: flex; align-items: center; gap: 0; border: 1px solid rgba(0,212,255,0.35); border-radius: 12px; overflow: hidden; margin-bottom: 20px; background: rgba(100,180,255,0.035); }
-        .db-modal-input { flex: 1; padding: 12px 14px; background: transparent; border: none; color: #E8F0FF; font-size: 15px; font-family: inherit; outline: none; }
-        .db-modal-suffix { padding: 12px 14px; color: rgba(200,220,255,0.35); font-size: 13px; white-space: nowrap; border-left: 1px solid rgba(100,180,255,0.08); font-family: 'JetBrains Mono', monospace; }
+        .db-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .db-modal { background: #0a1628; border: 1px solid rgba(0,212,255,0.15); border-radius: 24px; padding: 34px; width: 100%; max-width: 440px; box-shadow: 0 0 60px rgba(0,0,0,0.40), 0 0 30px rgba(0,212,255,0.06); }
+        .db-modal-title { font-size: 22px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 8px; color: #E8F0FF; }
+        .db-modal-sub { font-size: 14px; color: rgba(200,220,255,0.50); margin-bottom: 24px; line-height: 1.5; font-family: 'Inter', system-ui, sans-serif; }
+        .db-modal-label { font-size: 12px; font-weight: 700; color: rgba(0,212,255,0.55); margin-bottom: 8px; letter-spacing: 0.06em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+        .db-modal-input-row { display: flex; align-items: center; gap: 0; border: 1px solid rgba(0,212,255,0.40); border-radius: 14px; overflow: hidden; margin-bottom: 22px; background: rgba(0,212,255,0.04); transition: border-color 200ms; }
+        .db-modal-input-row:focus-within { border-color: rgba(0,212,255,0.60); box-shadow: 0 0 20px rgba(0,212,255,0.10); }
+        .db-modal-input { flex: 1; padding: 14px 16px; background: transparent; border: none; color: #E8F0FF; font-size: 15px; font-family: inherit; outline: none; }
+        .db-modal-suffix { padding: 14px 16px; color: rgba(200,220,255,0.40); font-size: 13px; white-space: nowrap; border-left: 1px solid rgba(100,180,255,0.08); font-family: 'JetBrains Mono', monospace; }
         .db-modal-actions { display: flex; gap: 10px; }
-        .db-modal-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 130ms; border: 1px solid; }
+        .db-modal-btn { flex: 1; padding: 13px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 180ms; border: 1px solid; }
         .db-modal-btn--primary { background: linear-gradient(135deg, #00D4FF, #0066FF); border-color: rgba(0,212,255,0.50); color: #030712; }
-        .db-modal-btn--primary:hover { background: linear-gradient(135deg, #1ADCFF, #1A7AFF); box-shadow: 0 0 20px rgba(0,212,255,0.20); }
-        .db-modal-btn--ghost { background: transparent; border-color: rgba(100,180,255,0.12); color: rgba(200,220,255,0.55); }
-        .db-modal-btn--ghost:hover { background: rgba(100,180,255,0.06); color: rgba(200,220,255,0.80); }
-        .db-modal-btn:disabled { opacity: 0.4; cursor: default; }
+        .db-modal-btn--primary:hover { background: linear-gradient(135deg, #1ADCFF, #1A7AFF); box-shadow: 0 0 28px rgba(0,212,255,0.25); transform: translateY(-1px); }
+        .db-modal-btn--ghost { background: transparent; border-color: rgba(100,180,255,0.12); color: rgba(200,220,255,0.60); }
+        .db-modal-btn--ghost:hover { background: rgba(100,180,255,0.06); color: rgba(200,220,255,0.85); }
+        .db-modal-btn:disabled { opacity: 0.35; cursor: default; }
         .db-modal-success { text-align: center; padding: 8px 0; }
-        .db-modal-success-icon { font-size: 40px; margin-bottom: 12px; }
-        .db-modal-success-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: #E8F0FF; }
-        .db-modal-success-url { display: inline-block; padding: 10px 16px; border-radius: 10px; background: rgba(0,255,178,0.10); border: 1px solid rgba(0,255,178,0.25); color: rgba(0,255,178,0.90); font-size: 14px; font-weight: 600; text-decoration: none; word-break: break-all; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace; }
+        .db-modal-success-icon { font-size: 44px; margin-bottom: 14px; }
+        .db-modal-success-title { font-size: 20px; font-weight: 900; margin-bottom: 10px; color: #E8F0FF; }
+        .db-modal-success-url { display: inline-block; padding: 12px 18px; border-radius: 12px; background: rgba(0,255,178,0.10); border: 1px solid rgba(0,255,178,0.30); color: #00FFB2; font-size: 14px; font-weight: 600; text-decoration: none; word-break: break-all; margin-bottom: 22px; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 6px rgba(0,255,178,0.20); }
 
         /* ── Delete confirm ── */
-        .db-delete-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.60); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
-        .db-delete-box { background: #0a1628; border: 1px solid rgba(255,71,87,0.25); border-radius: 18px; padding: 28px; max-width: 360px; width: 100%; text-align: center; }
-        .db-delete-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: #E8F0FF; }
-        .db-delete-sub { font-size: 14px; color: rgba(200,220,255,0.45); margin-bottom: 24px; font-family: 'Inter', system-ui, sans-serif; }
+        .db-delete-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .db-delete-box { background: #0a1628; border: 1px solid rgba(255,71,87,0.30); border-radius: 20px; padding: 30px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 0 40px rgba(0,0,0,0.30); }
+        .db-delete-title { font-size: 20px; font-weight: 900; margin-bottom: 8px; color: #E8F0FF; }
+        .db-delete-sub { font-size: 14px; color: rgba(200,220,255,0.50); margin-bottom: 24px; font-family: 'Inter', system-ui, sans-serif; }
         .db-delete-actions { display: flex; gap: 10px; }
-        .db-delete-btn-cancel { flex: 1; padding: 11px; border-radius: 12px; background: transparent; border: 1px solid rgba(100,180,255,0.12); color: rgba(200,220,255,0.65); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
-        .db-delete-btn-delete { flex: 1; padding: 11px; border-radius: 12px; background: rgba(255,71,87,0.15); border: 1px solid rgba(255,71,87,0.35); color: rgba(255,100,100,0.95); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .db-delete-btn-cancel { flex: 1; padding: 12px; border-radius: 12px; background: transparent; border: 1px solid rgba(100,180,255,0.12); color: rgba(200,220,255,0.65); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 150ms; }
+        .db-delete-btn-cancel:hover { background: rgba(100,180,255,0.06); color: rgba(200,220,255,0.85); }
+        .db-delete-btn-delete { flex: 1; padding: 12px; border-radius: 12px; background: rgba(255,71,87,0.18); border: 1px solid rgba(255,71,87,0.40); color: rgba(255,100,100,0.95); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 150ms; }
+        .db-delete-btn-delete:hover { background: rgba(255,71,87,0.28); box-shadow: 0 0 16px rgba(255,71,87,0.12); }
       `}</style>
 
       <div className="db-root">
+        <div className="db-mesh"><div className="db-mesh-1" /><div className="db-mesh-2" /></div>
         <nav className="db-nav">
           <Link href="/" className="db-logo">Dominat8.io</Link>
           <div className="db-nav-links">
