@@ -27,12 +27,12 @@ async function testOpenAI(): Promise<Result> {
     });
     const latencyMs = Date.now() - start;
     if (res.ok) {
-      return { name: "OpenAI", status: "pass", present: !!key, detail: `API reachable (${res.status})`, latencyMs };
+      return { name: "OpenAI", status: "pass", present: true, detail: `API reachable (${res.status})`, latencyMs };
     }
     const body = await res.text().catch(() => "");
-    return { name: "OpenAI", status: "fail", present: !!key, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
+    return { name: "OpenAI", status: "fail", present: true, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
   } catch (err: unknown) {
-    return { name: "OpenAI", status: "fail", present: !!key, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
+    return { name: "OpenAI", status: "fail", present: true, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
   }
 }
 
@@ -57,12 +57,12 @@ async function testAnthropic(): Promise<Result> {
     });
     const latencyMs = Date.now() - start;
     if (res.ok) {
-      return { name: "Anthropic (Claude)", status: "pass", present: !!key, detail: `API reachable (${res.status})`, latencyMs };
+      return { name: "Anthropic (Claude)", status: "pass", present: true, detail: `API reachable (${res.status})`, latencyMs };
     }
     const body = await res.text().catch(() => "");
-    return { name: "Anthropic (Claude)", status: "fail", present: !!key, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
+    return { name: "Anthropic (Claude)", status: "fail", present: true, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
   } catch (err: unknown) {
-    return { name: "Anthropic (Claude)", status: "fail", present: !!key, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
+    return { name: "Anthropic (Claude)", status: "fail", present: true, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
   }
 }
 
@@ -78,12 +78,12 @@ async function testClerk(): Promise<Result> {
     });
     const latencyMs = Date.now() - start;
     if (res.ok) {
-      return { name: "Clerk (Auth)", status: "pass", present: !!secretKey, detail: `API reachable`, latencyMs };
+      return { name: "Clerk (Auth)", status: "pass", present: true, detail: `API reachable`, latencyMs };
     }
     const body = await res.text().catch(() => "");
-    return { name: "Clerk (Auth)", status: "fail", present: !!secretKey, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
+    return { name: "Clerk (Auth)", status: "fail", present: true, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
   } catch (err: unknown) {
-    return { name: "Clerk (Auth)", status: "fail", present: !!secretKey, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
+    return { name: "Clerk (Auth)", status: "fail", present: true, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
   }
 }
 
@@ -104,22 +104,22 @@ async function testStripe(): Promise<Result> {
       return {
         name: "Stripe (Payments)",
         status: "pass",
-        present: !!key,
+        present: true,
         detail: `API reachable | Prices: starter=${starterPrice}, pro=${proPrice}, agency=${agencyPrice} | Webhook: ${webhook}`,
         latencyMs,
       };
     }
     const body = await res.text().catch(() => "");
-    return { name: "Stripe (Payments)", status: "fail", present: !!key, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
+    return { name: "Stripe (Payments)", status: "fail", present: true, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
   } catch (err: unknown) {
-    return { name: "Stripe (Payments)", status: "fail", present: !!key, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
+    return { name: "Stripe (Payments)", status: "fail", present: true, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
   }
 }
 
 async function testVercelKV(): Promise<Result> {
   const url = process.env.KV_REST_API_URL;
   const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return { name: "Vercel KV (Redis)", status: "fail", present: !!(url && token), detail: !url ? "KV_REST_API_URL not configured" : "KV_REST_API_TOKEN not configured" };
+  if (!url || !token) return { name: "Vercel KV (Redis)", status: "fail", present: false, detail: !url ? "KV_REST_API_URL not configured" : "KV_REST_API_TOKEN not configured" };
   const start = Date.now();
   try {
     const res = await fetch(`${url}/ping`, {
@@ -127,12 +127,12 @@ async function testVercelKV(): Promise<Result> {
     });
     const latencyMs = Date.now() - start;
     if (res.ok) {
-      return { name: "Vercel KV (Redis)", status: "pass", present: !!token, detail: `Connected to ${new URL(url).hostname}`, latencyMs };
+      return { name: "Vercel KV (Redis)", status: "pass", present: true, detail: `Connected to ${new URL(url).hostname}`, latencyMs };
     }
     const body = await res.text().catch(() => "");
-    return { name: "Vercel KV (Redis)", status: "fail", present: !!token, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
+    return { name: "Vercel KV (Redis)", status: "fail", present: true, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
   } catch (err: unknown) {
-    return { name: "Vercel KV (Redis)", status: "fail", present: !!token, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
+    return { name: "Vercel KV (Redis)", status: "fail", present: true, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
   }
 }
 
@@ -147,19 +147,19 @@ async function testVercelBlob(): Promise<Result> {
     });
     const latencyMs = Date.now() - start;
     if (res.ok) {
-      return { name: "Vercel Blob (Storage)", status: "pass", present: !!token, detail: `API reachable`, latencyMs };
+      return { name: "Vercel Blob (Storage)", status: "pass", present: true, detail: `API reachable`, latencyMs };
     }
     const body = await res.text().catch(() => "");
-    return { name: "Vercel Blob (Storage)", status: "fail", present: !!token, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
+    return { name: "Vercel Blob (Storage)", status: "fail", present: true, detail: `HTTP ${res.status}: ${body.slice(0, 200)}`, latencyMs };
   } catch (err: unknown) {
-    return { name: "Vercel Blob (Storage)", status: "fail", present: !!token, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
+    return { name: "Vercel Blob (Storage)", status: "fail", present: true, detail: `Network error: ${err instanceof Error ? err.message : String(err)}`, latencyMs: Date.now() - start };
   }
 }
 
 function testResend(): Result {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { name: "Resend (Email)", status: "skip", present: false, detail: "RESEND_API_KEY not configured (optional — emails disabled)" };
-  return { name: "Resend (Email)", status: "pass", present: !!key, detail: "Key present (not live-tested to avoid sending email)" };
+  return { name: "Resend (Email)", status: "pass", present: true, detail: "Key present (not live-tested to avoid sending email)" };
 }
 
 function testEnvVars(): Result {
