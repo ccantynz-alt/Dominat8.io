@@ -279,15 +279,21 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { prompt, industry, vibe } = await req.json();
+  const { prompt, industry, vibe, model: requestedModel } = await req.json();
 
   if (!prompt?.trim()) {
-    return new Response("Prompt required", { status: 400 });
+    return new Response(
+      JSON.stringify({ error: "Prompt required", code: "MISSING_PROMPT" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return new Response("OpenAI API key not configured", { status: 500 });
+    return new Response(
+      JSON.stringify({ error: "AI service not configured. Please contact support.", code: "NO_API_KEY" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   // ── Auth + quota check ────────────────────────────────────────────────────
@@ -312,6 +318,8 @@ export async function POST(req: NextRequest) {
   // Unauthenticated users get 3 free generations tracked client-side (localStorage).
   // ─────────────────────────────────────────────────────────────────────────
 
+  // ── Determine which model to use ──────────────────────────────────────────
+  const useClaude = requestedModel === "claude-sonnet-4-6" && !!process.env.ANTHROPIC_API_KEY;
   const openai = new OpenAI({ apiKey });
 
   const industryHint = industry && INDUSTRY_HINTS[industry]
@@ -335,16 +343,116 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
-  const stream = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userMessage },
-    ],
-    stream: true,
-    max_tokens: 16000,
-    temperature: 0.80,
-  });
+  const messages = [
+    { role: "system" as const, content: SYSTEM_PROMPT },
+    { role: "user" as const, content: userMessage },
+  ];
+
+  // ── Claude path (Anthropic API) ─────────────────────────────────────────
+  if (useClaude) {
+    try {
+      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY!,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6-20250514",
+          max_tokens: 16000,
+          system: SYSTEM_PROMPT,
+          stream: true,
+          messages: [{ role: "user", content: userMessage }],
+        }),
+      });
+
+      if (!anthropicRes.ok || !anthropicRes.body) {
+        const errText = await anthropicRes.text().catch(() => "Unknown error");
+        return new Response(
+          JSON.stringify({ error: `Claude generation failed: ${errText}`, code: "AI_ERROR" }),
+          { status: 502, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
+      const readable = new ReadableStream({
+        async start(controller) {
+          const reader = anthropicRes.body!.getReader();
+          try {
+            let buffer = "";
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() ?? "";
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const data = line.slice(6);
+                if (data === "[DONE]") continue;
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.type === "content_block_delta" && parsed.delta?.text) {
+                    controller.enqueue(encoder.encode(parsed.delta.text));
+                  }
+                } catch { /* skip non-JSON lines */ }
+              }
+            }
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Stream interrupted";
+            controller.enqueue(encoder.encode(`\n<!-- GENERATION_ERROR: ${message} -->`));
+          } finally {
+            reader.releaseLock();
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(readable, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "X-Content-Type-Options": "nosniff",
+          "Cache-Control": "no-store",
+        },
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      return new Response(
+        JSON.stringify({ error: `Claude generation failed: ${message}`, code: "AI_ERROR" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }
+
+  // ── OpenAI path (default) ───────────────────────────────────────────────
+  let stream;
+  try {
+    stream = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages,
+      stream: true,
+      max_tokens: 16000,
+      temperature: 0.80,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    const isAuth = message.includes("401") || message.includes("Incorrect API key") || message.includes("invalid_api_key");
+    const isQuota = message.includes("429") || message.includes("quota") || message.includes("rate_limit");
+    return new Response(
+      JSON.stringify({
+        error: isAuth
+          ? "AI service authentication failed. Please check the API key configuration."
+          : isQuota
+          ? "AI service rate limit reached. Please try again in a moment."
+          : `AI generation failed: ${message}`,
+        code: isAuth ? "AI_AUTH" : isQuota ? "AI_RATE_LIMIT" : "AI_ERROR",
+      }),
+      { status: isAuth ? 502 : isQuota ? 503 : 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
 
   const encoder = new TextEncoder();
 
@@ -355,6 +463,9 @@ export async function POST(req: NextRequest) {
           const text = chunk.choices[0]?.delta?.content ?? "";
           if (text) controller.enqueue(encoder.encode(text));
         }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Stream interrupted";
+        controller.enqueue(encoder.encode(`\n<!-- GENERATION_ERROR: ${message} -->`));
       } finally {
         controller.close();
       }

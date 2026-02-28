@@ -139,7 +139,7 @@ const FEATURES = [
     icon: "⚡",
     title: "Under 30 seconds",
     desc: "Not a prototype. A publish-ready, multi-section website generated from a single sentence.",
-    accent: "#3DF0FF",
+    accent: "#F0B35A",
   },
   {
     icon: "🎨",
@@ -169,7 +169,7 @@ const FEATURES = [
     icon: "📦",
     title: "Clean HTML export",
     desc: "Download the source. No lock-in. Host anywhere — Vercel, Netlify, your own server.",
-    accent: "#3DF0FF",
+    accent: "#F0B35A",
   },
   {
     icon: "🛡️",
@@ -216,7 +216,7 @@ const TESTIMONIALS = [
     name: "Marcus T.",
     role: "Principal, Henderson Law",
     avatar: "MT",
-    color: "#3DF0FF",
+    color: "#F0B35A",
     stars: 5,
   },
   {
@@ -243,7 +243,7 @@ const STYLE_CARDS = [
   { label: "Minimal",   preview: ["◽ Clean. Precise.", "One typeface.", "Maximum whitespace."],     bg: "linear-gradient(135deg, #0a0d16 0%, #111520 100%)", accent: "#ffffff", border: "rgba(255,255,255,0.14)" },
   { label: "Bold",      preview: ["■ High contrast.", "Oversized type.", "Zero decoration."],       bg: "linear-gradient(135deg, #0d0808 0%, #1a0505 100%)", accent: "#FF4D4D", border: "rgba(255,80,80,0.25)" },
   { label: "Luxury",    preview: ["◆ Dark + gold.", "Editorial spacing.", "Premium serif."],        bg: "linear-gradient(135deg, #080610 0%, #100d1a 100%)", accent: "#C09A5C", border: "rgba(192,154,92,0.30)" },
-  { label: "Dark",      preview: ["◉ Neon accents.", "Grid background.", "Cyberpunk-adjacent."],    bg: "linear-gradient(135deg, #030610 0%, #060b1c 100%)", accent: "#3DF0FF", border: "rgba(61,240,255,0.28)" },
+  { label: "Dark",      preview: ["◉ Neon accents.", "Grid background.", "Cyberpunk-adjacent."],    bg: "linear-gradient(135deg, #030610 0%, #060b1c 100%)", accent: "#F0B35A", border: "rgba(240,179,90,0.28)" },
   { label: "Playful",   preview: ["✦ Vibrant.", "Rounded shapes.", "Warm personality."],            bg: "linear-gradient(135deg, #100a06 0%, #1c1006 100%)", accent: "#FFD166", border: "rgba(255,209,102,0.28)" },
   { label: "Corporate", preview: ["▲ Structured.", "Clear hierarchy.", "Enterprise-ready."],        bg: "linear-gradient(135deg, #06080d 0%, #0a0e18 100%)", accent: "#4A90E2", border: "rgba(74,144,226,0.28)" },
 ];
@@ -258,7 +258,7 @@ export function HomeSections() {
       {/* ── Stats Strip ── */}
       <section className="d8hs-stats-section">
         <div className="d8hs-stats-inner">
-          <StatCard value={50000} suffix="+" label="Sites generated" color="#3DF0FF" />
+          <StatCard value={50000} suffix="+" label="Sites generated" color="#F0B35A" />
           <div className="d8hs-stats-div" />
           <StatCard value={180} suffix="+" label="Countries" color="#38F8A6" />
           <div className="d8hs-stats-div" />
@@ -427,7 +427,7 @@ function HomeSectionsStyles() {
         font-weight: 700;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: rgba(61,240,255,0.65);
+        color: rgba(240,179,90,0.65);
         margin-bottom: 12px;
       }
       .d8hs-h2 {
@@ -544,9 +544,9 @@ function HomeSectionsStyles() {
       .d8hs-feed-vibe {
         padding: 2px 8px;
         border-radius: 999px;
-        background: rgba(61,240,255,0.07);
-        border: 1px solid rgba(61,240,255,0.15);
-        color: rgba(61,240,255,0.70);
+        background: rgba(240,179,90,0.07);
+        border: 1px solid rgba(240,179,90,0.15);
+        color: rgba(240,179,90,0.70);
         font-size: 10px;
         font-weight: 600;
         letter-spacing: 0.04em;
@@ -591,7 +591,7 @@ function HomeSectionsStyles() {
         font-size: 11px;
         font-weight: 800;
         letter-spacing: 0.10em;
-        color: rgba(61,240,255,0.45);
+        color: rgba(240,179,90,0.45);
       }
       .d8hs-step-title {
         font-size: 17px;
@@ -606,7 +606,7 @@ function HomeSectionsStyles() {
       }
       .d8hs-step-detail {
         font-size: 11px;
-        color: rgba(61,240,255,0.45);
+        color: rgba(240,179,90,0.45);
         font-family: 'JetBrains Mono', ui-monospace, monospace;
         border-top: 1px solid rgba(255,255,255,0.06);
         padding-top: 10px;
@@ -773,7 +773,7 @@ function HomeSectionsStyles() {
         width: 400px; height: 200px;
         top: 50%; left: 50%;
         transform: translate(-50%, -50%);
-        background: radial-gradient(ellipse, rgba(61,240,255,0.07) 0%, transparent 70%);
+        background: radial-gradient(ellipse, rgba(240,179,90,0.07) 0%, transparent 70%);
         pointer-events: none;
         border-radius: 50%;
       }
@@ -782,7 +782,7 @@ function HomeSectionsStyles() {
         font-weight: 700;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: rgba(61,240,255,0.55);
+        color: rgba(240,179,90,0.55);
         margin-bottom: 14px;
       }
       .d8hs-cta-title {
