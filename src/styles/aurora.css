@@ -1,8 +1,8 @@
-/* D8 Premium Aurora Background Pack + Glass Hero + Gradient CTA + Flagship Sections + ACE V1 */
+/* D8 Midnight Ember — Warm Mesh + Glass + Gradient CTA */
 
 .aurora-blob {
-  background: radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.85), rgba(56, 189, 248, 0.25), rgba(0, 0, 0, 0) 70%);
-  filter: saturate(1.2);
+  background: radial-gradient(circle at 30% 30%, rgba(240,179,90,0.65), rgba(232,113,90,0.25), rgba(0,0,0,0) 70%);
+  filter: saturate(1.1);
 }
 
 .aurora-1 { animation: auroraFloat1 22s ease-in-out infinite; }
@@ -27,31 +27,29 @@
   50% { transform: translate(-52%, -14px) scale(1.07); }
 }
 
-/* Noise overlay using repeating gradients (no image) */
+/* Noise overlay */
 .aurora-noise {
   background-image:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 3px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 4px);
+    repeating-linear-gradient(0deg, rgba(245,240,235,0.04) 0px, rgba(245,240,235,0.04) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 3px),
+    repeating-linear-gradient(90deg, rgba(245,240,235,0.03) 0px, rgba(245,240,235,0.03) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 4px);
   background-size: 220px 220px, 180px 180px;
   transform: translateZ(0);
 }
 
-/* ---------------------------
-   Floating Glass Hero Panel
-   --------------------------- */
+/* Floating Glass Panel */
 .d8-glass {
   position: relative;
   border-radius: 24px;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(245,240,235,0.10);
   background:
-    radial-gradient(900px 500px at 20% 10%, rgba(255,255,255,0.10), transparent 55%),
-    radial-gradient(700px 420px at 80% 0%, rgba(120,119,198,0.10), transparent 60%),
+    radial-gradient(900px 500px at 20% 10%, rgba(240,179,90,0.06), transparent 55%),
+    radial-gradient(700px 420px at 80% 0%, rgba(232,113,90,0.05), transparent 60%),
     rgba(0,0,0,0.32);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow:
     0 30px 80px rgba(0,0,0,0.65),
-    0 1px 0 rgba(255,255,255,0.06) inset;
+    0 1px 0 rgba(245,240,235,0.06) inset;
 }
 .d8-glass::after {
   content: "";
@@ -59,7 +57,7 @@
   position: absolute;
   inset: 0;
   border-radius: 24px;
-  background: radial-gradient(600px 200px at 30% 0%, rgba(255,255,255,0.10), transparent 60%);
+  background: radial-gradient(600px 200px at 30% 0%, rgba(245,240,235,0.08), transparent 60%);
   opacity: 0.8;
 }
 
@@ -79,58 +77,26 @@
   border-radius: 14px;
   padding: 12px 18px;
   font-weight: 700;
-  color: #ffffff;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.10);
+  color: #0F0D15;
+  background: linear-gradient(135deg, #F0B35A, #E8A040);
+  border: none;
   text-decoration: none;
-  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
 .d8-cta:hover {
-  transform: translateY(-1px);
-  background: rgba(0,0,0,0.45);
-  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(240,179,90,0.30);
 }
 .d8-cta:active { transform: translateY(0); }
-.d8-cta::before {
-  content: "";
-  pointer-events: none;
-  position: absolute;
-  inset: -1px;
-  border-radius: 14px;
-  padding: 1px;
-  background: linear-gradient(
-    90deg,
-    rgba(56,189,248,0.65),
-    rgba(168,85,247,0.55),
-    rgba(34,197,94,0.40),
-    rgba(56,189,248,0.65)
-  );
-  background-size: 240% 240%;
-  animation: d8BorderShift 8s ease-in-out infinite;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0.85;
-}
-@keyframes d8BorderShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
 /* Divider */
 .d8-divider {
   height: 1px;
   width: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
+  background: linear-gradient(90deg, transparent, rgba(240,179,90,0.14), transparent);
   opacity: 0.9;
 }
 
-/* ---------------------------
-   ACE V1 Sticky CTA Bar
-   --------------------------- */
+/* Sticky CTA Bar */
 .d8-sticky-cta {
   position: fixed;
   left: 0;
@@ -143,5 +109,4 @@
 @media (prefers-reduced-motion: reduce) {
   .aurora-1, .aurora-2, .aurora-3, .aurora-4 { animation: none !important; }
   .d8-float { animation: none !important; }
-  .d8-cta::before { animation: none !important; }
 }
