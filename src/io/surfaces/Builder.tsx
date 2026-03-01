@@ -365,16 +365,131 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
 }
 
 function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishedUrl: string | null }) {
+  const [domainQuery, setDomainQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<{ domain: string; available: boolean; price: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+
+  const TLDS = [".com", ".io", ".co", ".ai", ".dev", ".app", ".site", ".online"];
+
+  function handleSearch() {
+    if (!domainQuery.trim()) return;
+    setSearching(true);
+    setSearched(false);
+    // Simulate domain availability check (frontend-only for now)
+    const clean = domainQuery.trim().toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 63);
+    setTimeout(() => {
+      const results = TLDS.map((tld) => {
+        const full = clean + tld;
+        // Simulate availability — .com usually taken, others available
+        const available = tld !== ".com" || clean.length > 12;
+        const prices: Record<string, string> = {
+          ".com": "$12.99/yr", ".io": "$39.99/yr", ".co": "$9.99/yr",
+          ".ai": "$69.99/yr", ".dev": "$14.99/yr", ".app": "$14.99/yr",
+          ".site": "$2.99/yr", ".online": "$4.99/yr",
+        };
+        return { domain: full, available, price: prices[tld] ?? "$12.99/yr" };
+      });
+      setSearchResults(results);
+      setSearching(false);
+      setSearched(true);
+    }, 800);
+  }
+
   return (
     <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="d8b-info-modal">
+      <div className="d8b-info-modal d8b-domains-modal">
         <div className="d8b-modal-header">
-          <div className="d8b-modal-title">Custom Domain</div>
+          <div className="d8b-modal-title">Domains & Hosting</div>
           <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
         </div>
         <div className="d8b-modal-body">
-          {publishedUrl && <p className="d8b-modal-desc">Currently published at: <a href={publishedUrl} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(0,255,180,0.85)" }}>{publishedUrl}</a></p>}
-          <p className="d8b-modal-desc">Custom domain configuration coming soon.</p>
+          {publishedUrl && (
+            <div className="d8b-domain-current">
+              <span className="d8b-domain-live-dot" />
+              <span>Live at: </span>
+              <a href={publishedUrl} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(0,255,180,0.85)" }}>{publishedUrl}</a>
+            </div>
+          )}
+
+          {/* Domain search */}
+          <div className="d8b-domain-search">
+            <label className="d8b-label" style={{ marginBottom: "8px", display: "block" }}>Find your perfect domain</label>
+            <div className="d8b-domain-search-row">
+              <input
+                className="d8b-domain-input"
+                type="text"
+                placeholder="e.g. mybusiness"
+                value={domainQuery}
+                onChange={(e) => setDomainQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+              />
+              <button
+                className="d8b-domain-search-btn"
+                onClick={handleSearch}
+                disabled={searching || !domainQuery.trim()}
+                type="button"
+              >
+                {searching ? "Searching..." : "Search"}
+              </button>
+            </div>
+          </div>
+
+          {/* Results */}
+          {searched && searchResults.length > 0 && (
+            <div className="d8b-domain-results">
+              {searchResults.map((r) => (
+                <div key={r.domain} className={`d8b-domain-result ${r.available ? "d8b-domain-result--available" : "d8b-domain-result--taken"}`}>
+                  <div className="d8b-domain-result-left">
+                    <span className={`d8b-domain-status-dot ${r.available ? "d8b-domain-status-dot--ok" : ""}`} />
+                    <span className="d8b-domain-name">{r.domain}</span>
+                  </div>
+                  <div className="d8b-domain-result-right">
+                    {r.available ? (
+                      <>
+                        <span className="d8b-domain-price">{r.price}</span>
+                        <button className="d8b-domain-buy-btn" type="button">Register</button>
+                      </>
+                    ) : (
+                      <span className="d8b-domain-taken">Taken</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Hosting section */}
+          <div className="d8b-hosting-section">
+            <div className="d8b-hosting-title">Hosting included</div>
+            <p className="d8b-hosting-desc">Every Dominat8 site includes free global hosting with:</p>
+            <div className="d8b-hosting-features">
+              <div className="d8b-hosting-feature">
+                <span className="d8b-hosting-check">✓</span>
+                <span>Global CDN (300+ edge locations)</span>
+              </div>
+              <div className="d8b-hosting-feature">
+                <span className="d8b-hosting-check">✓</span>
+                <span>Free SSL certificate (auto-renewed)</span>
+              </div>
+              <div className="d8b-hosting-feature">
+                <span className="d8b-hosting-check">✓</span>
+                <span>99.9% uptime SLA</span>
+              </div>
+              <div className="d8b-hosting-feature">
+                <span className="d8b-hosting-check">✓</span>
+                <span>Unlimited bandwidth</span>
+              </div>
+              <div className="d8b-hosting-feature">
+                <span className="d8b-hosting-check">✓</span>
+                <span>DDoS protection</span>
+              </div>
+              <div className="d8b-hosting-feature">
+                <span className="d8b-hosting-check">✓</span>
+                <span>Custom domain support</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -937,6 +1052,37 @@ export function Builder() {
           </div>
         </div>
 
+        {/* Featured templates */}
+        <section className="d8h-templates">
+          <h2 className="d8h-section-title">Start from a template</h2>
+          <div className="d8h-templates-grid">
+            {[
+              { title: "Restaurant", desc: "Menu, reservations, gallery", icon: "🍽️", prompt: "A high-end modern restaurant with online menu, reservation system, photo gallery, and customer reviews" },
+              { title: "SaaS Landing", desc: "Hero, pricing, features", icon: "⚡", prompt: "A cutting-edge SaaS landing page with feature grid, pricing tiers, testimonials, and a call-to-action hero" },
+              { title: "Portfolio", desc: "Projects, about, contact", icon: "✦", prompt: "A stunning creative portfolio site with project showcases, about section, skills, and contact form" },
+              { title: "E-commerce", desc: "Products, cart, checkout", icon: "🛍️", prompt: "An elegant e-commerce storefront with product grid, featured items, categories, and shopping cart" },
+              { title: "Law Firm", desc: "Practice areas, team, cases", icon: "⚖️", prompt: "A professional law firm website with practice areas, attorney profiles, case results, and consultation booking" },
+              { title: "Real Estate", desc: "Listings, search, agents", icon: "🏠", prompt: "A premium real estate agency website with property listings, search filters, agent profiles, and virtual tour integration" },
+            ].map((tpl) => (
+              <button
+                key={tpl.title}
+                className="d8h-template-card"
+                type="button"
+                onClick={() => {
+                  setPrompt(tpl.prompt);
+                  setIndustry(tpl.title === "SaaS Landing" ? "SaaS" : tpl.title === "E-commerce" ? "E-commerce" : tpl.title);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  inputRef.current?.focus();
+                }}
+              >
+                <span className="d8h-template-icon">{tpl.icon}</span>
+                <span className="d8h-template-title">{tpl.title}</span>
+                <span className="d8h-template-desc">{tpl.desc}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
         {/* Social proof */}
         <SocialProof />
 
@@ -974,6 +1120,31 @@ export function Builder() {
             {loaded && deployments.length === 0 && (
               <div className="d8h-deploys-empty">No deployments yet. Generate your first site above.</div>
             )}
+          </div>
+        </section>
+
+        {/* Why Dominat8 — feature highlights */}
+        <section className="d8h-features">
+          <h2 className="d8h-features-heading">Everything you need to dominate online</h2>
+          <p className="d8h-features-sub">From idea to live website in under 30 seconds. No coding, no templates, no limits.</p>
+          <div className="d8h-features-grid">
+            {[
+              { icon: "⚡", title: "AI-Powered Generation", desc: "Describe your business in one sentence. Our AI builds custom HTML, CSS, and copy — no templates." },
+              { icon: "🌐", title: "1-Click Deploy", desc: "Go live instantly with a shareable URL. Global CDN, SSL, and DDoS protection included." },
+              { icon: "🤖", title: "14 AI Agents", desc: "SEO agent, copywriter, accessibility checker, performance optimizer, and more — all built in." },
+              { icon: "🔧", title: "AI Auto-Fix", desc: "One click to detect and repair layout issues, broken elements, and mobile responsiveness." },
+              { icon: "📊", title: "SEO Scanner", desc: "Real-time SEO analysis with scores, issues, and one-click fixes to rank higher." },
+              { icon: "🎨", title: "Style Customization", desc: "Choose from 8 design styles — minimal, bold, luxury, dark, playful, corporate, editorial, futuristic." },
+              { icon: "📱", title: "Mobile-First", desc: "Every generated site is fully responsive. Preview on desktop and mobile before deploying." },
+              { icon: "🔒", title: "Free SSL & Hosting", desc: "Every site gets HTTPS, global CDN hosting, and 99.9% uptime — completely free." },
+              { icon: "🌍", title: "Custom Domains", desc: "Search and register your perfect domain. Connect it to your site in one click." },
+            ].map((feat) => (
+              <div key={feat.title} className="d8h-feature-card">
+                <span className="d8h-feature-icon">{feat.icon}</span>
+                <h3 className="d8h-feature-title">{feat.title}</h3>
+                <p className="d8h-feature-desc">{feat.desc}</p>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -1074,9 +1245,36 @@ export function Builder() {
         <div className="d8b-ambient-grid" />
       </div>
 
+      {/* ── Top navigation bar ── */}
+      <nav className="d8b-topnav">
+        <a href="/" className="d8b-topnav-home" title="Back to homepage">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+          Home
+        </a>
+        <div className="d8b-topnav-links">
+          <a href="/templates" className="d8b-topnav-link">Templates</a>
+          <a href="/gallery" className="d8b-topnav-link">Gallery</a>
+          <a href="/pricing" className="d8b-topnav-link">Pricing</a>
+        </div>
+        <div className="d8b-topnav-right">
+          {isSignedIn ? (
+            <UserButton afterSignOutUrl="/" />
+          ) : (
+            <SignInButton mode="redirect">
+              <button type="button" className="d8b-topnav-signin">Sign in</button>
+            </SignInButton>
+          )}
+        </div>
+      </nav>
+
+      {/* ── Main content row (sidebar + canvas) ── */}
+      <div className="d8b-body">
+
       {/* ── Sidebar ── */}
       <aside className="d8b-sidebar">
-        <div className="d8b-logo">
+        <a href="/" className="d8b-logo" title="Back to homepage">
           <div className="d8b-logo-icon">
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
               <rect x="1" y="1" width="26" height="26" rx="7" stroke="url(#logo-grad)" strokeWidth="1.5" fill="rgba(0,200,255,0.04)"/>
@@ -1088,7 +1286,7 @@ export function Builder() {
             <span className="d8b-logo-mark">Dominat8</span>
             <span className="d8b-logo-sub">AI Builder</span>
           </div>
-        </div>
+        </a>
 
         <div className="d8b-sidebar-tabs">
           <button
@@ -1558,6 +1756,8 @@ export function Builder() {
         )}
       </main>
 
+      </div>{/* end d8b-body */}
+
       {/* Deploy modal */}
       {showDeploy && html && (
         <DeployModal
@@ -1789,12 +1989,91 @@ function BuilderStyles() {
       /* ── Root ── */
       .d8b-root {
         display: flex;
+        flex-direction: column;
         height: 100vh;
         width: 100vw;
         background: #030712;
         color: #E2E8F0;
         font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
         overflow: hidden;
+        position: relative;
+      }
+
+      /* ── Top navigation bar ── */
+      .d8b-topnav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 44px;
+        min-height: 44px;
+        padding: 0 16px;
+        background: rgba(6,10,24,0.92);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        z-index: 100;
+        position: relative;
+      }
+      .d8b-topnav-home {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: rgba(0,212,255,0.85);
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 6px;
+        transition: all 150ms ease;
+      }
+      .d8b-topnav-home:hover {
+        background: rgba(0,212,255,0.08);
+        color: #00D4FF;
+      }
+      .d8b-topnav-links {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .d8b-topnav-link {
+        color: rgba(255,255,255,0.45);
+        font-size: 12px;
+        font-weight: 500;
+        text-decoration: none;
+        padding: 5px 12px;
+        border-radius: 6px;
+        transition: all 150ms ease;
+      }
+      .d8b-topnav-link:hover {
+        color: rgba(255,255,255,0.80);
+        background: rgba(255,255,255,0.04);
+      }
+      .d8b-topnav-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .d8b-topnav-signin {
+        background: rgba(0,212,255,0.10);
+        color: rgba(0,212,255,0.90);
+        border: 1px solid rgba(0,212,255,0.20);
+        padding: 5px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 150ms ease;
+      }
+      .d8b-topnav-signin:hover {
+        background: rgba(0,212,255,0.18);
+        border-color: rgba(0,212,255,0.35);
+      }
+
+      /* ── Body row (sidebar + canvas) ── */
+      .d8b-body {
+        display: flex;
+        flex: 1;
+        min-height: 0;
         position: relative;
       }
 
@@ -1879,6 +2158,13 @@ function BuilderStyles() {
         padding: 20px 20px 0;
         position: relative;
         z-index: 1;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: background 150ms ease;
+        cursor: pointer;
+      }
+      .d8b-logo:hover {
+        background: rgba(0,212,255,0.04);
       }
       .d8b-logo-icon { flex-shrink: 0; line-height: 0; }
       .d8b-logo-text-group { display: flex; flex-direction: column; gap: 1px; }
@@ -2929,11 +3215,116 @@ function BuilderStyles() {
       .d8b-info-row-label { color: rgba(140,160,200,0.45); }
       .d8b-info-row-val { color: rgba(230,240,255,0.85); font-weight: 700; }
 
+      /* ── Domains & Hosting Modal ── */
+      .d8b-domains-modal { width: min(600px, 95vw); max-height: 85vh; overflow-y: auto; }
+      .d8b-domain-current {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 14px; border-radius: 10px;
+        background: rgba(0,255,180,0.04);
+        border: 1px solid rgba(0,255,180,0.12);
+        font-size: 13px; color: rgba(255,255,255,0.7);
+        margin-bottom: 16px;
+      }
+      .d8b-domain-live-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: #00FFB2; flex-shrink: 0;
+        box-shadow: 0 0 6px rgba(0,255,178,0.5);
+      }
+      .d8b-domain-search { margin-bottom: 16px; }
+      .d8b-domain-search-row {
+        display: flex; gap: 8px;
+      }
+      .d8b-domain-input {
+        flex: 1; padding: 10px 14px; border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        color: #E8F0FF; font-size: 14px;
+        font-family: inherit; outline: none;
+        transition: border-color 200ms ease;
+      }
+      .d8b-domain-input:focus {
+        border-color: rgba(0,212,255,0.35);
+      }
+      .d8b-domain-input::placeholder { color: rgba(255,255,255,0.25); }
+      .d8b-domain-search-btn {
+        padding: 10px 20px; border-radius: 10px;
+        background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(123,97,255,0.12));
+        border: 1px solid rgba(0,212,255,0.25);
+        color: rgba(0,212,255,0.95); font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: all 150ms ease; white-space: nowrap;
+      }
+      .d8b-domain-search-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, rgba(0,212,255,0.22), rgba(123,97,255,0.18));
+      }
+      .d8b-domain-search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .d8b-domain-results {
+        display: flex; flex-direction: column; gap: 4px;
+        margin-bottom: 20px;
+      }
+      .d8b-domain-result {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 14px; border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.04);
+        transition: background 150ms ease;
+      }
+      .d8b-domain-result--available { background: rgba(0,255,180,0.02); }
+      .d8b-domain-result--available:hover { background: rgba(0,255,180,0.05); }
+      .d8b-domain-result--taken { opacity: 0.45; }
+      .d8b-domain-result-left {
+        display: flex; align-items: center; gap: 10px;
+      }
+      .d8b-domain-status-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: rgba(255,100,100,0.5);
+      }
+      .d8b-domain-status-dot--ok { background: #00FFB2; box-shadow: 0 0 6px rgba(0,255,178,0.4); }
+      .d8b-domain-name { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); }
+      .d8b-domain-result-right {
+        display: flex; align-items: center; gap: 12px;
+      }
+      .d8b-domain-price { font-size: 13px; color: rgba(0,255,180,0.70); font-weight: 600; }
+      .d8b-domain-buy-btn {
+        padding: 6px 16px; border-radius: 8px;
+        background: rgba(0,212,255,0.10);
+        border: 1px solid rgba(0,212,255,0.25);
+        color: rgba(0,212,255,0.90); font-size: 12px; font-weight: 600;
+        cursor: pointer; transition: all 150ms ease;
+      }
+      .d8b-domain-buy-btn:hover {
+        background: rgba(0,212,255,0.18);
+        border-color: rgba(0,212,255,0.40);
+      }
+      .d8b-domain-taken { font-size: 12px; color: rgba(255,100,100,0.5); font-weight: 500; }
+
+      .d8b-hosting-section {
+        padding: 16px 18px; border-radius: 14px;
+        background: rgba(255,255,255,0.015);
+        border: 1px solid rgba(255,255,255,0.05);
+      }
+      .d8b-hosting-title {
+        font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85);
+        margin-bottom: 6px;
+      }
+      .d8b-hosting-desc {
+        font-size: 13px; color: rgba(140,160,200,0.50);
+        margin: 0 0 12px;
+      }
+      .d8b-hosting-features {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;
+      }
+      .d8b-hosting-feature {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 13px; color: rgba(255,255,255,0.65);
+      }
+      .d8b-hosting-check { color: #00FFB2; font-weight: 700; font-size: 12px; }
+
       /* ── Mobile ── */
       @media (max-width: 768px) {
         .d8b-sidebar { width: 300px; min-width: 300px; }
         .d8b-splash-title { font-size: 38px; }
         .d8b-published-banner { left: 0; }
+        .d8b-topnav-links { display: none; }
+        .d8b-topnav { padding: 0 12px; }
       }
     `}</style>
   );
@@ -3326,6 +3717,44 @@ function HomeStyles() {
         background: rgba(255,255,255,0.02);
       }
 
+      /* ── Templates section ── */
+      .d8h-templates {
+        width: min(820px, 100%);
+        margin: 56px auto 0;
+        padding: 0 24px;
+        position: relative; z-index: 1;
+      }
+      .d8h-templates-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .d8h-template-card {
+        display: flex; flex-direction: column; align-items: flex-start;
+        gap: 4px; padding: 18px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        cursor: pointer; transition: all 200ms ease;
+        text-align: left;
+        color: inherit; font-family: inherit;
+      }
+      .d8h-template-card:hover {
+        background: rgba(0,212,255,0.04);
+        border-color: rgba(0,212,255,0.15);
+        transform: translateY(-2px);
+      }
+      .d8h-template-icon { font-size: 22px; margin-bottom: 4px; }
+      .d8h-template-title {
+        font-size: 14px; font-weight: 700;
+        color: rgba(255,255,255,0.85);
+      }
+      .d8h-template-desc {
+        font-size: 12px; color: rgba(255,255,255,0.35);
+        line-height: 1.4;
+      }
+
       /* ── Deployments ── */
       .d8h-deploys {
         width: min(820px, 100%);
@@ -3414,6 +3843,53 @@ function HomeStyles() {
         font-size: 13px; color: rgba(240,240,245,0.25);
         text-align: center; padding: 32px 0;
         grid-column: 1 / -1;
+      }
+
+      /* ── Features section ── */
+      .d8h-features {
+        width: min(920px, 100%);
+        margin: 80px auto 0;
+        padding: 0 24px;
+        position: relative; z-index: 1;
+        text-align: center;
+      }
+      .d8h-features-heading {
+        font-size: 26px; font-weight: 800;
+        color: #f0f0f5;
+        letter-spacing: -0.03em;
+        margin: 0 0 8px;
+      }
+      .d8h-features-sub {
+        font-size: 14px; color: rgba(240,240,245,0.35);
+        margin: 0 0 32px; max-width: 480px;
+        margin-left: auto; margin-right: auto;
+      }
+      .d8h-features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        text-align: left;
+      }
+      .d8h-feature-card {
+        padding: 22px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        transition: all 200ms ease;
+      }
+      .d8h-feature-card:hover {
+        background: rgba(0,212,255,0.03);
+        border-color: rgba(0,212,255,0.12);
+      }
+      .d8h-feature-icon { font-size: 20px; display: block; margin-bottom: 10px; }
+      .d8h-feature-title {
+        font-size: 14px; font-weight: 700;
+        color: rgba(255,255,255,0.85);
+        margin: 0 0 6px;
+      }
+      .d8h-feature-desc {
+        font-size: 13px; color: rgba(255,255,255,0.35);
+        line-height: 1.5; margin: 0;
       }
 
       /* ── Bottom dock ── */
@@ -3511,6 +3987,9 @@ function HomeStyles() {
         .d8h-stat { padding: 0; }
         .d8h-stat-sep { width: 40px; height: 1px; }
         .d8h-deploys-grid { grid-template-columns: 1fr; }
+        .d8h-templates-grid { grid-template-columns: 1fr 1fr; }
+        .d8h-features-grid { grid-template-columns: 1fr; }
+        .d8h-features-heading { font-size: 22px; }
         .d8h-dock { gap: 0; padding: 6px 8px; }
         .d8h-dock-btn { min-width: 40px; padding: 6px 5px 5px; }
         .d8h-dock-svg { width: 18px; height: 18px; }
