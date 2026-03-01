@@ -46,3 +46,11 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # Satisfies branch protection required checks from deleted workflows.
+  # Remove these once branch protection settings are updated.
+  gates:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Gates passed (consolidated into CI)"
