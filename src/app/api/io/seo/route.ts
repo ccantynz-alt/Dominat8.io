@@ -1,4 +1,5 @@
 import { OpenAI } from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { isAdminUser, checkAndConsumeCredits } from "@/lib/agent-credits";
@@ -60,30 +61,48 @@ export async function POST(req: NextRequest) {
     return new Response("HTML required", { status: 400 });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return new Response("OpenAI API key not configured", { status: 500 });
+  const useClaude = !!process.env.ANTHROPIC_API_KEY;
+  if (!useClaude && !process.env.OPENAI_API_KEY) {
+    return new Response("No AI provider configured", { status: 503 });
   }
-
-  const openai = new OpenAI({ apiKey });
 
   // Truncate HTML to keep costs low — first 8000 chars covers all meta + structure
   const truncated = html.length > 8000 ? html.slice(0, 8000) + "\n<!-- truncated -->" : html;
+  const userContent = `Analyse this HTML:\n\n${truncated}`;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: SEO_SYSTEM_PROMPT },
-      { role: "user", content: `Analyse this HTML:\n\n${truncated}` },
-    ],
-    max_tokens: 1200,
-    temperature: 0.1,
-    response_format: { type: "json_object" },
-  });
+  let raw: string;
 
-  const raw = completion.choices[0]?.message?.content ?? "{}";
+  if (useClaude) {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const msg = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1200,
+      temperature: 0.1,
+      system: SEO_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userContent }],
+    });
+    const block = msg.content[0];
+    raw = block.type === "text" ? block.text : "{}";
+  } else {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: SEO_SYSTEM_PROMPT },
+        { role: "user", content: userContent },
+      ],
+      max_tokens: 1200,
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+    });
+    raw = completion.choices[0]?.message?.content ?? "{}";
+  }
 
-  return new Response(raw, {
+  // Ensure we return valid JSON even if Claude wraps in code fences
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  const cleaned = jsonMatch ? jsonMatch[0] : raw;
+
+  return new Response(cleaned, {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",

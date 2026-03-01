@@ -1,6 +1,7 @@
 import { OpenAI } from "openai";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 export const maxDuration = 60;
 
@@ -278,7 +279,7 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { prompt, industry, vibe, model: requestedModel } = await req.json();
+  const { prompt, industry, vibe } = await req.json();
 
   if (!prompt?.trim()) {
     return new Response(
@@ -287,8 +288,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
     return new Response(
       JSON.stringify({ error: "AI service not configured. Please contact support.", code: "NO_API_KEY" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
@@ -324,8 +324,9 @@ export async function POST(req: NextRequest) {
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── Determine which model to use ──────────────────────────────────────────
-  const useClaude = requestedModel === "claude-sonnet-4-6" && !!process.env.ANTHROPIC_API_KEY;
-  const openai = new OpenAI({ apiKey });
+  // Claude is preferred for website generation when ANTHROPIC_API_KEY is set.
+  // Falls back to OpenAI only when Anthropic key is absent.
+  const useClaude = !!process.env.ANTHROPIC_API_KEY;
 
   const industryHint = industry && INDUSTRY_HINTS[industry]
     ? `\nINDUSTRY GUIDANCE: ${INDUSTRY_HINTS[industry]}`
@@ -353,64 +354,32 @@ export async function POST(req: NextRequest) {
     { role: "user" as const, content: userMessage },
   ];
 
-  // ── Claude path (Anthropic API) ─────────────────────────────────────────
+  // ── Claude path (preferred) ─────────────────────────────────────────────
   if (useClaude) {
     try {
-      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.ANTHROPIC_API_KEY!,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6-20250514",
-          max_tokens: 16000,
-          system: SYSTEM_PROMPT,
-          stream: true,
-          messages: [{ role: "user", content: userMessage }],
-        }),
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const stream = client.messages.stream({
+        model: "claude-sonnet-4-6",
+        max_tokens: 16000,
+        temperature: 0.80,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userMessage }],
       });
 
-      if (!anthropicRes.ok || !anthropicRes.body) {
-        const errText = await anthropicRes.text().catch(() => "Unknown error");
-        return new Response(
-          JSON.stringify({ error: `Claude generation failed: ${errText}`, code: "AI_ERROR" }),
-          { status: 502, headers: { "Content-Type": "application/json" } }
-        );
-      }
-
       const encoder = new TextEncoder();
-      const decoder = new TextDecoder();
 
       const readable = new ReadableStream({
         async start(controller) {
-          const reader = anthropicRes.body!.getReader();
           try {
-            let buffer = "";
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split("\n");
-              buffer = lines.pop() ?? "";
-              for (const line of lines) {
-                if (!line.startsWith("data: ")) continue;
-                const data = line.slice(6);
-                if (data === "[DONE]") continue;
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.type === "content_block_delta" && parsed.delta?.text) {
-                    controller.enqueue(encoder.encode(parsed.delta.text));
-                  }
-                } catch { /* skip non-JSON lines */ }
+            for await (const event of stream) {
+              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                controller.enqueue(encoder.encode(event.delta.text));
               }
             }
           } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Stream interrupted";
             controller.enqueue(encoder.encode(`\n<!-- GENERATION_ERROR: ${message} -->`));
           } finally {
-            reader.releaseLock();
             controller.close();
           }
         },
@@ -432,7 +401,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── OpenAI path (default) ───────────────────────────────────────────────
+  // ── OpenAI path (fallback) ──────────────────────────────────────────────
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   let stream;
   try {
     stream = await openai.chat.completions.create({

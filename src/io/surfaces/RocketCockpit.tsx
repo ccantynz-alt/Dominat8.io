@@ -178,10 +178,13 @@ type QAState = "idle" | "running" | "done" | "failed";
 type QAResult = { summary?: string; error?: string };
 
 const QA_ACTIONS = [
-  { id: "seo-sweep",             label: "SEO Sweep",      sub: "Titles, descriptions, keywords", badge: "RUN",   cls: "badge hot" },
-  { id: "sit",                   label: "Sitemap Rebuild", sub: "Trigger sitemap refresh",        badge: "RUN",   cls: "badge ok" },
-  { id: "performance-optimizer", label: "Perf Audit",     sub: "LCP, CLS, render-blocking",      badge: "SCAN",  cls: "badge" },
-  { id: "accessibility-checker", label: "A11y Check",     sub: "ARIA, contrast, keyboard nav",   badge: "CHECK", cls: "badge" },
+  { id: "seo-sweep",             label: "SEO Sweep",       sub: "Titles, descriptions, keywords",  badge: "RUN",   cls: "badge hot" },
+  { id: "design-fixer",          label: "Design Fixer",    sub: "Layout, contrast, UX polish",     badge: "FIX",   cls: "badge hot" },
+  { id: "responsive-audit",      label: "Responsive Audit",sub: "320px → 1440px breakpoints",      badge: "SCAN",  cls: "badge" },
+  { id: "performance-optimizer", label: "Perf Audit",      sub: "LCP, CLS, render-blocking",       badge: "SCAN",  cls: "badge" },
+  { id: "accessibility-checker", label: "A11y Check",      sub: "ARIA, contrast, keyboard nav",    badge: "CHECK", cls: "badge" },
+  { id: "link-scanner",          label: "Link Scanner",    sub: "Broken links, CTAs, anchors",     badge: "SCAN",  cls: "badge" },
+  { id: "sit",                   label: "Sitemap Rebuild", sub: "Trigger sitemap refresh",         badge: "RUN",   cls: "badge ok" },
 ] as const;
 
 type QAId = typeof QA_ACTIONS[number]["id"];
@@ -266,7 +269,7 @@ function QuickActionsPanel() {
 
 type CockpitAgentState = "idle" | "running" | "done";
 
-const COCKPIT_AGENTS = ["seo-sweep", "performance-optimizer", "accessibility-checker", "link-scanner"] as const;
+const COCKPIT_AGENTS = ["seo-sweep", "design-fixer", "responsive-audit", "performance-optimizer", "accessibility-checker", "link-scanner"] as const;
 
 export function RocketCockpit(props: { patchId: string }) {
   const [runAllState, setRunAllState] = React.useState<CockpitAgentState>("idle");

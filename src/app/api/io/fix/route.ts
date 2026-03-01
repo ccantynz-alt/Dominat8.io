@@ -1,4 +1,5 @@
 import { OpenAI } from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { isAdminUser, checkAndConsumeCredits } from "@/lib/agent-credits";
@@ -47,12 +48,10 @@ export async function POST(req: NextRequest) {
     return new Response("HTML required", { status: 400 });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return new Response("OpenAI API key not configured", { status: 500 });
+  const useClaude = !!process.env.ANTHROPIC_API_KEY;
+  if (!useClaude && !process.env.OPENAI_API_KEY) {
+    return new Response("No AI provider configured", { status: 503 });
   }
-
-  const openai = new OpenAI({ apiKey });
 
   const userMessage = [
     "Fix all issues in this website HTML. Original brief:",
@@ -62,6 +61,43 @@ export async function POST(req: NextRequest) {
     html.trim(),
   ].join("\n");
 
+  const encoder = new TextEncoder();
+
+  if (useClaude) {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const stream = client.messages.stream({
+      model: "claude-sonnet-4-6",
+      max_tokens: 16000,
+      temperature: 0.2,
+      system: FIX_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userMessage }],
+    });
+
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of stream) {
+            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          }
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
+  // Fallback: OpenAI
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const stream = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
@@ -72,8 +108,6 @@ export async function POST(req: NextRequest) {
     max_tokens: 16000,
     temperature: 0.30,
   });
-
-  const encoder = new TextEncoder();
 
   const readable = new ReadableStream({
     async start(controller) {
