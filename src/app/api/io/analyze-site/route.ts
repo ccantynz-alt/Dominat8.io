@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
   }
 
   const msg = await client.messages.create(
-    createParams as Parameters<typeof client.messages.create>[0]
+    createParams as unknown as Parameters<typeof client.messages.create>[0]
   );
 
   const block = msg.content[0];
