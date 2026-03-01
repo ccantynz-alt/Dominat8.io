@@ -8,9 +8,7 @@ on:
   # mergeStateStatus from reaching CLEAN (circular dependency).
   workflow_run:
     workflows:
-      - "d8-keep-green"
       - "CI"
-      - "D8 Quality Gates"
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -53,9 +51,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.pr_number }}" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.pr_number }}" ]; then
             PR_NUMBER="${{ github.event.inputs.pr_number }}"
           else
             BRANCH="${{ github.event.workflow_run.head_branch }}"

@@ -16,6 +16,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -39,6 +40,9 @@ jobs:
           GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           ALLOW_PROTECTED_PATHS: ${{ contains(github.event.pull_request.title, '[ALLOW_PROTECTED]') && '1' || '0' }}
         run: node scripts/protected-paths-check.mjs
+
+      - name: Lint
+        run: npm run lint --if-present
 
       - name: Build
         run: npm run build
