@@ -280,7 +280,7 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { prompt, industry, vibe, model: requestedModel } = await req.json();
+  const { prompt, industry, vibe } = await req.json();
 
   if (!prompt?.trim()) {
     return new Response(
