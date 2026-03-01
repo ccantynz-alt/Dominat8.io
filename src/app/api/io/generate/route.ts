@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import { calculateCost, trackGenerationCost } from "@/lib/cost-tracker";
+import { formatMemoriesForPrompt } from "@/lib/memory";
 
 export const maxDuration = 60;
 
@@ -362,11 +363,20 @@ export async function POST(req: NextRequest) {
     ? `\n${VIBE_HINTS[vibe]}`
     : "";
 
+  // Inject user memories (brand colors, fonts, business info, etc.)
+  let memoryContext = "";
+  if (userId) {
+    try {
+      memoryContext = await formatMemoriesForPrompt(userId);
+    } catch { /* no memories — continue */ }
+  }
+
   const userMessage = [
     `Build a world-class website for: ${prompt.trim()}`,
     industryHint,
     vibeHint,
     industry ? `Industry category: ${industry}` : "",
+    memoryContext,
     "",
     "This website must be so visually stunning it wins a Webby Award.",
     "Invent real, specific, compelling content — zero lorem ipsum, zero generic placeholders.",
