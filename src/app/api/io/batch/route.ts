@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
   // If completed, fetch results
   if (batch.processing_status === "ended") {
     const results: Record<string, unknown>[] = [];
-    for await (const result of client.messages.batches.results(batchId)) {
+    for await (const result of await client.messages.batches.results(batchId)) {
       if (result.result.type === "succeeded") {
         const msg = result.result.message;
         const block = msg.content[0];

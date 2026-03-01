@@ -151,7 +151,7 @@ export async function classifyAndDraft(
         strict: true,
       },
     },
-  } as Parameters<typeof client.messages.create>[0]);
+  } as unknown as Anthropic.MessageCreateParamsNonStreaming);
 
   const block = msg.content[0];
   const raw = block.type === "text" ? block.text : "{}";

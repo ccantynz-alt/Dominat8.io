@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
   const blob = new Blob([buffer], { type: type || "application/octet-stream" });
   const fileObj = new File([blob], filename, { type: type || "application/octet-stream" });
 
+  // @ts-expect-error -- Files API not yet in SDK types
   const uploaded = await client.files.upload({
     file: fileObj,
     purpose: "vision",
@@ -120,6 +121,7 @@ export async function DELETE(req: NextRequest) {
   if (anthropicKey) {
     try {
       const client = new Anthropic({ apiKey: anthropicKey });
+      // @ts-expect-error -- Files API not yet in SDK types
       await client.files.delete(fileId);
     } catch { /* file may already be deleted on Anthropic side */ }
   }

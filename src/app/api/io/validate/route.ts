@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       {
         type: "code_execution_20250825",
         name: "code_execution",
-      } as Anthropic.Tool,
+      } as unknown as Anthropic.Tool,
     ],
   });
 
@@ -115,13 +115,13 @@ export async function POST(req: NextRequest) {
       textBlocks.push(block.text);
     } else if (block.type === "server_tool_use" || block.type === "tool_use") {
       // Code execution tool was called
-      const input = (block as Record<string, unknown>).input as Record<string, string> | undefined;
+      const input = (block as unknown as Record<string, unknown>).input as Record<string, string> | undefined;
       if (input?.code) {
         codeResults.push({ code: input.code, output: "" });
       }
-    } else if (block.type === "server_tool_result" || block.type === "tool_result") {
-      // Code execution result
-      const content = (block as Record<string, unknown>).content;
+    } else {
+      // Code execution result (server_tool_result / tool_result)
+      const content = (block as unknown as Record<string, unknown>).content;
       if (typeof content === "string" && codeResults.length > 0) {
         codeResults[codeResults.length - 1].output = content;
       }

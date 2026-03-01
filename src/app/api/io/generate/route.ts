@@ -460,8 +460,8 @@ export async function POST(req: NextRequest) {
                 claudeModelId,
                 usage.input_tokens,
                 usage.output_tokens,
-                (usage as Record<string, number>).thinking_tokens ?? 0,
-                (usage as Record<string, number>).cache_read_input_tokens ?? 0,
+                (usage as unknown as Record<string, number>).thinking_tokens ?? 0,
+                (usage as unknown as Record<string, number>).cache_read_input_tokens ?? 0,
                 "pro",
               );
               if (userId) trackGenerationCost(userId, cost).catch(() => {});

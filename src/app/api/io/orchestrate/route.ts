@@ -131,11 +131,11 @@ export async function POST(req: NextRequest) {
               type: "web_search_20250305",
               name: "web_search",
               max_uses: 3,
-            } as Anthropic.Tool,
+            } as unknown as Anthropic.Tool,
             {
               type: "code_execution_20250825",
               name: "code_execution",
-            } as Anthropic.Tool,
+            } as unknown as Anthropic.Tool,
           ],
         });
 
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
           if (block.type === "text") {
             textBlocks.push(block.text);
           } else if (block.type === "server_tool_use") {
-            const name = (block as Record<string, unknown>).name;
+            const name = (block as unknown as Record<string, unknown>).name;
             if (name === "web_search") searchesUsed++;
             if (name === "code_execution") codeExecutions++;
           }

@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
   const client = new Anthropic({ apiKey: anthropicKey });
 
   // Use 1M context window beta for large sites
-  const createParams: Record<string, unknown> = {
+  const createParams: Anthropic.MessageCreateParamsNonStreaming = {
     model: "claude-sonnet-4-6-20250514",
     max_tokens: 6000,
     temperature: 0.1,
@@ -150,13 +150,12 @@ export async function POST(req: NextRequest) {
   };
 
   // Enable 1M context for large sites (>150K estimated tokens)
-  if (estimatedTokens > 150000) {
-    createParams.betas = ["context-1m-2025-08-07"];
-  }
-
-  const msg = await client.messages.create(
-    createParams as unknown as Parameters<typeof client.messages.create>[0]
-  );
+  const msg = estimatedTokens > 150000
+    ? await client.beta.messages.create({
+        ...createParams,
+        betas: ["context-1m-2025-08-07"],
+      })
+    : await client.messages.create(createParams);
 
   const block = msg.content[0];
   const raw = block.type === "text" ? block.text : "{}";

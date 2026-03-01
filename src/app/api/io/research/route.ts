@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         type: "web_search_20250305",
         name: "web_search",
         max_uses: 5,
-      } as Anthropic.Tool,
+      } as unknown as Anthropic.Tool,
     ],
   });
 

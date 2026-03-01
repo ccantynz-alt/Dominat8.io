@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   if (anthropicKey) {
     try {
       const client = new Anthropic({ apiKey: anthropicKey });
-      const countResult = await client.messages.count_tokens({
+      const countResult = await client.messages.countTokens({
         model: "claude-sonnet-4-6-20250514",
         system: systemPrompt,
         messages: [{ role: "user", content: userMessage }],

@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
         ],
       },
     ],
-  });
+  } as unknown as Anthropic.MessageCreateParamsNonStreaming);
 
   // Extract text and citations from the response
   const textBlocks: string[] = [];
@@ -133,8 +133,8 @@ export async function POST(req: NextRequest) {
       if ("citations" in block && Array.isArray(block.citations)) {
         for (const cite of block.citations) {
           citations.push({
-            text: (cite as Record<string, string>).cited_text ?? "",
-            source: (cite as Record<string, string>).document_title ?? "HTML",
+            text: (cite as unknown as Record<string, string>).cited_text ?? "",
+            source: (cite as unknown as Record<string, string>).document_title ?? "HTML",
           });
         }
       }
