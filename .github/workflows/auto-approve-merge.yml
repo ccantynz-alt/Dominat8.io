@@ -28,12 +28,12 @@ jobs:
   auto-approve-merge:
     name: Auto-approve and merge Claude PRs
     runs-on: ubuntu-latest
-    # Only act on claude/* branches
+    # Only act on claude/* or copilot/* branches
     if: |
       (github.event_name == 'pull_request' &&
-        startsWith(github.head_ref, 'claude/')) ||
+        (startsWith(github.head_ref, 'claude/') || startsWith(github.head_ref, 'copilot/'))) ||
       (github.event_name == 'workflow_run' &&
-        startsWith(github.event.workflow_run.head_branch, 'claude/')) ||
+        (startsWith(github.event.workflow_run.head_branch, 'claude/') || startsWith(github.event.workflow_run.head_branch, 'copilot/'))) ||
       github.event_name == 'workflow_dispatch'
     steps:
       - name: Verify GH_CLAUDE_PAT is configured
