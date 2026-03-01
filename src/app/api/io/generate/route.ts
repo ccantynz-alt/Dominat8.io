@@ -287,8 +287,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
+  // ── Determine which model to use ──────────────────────────────────────────
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const useClaude = requestedModel === "claude-sonnet-4-6" && !!anthropicKey;
+
+  // Ensure we have at least one usable API key
+  if (!useClaude && !openaiKey) {
     return new Response(
       JSON.stringify({ error: "AI service not configured. Please contact support.", code: "NO_API_KEY" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
@@ -323,10 +328,6 @@ export async function POST(req: NextRequest) {
   // Unauthenticated users get 3 free generations tracked client-side (localStorage).
   // ─────────────────────────────────────────────────────────────────────────
 
-  // ── Determine which model to use ──────────────────────────────────────────
-  const useClaude = requestedModel === "claude-sonnet-4-6" && !!process.env.ANTHROPIC_API_KEY;
-  const openai = new OpenAI({ apiKey });
-
   const industryHint = industry && INDUSTRY_HINTS[industry]
     ? `\nINDUSTRY GUIDANCE: ${INDUSTRY_HINTS[industry]}`
     : "";
@@ -360,7 +361,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": process.env.ANTHROPIC_API_KEY!,
+          "x-api-key": anthropicKey!,
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
@@ -433,6 +434,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── OpenAI path (default) ───────────────────────────────────────────────
+  const openai = new OpenAI({ apiKey: openaiKey! });
   let stream;
   try {
     stream = await openai.chat.completions.create({
