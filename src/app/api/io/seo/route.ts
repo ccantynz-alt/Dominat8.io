@@ -43,7 +43,7 @@ Return ONLY valid JSON. No markdown, no explanation, no code fences.`;
 
 export async function POST(req: NextRequest) {
   // ── Auth + credit check ────────────────────────────────────────────────────
-  const { userId } = auth();
+  const { userId } = await auth();
   if (userId && !isAdminUser(userId)) {
     const check = await checkAndConsumeCredits(userId, "seo-sweep");
     if (!check.ok) {

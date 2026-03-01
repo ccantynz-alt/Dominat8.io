@@ -19,7 +19,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const { userId } = auth();
+  const { userId } = await auth();
 
   if (!userId || !isAdminUser(userId)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

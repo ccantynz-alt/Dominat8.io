@@ -199,16 +199,27 @@ const GEN_STAGES = [
 
 function GeneratingAnimation({ progress }: { progress: number }) {
   const stage = GEN_STAGES.slice().reverse().find(s => progress >= s.threshold) ?? GEN_STAGES[0];
-  const circ = 2 * Math.PI * 34;
+  const circ = 2 * Math.PI * 38;
 
   return (
     <div className="d8b-gen-anim">
+      {/* Pulsing glow behind ring */}
+      <div className="d8b-gen-glow" />
+
       <div className="d8b-gen-ring">
-        <svg viewBox="0 0 80 80" className="d8b-gen-svg">
-          <circle cx="40" cy="40" r="34" className="d8b-gen-track" />
+        <svg viewBox="0 0 88 88" className="d8b-gen-svg">
+          <defs>
+            <linearGradient id="d8b-gen-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#00C8FF" />
+              <stop offset="50%" stopColor="#00E0FF" />
+              <stop offset="100%" stopColor="#7B61FF" />
+            </linearGradient>
+          </defs>
+          <circle cx="44" cy="44" r="38" className="d8b-gen-track" />
           <circle
-            cx="40" cy="40" r="34"
+            cx="44" cy="44" r="38"
             className="d8b-gen-arc"
+            stroke="url(#d8b-gen-grad)"
             strokeDasharray={`${circ}`}
             strokeDashoffset={`${circ * (1 - progress / 100)}`}
           />
@@ -226,7 +237,7 @@ function GeneratingAnimation({ progress }: { progress: number }) {
               key={i}
               className={`d8b-gen-stage-pill ${active ? "d8b-gen-stage-pill--active" : ""} ${done ? "d8b-gen-stage-pill--done" : ""}`}
             >
-              <span className="d8b-gen-stage-check">{done ? "✓" : active ? "○" : "·"}</span>
+              <span className="d8b-gen-stage-check">{done ? "✓" : active ? "●" : "·"}</span>
               <span>{s.label}</span>
             </div>
           );
@@ -333,6 +344,73 @@ function deployIcon(icon: string): string {
   if (icon === "globe")  return "🌐";
   if (icon === "bot")    return "🤖";
   return "⚙️";
+}
+
+// ─── Dock Modals (stubs — wired into dock buttons) ───────────────────────────
+
+function SettingsModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">Settings</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          <p className="d8b-modal-desc">Site settings coming soon.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishedUrl: string | null }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">Custom Domain</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          {publishedUrl && <p className="d8b-modal-desc">Currently published at: <a href={publishedUrl} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(0,255,180,0.85)" }}>{publishedUrl}</a></p>}
+          <p className="d8b-modal-desc">Custom domain configuration coming soon.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SSLModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">SSL Certificate</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          <p className="d8b-modal-desc">All deployed sites are served over HTTPS with automatic SSL certificates.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AutomateModal({ onClose, html, prompt, onApplyHtml }: { onClose: () => void; html: string; prompt: string; onApplyHtml?: (h: string) => void }) {
+  return (
+    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="d8b-info-modal">
+        <div className="d8b-modal-header">
+          <div className="d8b-modal-title">Automate</div>
+          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
+        </div>
+        <div className="d8b-modal-body">
+          <p className="d8b-modal-desc">Automation workflows coming soon. Schedule regenerations, A/B tests, and more.</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Main Builder ─────────────────────────────────────────────────────────────
@@ -958,11 +1036,28 @@ export function Builder() {
     <div className="d8b-root">
       <BuilderStyles />
 
+      {/* Ambient animated background */}
+      <div className="d8b-ambient" aria-hidden="true">
+        <div className="d8b-ambient-orb d8b-ambient-orb-1" />
+        <div className="d8b-ambient-orb d8b-ambient-orb-2" />
+        <div className="d8b-ambient-orb d8b-ambient-orb-3" />
+        <div className="d8b-ambient-grid" />
+      </div>
+
       {/* ── Sidebar ── */}
       <aside className="d8b-sidebar">
         <div className="d8b-logo">
-          <span className="d8b-logo-mark">D8</span>
-          <span className="d8b-logo-sub">IO Builder</span>
+          <div className="d8b-logo-icon">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="1" y="1" width="26" height="26" rx="7" stroke="url(#logo-grad)" strokeWidth="1.5" fill="rgba(0,200,255,0.04)"/>
+              <text x="14" y="19" textAnchor="middle" fill="url(#logo-grad)" fontSize="13" fontWeight="900" fontFamily="inherit">D8</text>
+              <defs><linearGradient id="logo-grad" x1="0" y1="0" x2="28" y2="28"><stop stopColor="#00E0FF"/><stop offset="1" stopColor="#7B61FF"/></linearGradient></defs>
+            </svg>
+          </div>
+          <div className="d8b-logo-text-group">
+            <span className="d8b-logo-mark">Dominat8</span>
+            <span className="d8b-logo-sub">AI Builder</span>
+          </div>
         </div>
 
         <div className="d8b-sidebar-tabs">
@@ -971,6 +1066,7 @@ export function Builder() {
             onClick={() => setSidebarTab("new")}
             type="button"
           >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
             New Site
           </button>
           <button
@@ -978,6 +1074,7 @@ export function Builder() {
             onClick={() => setSidebarTab("history")}
             type="button"
           >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
             History {sites.length > 0 && <span className="d8b-count">{sites.length}</span>}
           </button>
         </div>
@@ -1061,10 +1158,14 @@ export function Builder() {
               disabled={!prompt.trim() && !isBuilding}
               type="button"
             >
+              <span className="d8b-generate-glow" />
               {isBuilding ? (
-                <><span className="d8b-stop-icon">■</span> Stop</>
+                <><span className="d8b-stop-icon">■</span> Stop generating</>
               ) : (
-                <><span className="d8b-spark">⚡</span> Generate Site</>
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10" /></svg>
+                  Generate Site
+                </>
               )}
             </button>
 
@@ -1235,15 +1336,33 @@ export function Builder() {
           /* ── Empty state ── */
           <div className="d8b-empty-canvas">
             <div className="d8b-splash">
-              <div className="d8b-splash-mark">✦</div>
-              <h1 className="d8b-splash-title">Build anything.</h1>
+              <div className="d8b-splash-ring" aria-hidden="true">
+                <svg viewBox="0 0 200 200" className="d8b-splash-ring-svg">
+                  <defs>
+                    <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#00E0FF" stopOpacity="0.6"/>
+                      <stop offset="50%" stopColor="#7B61FF" stopOpacity="0.3"/>
+                      <stop offset="100%" stopColor="#00E0FF" stopOpacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="100" cy="100" r="90" fill="none" stroke="url(#ring-grad)" strokeWidth="0.5" />
+                  <circle cx="100" cy="100" r="70" fill="none" stroke="rgba(0,224,255,0.08)" strokeWidth="0.5" strokeDasharray="4 8"/>
+                </svg>
+              </div>
+              <div className="d8b-splash-mark">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                  <path d="M24 4L28 16L40 12L32 22L44 24L32 26L40 36L28 32L24 44L20 32L8 36L16 26L4 24L16 22L8 12L20 16Z" fill="url(#star-grad)" opacity="0.9"/>
+                  <defs><linearGradient id="star-grad" x1="4" y1="4" x2="44" y2="44"><stop stopColor="#00E0FF"/><stop offset="1" stopColor="#7B61FF"/></linearGradient></defs>
+                </svg>
+              </div>
+              <h1 className="d8b-splash-title">Build anything<span className="d8b-splash-dot">.</span></h1>
               <p className="d8b-splash-sub">
-                Describe your website and watch it appear in seconds.<br />
-                No templates. No drag and drop. Just results.
+                Describe your business. Watch a production-ready site<br />
+                materialize in seconds. Powered by AI.
               </p>
               <div className="d8b-splash-examples">
-                <div className="d8b-examples-label">Try one of these:</div>
-                {EXAMPLE_PROMPTS.slice(0, 3).map((ex) => (
+                <div className="d8b-examples-label">Quick start</div>
+                {EXAMPLE_PROMPTS.slice(0, 3).map((ex, i) => (
                   <button
                     key={ex}
                     className="d8b-example-btn"
@@ -1252,7 +1371,9 @@ export function Builder() {
                       textareaRef.current?.focus();
                     }}
                     type="button"
+                    style={{ animationDelay: `${i * 80}ms` }}
                   >
+                    <span className="d8b-example-arrow">→</span>
                     {ex}
                   </button>
                 ))}
@@ -1632,125 +1753,219 @@ function DeployModal({ html, prompt, onClose, onDeployed }: { html: string; prom
 function BuilderStyles() {
   return (
     <style>{`
-      /* ── Reset / root ── */
+      /* ══════════════════════════════════════════════════════════
+         D8 BUILDER — 2030 Futuristic Design System
+         ══════════════════════════════════════════════════════════ */
+
+      /* ── Root ── */
       .d8b-root {
         display: flex;
         height: 100vh;
         width: 100vw;
-        background: #07090f;
-        color: #d7dbea;
-        font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+        background: #030712;
+        color: #E2E8F0;
+        font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
         overflow: hidden;
+        position: relative;
+      }
+
+      /* ── Ambient animated background ── */
+      .d8b-ambient {
+        position: fixed; inset: 0; z-index: 0;
+        pointer-events: none; overflow: hidden;
+      }
+      .d8b-ambient-orb {
+        position: absolute; border-radius: 50%;
+        filter: blur(120px); will-change: transform;
+      }
+      .d8b-ambient-orb-1 {
+        width: 800px; height: 800px; top: -300px; left: -200px;
+        background: radial-gradient(circle, rgba(0,200,255,0.08) 0%, transparent 70%);
+        animation: d8b-float-1 30s ease-in-out infinite;
+      }
+      .d8b-ambient-orb-2 {
+        width: 600px; height: 600px; bottom: -200px; right: -100px;
+        background: radial-gradient(circle, rgba(123,97,255,0.07) 0%, transparent 70%);
+        animation: d8b-float-2 25s ease-in-out infinite;
+      }
+      .d8b-ambient-orb-3 {
+        width: 500px; height: 500px; top: 30%; left: 50%;
+        background: radial-gradient(circle, rgba(0,255,200,0.04) 0%, transparent 70%);
+        animation: d8b-float-3 35s ease-in-out infinite;
+      }
+      .d8b-ambient-grid {
+        position: absolute; inset: 0;
+        background-image:
+          linear-gradient(rgba(0,200,255,0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,200,255,0.025) 1px, transparent 1px);
+        background-size: 80px 80px;
+        mask-image: radial-gradient(ellipse 70% 60% at 30% 30%, black, transparent);
+        -webkit-mask-image: radial-gradient(ellipse 70% 60% at 30% 30%, black, transparent);
+      }
+      @keyframes d8b-float-1 {
+        0%, 100% { transform: translate(0,0) scale(1); }
+        33% { transform: translate(80px,60px) scale(1.1); }
+        66% { transform: translate(-40px,80px) scale(0.95); }
+      }
+      @keyframes d8b-float-2 {
+        0%, 100% { transform: translate(0,0) scale(1); }
+        33% { transform: translate(-60px,-40px) scale(1.12); }
+        66% { transform: translate(50px,-20px) scale(0.9); }
+      }
+      @keyframes d8b-float-3 {
+        0%, 100% { transform: translate(0,0); }
+        50% { transform: translate(-60px,40px); }
       }
 
       /* ── Sidebar ── */
       .d8b-sidebar {
-        width: 300px;
-        min-width: 300px;
+        width: 340px;
+        min-width: 340px;
         display: flex;
         flex-direction: column;
-        background: linear-gradient(180deg, #0a0d18 0%, #080b15 100%);
-        border-right: 1px solid rgba(255,255,255,0.07);
+        background: rgba(6,10,24,0.85);
+        backdrop-filter: blur(40px) saturate(1.4);
+        -webkit-backdrop-filter: blur(40px) saturate(1.4);
+        border-right: 1px solid rgba(255,255,255,0.06);
         overflow: hidden;
+        position: relative;
+        z-index: 10;
+      }
+      .d8b-sidebar::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(0,200,255,0.3), rgba(123,97,255,0.2), transparent);
+      }
+      .d8b-sidebar::after {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 300px;
+        background: radial-gradient(ellipse 100% 100% at 50% -20%, rgba(0,180,255,0.04), transparent 70%);
+        pointer-events: none; z-index: 0;
       }
 
       .d8b-logo {
         display: flex;
-        align-items: baseline;
-        gap: 8px;
+        align-items: center;
+        gap: 12px;
         padding: 20px 20px 0;
+        position: relative;
+        z-index: 1;
       }
+      .d8b-logo-icon { flex-shrink: 0; line-height: 0; }
+      .d8b-logo-text-group { display: flex; flex-direction: column; gap: 1px; }
       .d8b-logo-mark {
-        font-size: 20px;
+        font-size: 16px;
         font-weight: 800;
-        color: #fff;
-        letter-spacing: -0.04em;
+        background: linear-gradient(135deg, #fff 0%, rgba(0,200,255,0.9) 100%);
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.03em;
       }
       .d8b-logo-sub {
-        font-size: 12px;
-        color: rgba(255,255,255,0.4);
-        font-weight: 500;
-        letter-spacing: 0.02em;
+        font-size: 10px;
+        color: rgba(140,160,200,0.45);
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
       }
 
       .d8b-sidebar-tabs {
         display: flex;
-        gap: 2px;
-        padding: 16px 14px 0;
+        gap: 4px;
+        padding: 18px 16px 0;
+        position: relative;
+        z-index: 1;
       }
       .d8b-tab {
         flex: 1;
-        padding: 8px 0;
-        border-radius: 8px;
-        border: none;
+        padding: 10px 0;
+        border-radius: 10px;
+        border: 1px solid transparent;
         background: transparent;
-        color: rgba(255,255,255,0.45);
+        color: rgba(140,160,200,0.45);
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 140ms ease;
+        transition: all 200ms cubic-bezier(0.16,1,0.3,1);
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        gap: 7px;
+        font-family: inherit;
+        position: relative;
       }
       .d8b-tab--active {
-        background: rgba(255,255,255,0.07);
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.08);
         color: #fff;
       }
+      .d8b-tab--active::after {
+        content: '';
+        position: absolute; bottom: -1px; left: 20%; right: 20%; height: 2px;
+        background: linear-gradient(90deg, #00D4FF, #7B61FF);
+        border-radius: 2px;
+        box-shadow: 0 0 12px rgba(0,200,255,0.4);
+      }
       .d8b-tab:hover:not(.d8b-tab--active) {
-        color: rgba(255,255,255,0.7);
+        color: rgba(200,210,230,0.70);
+        background: rgba(255,255,255,0.02);
       }
       .d8b-count {
-        background: rgba(255,255,255,0.12);
-        color: rgba(255,255,255,0.7);
+        background: linear-gradient(135deg, rgba(0,200,255,0.15), rgba(123,97,255,0.10));
+        color: rgba(0,220,255,0.90);
         border-radius: 999px;
-        padding: 1px 6px;
-        font-size: 11px;
+        padding: 2px 8px;
+        font-size: 10px;
+        font-weight: 700;
       }
 
       .d8b-sidebar-content {
         flex: 1;
         overflow-y: auto;
-        padding: 16px 14px;
+        padding: 20px 16px;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 20px;
+        position: relative;
+        z-index: 1;
       }
-      .d8b-sidebar-content::-webkit-scrollbar { width: 4px; }
+      .d8b-sidebar-content::-webkit-scrollbar { width: 3px; }
       .d8b-sidebar-content::-webkit-scrollbar-track { background: transparent; }
-      .d8b-sidebar-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+      .d8b-sidebar-content::-webkit-scrollbar-thumb { background: rgba(0,200,255,0.12); border-radius: 99px; }
 
       /* ── Fields ── */
-      .d8b-field { display: flex; flex-direction: column; gap: 8px; }
+      .d8b-field { display: flex; flex-direction: column; gap: 10px; }
       .d8b-label {
         font-size: 11px;
-        font-weight: 600;
-        color: rgba(255,255,255,0.4);
+        font-weight: 700;
+        color: rgba(140,160,200,0.50);
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.10em;
       }
       .d8b-textarea {
         width: 100%;
-        background: rgba(0,0,0,0.3);
-        border: 1px solid rgba(255,255,255,0.10);
-        border-radius: 10px;
-        color: #e8eaf6;
-        font-size: 13px;
-        line-height: 1.6;
-        padding: 10px 12px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 14px;
+        color: #E8F0FF;
+        font-size: 14px;
+        line-height: 1.7;
+        padding: 14px 16px;
         resize: none;
         font-family: inherit;
         outline: none;
-        transition: border-color 140ms ease;
+        transition: all 250ms cubic-bezier(0.16,1,0.3,1);
       }
       .d8b-textarea:focus {
-        border-color: rgba(255,255,255,0.22);
+        border-color: rgba(0,200,255,0.30);
+        background: rgba(0,200,255,0.02);
+        box-shadow: 0 0 0 3px rgba(0,200,255,0.06), 0 0 30px rgba(0,200,255,0.04);
       }
-      .d8b-textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+      .d8b-textarea::placeholder { color: rgba(120,140,180,0.30); }
+      .d8b-textarea:disabled { opacity: 0.35; cursor: not-allowed; }
       .d8b-hint {
         font-size: 11px;
-        color: rgba(255,255,255,0.25);
+        color: rgba(120,140,180,0.30);
         text-align: right;
       }
 
@@ -1764,107 +1979,134 @@ function BuilderStyles() {
         display: inline-flex;
         align-items: center;
         gap: 5px;
-        padding: 5px 10px;
+        padding: 6px 12px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(255,255,255,0.03);
-        color: rgba(255,255,255,0.55);
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        color: rgba(180,195,220,0.55);
         font-size: 12px;
+        font-weight: 500;
         font-family: inherit;
         cursor: pointer;
-        transition: all 120ms ease;
+        transition: all 200ms cubic-bezier(0.16,1,0.3,1);
       }
-      .d8b-chip:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.85); }
+      .d8b-chip:hover {
+        border-color: rgba(0,200,255,0.20);
+        color: rgba(230,240,255,0.85);
+        background: rgba(0,200,255,0.04);
+        transform: translateY(-1px);
+      }
       .d8b-chip--active {
-        border-color: rgba(240,179,90,0.5);
-        background: rgba(240,179,90,0.08);
-        color: rgba(240,179,90,0.9);
+        border-color: rgba(0,200,255,0.35);
+        background: linear-gradient(135deg, rgba(0,200,255,0.08), rgba(123,97,255,0.05));
+        color: rgba(0,230,255,0.95);
+        box-shadow: 0 0 16px rgba(0,200,255,0.08), inset 0 0 12px rgba(0,200,255,0.03);
       }
-      .d8b-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+      .d8b-chip:disabled { opacity: 0.25; cursor: not-allowed; }
 
       /* ── Model selector ── */
       .d8b-model-selector {
         display: flex;
         gap: 4px;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 10px;
-        padding: 3px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 12px;
+        padding: 4px;
       }
       .d8b-model-btn {
         flex: 1;
-        padding: 5px 10px;
-        border-radius: 7px;
+        padding: 8px 10px;
+        border-radius: 9px;
         border: none;
         background: transparent;
-        color: rgba(255,255,255,0.40);
+        color: rgba(140,160,200,0.40);
         font-size: 12px;
         font-weight: 600;
         font-family: inherit;
         cursor: pointer;
-        transition: all 120ms ease;
+        transition: all 200ms cubic-bezier(0.16,1,0.3,1);
       }
-      .d8b-model-btn:hover:not(:disabled) { color: rgba(255,255,255,0.70); }
-      .d8b-model-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .d8b-model-btn:hover:not(:disabled) { color: rgba(200,215,240,0.70); }
+      .d8b-model-btn:disabled { opacity: 0.30; cursor: not-allowed; }
       .d8b-model-btn--active {
-        background: rgba(255,255,255,0.10);
-        color: rgba(255,255,255,0.90);
-        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        background: rgba(255,255,255,0.06);
+        color: #fff;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
       }
 
-      /* ── Generate button ── */
+      /* ── Generate button — THE HERO ── */
       .d8b-generate-btn {
         width: 100%;
-        padding: 13px;
-        border-radius: 12px;
-        border: 1px solid rgba(240,179,90,0.4);
-        background: linear-gradient(180deg, rgba(240,179,90,0.15), rgba(240,179,90,0.06));
-        color: rgba(240,179,90,0.95);
+        padding: 15px;
+        border-radius: 14px;
+        border: 1px solid rgba(0,200,255,0.25);
+        background: linear-gradient(135deg, rgba(0,180,255,0.12), rgba(123,97,255,0.08));
+        color: #fff;
         font-size: 15px;
-        font-weight: 600;
+        font-weight: 700;
         font-family: inherit;
         cursor: pointer;
-        transition: all 140ms ease;
+        transition: all 250ms cubic-bezier(0.16,1,0.3,1);
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        letter-spacing: -0.01em;
+        gap: 10px;
+        letter-spacing: 0.01em;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0,200,255,0.08), 0 4px 20px rgba(0,0,0,0.3);
       }
+      .d8b-generate-glow {
+        position: absolute; inset: -1px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(0,220,255,0.15), rgba(123,97,255,0.10), rgba(0,255,200,0.08));
+        opacity: 0;
+        transition: opacity 300ms ease;
+        z-index: 0;
+      }
+      .d8b-generate-btn > *:not(.d8b-generate-glow) { position: relative; z-index: 1; }
       .d8b-generate-btn:hover:not(:disabled) {
-        background: linear-gradient(180deg, rgba(240,179,90,0.22), rgba(240,179,90,0.10));
-        border-color: rgba(240,179,90,0.6);
-        transform: translateY(-1px);
+        border-color: rgba(0,220,255,0.45);
+        box-shadow: 0 0 40px rgba(0,200,255,0.15), 0 8px 30px rgba(0,0,0,0.3);
+        transform: translateY(-2px);
       }
+      .d8b-generate-btn:hover:not(:disabled) .d8b-generate-glow { opacity: 1; }
+      .d8b-generate-btn:active:not(:disabled) { transform: translateY(0); }
       .d8b-generate-btn:disabled {
-        opacity: 0.35;
+        opacity: 0.25;
         cursor: not-allowed;
       }
       .d8b-generate-btn--building {
-        border-color: rgba(255,80,80,0.4);
-        background: linear-gradient(180deg, rgba(255,80,80,0.12), rgba(255,80,80,0.05));
-        color: rgba(255,100,100,0.9);
+        border-color: rgba(255,60,90,0.30);
+        background: linear-gradient(135deg, rgba(255,50,80,0.10), rgba(200,30,60,0.06));
+        color: rgba(255,130,150,0.95);
+        box-shadow: 0 0 20px rgba(255,60,90,0.06);
       }
       .d8b-generate-btn--building:hover {
-        border-color: rgba(255,80,80,0.6) !important;
-        background: linear-gradient(180deg, rgba(255,80,80,0.18), rgba(255,80,80,0.08)) !important;
+        border-color: rgba(255,60,90,0.50) !important;
+        box-shadow: 0 0 30px rgba(255,60,90,0.10) !important;
       }
       .d8b-spark { font-size: 16px; }
       .d8b-stop-icon { font-size: 10px; }
 
       .d8b-regen-btn {
         width: 100%;
-        padding: 10px;
-        border-radius: 10px;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: transparent;
-        color: rgba(255,255,255,0.5);
+        padding: 11px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        color: rgba(160,175,200,0.55);
         font-size: 13px;
+        font-weight: 500;
         font-family: inherit;
         cursor: pointer;
-        transition: all 120ms ease;
+        transition: all 200ms cubic-bezier(0.16,1,0.3,1);
       }
-      .d8b-regen-btn:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.18); }
+      .d8b-regen-btn:hover {
+        color: rgba(230,240,255,0.80);
+        border-color: rgba(0,200,255,0.15);
+        background: rgba(0,200,255,0.03);
+      }
 
       /* ── Stats ── */
       .d8b-stats {
@@ -1873,55 +2115,70 @@ function BuilderStyles() {
         gap: 8px;
       }
       .d8b-stat {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 10px;
-        padding: 10px 8px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 12px;
+        padding: 14px 8px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
       }
-      .d8b-stat-val { font-size: 15px; font-weight: 700; color: #fff; }
-      .d8b-stat-val.green { color: rgba(61,240,180,0.9); }
-      .d8b-stat-label { font-size: 10px; color: rgba(255,255,255,0.35); text-align: center; }
+      .d8b-stat-val {
+        font-size: 17px;
+        font-weight: 800;
+        color: #fff;
+        font-variant-numeric: tabular-nums;
+      }
+      .d8b-stat-val.green {
+        background: linear-gradient(135deg, #00FFB2, #00D4FF);
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .d8b-stat-label { font-size: 10px; color: rgba(120,140,180,0.40); text-align: center; font-weight: 600; letter-spacing: 0.02em; }
 
       /* ── History ── */
       .d8b-history { display: flex; flex-direction: column; gap: 10px; }
       .d8b-site-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 12px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 14px;
         overflow: hidden;
         cursor: pointer;
         text-align: left;
         padding: 0;
-        transition: all 140ms ease;
+        transition: all 220ms cubic-bezier(0.16,1,0.3,1);
         width: 100%;
       }
-      .d8b-site-card:hover { border-color: rgba(255,255,255,0.16); transform: translateY(-1px); }
+      .d8b-site-card:hover {
+        border-color: rgba(0,200,255,0.18);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3), 0 0 20px rgba(0,200,255,0.04);
+      }
       .d8b-site-preview { position: relative; height: 100px; overflow: hidden; }
       .d8b-site-thumb { width: 100%; height: 400px; transform: scale(0.25) translateY(-75%); transform-origin: top left; pointer-events: none; border: none; }
-      .d8b-site-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5)); }
-      .d8b-site-meta { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
-      .d8b-site-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); }
-      .d8b-site-age { font-size: 11px; color: rgba(255,255,255,0.3); }
+      .d8b-site-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, rgba(3,7,18,0.8)); }
+      .d8b-site-meta { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+      .d8b-site-name { font-size: 12px; font-weight: 600; color: rgba(230,240,255,0.80); }
+      .d8b-site-age { font-size: 11px; color: rgba(120,140,180,0.35); }
 
       /* ── Empty state ── */
-      .d8b-empty { display: flex; flex-direction: column; align-items: center; padding: 32px 16px; gap: 12px; }
-      .d8b-empty-icon { font-size: 28px; opacity: 0.3; }
-      .d8b-empty-text { font-size: 13px; color: rgba(255,255,255,0.35); text-align: center; line-height: 1.6; }
+      .d8b-empty { display: flex; flex-direction: column; align-items: center; padding: 48px 16px; gap: 14px; }
+      .d8b-empty-icon { font-size: 32px; opacity: 0.15; }
+      .d8b-empty-text { font-size: 13px; color: rgba(120,140,180,0.35); text-align: center; line-height: 1.7; }
 
       /* ── Sidebar footer ── */
       .d8b-sidebar-foot {
-        padding: 12px 16px;
-        border-top: 1px solid rgba(255,255,255,0.05);
+        padding: 14px 16px;
+        border-top: 1px solid rgba(255,255,255,0.04);
+        position: relative; z-index: 1;
       }
       .d8b-foot-badge {
         font-size: 10px;
-        color: rgba(255,255,255,0.2);
-        letter-spacing: 0.04em;
+        color: rgba(100,120,160,0.25);
+        letter-spacing: 0.08em;
         text-align: center;
+        text-transform: uppercase;
       }
 
       /* ── Main canvas ── */
@@ -1931,6 +2188,7 @@ function BuilderStyles() {
         flex-direction: column;
         overflow: hidden;
         position: relative;
+        z-index: 5;
       }
 
       /* ── Empty canvas ── */
@@ -1939,57 +2197,114 @@ function BuilderStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        background:
-          radial-gradient(800px 600px at 50% 30%, rgba(240,179,90,0.03), transparent 60%),
-          #07090f;
+        position: relative;
       }
-      .d8b-splash { text-align: center; max-width: 520px; padding: 0 24px; }
+      .d8b-splash {
+        text-align: center;
+        max-width: 580px;
+        padding: 0 24px;
+        position: relative;
+      }
+      .d8b-splash-ring {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px; height: 400px;
+        pointer-events: none;
+        opacity: 0.5;
+        animation: d8b-ring-rotate 40s linear infinite;
+      }
+      .d8b-splash-ring-svg { width: 100%; height: 100%; }
+      @keyframes d8b-ring-rotate { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
+
       .d8b-splash-mark {
-        font-size: 48px;
-        color: rgba(240,179,90,0.3);
-        display: block;
-        margin-bottom: 16px;
-        animation: d8b-pulse 3s ease-in-out infinite;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 28px;
+        width: 64px; height: 64px;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        animation: d8b-mark-float 4s ease-in-out infinite;
+        position: relative;
       }
-      @keyframes d8b-pulse {
-        0%, 100% { opacity: 0.3; transform: scale(1); }
-        50% { opacity: 0.6; transform: scale(1.05); }
+      .d8b-splash-mark::before {
+        content: '';
+        position: absolute; inset: -1px; border-radius: 20px;
+        background: linear-gradient(135deg, rgba(0,200,255,0.20), rgba(123,97,255,0.15), transparent, transparent);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor; mask-composite: exclude;
+        padding: 1px; pointer-events: none;
+      }
+      @keyframes d8b-mark-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
       }
       .d8b-splash-title {
-        font-size: 48px;
-        font-weight: 800;
+        font-size: 56px;
+        font-weight: 900;
         color: #fff;
         letter-spacing: -0.04em;
         line-height: 1;
-        margin: 0 0 16px;
+        margin: 0 0 20px;
+        position: relative;
+      }
+      .d8b-splash-dot {
+        background: linear-gradient(135deg, #00D4FF, #7B61FF);
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent;
       }
       .d8b-splash-sub {
         font-size: 16px;
-        color: rgba(255,255,255,0.45);
-        line-height: 1.7;
-        margin: 0 0 32px;
+        color: rgba(150,170,210,0.50);
+        line-height: 1.75;
+        margin: 0 0 40px;
       }
       .d8b-splash-examples { display: flex; flex-direction: column; gap: 8px; }
-      .d8b-examples-label { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+      .d8b-examples-label {
+        font-size: 10px;
+        color: rgba(0,200,255,0.30);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        font-weight: 700;
+      }
       .d8b-example-btn {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 10px;
-        color: rgba(255,255,255,0.55);
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 12px;
+        color: rgba(170,185,215,0.55);
         font-size: 13px;
         font-family: inherit;
-        padding: 12px 16px;
+        padding: 14px 18px;
         text-align: left;
         cursor: pointer;
-        transition: all 140ms ease;
-        line-height: 1.4;
+        transition: all 250ms cubic-bezier(0.16,1,0.3,1);
+        line-height: 1.5;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        animation: d8b-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both;
+      }
+      @keyframes d8b-fade-up {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .d8b-example-arrow {
+        color: rgba(0,200,255,0.30);
+        font-weight: 700;
+        flex-shrink: 0;
+        transition: all 200ms ease;
       }
       .d8b-example-btn:hover {
-        border-color: rgba(255,255,255,0.16);
-        color: rgba(255,255,255,0.85);
-        background: rgba(255,255,255,0.05);
-        transform: translateX(4px);
+        border-color: rgba(0,200,255,0.18);
+        color: rgba(230,240,255,0.85);
+        background: rgba(0,200,255,0.03);
+        transform: translateX(6px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2), 0 0 20px rgba(0,200,255,0.03);
       }
+      .d8b-example-btn:hover .d8b-example-arrow { color: rgba(0,220,255,0.80); transform: translateX(2px); }
 
       /* ── Generating screen ── */
       .d8b-generating-screen {
@@ -1997,18 +2312,31 @@ function BuilderStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #07090f;
+        position: relative;
       }
-      .d8b-gen-anim { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-      .d8b-gen-ring { position: relative; width: 80px; height: 80px; }
-      .d8b-gen-svg { width: 80px; height: 80px; transform: rotate(-90deg); }
-      .d8b-gen-track { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 4; }
+      .d8b-gen-anim { display: flex; flex-direction: column; align-items: center; gap: 20px; position: relative; }
+      .d8b-gen-glow {
+        position: absolute;
+        top: -30px;
+        width: 160px; height: 160px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0,200,255,0.12) 0%, rgba(123,97,255,0.05) 40%, transparent 70%);
+        animation: d8b-gen-breathe 3s ease-in-out infinite;
+        pointer-events: none;
+      }
+      @keyframes d8b-gen-breathe {
+        0%, 100% { transform: scale(0.85); opacity: 0.4; }
+        50% { transform: scale(1.2); opacity: 1; }
+      }
+      .d8b-gen-ring { position: relative; width: 96px; height: 96px; z-index: 1; }
+      .d8b-gen-svg { width: 96px; height: 96px; transform: rotate(-90deg); }
+      .d8b-gen-track { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 3; }
       .d8b-gen-arc {
         fill: none;
-        stroke: rgba(240,179,90,0.8);
-        stroke-width: 4;
+        stroke-width: 3;
         stroke-linecap: round;
         transition: stroke-dashoffset 300ms ease;
+        filter: drop-shadow(0 0 8px rgba(0,200,255,0.4));
       }
       .d8b-gen-pct {
         position: absolute;
@@ -2016,12 +2344,13 @@ function BuilderStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
-        font-weight: 700;
-        color: rgba(240,179,90,0.9);
+        font-size: 16px;
+        font-weight: 800;
+        color: #fff;
+        font-variant-numeric: tabular-nums;
       }
-      .d8b-gen-label { font-size: 18px; font-weight: 600; color: #fff; }
-      .d8b-gen-sub { font-size: 13px; color: rgba(255,255,255,0.4); }
+      .d8b-gen-label { font-size: 18px; font-weight: 700; color: #fff; }
+      .d8b-gen-sub { font-size: 13px; color: rgba(140,160,200,0.45); }
 
       /* ── Gen stage pills ── */
       .d8b-gen-stages {
@@ -2029,30 +2358,31 @@ function BuilderStyles() {
         flex-direction: column;
         gap: 6px;
         width: 100%;
-        max-width: 280px;
-        margin: 4px 0 8px;
+        max-width: 320px;
+        margin: 8px 0 12px;
       }
       .d8b-gen-stage-pill {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 5px 12px;
-        border-radius: 8px;
-        border: 1px solid rgba(255,255,255,0.06);
-        background: rgba(255,255,255,0.02);
-        font-size: 11px;
-        color: rgba(255,255,255,0.28);
-        transition: all 200ms ease;
+        gap: 10px;
+        padding: 8px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.04);
+        background: rgba(255,255,255,0.015);
+        font-size: 12px;
+        color: rgba(140,160,200,0.25);
+        transition: all 250ms cubic-bezier(0.16,1,0.3,1);
       }
       .d8b-gen-stage-pill--active {
-        border-color: rgba(240,179,90,0.30);
-        background: rgba(240,179,90,0.07);
-        color: rgba(240,179,90,0.85);
+        border-color: rgba(0,200,255,0.20);
+        background: rgba(0,200,255,0.04);
+        color: rgba(0,230,255,0.90);
+        box-shadow: 0 0 16px rgba(0,200,255,0.05);
       }
       .d8b-gen-stage-pill--done {
-        color: rgba(56,248,166,0.55);
-        border-color: rgba(56,248,166,0.15);
-        background: rgba(56,248,166,0.04);
+        color: rgba(0,255,180,0.50);
+        border-color: rgba(0,255,180,0.08);
+        background: rgba(0,255,180,0.02);
       }
       .d8b-gen-stage-check {
         font-size: 10px;
@@ -2067,85 +2397,91 @@ function BuilderStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        background:
-          radial-gradient(800px 600px at 50% 30%, rgba(255,100,100,0.02), transparent 60%),
-          #07090f;
+        position: relative;
       }
       .d8b-error-content {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 16px;
-        max-width: 400px;
-        padding: 0 24px;
+        gap: 20px;
+        max-width: 440px;
+        padding: 48px 40px;
         text-align: center;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 28px;
+        backdrop-filter: blur(20px);
+        position: relative;
       }
-      .d8b-error-icon {
-        font-size: 48px;
-        display: block;
+      .d8b-error-content::before {
+        content: '';
+        position: absolute; inset: -1px; border-radius: 28px;
+        background: linear-gradient(135deg, rgba(255,60,90,0.15), transparent, transparent);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor; mask-composite: exclude;
+        padding: 1px; pointer-events: none;
       }
+      .d8b-error-icon { font-size: 48px; }
       .d8b-error-title {
-        font-size: 32px;
-        font-weight: 700;
+        font-size: 26px;
+        font-weight: 800;
         color: #fff;
         margin: 0;
         letter-spacing: -0.02em;
       }
       .d8b-error-message {
-        font-size: 15px;
-        color: rgba(255,255,255,0.5);
-        line-height: 1.6;
-        margin: 0 0 8px;
+        font-size: 14px;
+        color: rgba(160,175,210,0.50);
+        line-height: 1.7;
+        margin: 0;
       }
       .d8b-error-retry-btn {
-        margin-top: 12px;
-        padding: 12px 24px;
-        border-radius: 10px;
-        border: 1px solid rgba(255,100,100,0.4);
-        background: linear-gradient(180deg, rgba(255,100,100,0.12), rgba(255,100,100,0.05));
-        color: rgba(255,120,120,0.95);
+        padding: 13px 28px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,200,255,0.20);
+        background: linear-gradient(135deg, rgba(0,200,255,0.08), rgba(123,97,255,0.05));
+        color: #fff;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
         font-family: inherit;
         cursor: pointer;
-        transition: all 140ms ease;
+        transition: all 200ms cubic-bezier(0.16,1,0.3,1);
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        gap: 6px;
+        gap: 8px;
+        text-decoration: none;
       }
       .d8b-error-retry-btn:hover {
-        background: linear-gradient(180deg, rgba(255,100,100,0.18), rgba(255,100,100,0.08));
-        border-color: rgba(255,100,100,0.6);
-        transform: translateY(-1px);
+        border-color: rgba(0,220,255,0.40);
+        box-shadow: 0 0 30px rgba(0,200,255,0.10);
+        transform: translateY(-2px);
       }
-
-      /* ── Error actions (quota/auth states) ── */
       .d8b-error-actions {
-        display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center;
+        display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
       }
       .d8b-error-upgrade-btn {
-        padding: 12px 24px; border-radius: 10px;
-        background: linear-gradient(135deg, #00C97A, #00B36B);
+        padding: 13px 28px; border-radius: 12px;
+        background: linear-gradient(135deg, #00C97A, #00A866);
         color: #fff; font-size: 14px; font-weight: 700;
         text-decoration: none; cursor: pointer;
-        transition: all 140ms ease;
+        transition: all 200ms cubic-bezier(0.16,1,0.3,1);
+        box-shadow: 0 4px 20px rgba(0,200,120,0.15);
       }
-      .d8b-error-upgrade-btn:hover { background: linear-gradient(135deg, #00DD8A, #00C47A); transform: translateY(-1px); }
+      .d8b-error-upgrade-btn:hover { box-shadow: 0 8px 30px rgba(0,200,120,0.25); transform: translateY(-2px); }
 
       /* ── Dots animation ── */
-      .d8b-dots { display: inline-flex; gap: 2px; margin-left: 4px; }
+      .d8b-dots { display: inline-flex; gap: 3px; margin-left: 6px; }
       .d8b-dots span {
         width: 4px; height: 4px;
         border-radius: 50%;
-        background: rgba(255,255,255,0.6);
-        animation: d8b-dot 1.2s ease-in-out infinite;
+        background: rgba(0,200,255,0.6);
+        animation: d8b-dot 1.4s ease-in-out infinite;
       }
-      .d8b-dots span:nth-child(2) { animation-delay: 0.2s; }
-      .d8b-dots span:nth-child(3) { animation-delay: 0.4s; }
+      .d8b-dots span:nth-child(2) { animation-delay: 0.15s; }
+      .d8b-dots span:nth-child(3) { animation-delay: 0.30s; }
       @keyframes d8b-dot {
-        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-        40% { transform: scale(1); opacity: 1; }
+        0%, 80%, 100% { transform: scale(0.4); opacity: 0.2; }
+        40% { transform: scale(1.2); opacity: 1; }
       }
 
       /* ── Preview wrap ── */
@@ -2162,12 +2498,16 @@ function BuilderStyles() {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 16px;
-        height: 48px;
-        border-bottom: 1px solid rgba(255,255,255,0.07);
-        background: rgba(0,0,0,0.2);
+        padding: 0 20px;
+        height: 52px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        background: rgba(3,7,18,0.60);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         flex-shrink: 0;
         gap: 12px;
+        position: relative;
+        z-index: 10;
       }
       .d8b-toolbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
       .d8b-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
@@ -2175,38 +2515,39 @@ function BuilderStyles() {
       .d8b-live-badge {
         display: flex;
         align-items: center;
-        gap: 5px;
-        background: rgba(255,80,80,0.12);
-        border: 1px solid rgba(255,80,80,0.3);
+        gap: 6px;
+        background: rgba(255,60,90,0.06);
+        border: 1px solid rgba(255,60,90,0.20);
         border-radius: 999px;
-        padding: 3px 8px;
+        padding: 4px 10px;
         font-size: 10px;
         font-weight: 700;
-        color: rgba(255,100,100,0.9);
+        color: rgba(255,100,120,0.95);
         letter-spacing: 0.06em;
       }
       .d8b-live-dot {
         width: 6px; height: 6px;
         border-radius: 50%;
-        background: rgba(255,100,100,0.9);
+        background: rgba(255,80,100,0.95);
+        box-shadow: 0 0 10px rgba(255,80,100,0.5);
         animation: d8b-blink 1s ease-in-out infinite;
       }
-      @keyframes d8b-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+      @keyframes d8b-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
 
       .d8b-done-badge {
-        background: rgba(61,240,180,0.1);
-        border: 1px solid rgba(61,240,180,0.3);
+        background: rgba(0,255,180,0.05);
+        border: 1px solid rgba(0,255,180,0.15);
         border-radius: 999px;
-        padding: 3px 8px;
+        padding: 4px 10px;
         font-size: 10px;
         font-weight: 700;
-        color: rgba(61,240,180,0.9);
+        color: rgba(0,255,180,0.85);
         letter-spacing: 0.04em;
       }
 
       .d8b-toolbar-prompt {
         font-size: 13px;
-        color: rgba(255,255,255,0.4);
+        color: rgba(140,160,200,0.40);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -2214,855 +2555,347 @@ function BuilderStyles() {
 
       .d8b-view-toggle {
         display: flex;
-        background: rgba(255,255,255,0.05);
-        border-radius: 8px;
-        padding: 2px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 10px;
+        padding: 3px;
         gap: 2px;
       }
       .d8b-view-btn {
-        padding: 5px 12px;
-        border-radius: 6px;
+        padding: 6px 14px;
+        border-radius: 7px;
         border: none;
         background: transparent;
-        color: rgba(255,255,255,0.45);
+        color: rgba(140,160,200,0.40);
         font-size: 12px;
+        font-weight: 500;
         font-family: inherit;
         cursor: pointer;
-        transition: all 120ms ease;
+        transition: all 180ms ease;
       }
-      .d8b-view-btn--active { background: rgba(255,255,255,0.1); color: #fff; }
+      .d8b-view-btn--active {
+        background: rgba(255,255,255,0.06);
+        color: #fff;
+      }
 
       .d8b-action-btn {
-        padding: 7px 12px;
-        border-radius: 8px;
-        border: 1px solid rgba(255,255,255,0.12);
-        background: transparent;
-        color: rgba(255,255,255,0.6);
+        padding: 7px 14px;
+        border-radius: 9px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        color: rgba(170,185,215,0.55);
         font-size: 12px;
+        font-weight: 500;
         font-family: inherit;
         cursor: pointer;
-        transition: all 120ms ease;
+        transition: all 200ms cubic-bezier(0.16,1,0.3,1);
       }
-      .d8b-action-btn:hover { border-color: rgba(255,255,255,0.22); color: #fff; }
+      .d8b-action-btn:hover { border-color: rgba(0,200,255,0.18); color: #E8F0FF; background: rgba(0,200,255,0.04); }
 
       .d8b-deploy-btn {
-        padding: 7px 14px;
-        border-radius: 8px;
-        border: 1px solid rgba(240,179,90,0.4);
-        background: linear-gradient(180deg, rgba(240,179,90,0.15), rgba(240,179,90,0.06));
-        color: rgba(240,179,90,0.9);
+        padding: 8px 16px;
+        border-radius: 10px;
+        border: 1px solid rgba(0,200,255,0.25);
+        background: linear-gradient(135deg, rgba(0,180,255,0.10), rgba(123,97,255,0.06));
+        color: #fff;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 700;
         font-family: inherit;
         cursor: pointer;
-        transition: all 120ms ease;
+        transition: all 200ms cubic-bezier(0.16,1,0.3,1);
+        box-shadow: 0 0 16px rgba(0,200,255,0.06);
       }
       .d8b-deploy-btn:hover:not(:disabled) {
-        border-color: rgba(240,179,90,0.6);
-        background: linear-gradient(180deg, rgba(240,179,90,0.22), rgba(240,179,90,0.10));
+        border-color: rgba(0,220,255,0.45);
+        box-shadow: 0 0 30px rgba(0,200,255,0.12);
+        transform: translateY(-1px);
       }
-      .d8b-deploy-btn:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
+      .d8b-deploy-btn:disabled { opacity: 0.30; cursor: not-allowed; }
 
       /* ── iframe ── */
-      .d8b-iframe-wrap {
-        flex: 1;
-        position: relative;
-        overflow: hidden;
-        background: #fff;
-      }
+      .d8b-iframe-wrap { flex: 1; position: relative; overflow: hidden; background: #fff; }
       .d8b-iframe-loader {
-        position: absolute;
-        inset: 0;
-        z-index: 10;
-        background: #07090f;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        position: absolute; inset: 0; z-index: 10;
+        background: #030712;
+        display: flex; align-items: center; justify-content: center;
       }
-      .d8b-iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        display: block;
-      }
+      .d8b-iframe { width: 100%; height: 100%; border: none; display: block; }
 
       /* ── Code view ── */
-      .d8b-code-wrap {
-        flex: 1;
-        overflow: auto;
-        background: #0a0d18;
-      }
+      .d8b-code-wrap { flex: 1; overflow: auto; background: rgba(3,7,18,0.95); }
       .d8b-code {
-        padding: 20px 24px;
-        font-size: 12px;
-        line-height: 1.7;
-        color: #9aa3c7;
-        font-family: 'JetBrains Mono', 'Fira Code', monospace;
-        white-space: pre-wrap;
-        word-break: break-all;
-        margin: 0;
+        padding: 24px 28px;
+        font-size: 12px; line-height: 1.8;
+        color: rgba(140,160,200,0.60);
+        font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+        white-space: pre-wrap; word-break: break-all; margin: 0;
       }
 
       /* ── Progress bar ── */
       .d8b-progress-bar {
         height: 2px;
-        background: rgba(255,255,255,0.05);
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        background: rgba(255,255,255,0.03);
+        position: absolute; bottom: 0; left: 0; right: 0;
+        overflow: hidden;
       }
       .d8b-progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, rgba(240,179,90,0.6), rgba(240,179,90,1));
+        background: linear-gradient(90deg, #00D4FF, #7B61FF, #00FFB2);
         transition: width 300ms ease;
         border-radius: 0 2px 2px 0;
+        position: relative;
+        box-shadow: 0 0 20px rgba(0,200,255,0.5);
       }
 
       /* ── Mobile device frame ── */
       .d8b-iframe-mobile-wrap {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #0a0d18;
-        overflow: hidden;
-        padding: 24px 0 16px;
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        background: #030712; overflow: hidden; padding: 24px 0 16px;
       }
       .d8b-phone-frame {
-        width: 375px;
-        height: calc(100% - 8px);
-        max-height: 780px;
-        border-radius: 40px;
-        border: 8px solid rgba(255,255,255,0.12);
-        background: #000;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 24px 64px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.06);
+        width: 375px; height: calc(100% - 8px); max-height: 780px;
+        border-radius: 44px;
+        border: 4px solid rgba(255,255,255,0.08);
+        background: #000; position: relative; overflow: hidden;
+        box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 60px rgba(0,200,255,0.03), inset 0 0 0 1px rgba(255,255,255,0.04);
       }
       .d8b-phone-notch {
         position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-        width: 100px; height: 26px;
-        background: #000;
-        border-radius: 0 0 18px 18px;
-        z-index: 10;
+        width: 120px; height: 32px; background: #000;
+        border-radius: 0 0 20px 20px; z-index: 10;
       }
-      .d8b-phone-iframe {
-        width: 100%; height: 100%; border: none;
-        border-radius: 32px;
-      }
+      .d8b-phone-iframe { width: 100%; height: 100%; border: none; border-radius: 40px; }
 
       /* ── Deploy Modal ── */
       .d8b-modal-backdrop {
         position: fixed; inset: 0; z-index: 99999;
         background: rgba(0,0,0,0.70);
-        backdrop-filter: blur(6px);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         display: flex; align-items: center; justify-content: center;
         padding: 24px;
       }
       .d8b-modal {
-        width: min(480px, 100%);
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.12);
-        background: #0d1020;
-        box-shadow: 0 32px 80px rgba(0,0,0,0.70);
+        width: min(500px, 100%);
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(8,12,28,0.95);
+        backdrop-filter: blur(40px);
+        box-shadow: 0 40px 120px rgba(0,0,0,0.7), 0 0 80px rgba(0,120,255,0.04);
         overflow: hidden;
-        animation: d8b-modal-in 200ms ease;
+        animation: d8b-modal-in 300ms cubic-bezier(0.16,1,0.3,1);
       }
-      @keyframes d8b-modal-in { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+      @keyframes d8b-modal-in { from { opacity:0; transform:scale(0.90) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
 
       .d8b-modal-header {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 16px 20px;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding: 20px 24px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
       }
-      .d8b-modal-title { font-size: 16px; font-weight: 700; color: #fff; }
+      .d8b-modal-title { font-size: 16px; font-weight: 800; color: #fff; }
       .d8b-modal-close {
-        background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.10);
-        border-radius: 8px; width: 28px; height: 28px;
-        color: rgba(255,255,255,0.60); cursor: pointer; font-size: 12px; font-family: inherit;
+        background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 10px; width: 32px; height: 32px;
+        color: rgba(140,160,200,0.45); cursor: pointer; font-size: 12px; font-family: inherit;
         display: flex; align-items: center; justify-content: center;
+        transition: all 200ms ease;
       }
-      .d8b-modal-close:hover { color: #fff; }
+      .d8b-modal-close:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
-      .d8b-modal-body { padding: 20px; }
-      .d8b-modal-desc { font-size: 14px; color: rgba(255,255,255,0.50); margin: 0 0 16px; line-height: 1.5; }
+      .d8b-modal-body { padding: 24px; }
+      .d8b-modal-desc { font-size: 14px; color: rgba(150,170,210,0.50); margin: 0 0 20px; line-height: 1.65; }
 
       .d8b-deploy-options { display: flex; flex-direction: column; gap: 10px; }
       .d8b-deploy-option {
         display: flex; align-items: center; gap: 14px;
-        padding: 14px 16px; border-radius: 14px;
-        border: 1px solid rgba(240,179,90,0.30);
-        background: rgba(240,179,90,0.06);
-        color: rgba(255,255,255,0.90);
+        padding: 16px 18px; border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        color: rgba(230,240,255,0.85);
         text-align: left; cursor: pointer; font-family: inherit;
-        transition: all 140ms ease;
+        transition: all 220ms cubic-bezier(0.16,1,0.3,1);
       }
-      .d8b-deploy-option:hover { border-color: rgba(240,179,90,0.55); background: rgba(240,179,90,0.10); }
-      .d8b-deploy-option--ghost { border-color: rgba(255,255,255,0.10); background: rgba(255,255,255,0.03); }
-      .d8b-deploy-option--ghost:hover { border-color: rgba(255,255,255,0.20); background: rgba(255,255,255,0.06); }
-      .d8b-deploy-option-icon { font-size: 20px; flex-shrink: 0; }
-      .d8b-deploy-option-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
-      .d8b-deploy-option-sub { font-size: 12px; color: rgba(255,255,255,0.45); }
+      .d8b-deploy-option:hover { border-color: rgba(0,200,255,0.20); background: rgba(0,200,255,0.03); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+      .d8b-deploy-option--ghost { border-color: rgba(255,255,255,0.04); background: rgba(255,255,255,0.01); }
+      .d8b-deploy-option--ghost:hover { border-color: rgba(255,255,255,0.10); background: rgba(255,255,255,0.03); }
+      .d8b-deploy-option-icon { font-size: 22px; flex-shrink: 0; }
+      .d8b-deploy-option-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; color: #fff; }
+      .d8b-deploy-option-sub { font-size: 12px; color: rgba(140,160,200,0.45); }
 
       .d8b-deploy-log {
-        background: #070a10; border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.07);
-        padding: 14px 16px; min-height: 160px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 12px; line-height: 1.8;
+        background: rgba(0,0,0,0.30); border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.05);
+        padding: 16px 18px; min-height: 160px;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 12px; line-height: 2;
         display: flex; flex-direction: column; gap: 2px;
       }
-      .d8b-deploy-log-line { color: rgba(255,255,255,0.65); }
-      .d8b-deploy-log-line--ok { color: rgba(56,248,166,0.90); }
-      .d8b-deploy-log-line--warn { color: rgba(255,180,50,0.85); }
-      .d8b-deploy-cursor { animation: d8b-blink 1s step-end infinite; color: rgba(240,179,90,0.8); }
+      .d8b-deploy-log-line { color: rgba(160,180,220,0.55); }
+      .d8b-deploy-log-line--ok { color: rgba(0,255,180,0.80); }
+      .d8b-deploy-log-line--warn { color: rgba(255,200,60,0.80); }
+      .d8b-deploy-cursor { animation: d8b-blink 1s step-end infinite; color: rgba(0,200,255,0.80); }
 
       .d8b-deploy-success { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
       .d8b-deploy-url {
-        flex: 1; padding: 10px 14px; border-radius: 10px;
-        background: rgba(56,248,166,0.08); border: 1px solid rgba(56,248,166,0.25);
-        font-size: 13px; font-family: ui-monospace, monospace; color: rgba(56,248,166,0.90);
+        flex: 1; padding: 12px 14px; border-radius: 12px;
+        background: rgba(0,255,180,0.04); border: 1px solid rgba(0,255,180,0.15);
+        font-size: 13px; font-family: ui-monospace, monospace; color: rgba(0,255,180,0.85);
       }
 
       /* ── Refine ── */
       .d8b-refine-section { display: flex; flex-direction: column; gap: 8px; }
       .d8b-refine-toggle {
-        width: 100%; padding: 10px 14px;
-        border-radius: 10px;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: transparent;
-        color: rgba(255,255,255,0.55);
-        font-size: 13px; font-family: inherit;
-        cursor: pointer; transition: all 120ms ease;
+        width: 100%; padding: 11px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        color: rgba(170,185,215,0.55);
+        font-size: 13px; font-weight: 500; font-family: inherit;
+        cursor: pointer; transition: all 200ms ease;
         display: flex; align-items: center; justify-content: space-between;
       }
-      .d8b-refine-toggle:hover { color: rgba(255,255,255,0.80); border-color: rgba(255,255,255,0.18); }
+      .d8b-refine-toggle:hover { color: rgba(230,240,255,0.80); border-color: rgba(0,200,255,0.15); }
       .d8b-refine-toggle--active {
-        border-color: rgba(240,179,90,0.35);
-        background: rgba(240,179,90,0.06);
-        color: rgba(240,179,90,0.85);
+        border-color: rgba(0,200,255,0.20);
+        background: rgba(0,200,255,0.03);
+        color: rgba(0,230,255,0.85);
       }
-      .d8b-refine-arrow { font-size: 10px; opacity: 0.6; }
+      .d8b-refine-arrow { font-size: 10px; opacity: 0.4; }
       .d8b-refine-panel { display: flex; flex-direction: column; gap: 8px; }
       .d8b-refine-btn {
-        width: 100%; padding: 10px;
-        border-radius: 10px;
-        border: 1px solid rgba(240,179,90,0.35);
-        background: linear-gradient(180deg, rgba(240,179,90,0.10), rgba(240,179,90,0.04));
-        color: rgba(240,179,90,0.90);
-        font-size: 13px; font-weight: 600; font-family: inherit;
-        cursor: pointer; transition: all 120ms ease;
+        width: 100%; padding: 11px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,200,255,0.18);
+        background: rgba(0,200,255,0.04);
+        color: #fff;
+        font-size: 13px; font-weight: 700; font-family: inherit;
+        cursor: pointer; transition: all 200ms ease;
       }
       .d8b-refine-btn:hover:not(:disabled) {
-        border-color: rgba(240,179,90,0.55);
-        background: linear-gradient(180deg, rgba(240,179,90,0.16), rgba(240,179,90,0.08));
+        border-color: rgba(0,220,255,0.35);
+        box-shadow: 0 0 20px rgba(0,200,255,0.06);
       }
-      .d8b-refine-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+      .d8b-refine-btn:disabled { opacity: 0.25; cursor: not-allowed; }
 
       /* ── Agent row ── */
       .d8b-agent-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
       .d8b-agent-btn {
-        padding: 9px 10px; border-radius: 10px;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(255,255,255,0.04);
-        color: rgba(255,255,255,0.60);
-        font-size: 12px; font-family: inherit; font-weight: 500;
-        cursor: pointer; transition: all 120ms ease;
+        padding: 10px 12px; border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.02);
+        color: rgba(170,185,215,0.50);
+        font-size: 12px; font-family: inherit; font-weight: 600;
+        cursor: pointer; transition: all 200ms ease;
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
-      .d8b-agent-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.18); }
-      .d8b-agent-btn--active { border-color: rgba(240,179,90,0.35); background: rgba(240,179,90,0.06); color: rgba(240,179,90,0.85); }
-      .d8b-agent-btn--loading { opacity: 0.6; cursor: not-allowed; }
-      .d8b-agent-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .d8b-agent-btn:hover:not(:disabled) { background: rgba(0,200,255,0.03); color: rgba(230,240,255,0.85); border-color: rgba(0,200,255,0.12); }
+      .d8b-agent-btn--active { border-color: rgba(0,200,255,0.20); background: rgba(0,200,255,0.04); color: rgba(0,230,255,0.85); }
+      .d8b-agent-btn--loading { opacity: 0.45; cursor: not-allowed; }
+      .d8b-agent-btn:disabled { opacity: 0.30; cursor: not-allowed; }
 
       /* ── SEO panel ── */
       .d8b-seo-panel {
-        border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.02); padding: 14px;
+        border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.015); padding: 16px;
         display: flex; flex-direction: column; gap: 12px;
       }
-      .d8b-seo-loading { font-size: 12px; color: rgba(255,255,255,0.45); text-align: center; padding: 8px 0; }
-      .d8b-seo-score-row { display: flex; align-items: center; gap: 12px; }
-      .d8b-seo-score { font-size: 36px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; flex-shrink: 0; }
+      .d8b-seo-loading { font-size: 12px; color: rgba(140,160,200,0.40); text-align: center; padding: 8px 0; }
+      .d8b-seo-score-row { display: flex; align-items: center; gap: 14px; }
+      .d8b-seo-score { font-size: 40px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; flex-shrink: 0; font-variant-numeric: tabular-nums; }
       .d8b-seo-grade { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 3px; }
-      .d8b-seo-summary { font-size: 11px; color: rgba(255,255,255,0.50); line-height: 1.5; }
+      .d8b-seo-summary { font-size: 11px; color: rgba(150,170,210,0.50); line-height: 1.5; }
       .d8b-seo-strengths { display: flex; flex-direction: column; gap: 4px; }
-      .d8b-seo-strength { font-size: 11px; color: rgba(56,248,166,0.75); line-height: 1.5; }
+      .d8b-seo-strength { font-size: 11px; color: rgba(0,255,180,0.65); line-height: 1.5; }
       .d8b-seo-issues { display: flex; flex-direction: column; gap: 8px; }
-      .d8b-seo-issue {
-        padding: 8px 10px; border-radius: 8px;
-        border-left: 2px solid rgba(255,255,255,0.15);
-      }
-      .d8b-seo-issue--critical { border-left-color: rgba(255,80,80,0.70); background: rgba(255,80,80,0.05); }
-      .d8b-seo-issue--warning  { border-left-color: rgba(255,180,50,0.70); background: rgba(255,180,50,0.05); }
-      .d8b-seo-issue--info     { border-left-color: rgba(240,179,90,0.40); background: rgba(240,179,90,0.04); }
-      .d8b-seo-issue-msg { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.80); margin-bottom: 3px; }
-      .d8b-seo-issue-fix { font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.5; }
+      .d8b-seo-issue { padding: 10px 12px; border-radius: 10px; border-left: 3px solid rgba(255,255,255,0.08); }
+      .d8b-seo-issue--critical { border-left-color: rgba(255,60,90,0.60); background: rgba(255,60,90,0.03); }
+      .d8b-seo-issue--warning  { border-left-color: rgba(255,200,60,0.60); background: rgba(255,200,60,0.03); }
+      .d8b-seo-issue--info     { border-left-color: rgba(0,200,255,0.30); background: rgba(0,200,255,0.02); }
+      .d8b-seo-issue-msg { font-size: 11px; font-weight: 700; color: rgba(230,240,255,0.75); margin-bottom: 3px; }
+      .d8b-seo-issue-fix { font-size: 10px; color: rgba(140,160,200,0.45); line-height: 1.5; }
 
       /* ── Published URL banner ── */
       .d8b-published-banner {
-        position: fixed; bottom: 0; left: 300px; right: 0;
-        display: flex; align-items: center; gap: 8px;
-        padding: 8px 16px;
-        background: rgba(56,248,166,0.08);
-        border-top: 1px solid rgba(56,248,166,0.20);
-        z-index: 200;
-        font-size: 12px;
+        position: fixed; bottom: 0; left: 340px; right: 0;
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 20px;
+        background: rgba(0,255,180,0.03);
+        border-top: 1px solid rgba(0,255,180,0.10);
+        backdrop-filter: blur(16px);
+        z-index: 200; font-size: 12px;
       }
       .d8b-published-dot {
-        width: 7px; height: 7px; border-radius: 50%;
-        background: #38F8A6;
-        box-shadow: 0 0 6px rgba(56,248,166,0.7);
+        width: 8px; height: 8px; border-radius: 50%;
+        background: #00FFB2;
+        box-shadow: 0 0 12px rgba(0,255,180,0.6);
         flex-shrink: 0;
-        animation: d8b-blink 2s ease-in-out infinite;
+        animation: d8b-blink 2.5s ease-in-out infinite;
       }
-      .d8b-published-label { color: rgba(56,248,166,0.70); font-weight: 600; flex-shrink: 0; }
+      .d8b-published-label { color: rgba(0,255,180,0.60); font-weight: 700; flex-shrink: 0; }
       .d8b-published-url {
-        color: rgba(56,248,166,0.90); text-decoration: none; font-family: ui-monospace, monospace;
+        color: rgba(0,255,180,0.85); text-decoration: none; font-family: 'JetBrains Mono', ui-monospace, monospace;
         flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       }
       .d8b-published-url:hover { text-decoration: underline; }
       .d8b-published-copy {
-        flex-shrink: 0; padding: 4px 10px; border-radius: 6px;
-        border: 1px solid rgba(56,248,166,0.30);
-        background: rgba(56,248,166,0.08);
-        color: rgba(56,248,166,0.85); font-size: 11px; font-family: inherit;
-        cursor: pointer; transition: all 120ms ease;
+        flex-shrink: 0; padding: 5px 12px; border-radius: 8px;
+        border: 1px solid rgba(0,255,180,0.15);
+        background: rgba(0,255,180,0.04);
+        color: rgba(0,255,180,0.80); font-size: 11px; font-weight: 600; font-family: inherit;
+        cursor: pointer; transition: all 200ms ease;
       }
-      .d8b-published-copy:hover { background: rgba(56,248,166,0.15); }
+      .d8b-published-copy:hover { background: rgba(0,255,180,0.08); box-shadow: 0 0 12px rgba(0,255,180,0.06); }
 
-      /* ── Info modal (Settings, Domains, SSL, Automate) ── */
+      /* ── Info modal ── */
       .d8b-info-modal {
-        width: min(520px, 100%);
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.12);
-        background: #0d1020;
-        box-shadow: 0 32px 80px rgba(0,0,0,0.70);
+        width: min(540px, 100%);
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(8,12,28,0.95);
+        backdrop-filter: blur(40px);
+        box-shadow: 0 40px 120px rgba(0,0,0,0.7), 0 0 80px rgba(0,120,255,0.04);
         overflow: hidden;
-        animation: d8b-modal-in 200ms ease;
+        animation: d8b-modal-in 300ms cubic-bezier(0.16,1,0.3,1);
       }
       .d8b-info-section {
-        border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.03);
-        padding: 14px 16px; margin-bottom: 10px;
-        display: flex; flex-direction: column; gap: 6px;
+        border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.015);
+        padding: 16px 18px; margin-bottom: 12px;
+        display: flex; flex-direction: column; gap: 8px;
       }
-      .d8b-info-section-title { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.70); letter-spacing: 0.04em; }
-      .d8b-info-section-body { font-size: 13px; color: rgba(255,255,255,0.50); line-height: 1.6; }
+      .d8b-info-section-title {
+        font-size: 10px; font-weight: 800; color: rgba(0,200,255,0.40);
+        letter-spacing: 0.12em; text-transform: uppercase;
+      }
+      .d8b-info-section-body { font-size: 13px; color: rgba(150,170,210,0.50); line-height: 1.7; }
       .d8b-info-pill {
         display: inline-flex; align-items: center; gap: 5px;
-        padding: 3px 10px; border-radius: 999px;
-        background: rgba(56,248,166,0.10); border: 1px solid rgba(56,248,166,0.25);
-        color: rgba(56,248,166,0.85); font-size: 11px; font-weight: 600;
+        padding: 4px 12px; border-radius: 999px;
+        background: rgba(0,255,180,0.05); border: 1px solid rgba(0,255,180,0.12);
+        color: rgba(0,255,180,0.80); font-size: 11px; font-weight: 700;
       }
       .d8b-info-code {
-        font-family: ui-monospace, monospace; font-size: 12px;
-        background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 8px; padding: 10px 12px;
-        color: rgba(240,179,90,0.85); line-height: 1.7;
-        white-space: pre;
+        font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px;
+        background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 10px; padding: 12px 14px;
+        color: rgba(0,200,255,0.70); line-height: 1.8; white-space: pre;
       }
       .d8b-info-row {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
         font-size: 13px;
       }
       .d8b-info-row:last-child { border-bottom: none; padding-bottom: 0; }
-      .d8b-info-row-label { color: rgba(255,255,255,0.55); }
-      .d8b-info-row-val { color: rgba(255,255,255,0.85); font-weight: 600; }
+      .d8b-info-row-label { color: rgba(140,160,200,0.45); }
+      .d8b-info-row-val { color: rgba(230,240,255,0.85); font-weight: 700; }
 
       /* ── Mobile ── */
       @media (max-width: 768px) {
-        .d8b-sidebar { width: 260px; min-width: 260px; }
-        .d8b-splash-title { font-size: 32px; }
+        .d8b-sidebar { width: 300px; min-width: 300px; }
+        .d8b-splash-title { font-size: 38px; }
         .d8b-published-banner { left: 0; }
       }
     `}</style>
-  );
-}
-
-// ─── Settings Modal ───────────────────────────────────────────────────────────
-
-function SettingsModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="d8b-info-modal">
-        <div className="d8b-modal-header">
-          <div className="d8b-modal-title">⚙️ Settings</div>
-          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
-        </div>
-        <div className="d8b-modal-body">
-          <div className="d8b-info-section">
-            <div className="d8b-info-section-title">GENERATION</div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">AI Model</span>
-              <span className="d8b-info-row-val">GPT-4o</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Max output tokens</span>
-              <span className="d8b-info-row-val">16,000</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Temperature</span>
-              <span className="d8b-info-row-val">0.80 (creative)</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Avg. generation time</span>
-              <span className="d8b-info-row-val">~18 seconds</span>
-            </div>
-          </div>
-          <div className="d8b-info-section">
-            <div className="d8b-info-section-title">OUTPUT FORMAT</div>
-            <div className="d8b-info-section-body">
-              Every generated site is a single self-contained HTML file with all CSS and JavaScript inline. Works fully offline once downloaded. No external dependencies required.
-            </div>
-          </div>
-          <div className="d8b-info-section">
-            <div className="d8b-info-section-title">DESIGN QUALITY</div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Design standard</span>
-              <span className="d8b-info-row-val">Webby Award level</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Sections per site</span>
-              <span className="d8b-info-row-val">8 (hero → footer)</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Responsive</span>
-              <span className="d8b-info-pill">320px · 768px · 1440px</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Animations</span>
-              <span className="d8b-info-row-val">Full micro-interaction suite</span>
-            </div>
-          </div>
-          <div className="d8b-info-section">
-            <div className="d8b-info-section-title">ACCOUNT</div>
-            <div className="d8b-info-section-body">
-              Manage your plan, billing, and usage at{" "}
-              <a href="/pricing" style={{ color: "rgba(240,179,90,0.8)", textDecoration: "none" }}>dominat8.io/pricing</a>.
-              Upgrade to Pro or Agency for higher generation limits and priority queue.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Domains Modal ────────────────────────────────────────────────────────────
-
-function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishedUrl: string | null }) {
-  return (
-    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="d8b-info-modal">
-        <div className="d8b-modal-header">
-          <div className="d8b-modal-title">🌐 Custom Domain</div>
-          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
-        </div>
-        <div className="d8b-modal-body">
-          {publishedUrl && (
-            <div className="d8b-info-section">
-              <div className="d8b-info-section-title">YOUR LIVE SITE</div>
-              <div className="d8b-info-row">
-                <span className="d8b-info-row-label">Published URL</span>
-                <span className="d8b-info-pill">● LIVE</span>
-              </div>
-              <div className="d8b-info-code">{publishedUrl}</div>
-            </div>
-          )}
-          <div className="d8b-info-section">
-            <div className="d8b-info-section-title">POINT YOUR DOMAIN</div>
-            <div className="d8b-info-section-body">
-              To use a custom domain (e.g. <strong>yoursite.com</strong>), add these DNS records at your registrar (GoDaddy, Namecheap, Cloudflare, etc.):
-            </div>
-            <div className="d8b-info-code">{`Type    Name    Value
-────────────────────────────────
-CNAME   @       cname.dominat8.io
-CNAME   www     cname.dominat8.io`}</div>
-          </div>
-          <div className="d8b-info-section">
-            <div className="d8b-info-section-title">HOW IT WORKS</div>
-            <div className="d8b-info-section-body">
-              DNS propagation typically takes 5–60 minutes. Once propagated, your custom domain will serve the generated site with full SSL/HTTPS automatically provisioned.
-            </div>
-          </div>
-          <div className="d8b-info-section">
-            <div className="d8b-info-section-title">UPGRADE FOR CUSTOM DOMAINS</div>
-            <div className="d8b-info-section-body">
-              Custom domain binding is available on <strong>Pro</strong> ($29/mo) and <strong>Agency</strong> ($99/mo) plans.{" "}
-              <a href="/pricing" style={{ color: "rgba(240,179,90,0.8)", textDecoration: "none" }}>View plans →</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── SSL Modal ────────────────────────────────────────────────────────────────
-
-function SSLModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="d8b-info-modal">
-        <div className="d8b-modal-header">
-          <div className="d8b-modal-title">🔒 SSL / HTTPS</div>
-          <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
-        </div>
-        <div className="d8b-modal-body">
-          <div className="d8b-info-section">
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Certificate type</span>
-              <span className="d8b-info-row-val">TLS 1.3 (Let&apos;s Encrypt)</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Auto-renewal</span>
-              <span className="d8b-info-pill">✓ Automatic</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">HSTS</span>
-              <span className="d8b-info-pill">✓ Enabled</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">HTTP → HTTPS redirect</span>
-              <span className="d8b-info-pill">✓ Enforced</span>
-            </div>
-            <div className="d8b-info-row">
-              <span className="d8b-info-row-label">Edge network</span>
-              <span className="d8b-info-row-val">Global CDN (100+ PoPs)</span>
-            </div>
-          </div>
-          <div className="d8b-info-section">
-            <div className="d8b-info-section-title">SECURITY HEADERS</div>
-            <div className="d8b-info-code">{`X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-Cache-Control: no-store
-Referrer-Policy: strict-origin`}</div>
-          </div>
-          <div className="d8b-info-section">
-            <div className="d8b-info-section-title">CERTIFICATE STATUS</div>
-            <div className="d8b-info-section-body">
-              SSL certificates are auto-provisioned on every deployment. No configuration required — your site is always served over HTTPS from the moment it&apos;s published.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Automate Modal ───────────────────────────────────────────────────────────
-
-type AgentId = "seo-sweep" | "design-fixer" | "responsive-audit" | "performance-optimizer" | "accessibility-checker" | "link-scanner";
-type AgentRunState = "idle" | "running" | "done" | "failed";
-
-interface AgentResult { summary: string; model: string; provider: string; data: unknown }
-
-const AUTOMATE_AGENTS: { id: AgentId; icon: string; name: string; desc: string }[] = [
-  { id: "seo-sweep",             icon: "🔍", name: "SEO Sweep",            desc: "Scans for title, meta, OG, H1, and structured data issues." },
-  { id: "design-fixer",          icon: "🎨", name: "Design Fixer",         desc: "Fixes layout bugs, contrast issues, and typography problems." },
-  { id: "responsive-audit",      icon: "📱", name: "Responsive Audit",     desc: "Tests your site at 320px, 768px, and 1440px breakpoints." },
-  { id: "performance-optimizer", icon: "⚡", name: "Performance Optimizer", desc: "Identifies critical CSS, render-blocking scripts, and CLS risks." },
-  { id: "accessibility-checker", icon: "♿", name: "Accessibility Checker", desc: "Validates ARIA roles, alt text, colour contrast, and keyboard nav." },
-  { id: "link-scanner",          icon: "🔗", name: "Link Scanner",         desc: "Validates all internal links, anchors, and CTA buttons." },
-];
-
-const SEVERITY_COLOR: Record<string, string> = {
-  high: "rgba(255,100,100,0.90)", critical: "rgba(255,60,60,0.95)",
-  medium: "rgba(255,180,0,0.90)", serious: "rgba(255,130,0,0.90)", moderate: "rgba(255,180,0,0.85)",
-  low: "rgba(255,255,255,0.45)", minor: "rgba(255,255,255,0.40)",
-};
-
-function AgentResultDetail({ id, data, onApply }: { id: AgentId; data: unknown; onApply?: () => void }) {
-  if (!data) return null;
-  if (id === "design-fixer") {
-    return (
-      <div style={{ marginTop: 8 }}>
-        <button onClick={onApply} type="button" style={{ fontSize: 11, padding: "5px 14px", borderRadius: 8, background: "linear-gradient(135deg,#00C97A,#00B36B)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}>
-          ✓ Apply to preview
-        </button>
-      </div>
-    );
-  }
-  const r = data as Record<string, unknown>;
-  const issues = (r.issues as Record<string, unknown>[] | undefined) ?? [];
-  const strengths = (r.strengths ?? r.passes ?? r.quick_wins) as string[] | undefined;
-  const score = r.score as number | undefined;
-  const grade = r.grade as string | undefined;
-  return (
-    <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
-      {score !== undefined && (
-        <div style={{ fontSize: 11, color: score >= 70 ? "rgba(56,248,166,0.90)" : score >= 50 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)", fontWeight: 700, fontFamily: "ui-monospace,monospace" }}>
-          Score: {score}/100{grade ? ` (${grade})` : ""}
-        </div>
-      )}
-      {issues.slice(0, 5).map((iss, i) => {
-        const sev = String(iss.severity ?? iss.priority ?? "low");
-        return (
-          <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", background: "rgba(0,0,0,0.25)", borderRadius: 6, padding: "5px 8px" }}>
-            <span style={{ fontSize: 9, fontWeight: 700, color: SEVERITY_COLOR[sev] ?? "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.04em", minWidth: 36, paddingTop: 1 }}>{sev.slice(0, 4)}</span>
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", lineHeight: 1.45 }}>{String(iss.message ?? iss.title ?? iss.problem ?? "")}</span>
-          </div>
-        );
-      })}
-      {issues.length > 5 && <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", paddingLeft: 2 }}>+{issues.length - 5} more issues</div>}
-      {strengths && strengths.slice(0, 2).map((s, i) => (
-        <div key={i} style={{ fontSize: 11, color: "rgba(56,248,166,0.75)", paddingLeft: 4 }}>✓ {s}</div>
-      ))}
-    </div>
-  );
-}
-
-interface CreditInfo {
-  admin: boolean;
-  balance: { plan: string; monthlyAllowance: number; monthlyUsed: number; monthlyRemaining: number; purchased: number; total: number };
-  costs: Record<AgentId, number>;
-  access: AgentId[];
-  packs: { id: string; credits: number; priceInCents: number; label: string; tag: string }[];
-}
-
-function AutomateModal({ onClose, html, prompt: _prompt, onApplyHtml }: { onClose: () => void; html: string; prompt: string; onApplyHtml?: (html: string) => void }) {
-  const [states, setStates] = useState<Record<AgentId, AgentRunState>>({} as Record<AgentId, AgentRunState>);
-  const [results, setResults] = useState<Record<AgentId, AgentResult>>({} as Record<AgentId, AgentResult>);
-  const [expanded, setExpanded] = useState<Record<AgentId, boolean>>({} as Record<AgentId, boolean>);
-  const [creditInfo, setCreditInfo] = useState<CreditInfo | null>(null);
-  const [showBuy, setShowBuy] = useState(false);
-  const [buyingPack, setBuyingPack] = useState<string | null>(null);
-  const hasHtml = !!html.trim();
-
-  useEffect(() => {
-    fetch("/api/io/agents/credits")
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.balance) setCreditInfo(d as CreditInfo); })
-      .catch(() => {});
-  }, []);
-
-  function updateBalance(b: CreditInfo["balance"] | null | undefined) {
-    if (b) setCreditInfo(ci => ci ? { ...ci, balance: b } : ci);
-  }
-
-  function agentAccess(id: AgentId) {
-    if (!creditInfo) return { canRun: true, locked: false, tooExpensive: false };
-    if (creditInfo.admin) return { canRun: true, locked: false, tooExpensive: false };
-    const accessible = creditInfo.access.includes(id);
-    const cost = creditInfo.costs[id] ?? 1;
-    const affordable = creditInfo.balance.total >= cost;
-    return { canRun: accessible && affordable, locked: !accessible, tooExpensive: accessible && !affordable };
-  }
-
-  async function buyCredits(packId: string) {
-    setBuyingPack(packId);
-    try {
-      const res = await fetch("/api/stripe/credits", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ packId }),
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } finally { setBuyingPack(null); }
-  }
-
-  async function runAgent(id: AgentId) {
-    if (!hasHtml || states[id] === "running") return;
-    setStates(s => ({ ...s, [id]: "running" }));
-    try {
-      const res = await fetch("/api/io/agents/run", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ agent: id, html, prompt: _prompt }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setStates(s => ({ ...s, [id]: "done" }));
-        setResults(s => ({ ...s, [id]: { summary: data.summary, model: data.model, provider: data.provider, data: data.result } }));
-        setExpanded(s => ({ ...s, [id]: true }));
-        updateBalance(data.balance);
-      } else {
-        setStates(s => ({ ...s, [id]: "failed" }));
-        const errMsg = data.code === "NO_ACCESS" ? `🔒 ${data.error}`
-          : data.code === "INSUFFICIENT_CREDITS" ? `⚡ ${data.error}`
-          : (data.error ?? "Agent failed.");
-        setResults(s => ({ ...s, [id]: { summary: errMsg, model: "", provider: "", data: null } }));
-        updateBalance(data.balance);
-      }
-    } catch (e: unknown) {
-      setStates(s => ({ ...s, [id]: "failed" }));
-      setResults(s => ({ ...s, [id]: { summary: e instanceof Error ? e.message : "Network error.", model: "", provider: "", data: null } }));
-    }
-  }
-
-  async function runAll() {
-    for (const ag of AUTOMATE_AGENTS) {
-      const { canRun } = agentAccess(ag.id);
-      if (canRun && states[ag.id] !== "running") runAgent(ag.id);
-    }
-  }
-
-  const totalCredits = creditInfo?.balance.total ?? null;
-  const planLabel = creditInfo?.admin ? "Admin" : creditInfo?.balance.plan ?? null;
-
-  return (
-    <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="d8b-info-modal" style={{ maxHeight: "88vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-
-        {/* ── Header ── */}
-        <div className="d8b-modal-header" style={{ flexDirection: "column", gap: 10, alignItems: "stretch" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div className="d8b-modal-title">⚡ Automate</div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {hasHtml && (
-                <button onClick={runAll} disabled={AUTOMATE_AGENTS.some(a => states[a.id] === "running")} type="button"
-                  style={{ fontSize: 12, padding: "4px 12px", borderRadius: 8, background: "rgba(240,179,90,0.12)", border: "1px solid rgba(240,179,90,0.30)", color: "rgba(240,179,90,0.90)", cursor: "pointer", fontWeight: 600 }}>
-                  Run All
-                </button>
-              )}
-              <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
-            </div>
-          </div>
-
-          {/* Credit balance bar */}
-          {creditInfo && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, padding: "7px 12px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ fontSize: 11 }}>
-                  <span style={{ color: "rgba(255,255,255,0.40)" }}>Plan </span>
-                  <span style={{ color: "rgba(255,255,255,0.85)", fontWeight: 600, textTransform: "capitalize" }}>{planLabel}</span>
-                </div>
-                {!creditInfo.admin && (
-                  <div style={{ fontSize: 11 }}>
-                    <span style={{ color: "rgba(255,255,255,0.40)" }}>Credits </span>
-                    <span style={{ fontWeight: 700, fontFamily: "ui-monospace,monospace", color: totalCredits! > 5 ? "rgba(56,248,166,0.90)" : totalCredits! > 0 ? "rgba(255,180,0,0.90)" : "rgba(255,100,100,0.90)" }}>
-                      {totalCredits}
-                    </span>
-                    {(creditInfo.balance.purchased ?? 0) > 0 && (
-                      <span style={{ color: "rgba(255,255,255,0.28)", fontSize: 10 }}>
-                        {" "}({creditInfo.balance.monthlyRemaining} mo + {creditInfo.balance.purchased} bought)
-                      </span>
-                    )}
-                  </div>
-                )}
-                {creditInfo.admin && <span style={{ fontSize: 10, color: "rgba(240,179,90,0.75)", fontWeight: 700, letterSpacing: "0.05em" }}>∞ ADMIN</span>}
-              </div>
-              {!creditInfo.admin && (
-                <button onClick={() => setShowBuy(b => !b)} type="button"
-                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: 7, background: showBuy ? "rgba(240,179,90,0.12)" : "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.70)", cursor: "pointer", fontWeight: 600 }}>
-                  {showBuy ? "▲ Hide" : "+ Buy credits"}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Credit packs */}
-          {showBuy && creditInfo?.packs && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
-              {creditInfo.packs.map(pack => (
-                <button key={pack.id} onClick={() => buyCredits(pack.id)} disabled={!!buyingPack} type="button"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 6px", cursor: buyingPack ? "wait" : "pointer", textAlign: "center" as const }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "rgba(255,255,255,0.92)" }}>{pack.credits}</div>
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>credits</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(240,179,90,0.85)", marginTop: 4 }}>${(pack.priceInCents / 100).toFixed(2)}</div>
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", marginTop: 2, textTransform: "capitalize" as const }}>{pack.tag}</div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ── Agent list ── */}
-        <div className="d8b-modal-body" style={{ overflowY: "auto", flex: 1 }}>
-          {!hasHtml && (
-            <p className="d8b-modal-desc" style={{ background: "rgba(255,209,102,0.07)", border: "1px solid rgba(255,209,102,0.20)", borderRadius: 10, padding: "10px 14px", color: "rgba(255,209,102,0.90)" }}>
-              Generate a site first — agents need your HTML to analyse.
-            </p>
-          )}
-          {AUTOMATE_AGENTS.map((agent) => {
-            const st = states[agent.id] ?? "idle";
-            const res = results[agent.id];
-            const isExp = expanded[agent.id];
-            const { locked, tooExpensive, canRun } = agentAccess(agent.id);
-            const cost = creditInfo?.costs[agent.id] ?? null;
-
-            return (
-              <div key={agent.id} className="d8b-info-section d8b-info-section--agent" style={{ opacity: locked ? 0.65 : 1 }}>
-                <div className="d8b-automate-row">
-                  <div className="d8b-automate-row-main">
-                    <span className="d8b-automate-icon">{locked ? "🔒" : agent.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const }}>
-                        <div className="d8b-info-section-title d8b-info-section-title--compact">{agent.name}</div>
-                        {cost !== null && !creditInfo?.admin && (
-                          <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.30)", background: "rgba(255,255,255,0.06)", borderRadius: 4, padding: "1px 5px" }}>
-                            {cost} cr
-                          </span>
-                        )}
-                        {locked && (
-                          <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,180,0,0.80)", background: "rgba(255,180,0,0.08)", borderRadius: 4, padding: "1px 6px" }}>
-                            {agent.id === "design-fixer" ? "Pro+" : "Starter+"}
-                          </span>
-                        )}
-                      </div>
-                      {st === "idle" && !locked && <div className="d8b-info-section-body d8b-info-section-body--small">{agent.desc}</div>}
-                      {locked && <div style={{ fontSize: 11, color: "rgba(255,180,0,0.60)", marginTop: 2 }}>Upgrade your plan to unlock this agent.</div>}
-                      {tooExpensive && st === "idle" && <div style={{ fontSize: 11, color: "rgba(255,100,100,0.70)", marginTop: 2 }}>Not enough credits — buy more to run this agent.</div>}
-                      {res && (
-                        <div style={{ marginTop: 4 }}>
-                          <div style={{ fontSize: 11, lineHeight: 1.5, color: st === "failed" ? "rgba(255,100,100,0.85)" : "rgba(56,248,166,0.90)", fontFamily: "ui-monospace,monospace" }}>
-                            {st !== "failed" && "✓ "}{res.summary}
-                          </div>
-                          {res.model && (
-                            <div style={{ marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.28)" }}>
-                              via {res.provider === "anthropic" ? "🟠 Claude" : "⬢ OpenAI"} · {res.model}
-                            </div>
-                          )}
-                          {st === "done" && !!res.data && (
-                            <button onClick={() => setExpanded(s => ({ ...s, [agent.id]: !isExp }))} type="button"
-                              style={{ marginTop: 4, fontSize: 10, color: "rgba(240,179,90,0.75)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                              {isExp ? "▲ Hide details" : "▼ View details"}
-                            </button>
-                          )}
-                          {isExp && !!res.data && (
-                            <AgentResultDetail
-                              id={agent.id}
-                              data={res.data}
-                              onApply={agent.id === "design-fixer" ? () => {
-                                if (typeof res.data === "string" && res.data.trim().startsWith("<")) {
-                                  onApplyHtml?.(res.data as string);
-                                  setExpanded(s => ({ ...s, [agent.id]: false }));
-                                }
-                              } : undefined}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => locked || tooExpensive ? setShowBuy(true) : runAgent(agent.id)}
-                    disabled={st === "running" || (!hasHtml && !locked && !tooExpensive)}
-                    type="button"
-                    style={{
-                      flexShrink: 0, fontSize: 11, padding: "4px 10px", borderRadius: 8, fontWeight: 600, whiteSpace: "nowrap" as const,
-                      cursor: st === "running" ? "not-allowed" : "pointer",
-                      background: locked || tooExpensive ? "rgba(255,180,0,0.10)" : st === "done" ? "rgba(56,248,166,0.12)" : st === "failed" ? "rgba(255,100,100,0.12)" : "rgba(255,255,255,0.06)",
-                      border: `1px solid ${locked || tooExpensive ? "rgba(255,180,0,0.30)" : st === "done" ? "rgba(56,248,166,0.35)" : st === "failed" ? "rgba(255,100,100,0.35)" : "rgba(255,255,255,0.14)"}`,
-                      color: locked || tooExpensive ? "rgba(255,180,0,0.85)" : st === "done" ? "rgba(56,248,166,0.90)" : st === "failed" ? "rgba(255,100,100,0.85)" : canRun ? "rgba(255,255,255,0.70)" : "rgba(255,255,255,0.40)",
-                      opacity: !hasHtml && !locked && !tooExpensive ? 0.4 : 1,
-                    }}>
-                    {st === "running" ? "Running…" : locked ? "Upgrade" : tooExpensive ? "Buy credits" : st === "done" ? "✓ Done" : st === "failed" ? "↩ Retry" : "Run"}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
   );
 }
 
