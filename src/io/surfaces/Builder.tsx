@@ -420,7 +420,7 @@ export function Builder() {
   const [industry, setIndustry] = useState("");
   const [state, setState] = useState<BuildState>("idle");
   const [html, setHtml] = useState("");
-  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-sonnet-4-6">("gpt-4o");
+  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-sonnet-4-6">("claude-sonnet-4-6");
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [sites, setSites] = useState<Site[]>(() => {
@@ -578,6 +578,12 @@ export function Builder() {
       setProgress(100);
       const dur = Date.now() - startRef.current;
       setDurationMs(dur);
+
+      // Strip markdown code fences if the AI wrapped the HTML in them
+      if (accumulated.trimStart().startsWith("```")) {
+        accumulated = accumulated.replace(/^\s*```(?:html)?\s*\n?/, "").replace(/\n?\s*```\s*$/, "");
+        setHtml(accumulated);
+      }
 
       const site: Site = {
         id: crypto.randomUUID(),
@@ -774,12 +780,8 @@ export function Builder() {
       <div className="d8h-root">
         <HomeStyles />
 
-        {/* Ambient animated background */}
-        <div className="d8h-bg" aria-hidden="true">
-          <div className="d8h-bg-a" />
-          <div className="d8h-bg-b" />
-          <div className="d8h-bg-c" />
-        </div>
+        {/* Ambient background */}
+        <div className="d8h-bg" aria-hidden="true" />
 
         {/* Payment success banner */}
         {paymentSuccess && (
@@ -794,160 +796,181 @@ export function Builder() {
         <header className="d8h-header">
           <div className="d8h-logo">
             <span className="d8h-logo-mark">D8</span>
-            <span className="d8h-logo-dot" />
-            <span className="d8h-logo-text">Dominat8.io</span>
+            <span className="d8h-logo-text">Dominat8</span>
           </div>
           <nav className="d8h-nav">
             <a href="/templates" className="d8h-nav-link">Templates</a>
             <a href="/gallery" className="d8h-nav-link">Gallery</a>
             <a href="/pricing" className="d8h-nav-link">Pricing</a>
+          </nav>
+          <div className="d8h-header-actions">
             {isSignedIn ? (
               <UserButton afterSignOutUrl="/" />
             ) : (
               <SignInButton mode="redirect">
-                <button type="button" className="d8h-nav-signin">Sign in</button>
+                <button type="button" className="d8h-nav-signin">Get Started</button>
               </SignInButton>
             )}
-          </nav>
+          </div>
         </header>
 
         {/* Hero */}
         <div className="d8h-hero">
-          <div className="d8h-eyebrow">
-            <span className="d8h-eyebrow-dot" />
-            The world&apos;s fastest AI website builder
+          <div className="d8h-badge">
+            <span className="d8h-badge-dot" />
+            AI Website Builder
           </div>
+
           <h1 className="d8h-title">
-            One sentence.<br />
-            <span className="d8h-title-accent">A complete website.</span>
+            Describe your business.<br />
+            <span className="d8h-title-grad">Get a website in seconds.</span>
           </h1>
-          <p className="d8h-sub">Describe your business. Watch a full, professional site appear in under 30 seconds — no templates, no drag and drop.</p>
 
-          {/* Prompt row */}
-          <div className="d8h-input-row">
-            <span className="d8h-input-icon">✦</span>
-            <input
-              ref={inputRef}
-              className="d8h-input"
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
-              placeholder={placeholder + "|"}
-            />
-            {typeof window !== "undefined" && "webkitSpeechRecognition" in window && (
+          <p className="d8h-sub">
+            Type one sentence about your business. Our AI writes the copy, designs the layout,
+            and delivers a production-ready website — no templates, no drag-and-drop.
+          </p>
+
+          {/* Input card */}
+          <div className="d8h-input-card">
+            <div className="d8h-input-row">
+              <input
+                ref={inputRef}
+                className="d8h-input"
+                type="text"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
+                placeholder={placeholder + "|"}
+              />
+              {typeof window !== "undefined" && "webkitSpeechRecognition" in window && (
+                <button
+                  className="d8h-mic-btn"
+                  type="button"
+                  title="Voice input"
+                  aria-label="Voice input"
+                  onClick={() => {
+                    if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
+                      type SpeechResult = { results: { 0: { transcript: string } }[] };
+                      type SR = { lang: string; onresult: ((e: SpeechResult) => void) | null; start: () => void };
+                      const Ctor = (window as unknown as { webkitSpeechRecognition: new () => SR }).webkitSpeechRecognition;
+                      const recognition = new Ctor();
+                      recognition.lang = "en-US";
+                      recognition.onresult = (ev) => {
+                        setPrompt(ev.results[0][0].transcript);
+                      };
+                      recognition.start();
+                    }
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                </button>
+              )}
               <button
-                className="d8h-mic-btn"
+                className="d8h-gen-btn"
+                onClick={() => generate()}
+                disabled={!prompt.trim()}
                 type="button"
-                title="Voice input"
-                aria-label="Voice input"
-                onClick={() => {
-                  if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
-                    type SpeechResult = { results: { 0: { transcript: string } }[] };
-                    type SR = { lang: string; onresult: ((e: SpeechResult) => void) | null; start: () => void };
-                    const Ctor = (window as unknown as { webkitSpeechRecognition: new () => SR }).webkitSpeechRecognition;
-                    const recognition = new Ctor();
-                    recognition.lang = "en-US";
-                    recognition.onresult = (ev) => {
-                      setPrompt(ev.results[0][0].transcript);
-                    };
-                    recognition.start();
-                  }
-                }}
               >
-                🎙
+                Generate
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
-            )}
-            <button
-              className="d8h-gen-btn"
-              onClick={() => generate()}
-              disabled={!prompt.trim()}
-              type="button"
-            >
-              GENERATE
-            </button>
+            </div>
           </div>
 
-          {/* Quick selections row — only show active tags + toggle */}
+          {/* Quick options */}
           <div className="d8h-quick-row">
-            {industry && <span className="d8h-quick-tag" onClick={() => setIndustry("")}>{INDUSTRIES.find(i => i.label === industry)?.icon} {industry} ✕</span>}
-            {vibe && <span className="d8h-quick-tag" onClick={() => setVibe("")}>{VIBES.find(v => v.label === vibe)?.icon} {vibe} ✕</span>}
-            <button type="button" className="d8h-quick-tag" onClick={() => setGenModel((m) => m === "gpt-4o" ? "claude-sonnet-4-6" : "gpt-4o")} title="Switch AI model">
-              {genModel === "gpt-4o" ? "⬢ GPT-4o" : "◈ Claude"}
+            {industry && <span className="d8h-tag" onClick={() => setIndustry("")}>{INDUSTRIES.find(i => i.label === industry)?.icon} {industry} ✕</span>}
+            {vibe && <span className="d8h-tag" onClick={() => setVibe("")}>{VIBES.find(v => v.label === vibe)?.icon} {vibe} ✕</span>}
+            <button type="button" className="d8h-tag d8h-tag--model" onClick={() => setGenModel((m) => m === "claude-sonnet-4-6" ? "gpt-4o" : "claude-sonnet-4-6")} title="Switch AI model">
+              {genModel === "claude-sonnet-4-6" ? "◈ Claude" : "⬢ GPT-4o"}
             </button>
-            <button type="button" className={`d8h-customize-toggle ${showOptions ? "d8h-customize-toggle--open" : ""}`} onClick={() => setShowOptions(!showOptions)}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M3 12h18"/></svg>
-              {showOptions ? "Less" : "Customize"}
+            <button type="button" className={`d8h-tag d8h-tag--toggle ${showOptions ? "d8h-tag--open" : ""}`} onClick={() => setShowOptions(!showOptions)}>
+              {showOptions ? "Less options" : "+ Customize"}
             </button>
           </div>
 
-          {/* Expanded options — industry chips + vibes */}
+          {/* Expanded options */}
           {showOptions && (
-            <div className="d8h-options-expanded">
-              <div className="d8h-chips">
-                {INDUSTRIES.map((ind) => (
-                  <button key={ind.label} type="button" className={`d8h-chip ${industry === ind.label ? "d8h-chip--active" : ""}`} onClick={() => setIndustry((prev) => prev === ind.label ? "" : ind.label)}>
-                    {ind.icon} {ind.label}
-                  </button>
-                ))}
+            <div className="d8h-expand">
+              <div className="d8h-expand-group">
+                <div className="d8h-expand-label">Industry</div>
+                <div className="d8h-chips">
+                  {INDUSTRIES.map((ind) => (
+                    <button key={ind.label} type="button" className={`d8h-chip ${industry === ind.label ? "d8h-chip--on" : ""}`} onClick={() => setIndustry((prev) => prev === ind.label ? "" : ind.label)}>
+                      {ind.icon} {ind.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="d8h-options-row">
-                {VIBES.map((v) => (
-                  <button key={v.label} type="button" className={`d8h-vibe-chip ${vibe === v.label ? "d8h-vibe-chip--active" : ""}`} onClick={() => setVibe((prev) => prev === v.label ? "" : v.label)} title={v.hint}>
-                    <span className="d8h-vibe-icon">{v.icon}</span>
-                    {v.label}
-                  </button>
-                ))}
+              <div className="d8h-expand-group">
+                <div className="d8h-expand-label">Style</div>
+                <div className="d8h-chips">
+                  {VIBES.map((v) => (
+                    <button key={v.label} type="button" className={`d8h-chip ${vibe === v.label ? "d8h-chip--on" : ""}`} onClick={() => setVibe((prev) => prev === v.label ? "" : v.label)} title={v.hint}>
+                      {v.icon} {v.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
-
-          {/* Social proof strip */}
-          <SocialProof />
         </div>
+
+        {/* Stats strip */}
+        <div className="d8h-stats">
+          <div className="d8h-stat">
+            <span className="d8h-stat-value">&lt;30s</span>
+            <span className="d8h-stat-label">Avg build time</span>
+          </div>
+          <div className="d8h-stat-sep" />
+          <div className="d8h-stat">
+            <span className="d8h-stat-value">14</span>
+            <span className="d8h-stat-label">AI agents</span>
+          </div>
+          <div className="d8h-stat-sep" />
+          <div className="d8h-stat">
+            <span className="d8h-stat-value">1-click</span>
+            <span className="d8h-stat-label">Deploy &amp; go live</span>
+          </div>
+        </div>
+
+        {/* Social proof */}
+        <SocialProof />
 
         {/* Deployments */}
         <section className="d8h-deploys">
-          <div className="d8h-deploys-header">
-            <span className="d8h-deploys-title">Deployments</span>
-            <span className="d8h-deploys-live">
+          <div className="d8h-section-head">
+            <h2 className="d8h-section-title">Active Deployments</h2>
+            <span className="d8h-live-indicator">
               <span className="d8h-live-dot" />
-              {loaded ? `${deployments.length} active` : "Loading…"}
+              {loaded ? `${deployments.length} live` : "Loading\u2026"}
             </span>
           </div>
 
-          <div className="d8h-deploys-list">
+          <div className="d8h-deploys-grid">
             {(loaded ? deployments : []).map((dep, i) => {
               const ps = pillStyle(dep.pill);
               const bar = barColor(dep.progress, dep.status);
               return (
-                <div key={i} className="d8h-dep-row">
-                  <span className="d8h-dep-icon">{deployIcon(dep.icon)}</span>
-                  <div className="d8h-dep-info">
-                    <div className="d8h-dep-domain">{dep.domain}</div>
-                    <div className="d8h-dep-desc">{dep.desc}</div>
+                <div key={i} className="d8h-dep-card">
+                  <div className="d8h-dep-top">
+                    <span className="d8h-dep-icon">{deployIcon(dep.icon)}</span>
+                    <span className="d8h-dep-pill" style={{ color: ps.color, background: ps.bg, borderColor: ps.border }}>{dep.pill}</span>
                   </div>
+                  <div className="d8h-dep-domain">{dep.domain}</div>
+                  <div className="d8h-dep-desc">{dep.desc}</div>
                   <div className="d8h-dep-bar-wrap">
                     <div className="d8h-dep-bar-track">
-                      <div
-                        className="d8h-dep-bar-fill"
-                        style={{ width: `${dep.progress}%`, background: bar }}
-                      />
+                      <div className="d8h-dep-bar-fill" style={{ width: `${dep.progress}%`, background: bar }} />
                     </div>
-                    <div className="d8h-dep-pct">{dep.progress}%</div>
+                    <span className="d8h-dep-pct">{dep.progress}%</span>
                   </div>
-                  <div className="d8h-dep-status">{dep.status}</div>
-                  <span
-                    className="d8h-dep-pill"
-                    style={{ color: ps.color, background: ps.bg, borderColor: ps.border }}
-                  >
-                    {dep.pill}
-                  </span>
                 </div>
               );
             })}
             {loaded && deployments.length === 0 && (
-              <div className="d8h-deploys-empty">No active deployments</div>
+              <div className="d8h-deploys-empty">No deployments yet. Generate your first site above.</div>
             )}
           </div>
         </section>
@@ -957,15 +980,20 @@ export function Builder() {
 
         {/* Footer */}
         <footer className="d8h-footer">
-          <div className="d8h-footer-links">
-            <a href="/templates" className="d8h-footer-link">Templates</a>
-            <a href="/gallery" className="d8h-footer-link">Gallery</a>
-            <a href="/pricing" className="d8h-footer-link">Pricing</a>
-            <a href="/about" className="d8h-footer-link">About</a>
-            <a href="/privacy" className="d8h-footer-link">Privacy</a>
-            <a href="/terms" className="d8h-footer-link">Terms</a>
+          <div className="d8h-footer-inner">
+            <div className="d8h-footer-brand">
+              <span className="d8h-footer-logo">D8</span>
+              <span className="d8h-footer-copy">&copy; {new Date().getFullYear()} Dominat8.io</span>
+            </div>
+            <div className="d8h-footer-links">
+              <a href="/templates" className="d8h-footer-link">Templates</a>
+              <a href="/gallery" className="d8h-footer-link">Gallery</a>
+              <a href="/pricing" className="d8h-footer-link">Pricing</a>
+              <a href="/about" className="d8h-footer-link">About</a>
+              <a href="/privacy" className="d8h-footer-link">Privacy</a>
+              <a href="/terms" className="d8h-footer-link">Terms</a>
+            </div>
           </div>
-          <div className="d8h-footer-copy">© {new Date().getFullYear()} Dominat8.io · Built with AI</div>
         </footer>
 
         {/* Bottom dock */}
@@ -1137,16 +1165,16 @@ export function Builder() {
 
             {/* Model selector */}
             <div className="d8b-model-selector">
-              {(["gpt-4o", "claude-sonnet-4-6"] as const).map(m => (
+              {(["claude-sonnet-4-6", "gpt-4o"] as const).map(m => (
                 <button
                   key={m}
                   className={`d8b-model-btn ${genModel === m ? "d8b-model-btn--active" : ""}`}
                   onClick={() => setGenModel(m)}
                   type="button"
                   disabled={isBuilding}
-                  title={m === "gpt-4o" ? "OpenAI GPT-4o" : "Anthropic Claude Sonnet"}
+                  title={m === "claude-sonnet-4-6" ? "Anthropic Claude Sonnet (Recommended)" : "OpenAI GPT-4o"}
                 >
-                  {m === "gpt-4o" ? "GPT-4o" : "Claude"}
+                  {m === "claude-sonnet-4-6" ? "◈ Claude" : "GPT-4o"}
                 </button>
               ))}
             </div>
@@ -2904,95 +2932,61 @@ function BuilderStyles() {
 function HomeStyles() {
   return (
     <style>{`
+      /* ══════════════════════════════════════════════════════════════════════════
+         Dominat8 — Premium Homepage
+         Design: Linear/Vercel-inspired dark theme
+         ══════════════════════════════════════════════════════════════════════════ */
+
       .d8h-root {
         min-height: 100vh;
         width: 100%;
-        background: #030712;
-        color: #E8F0FF;
-        font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+        background: #08090d;
+        color: #f0f0f5;
+        font-family: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
         display: flex;
         flex-direction: column;
         padding-bottom: 100px;
         position: relative;
         overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
-      /* ── Grid overlay ── */
+      /* ── Subtle dot grid ── */
       .d8h-root::before {
         content: '';
         position: fixed;
         inset: 0;
         pointer-events: none;
         z-index: 0;
-        background-image:
-          linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-        background-size: 60px 60px;
-        mask-image: radial-gradient(ellipse 80% 50% at 50% 20%, black 0%, transparent 70%);
-        -webkit-mask-image: radial-gradient(ellipse 80% 50% at 50% 20%, black 0%, transparent 70%);
+        background-image: radial-gradient(rgba(0,212,255,0.03) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mask-image: radial-gradient(ellipse 70% 50% at 50% 0%, black 0%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 0%, black 0%, transparent 70%);
       }
 
-      /* ── Animated ambient orbs — VIVID ── */
+      /* ── Ambient background — single soft spotlight ── */
       .d8h-bg {
         position: fixed; inset: 0;
-        pointer-events: none; z-index: 0; overflow: hidden;
-      }
-      .d8h-bg-a {
-        position: absolute;
-        width: 900px; height: 700px;
-        top: -250px; left: -200px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(0,212,255,0.18) 0%, transparent 65%);
-        filter: blur(60px);
-        animation: d8h-drift-a 22s ease-in-out infinite;
-      }
-      .d8h-bg-b {
-        position: absolute;
-        width: 800px; height: 600px;
-        top: 80px; right: -250px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(123,97,255,0.14) 0%, transparent 65%);
-        filter: blur(60px);
-        animation: d8h-drift-b 28s ease-in-out infinite;
-      }
-      .d8h-bg-c {
-        position: absolute;
-        width: 600px; height: 500px;
-        bottom: -150px; left: 25%;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(0,255,178,0.10) 0%, transparent 65%);
-        filter: blur(60px);
-        animation: d8h-drift-a 35s ease-in-out infinite reverse;
-      }
-      @keyframes d8h-drift-a {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(60px, 40px) scale(1.08); }
-        66% { transform: translate(-40px, 60px) scale(0.95); }
-      }
-      @keyframes d8h-drift-b {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(-70px, -30px) scale(1.10); }
-        66% { transform: translate(50px, 50px) scale(0.93); }
-      }
-      @keyframes d8h-shimmer {
-        0% { left: -100%; }
-        40% { left: 100%; }
-        100% { left: 100%; }
+        pointer-events: none; z-index: 0;
+        background:
+          radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,212,255,0.10) 0%, transparent 60%),
+          radial-gradient(ellipse 50% 40% at 80% 20%, rgba(123,97,255,0.06) 0%, transparent 50%);
       }
 
-      /* ── Payment success banner ── */
+      /* ── Payment banner ── */
       .d8h-payment-banner {
         display: flex; align-items: center; justify-content: center; gap: 10px;
-        padding: 11px 20px;
-        background: rgba(0,255,178,0.10);
-        border-bottom: 1px solid rgba(0,255,178,0.25);
+        padding: 12px 20px;
+        background: rgba(0,255,178,0.08);
+        border-bottom: 1px solid rgba(0,255,178,0.20);
         font-size: 13px; color: rgba(0,255,178,0.90);
-        position: relative;
+        position: relative; z-index: 2;
       }
       .d8h-payment-dismiss {
-        position: absolute; right: 14px;
+        position: absolute; right: 16px;
         background: none; border: none; cursor: pointer;
-        color: rgba(0,255,178,0.60); font-size: 14px; line-height: 1;
+        color: rgba(0,255,178,0.50); font-size: 14px; line-height: 1;
         padding: 0; font-family: inherit;
       }
       .d8h-payment-dismiss:hover { color: rgba(0,255,178,0.90); }
@@ -3002,528 +2996,509 @@ function HomeStyles() {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 16px 28px;
-        border-bottom: 1px solid rgba(0,212,255,0.08);
+        padding: 0 32px;
+        height: 56px;
+        border-bottom: 1px solid rgba(0,212,255,0.06);
         position: sticky; top: 0; z-index: 50;
-        background: rgba(3,7,18,0.80);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
+        background: rgba(8,9,13,0.85);
+        backdrop-filter: blur(20px) saturate(1.2);
+        -webkit-backdrop-filter: blur(20px) saturate(1.2);
       }
-      .d8h-logo { display: flex; align-items: center; gap: 7px; }
+      .d8h-logo { display: flex; align-items: center; gap: 10px; }
       .d8h-logo-mark {
-        font-size: 18px; font-weight: 900;
+        font-size: 17px; font-weight: 800;
         background: linear-gradient(135deg, #E8F0FF, #00D4FF);
         -webkit-background-clip: text; background-clip: text;
         -webkit-text-fill-color: transparent;
         letter-spacing: -0.04em;
       }
-      .d8h-logo-dot {
-        width: 6px; height: 6px; border-radius: 50%;
-        background: #00D4FF;
-        box-shadow: 0 0 10px rgba(0,212,255,0.7);
-        animation: d8h-dot-pulse 3s ease-in-out infinite;
-      }
-      @keyframes d8h-dot-pulse {
-        0%, 100% { opacity: 0.75; box-shadow: 0 0 6px rgba(0,212,255,0.4); }
-        50% { opacity: 1; box-shadow: 0 0 14px rgba(0,212,255,0.8); }
-      }
       .d8h-logo-text {
         font-size: 13px; font-weight: 500;
-        color: rgba(200,220,255,0.50); letter-spacing: 0.01em;
+        color: rgba(240,240,245,0.35);
+        letter-spacing: 0.01em;
       }
-      .d8h-nav { display: flex; gap: 6px; align-items: center; }
-      .d8h-nav-signin {
-        padding: 7px 16px;
-        border-radius: 999px;
-        border: 1px solid rgba(0,212,255,0.40);
-        background: rgba(0,212,255,0.12);
-        color: #00D4FF;
-        font-size: 12px; font-weight: 600; font-family: inherit;
-        cursor: pointer; transition: all 140ms ease;
-      }
-      .d8h-nav-signin:hover {
-        background: rgba(0,212,255,0.22);
-        border-color: rgba(0,212,255,0.60);
-        box-shadow: 0 0 16px rgba(0,212,255,0.15);
+      .d8h-nav {
+        display: flex; gap: 2px; align-items: center;
+        position: absolute; left: 50%; transform: translateX(-50%);
       }
       .d8h-nav-link {
         padding: 6px 14px;
-        border-radius: 999px;
-        border: 1px solid rgba(100,180,255,0.12);
-        background: rgba(100,180,255,0.05);
-        color: rgba(200,220,255,0.60);
-        font-size: 12px;
+        border-radius: 8px;
+        color: rgba(240,240,245,0.45);
+        font-size: 13px; font-weight: 500;
         text-decoration: none;
-        transition: all 120ms ease;
+        transition: all 150ms ease;
       }
-      .d8h-nav-link:hover { color: #E8F0FF; border-color: rgba(100,180,255,0.25); background: rgba(100,180,255,0.10); }
+      .d8h-nav-link:hover { color: rgba(240,240,245,0.85); background: rgba(255,255,255,0.04); }
+      .d8h-header-actions { display: flex; align-items: center; gap: 8px; }
+      .d8h-nav-signin {
+        padding: 7px 18px;
+        border-radius: 8px;
+        border: 1px solid rgba(0,212,255,0.35);
+        background: rgba(0,212,255,0.08);
+        color: #00D4FF;
+        font-size: 13px; font-weight: 600; font-family: inherit;
+        cursor: pointer; transition: all 150ms ease;
+      }
+      .d8h-nav-signin:hover {
+        background: rgba(0,212,255,0.16);
+        border-color: rgba(0,212,255,0.50);
+        box-shadow: 0 0 16px rgba(0,212,255,0.10);
+      }
 
       /* ── Hero ── */
       .d8h-hero {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 80px 24px 48px;
-        gap: 24px;
+        padding: 120px 24px 0;
+        gap: 0;
         position: relative; z-index: 1;
       }
-      .d8h-eyebrow {
+
+      .d8h-badge {
         display: inline-flex; align-items: center; gap: 8px;
-        padding: 7px 20px; border-radius: 999px;
-        border: 1px solid rgba(0,212,255,0.30);
+        padding: 6px 16px; border-radius: 999px;
+        border: 1px solid rgba(0,212,255,0.25);
         background: rgba(0,212,255,0.06);
         color: #00D4FF;
-        font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+        font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
         text-transform: uppercase;
-        box-shadow: 0 0 30px rgba(0,212,255,0.10);
+        margin-bottom: 32px;
       }
-      .d8h-eyebrow-dot {
-        width: 7px; height: 7px; border-radius: 50%;
+      .d8h-badge-dot {
+        width: 6px; height: 6px; border-radius: 50%;
         background: #00D4FF;
-        box-shadow: 0 0 12px rgba(0,212,255,0.8);
+        box-shadow: 0 0 8px rgba(0,212,255,0.6);
         flex-shrink: 0;
-        animation: d8h-dot-pulse 2.5s ease-in-out infinite;
+        animation: d8h-pulse 3s ease-in-out infinite;
       }
+      @keyframes d8h-pulse {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+      }
+
       .d8h-title {
         margin: 0;
-        font-size: clamp(48px, 7vw, 82px);
-        font-weight: 900;
-        color: #E8F0FF;
-        letter-spacing: -0.04em;
+        font-size: clamp(40px, 6vw, 72px);
+        font-weight: 700;
+        color: #f0f0f5;
+        letter-spacing: -0.035em;
         text-align: center;
-        line-height: 1.02;
+        line-height: 1.08;
       }
-      .d8h-title-accent {
+      .d8h-title-grad {
         background: linear-gradient(135deg, #00D4FF 0%, #0066FF 50%, #7B61FF 100%);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: none;
-      }
-      .d8h-sub {
-        margin: 0;
-        font-size: 18px;
-        color: rgba(200,220,255,0.45);
-        text-align: center;
-        letter-spacing: -0.01em;
-        max-width: 540px;
-        line-height: 1.60;
-        font-family: 'Inter', system-ui, sans-serif;
       }
 
-      /* ── Input row — PREMIUM ── */
+      .d8h-sub {
+        margin: 24px 0 0;
+        font-size: 17px;
+        color: rgba(240,240,245,0.40);
+        text-align: center;
+        letter-spacing: -0.01em;
+        max-width: 520px;
+        line-height: 1.65;
+      }
+
+      /* ── Input card ── */
+      .d8h-input-card {
+        margin-top: 40px;
+        width: min(680px, calc(100% - 32px));
+        padding: 6px;
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        box-shadow:
+          0 0 0 1px rgba(0,212,255,0.0),
+          0 16px 48px -12px rgba(0,0,0,0.50);
+        transition: all 250ms ease;
+      }
+      .d8h-input-card:focus-within {
+        border-color: rgba(0,212,255,0.30);
+        box-shadow:
+          0 0 0 4px rgba(0,212,255,0.06),
+          0 20px 60px -12px rgba(0,0,0,0.60),
+          0 0 40px rgba(0,212,255,0.05);
+      }
       .d8h-input-row {
         display: flex;
         align-items: center;
-        width: min(740px, 100%);
-        background: rgba(100,180,255,0.04);
-        border: 1px solid rgba(100,180,255,0.15);
-        border-radius: 18px;
-        padding: 8px 8px 8px 20px;
-        gap: 10px;
-        transition: all 200ms ease;
-        position: relative;
+        gap: 8px;
+        padding: 6px 6px 6px 18px;
       }
-      .d8h-input-row:focus-within {
-        border-color: rgba(0,212,255,0.45);
-        box-shadow: 0 0 0 4px rgba(0,212,255,0.08), 0 8px 32px rgba(0,0,0,0.40), 0 0 40px rgba(0,212,255,0.06);
-        background: rgba(100,180,255,0.06);
-      }
-      .d8h-input-icon { font-size: 20px; flex-shrink: 0; }
       .d8h-input {
         flex: 1;
         background: transparent;
         border: none;
         outline: none;
-        color: #E8F0FF;
-        font-size: 16px;
+        color: #f0f0f5;
+        font-size: 15px;
         font-family: inherit;
         letter-spacing: -0.01em;
         min-width: 0;
       }
-      .d8h-input::placeholder { color: rgba(200,220,255,0.30); }
+      .d8h-input::placeholder { color: rgba(240,240,245,0.22); }
+      .d8h-mic-btn {
+        flex-shrink: 0;
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: transparent;
+        color: rgba(240,240,245,0.35);
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 150ms ease;
+      }
+      .d8h-mic-btn:hover { background: rgba(255,255,255,0.06); color: rgba(240,240,245,0.70); }
       .d8h-gen-btn {
         flex-shrink: 0;
-        padding: 13px 28px;
-        border-radius: 12px;
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 22px;
+        border-radius: 10px;
         border: none;
         background: linear-gradient(135deg, #00D4FF, #0066FF);
         color: #030712;
         font-size: 14px;
-        font-weight: 800;
+        font-weight: 700;
         font-family: inherit;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.01em;
         cursor: pointer;
         transition: all 180ms ease;
-        box-shadow: 0 4px 18px rgba(0,212,255,0.35);
-        position: relative; overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,212,255,0.30), inset 0 1px 0 rgba(255,255,255,0.15);
       }
-      .d8h-gen-btn::after {
-        content: '';
-        position: absolute; top: 0; left: -100%;
-        width: 100%; height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-        animation: d8h-shimmer 4s ease-in-out infinite;
-      }
+      .d8h-gen-btn svg { flex-shrink: 0; }
       .d8h-gen-btn:hover:not(:disabled) {
         background: linear-gradient(135deg, #1ADCFF, #1A7AFF);
-        box-shadow: 0 6px 28px rgba(0,212,255,0.50);
-        transform: translateY(-2px);
-      }
-      .d8h-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
-      .d8h-gen-btn:disabled::after { animation: none; }
-      .d8h-mic-btn {
-        flex-shrink: 0;
-        width: 40px; height: 40px;
-        border-radius: 10px;
-        border: 1px solid rgba(100,180,255,0.15);
-        background: rgba(100,180,255,0.06);
-        color: rgba(200,220,255,0.55);
-        font-size: 16px; cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        transition: all 140ms ease;
-      }
-      .d8h-mic-btn:hover { background: rgba(100,180,255,0.12); color: #E8F0FF; border-color: rgba(100,180,255,0.30); }
-
-      /* ── Options row (vibes + model) ── */
-      .d8h-options-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 8px;
-        width: min(740px, 100%);
-      }
-      .d8h-vibe-chip {
-        display: inline-flex; align-items: center; gap: 6px;
-        padding: 7px 14px;
-        border-radius: 10px;
-        border: 1px solid rgba(100,180,255,0.12);
-        background: rgba(100,180,255,0.04);
-        color: rgba(200,220,255,0.55);
-        font-size: 12px; font-weight: 500; font-family: inherit;
-        cursor: pointer; transition: all 150ms ease;
-      }
-      .d8h-vibe-chip:hover {
-        border-color: rgba(123,97,255,0.35);
-        background: rgba(123,97,255,0.08);
-        color: rgba(200,220,255,0.85);
+        box-shadow: 0 4px 20px rgba(0,212,255,0.45), inset 0 1px 0 rgba(255,255,255,0.18);
         transform: translateY(-1px);
       }
-      .d8h-vibe-chip--active {
-        border-color: rgba(123,97,255,0.55);
-        background: rgba(123,97,255,0.12);
-        color: #B4A0FF;
-        box-shadow: 0 0 16px rgba(123,97,255,0.12);
-      }
-      .d8h-vibe-icon { font-size: 14px; opacity: 0.7; }
-      .d8h-model-toggle {
-        display: inline-flex; align-items: center; gap: 6px;
-        padding: 7px 14px;
-        border-radius: 10px;
-        border: 1px solid rgba(0,212,255,0.20);
-        background: rgba(0,212,255,0.05);
-        color: rgba(0,212,255,0.70);
-        font-size: 12px; font-weight: 600; font-family: inherit;
-        cursor: pointer; transition: all 150ms ease;
-        margin-left: auto;
-      }
-      .d8h-model-toggle:hover {
-        border-color: rgba(0,212,255,0.40);
-        background: rgba(0,212,255,0.10);
-        color: #00D4FF;
-      }
+      .d8h-gen-btn:disabled { opacity: 0.30; cursor: not-allowed; }
 
-      /* ── Industry chips ── */
-      /* ── Quick row + customize ── */
+      /* ── Quick options row ── */
       .d8h-quick-row {
         display: flex; align-items: center; justify-content: center;
-        gap: 8px; flex-wrap: wrap; margin-top: 12px;
+        gap: 6px; flex-wrap: wrap; margin-top: 16px;
       }
-      .d8h-quick-tag {
+      .d8h-tag {
         display: inline-flex; align-items: center; gap: 5px;
-        padding: 5px 12px; border-radius: 20px; font-size: 12px;
-        font-weight: 600; font-family: inherit; cursor: pointer;
-        border: 1px solid rgba(0,212,255,0.25);
-        background: rgba(0,212,255,0.08); color: #00D4FF;
-        transition: all 180ms ease;
+        padding: 5px 12px; border-radius: 8px; font-size: 12px;
+        font-weight: 500; font-family: inherit; cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        color: rgba(240,240,245,0.50);
+        transition: all 150ms ease;
       }
-      .d8h-quick-tag:hover { background: rgba(0,212,255,0.14); }
-      .d8h-customize-toggle {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 5px 14px; border-radius: 20px; font-size: 12px;
-        font-weight: 600; font-family: inherit; cursor: pointer;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(255,255,255,0.04); color: rgba(200,220,255,0.55);
-        transition: all 200ms ease;
+      .d8h-tag:hover { border-color: rgba(255,255,255,0.15); color: rgba(240,240,245,0.75); }
+      .d8h-tag--model {
+        border-color: rgba(0,212,255,0.20);
+        color: rgba(0,212,255,0.80);
       }
-      .d8h-customize-toggle:hover { border-color: rgba(0,212,255,0.25); color: rgba(200,220,255,0.85); }
-      .d8h-customize-toggle--open { border-color: rgba(0,212,255,0.30); color: #00D4FF; background: rgba(0,212,255,0.06); }
-      .d8h-customize-toggle svg { transition: transform 300ms ease; }
-      .d8h-customize-toggle--open svg { transform: rotate(45deg); }
-      .d8h-options-expanded {
-        display: flex; flex-direction: column; align-items: center; gap: 12px;
-        margin-top: 14px; padding: 16px 20px;
-        border-radius: 16px; border: 1px solid rgba(0,212,255,0.10);
-        background: rgba(0,212,255,0.02);
-        animation: d8hSlideDown 200ms ease;
-      }
-      @keyframes d8hSlideDown {
-        from { opacity: 0; transform: translateY(-8px); }
-        to { opacity: 1; transform: translateY(0); }
+      .d8h-tag--model:hover { border-color: rgba(0,212,255,0.40); }
+      .d8h-tag--open {
+        border-color: rgba(0,212,255,0.30);
+        color: #00D4FF;
+        background: rgba(0,212,255,0.06);
       }
 
+      /* ── Expanded options ── */
+      .d8h-expand {
+        display: flex; flex-direction: column; gap: 20px;
+        margin-top: 20px; padding: 20px 24px;
+        width: min(680px, calc(100% - 32px));
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        animation: d8h-fade-in 200ms ease;
+      }
+      @keyframes d8h-fade-in {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .d8h-expand-group { display: flex; flex-direction: column; gap: 10px; }
+      .d8h-expand-label {
+        font-size: 11px; font-weight: 600;
+        color: rgba(240,240,245,0.30);
+        text-transform: uppercase; letter-spacing: 0.08em;
+      }
       .d8h-chips {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 7px;
-        width: min(760px, 100%);
+        display: flex; flex-wrap: wrap; gap: 6px;
       }
       .d8h-chip {
         display: inline-flex; align-items: center; gap: 5px;
-        padding: 7px 14px;
-        border-radius: 999px;
-        border: 1px solid rgba(100,180,255,0.10);
-        background: rgba(100,180,255,0.03);
-        color: rgba(200,220,255,0.50);
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: transparent;
+        color: rgba(240,240,245,0.40);
         font-size: 12px; font-weight: 500; font-family: inherit;
         cursor: pointer; transition: all 150ms ease;
       }
       .d8h-chip:hover {
-        border-color: rgba(0,212,255,0.25);
-        color: rgba(200,220,255,0.85);
-        background: rgba(0,212,255,0.05);
-        transform: translateY(-1px);
+        border-color: rgba(255,255,255,0.15);
+        color: rgba(240,240,245,0.75);
+        background: rgba(255,255,255,0.03);
       }
-      .d8h-chip--active {
-        border-color: rgba(0,212,255,0.50);
-        background: rgba(0,212,255,0.10);
+      .d8h-chip--on {
+        border-color: rgba(0,212,255,0.45);
+        background: rgba(0,212,255,0.08);
         color: #00D4FF;
-        box-shadow: 0 0 14px rgba(0,212,255,0.10);
+      }
+
+      /* ── Stats strip ── */
+      .d8h-stats {
+        display: flex; align-items: center; justify-content: center;
+        gap: 0; margin: 56px auto 0;
+        padding: 20px 40px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        position: relative; z-index: 1;
+      }
+      .d8h-stat {
+        display: flex; flex-direction: column; align-items: center;
+        gap: 4px; padding: 0 36px;
+      }
+      .d8h-stat-value {
+        font-size: 22px; font-weight: 700; color: #f0f0f5;
+        font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+        letter-spacing: -0.03em;
+      }
+      .d8h-stat-label {
+        font-size: 12px; color: rgba(240,240,245,0.30);
+        font-weight: 500; letter-spacing: 0.01em;
+      }
+      .d8h-stat-sep {
+        width: 1px; height: 32px;
+        background: rgba(255,255,255,0.08);
+        flex-shrink: 0;
       }
 
       /* ── Social proof ── */
       .d8h-social-proof {
         display: flex; align-items: center; justify-content: center;
-        flex-wrap: wrap; gap: 8px 12px;
+        flex-wrap: wrap; gap: 8px 14px;
         margin: 24px 0 0;
         padding: 0 24px;
+        position: relative; z-index: 1;
       }
       .d8h-avatars { display: flex; align-items: center; }
       .d8h-avatar {
-        width: 24px; height: 24px; border-radius: 50%;
-        border: 2px solid #030712;
+        width: 22px; height: 22px; border-radius: 50%;
+        border: 2px solid #08090d;
         display: inline-block; flex-shrink: 0;
       }
       .d8h-sp-count {
-        font-size: 13px; color: rgba(200,220,255,0.60);
+        font-size: 13px; color: rgba(240,240,245,0.45);
       }
-      .d8h-sp-num { font-weight: 700; color: #E8F0FF; }
-      .d8h-sp-divider { color: rgba(100,180,255,0.20); font-size: 13px; }
+      .d8h-sp-num { font-weight: 700; color: #f0f0f5; }
+      .d8h-sp-divider { color: rgba(255,255,255,0.12); font-size: 13px; }
       .d8h-sp-tag {
-        font-size: 12px; color: rgba(200,220,255,0.40);
-        padding: 3px 10px; border-radius: 999px;
-        border: 1px solid rgba(100,180,255,0.10);
-        background: rgba(100,180,255,0.04);
+        font-size: 12px; color: rgba(240,240,245,0.30);
+        padding: 3px 10px; border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
       }
 
       /* ── Deployments ── */
       .d8h-deploys {
         width: min(820px, 100%);
-        margin: 0 auto;
+        margin: 56px auto 0;
         padding: 0 24px;
         position: relative; z-index: 1;
       }
-      .d8h-deploys-header {
+      .d8h-section-head {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 0 0 14px;
-        border-bottom: 1px solid rgba(100,180,255,0.08);
-        margin-bottom: 12px;
+        margin-bottom: 16px;
       }
-      .d8h-deploys-title {
-        font-size: 13px; font-weight: 700;
-        background: linear-gradient(135deg, #E8F0FF, #00D4FF);
-        -webkit-background-clip: text; background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-transform: uppercase; letter-spacing: 0.08em;
+      .d8h-section-title {
+        margin: 0;
+        font-size: 14px; font-weight: 600;
+        color: rgba(240,240,245,0.70);
+        letter-spacing: -0.01em;
       }
-      .d8h-deploys-live {
+      .d8h-live-indicator {
         display: flex; align-items: center; gap: 6px;
-        font-size: 12px; color: rgba(200,220,255,0.45);
+        font-size: 12px; color: rgba(240,240,245,0.35);
       }
       .d8h-live-dot {
-        width: 7px; height: 7px; border-radius: 50%;
+        width: 6px; height: 6px; border-radius: 50%;
         background: #00FFB2;
-        box-shadow: 0 0 8px rgba(0,255,178,0.6);
-        animation: d8h-blink 2s ease-in-out infinite;
+        box-shadow: 0 0 6px rgba(0,255,178,0.5);
+        animation: d8h-blink 2.5s ease-in-out infinite;
       }
-      @keyframes d8h-blink { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+      @keyframes d8h-blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
-      .d8h-deploys-list { display: flex; flex-direction: column; gap: 10px; }
-      .d8h-dep-row {
-        display: flex; align-items: center; gap: 14px;
-        padding: 14px 18px;
-        border-radius: 16px;
-        border: 1px solid rgba(100,180,255,0.10);
-        background: rgba(100,180,255,0.03);
-        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        transition: all 180ms ease;
-        box-shadow: 0 2px 16px rgba(0,0,0,0.25);
-        position: relative; overflow: hidden;
+      .d8h-deploys-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 12px;
       }
-      .d8h-dep-row::before {
-        content: ''; position: absolute; inset: 0;
-        border-radius: 16px; padding: 1px;
-        background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(100,180,255,0.05));
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor; mask-composite: exclude;
-        opacity: 0; transition: opacity 200ms; pointer-events: none;
+      .d8h-dep-card {
+        padding: 16px 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        transition: all 200ms ease;
       }
-      .d8h-dep-row:hover {
-        background: rgba(100,180,255,0.06);
-        border-color: rgba(0,212,255,0.18);
-        box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 20px rgba(0,212,255,0.04);
+      .d8h-dep-card:hover {
+        border-color: rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.04);
         transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.30);
       }
-      .d8h-dep-row:hover::before { opacity: 1; }
-      .d8h-dep-icon { font-size: 20px; flex-shrink: 0; }
-      .d8h-dep-info { flex: 1; min-width: 0; }
+      .d8h-dep-top {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .d8h-dep-icon { font-size: 18px; }
+      .d8h-dep-pill {
+        display: inline-flex; align-items: center;
+        padding: 3px 10px; border-radius: 6px;
+        border: 1px solid; font-size: 10px; font-weight: 700;
+        letter-spacing: 0.04em; text-transform: uppercase;
+      }
       .d8h-dep-domain {
-        font-size: 14px; font-weight: 700; color: #E8F0FF;
+        font-size: 14px; font-weight: 600; color: #f0f0f5;
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
       .d8h-dep-desc {
-        font-size: 11px; color: rgba(200,220,255,0.40);
-        margin-top: 3px;
+        font-size: 12px; color: rgba(240,240,245,0.30);
+        margin-top: 4px;
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
       .d8h-dep-bar-wrap {
         display: flex; align-items: center; gap: 8px;
-        flex-shrink: 0; width: 140px;
+        margin-top: 12px;
       }
       .d8h-dep-bar-track {
-        flex: 1; height: 5px; border-radius: 999px;
-        background: rgba(100,180,255,0.08); overflow: hidden;
+        flex: 1; height: 4px; border-radius: 999px;
+        background: rgba(255,255,255,0.06); overflow: hidden;
       }
       .d8h-dep-bar-fill {
         height: 100%; border-radius: 999px;
         transition: width 600ms ease;
       }
-      .d8h-dep-pct { font-size: 11px; color: rgba(200,220,255,0.50); flex-shrink: 0; width: 30px; text-align: right; font-family: 'JetBrains Mono', ui-monospace, monospace; }
-      .d8h-dep-status { font-size: 11px; color: rgba(200,220,255,0.50); flex-shrink: 0; width: 70px; text-align: center; }
-      .d8h-dep-pill {
-        display: inline-flex; align-items: center;
-        padding: 4px 12px; border-radius: 999px;
-        border: 1px solid; font-size: 11px; font-weight: 700;
-        letter-spacing: 0.04em; flex-shrink: 0;
+      .d8h-dep-pct {
+        font-size: 11px; color: rgba(240,240,245,0.35);
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        min-width: 28px; text-align: right;
       }
       .d8h-deploys-empty {
-        font-size: 13px; color: rgba(200,220,255,0.30);
-        text-align: center; padding: 24px 0;
+        font-size: 13px; color: rgba(240,240,245,0.25);
+        text-align: center; padding: 32px 0;
+        grid-column: 1 / -1;
       }
 
-      /* ── Bottom dock — futuristic glass ── */
+      /* ── Bottom dock ── */
       .d8h-dock {
         position: fixed;
-        bottom: 20px; left: 50%; transform: translateX(-50%);
-        display: flex; gap: 4px; align-items: end;
-        padding: 10px 16px 10px;
-        border-radius: 24px;
-        border: 1px solid rgba(0,212,255,0.18);
-        background: linear-gradient(180deg, rgba(8,14,30,0.92) 0%, rgba(3,7,18,0.96) 100%);
-        backdrop-filter: blur(32px) saturate(1.6);
-        -webkit-backdrop-filter: blur(32px) saturate(1.6);
+        bottom: 16px; left: 50%; transform: translateX(-50%);
+        display: flex; gap: 2px; align-items: end;
+        padding: 8px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(0,212,255,0.12);
+        background: rgba(8,9,13,0.92);
+        backdrop-filter: blur(24px) saturate(1.4);
+        -webkit-backdrop-filter: blur(24px) saturate(1.4);
         z-index: 100;
-        box-shadow:
-          0 16px 60px rgba(0,0,0,0.7),
-          0 0 80px rgba(0,212,255,0.06),
-          0 1px 0 rgba(0,212,255,0.15) inset,
-          0 -1px 0 rgba(123,97,255,0.08) inset;
-      }
-      .d8h-dock::before {
-        content: ''; position: absolute; inset: 0; border-radius: 24px; padding: 1px;
-        background: linear-gradient(135deg, rgba(0,212,255,0.25), rgba(123,97,255,0.15), transparent 60%);
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.60), 0 0 40px rgba(0,212,255,0.03);
       }
       .d8h-dock-btn {
         position: relative;
         display: flex; flex-direction: column; align-items: center;
-        gap: 4px; padding: 10px 12px 8px;
-        border-radius: 14px;
+        gap: 3px; padding: 8px 10px 6px;
+        border-radius: 10px;
         border: 1px solid transparent;
-        background: rgba(255,255,255,0.03);
-        color: var(--dock-color, rgba(200,220,255,0.7));
-        cursor: pointer; transition: all 280ms cubic-bezier(0.34,1.56,0.64,1);
-        min-width: 56px;
+        background: transparent;
+        color: var(--dock-color, rgba(240,240,245,0.45));
+        cursor: pointer; transition: all 200ms ease;
+        min-width: 48px;
         text-decoration: none;
         overflow: hidden;
       }
       .d8h-dock-glow {
-        position: absolute; inset: 0; border-radius: 14px;
+        position: absolute; inset: 0; border-radius: 10px;
         background: radial-gradient(circle at 50% 40%, var(--dock-color), transparent 70%);
-        opacity: 0; transition: opacity 300ms ease; pointer-events: none;
+        opacity: 0; transition: opacity 200ms ease; pointer-events: none;
       }
       .d8h-dock-btn:hover {
-        border-color: color-mix(in srgb, var(--dock-color) 30%, transparent);
-        background: color-mix(in srgb, var(--dock-color) 10%, transparent);
-        transform: translateY(-6px) scale(1.08);
-        box-shadow:
-          0 8px 32px color-mix(in srgb, var(--dock-color) 25%, transparent),
-          0 0 20px color-mix(in srgb, var(--dock-color) 12%, transparent);
+        background: rgba(255,255,255,0.04);
+        transform: translateY(-3px);
       }
-      .d8h-dock-btn:hover .d8h-dock-glow { opacity: 0.12; }
-      .d8h-dock-btn:hover .d8h-dock-svg { filter: drop-shadow(0 0 6px var(--dock-color)); }
+      .d8h-dock-btn:hover .d8h-dock-glow { opacity: 0.08; }
       .d8h-dock-btn:hover .d8h-dock-label { color: var(--dock-color); }
       .d8h-dock-svg {
-        width: 22px; height: 22px;
-        color: var(--dock-color, rgba(200,220,255,0.7));
-        transition: filter 280ms ease, transform 280ms ease;
+        width: 20px; height: 20px;
+        color: var(--dock-color, rgba(240,240,245,0.45));
+        transition: all 200ms ease;
         flex-shrink: 0;
-        filter: drop-shadow(0 0 2px color-mix(in srgb, var(--dock-color) 30%, transparent));
       }
       .d8h-dock-label {
-        font-size: 9px; font-family: inherit; font-weight: 600;
-        color: rgba(200,220,255,0.40);
-        letter-spacing: 0.05em;
+        font-size: 9px; font-family: inherit; font-weight: 500;
+        color: rgba(240,240,245,0.25);
+        letter-spacing: 0.03em;
         white-space: nowrap;
         text-transform: uppercase;
-        transition: color 280ms ease;
+        transition: color 200ms ease;
       }
 
       /* ── Footer ── */
       .d8h-footer {
-        text-align: center;
-        padding: 40px 24px 100px;
-        margin-top: 32px;
+        padding: 48px 32px 100px;
+        margin-top: 48px;
+        border-top: 1px solid rgba(255,255,255,0.04);
+        position: relative; z-index: 1;
+      }
+      .d8h-footer-inner {
+        max-width: 820px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .d8h-footer-brand {
+        display: flex; align-items: center; gap: 12px;
+      }
+      .d8h-footer-logo {
+        font-size: 15px; font-weight: 800; color: rgba(240,240,245,0.50);
+      }
+      .d8h-footer-copy {
+        font-size: 12px; color: rgba(240,240,245,0.18);
       }
       .d8h-footer-links {
-        display: flex; flex-wrap: wrap;
-        align-items: center; justify-content: center;
-        gap: 4px 18px; margin-bottom: 14px;
+        display: flex; flex-wrap: wrap; gap: 4px 16px;
       }
       .d8h-footer-link {
-        font-size: 13px; color: rgba(200,220,255,0.30);
-        text-decoration: none; transition: color 140ms ease;
+        font-size: 12px; color: rgba(240,240,245,0.25);
+        text-decoration: none; transition: color 150ms ease;
       }
-      .d8h-footer-link:hover { color: rgba(200,220,255,0.70); }
-      .d8h-footer-copy {
-        font-size: 12px; color: rgba(200,220,255,0.15);
-      }
+      .d8h-footer-link:hover { color: rgba(240,240,245,0.60); }
 
+      /* ── Responsive ── */
       @media (max-width: 640px) {
-        .d8h-title { font-size: 36px; }
-        .d8h-options-row { gap: 5px; }
-        .d8h-vibe-chip { padding: 5px 10px; font-size: 11px; }
-        .d8h-dock { gap: 2px; padding: 6px 8px; }
-        .d8h-dock-btn { min-width: 42px; padding: 8px 6px 6px; }
-        .d8h-dock-svg { width: 20px; height: 20px; }
+        .d8h-hero { padding: 80px 20px 0; }
+        .d8h-title { font-size: 32px; }
+        .d8h-sub { font-size: 15px; }
+        .d8h-nav { display: none; }
+        .d8h-stats { flex-direction: column; gap: 16px; padding: 20px; }
+        .d8h-stat { padding: 0; }
+        .d8h-stat-sep { width: 40px; height: 1px; }
+        .d8h-deploys-grid { grid-template-columns: 1fr; }
+        .d8h-dock { gap: 0; padding: 6px 8px; }
+        .d8h-dock-btn { min-width: 40px; padding: 6px 5px 5px; }
+        .d8h-dock-svg { width: 18px; height: 18px; }
         .d8h-dock-label { display: none; }
+        .d8h-footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+        .d8h-footer-links { justify-content: center; }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .d8h-bg-a, .d8h-bg-b, .d8h-bg-c { animation: none !important; }
-        .d8h-gen-btn::after { animation: none !important; }
+        .d8h-badge-dot { animation: none !important; }
+        .d8h-live-dot { animation: none !important; }
       }
     `}</style>
   );

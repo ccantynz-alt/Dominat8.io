@@ -7,7 +7,15 @@ export type AgentType =
   | "responsive-audit"
   | "performance-optimizer"
   | "accessibility-checker"
-  | "link-scanner";
+  | "link-scanner"
+  | "creative-director"
+  | "motion-designer"
+  | "conversion-architect"
+  | "copy-chief"
+  | "proof-engine"
+  | "seo-gsc"
+  | "domain-ssl"
+  | "monetization";
 
 export type RunStatus = "queued" | "running" | "succeeded" | "failed";
 
@@ -29,6 +37,14 @@ export const AGENT_LABELS: Record<AgentType, string> = {
   "performance-optimizer":  "Performance Optimizer",
   "accessibility-checker":  "Accessibility Checker",
   "link-scanner":           "Link Scanner",
+  "creative-director":      "Creative Director",
+  "motion-designer":        "Motion Designer",
+  "conversion-architect":   "Conversion Architect",
+  "copy-chief":             "Copy Chief",
+  "proof-engine":           "Proof Engine",
+  "seo-gsc":                "SEO + GSC",
+  "domain-ssl":             "Domain + SSL",
+  "monetization":           "Monetization",
 };
 
 const MAX_RUNS = 60;

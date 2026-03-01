@@ -48,8 +48,9 @@ export async function POST(req: NextRequest) {
     return new Response("HTML required", { status: 400 });
   }
 
-  const useClaude = !!process.env.ANTHROPIC_API_KEY;
-  if (!useClaude && !process.env.OPENAI_API_KEY) {
+  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasOpenAI = !!process.env.OPENAI_API_KEY;
+  if (!hasAnthropic && !hasOpenAI) {
     return new Response("No AI provider configured", { status: 503 });
   }
 
@@ -62,41 +63,50 @@ export async function POST(req: NextRequest) {
   ].join("\n");
 
   const encoder = new TextEncoder();
+  const streamHeaders = {
+    "Content-Type": "text/plain; charset=utf-8",
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+  };
 
-  if (useClaude) {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const stream = client.messages.stream({
-      model: "claude-sonnet-4-6",
-      max_tokens: 16000,
-      temperature: 0.2,
-      system: FIX_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
+  // ── Claude path (preferred) ─────────────────────────────────────────────
+  if (hasAnthropic) {
+    try {
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const stream = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 16000,
+        temperature: 0.2,
+        stream: true,
+        system: FIX_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userMessage }],
+      });
 
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const event of stream) {
-            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-              controller.enqueue(encoder.encode(event.delta.text));
+      const readable = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const event of stream) {
+              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                controller.enqueue(encoder.encode(event.delta.text));
+              }
             }
+          } finally {
+            controller.close();
           }
-        } finally {
-          controller.close();
-        }
-      },
-    });
+        },
+      });
 
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "X-Content-Type-Options": "nosniff",
-        "Cache-Control": "no-store",
-      },
-    });
+      return new Response(readable, { headers: streamHeaders });
+    } catch (err: unknown) {
+      if (hasOpenAI) {
+        console.warn("[fix] Claude failed, falling back to OpenAI:", err instanceof Error ? err.message : err);
+      } else {
+        return new Response("AI generation failed", { status: 500 });
+      }
+    }
   }
 
-  // Fallback: OpenAI
+  // ── OpenAI path (fallback) ──────────────────────────────────────────────
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const stream = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -122,11 +132,5 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return new Response(readable, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "no-store",
-    },
-  });
+  return new Response(readable, { headers: streamHeaders });
 }
