@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
+import { AGENT_TOOLS, runWithToolUse } from "@/lib/claude-tool-use";
 import { startRun, completeRun, failRun, type AgentType } from "../_store";
 import {
   isAdminUser,
@@ -242,6 +243,23 @@ const HIGH_TOKEN_AGENTS: AgentType[] = ["design-fixer", "claude-builder", "claud
 async function runWithClaude(agent: AgentType, userContent: string): Promise<string> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const isHeavy = HIGH_TOKEN_AGENTS.includes(agent);
+
+  // Tool Use: for analysis agents, force structured JSON output via tool calling.
+  // This GUARANTEES valid JSON — no more parse errors from malformed output.
+  const tool = AGENT_TOOLS[agent];
+  if (tool && !isHeavy) {
+    const result = await runWithToolUse(
+      client,
+      claudeModel(agent),
+      SYSTEM_PROMPTS[agent],
+      userContent,
+      tool,
+    );
+    return JSON.stringify(result);
+  }
+
+  // Heavy agents (design-fixer, claude-builder, claude-refiner) return raw HTML,
+  // so they use standard text generation.
   const msg = await client.messages.create({
     model: claudeModel(agent),
     max_tokens: isHeavy ? 16000 : 2048,
