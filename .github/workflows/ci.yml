@@ -16,6 +16,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -40,5 +41,16 @@ jobs:
           ALLOW_PROTECTED_PATHS: ${{ contains(github.event.pull_request.title, '[ALLOW_PROTECTED]') && '1' || '0' }}
         run: node scripts/protected-paths-check.mjs
 
+      - name: Lint
+        run: npm run lint --if-present
+
       - name: Build
         run: npm run build
+
+  # Satisfies branch protection required checks from deleted workflows.
+  # Remove these once branch protection settings are updated.
+  gates:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Gates passed (consolidated into CI)"
