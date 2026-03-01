@@ -148,42 +148,80 @@ function SiteCard({ site, onSelect }: { site: Site; onSelect: () => void }) {
   );
 }
 
-// Social proof counter — increments over time for live feel
+// Live deploy feed — terminal-style scrolling activity log
+const FEED_NAMES = [
+  "alex_k9", "dev_mira", "jonah_x", "sara_7f", "kris_b2", "noor_91",
+  "liam_c4", "emma_z8", "ravi_d3", "chloe_e1", "omar_f6", "zoe_a5",
+  "finn_h0", "iris_j7", "noah_g2", "luna_m4", "ava_p8", "leo_r3",
+];
+const FEED_TYPES = [
+  { label: "deployed", color: "#10FF90" },
+  { label: "launched", color: "#00F0FF" },
+  { label: "published", color: "#10FF90" },
+  { label: "shipped", color: "#00F0FF" },
+];
+
+function makeFeedEntry(baseTime: number, offset: number) {
+  const t = new Date(baseTime - offset * 1000);
+  const ts = `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")}`;
+  const name = FEED_NAMES[Math.floor(Math.random() * FEED_NAMES.length)];
+  const action = FEED_TYPES[Math.floor(Math.random() * FEED_TYPES.length)];
+  return { ts, name, action, id: `${ts}-${name}-${Math.random().toString(36).slice(2, 6)}` };
+}
+
 function SocialProof() {
   const [count, setCount] = React.useState(() => {
-    // Deterministic base from date (resets each day)
     const d = new Date();
     const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
     return 2400 + (seed % 600);
   });
 
+  const [feed, setFeed] = React.useState(() => {
+    const now = Date.now();
+    return [
+      makeFeedEntry(now, 0),
+      makeFeedEntry(now, 4),
+      makeFeedEntry(now, 11),
+    ];
+  });
+
+  const [rate] = React.useState(() => 2 + Math.floor(Math.random() * 3)); // 2-4/min
+
   React.useEffect(() => {
-    // Tick up by 1-3 every 8-15 seconds
     const tick = () => {
       setCount(c => c + Math.floor(Math.random() * 3) + 1);
+      setFeed(prev => [makeFeedEntry(Date.now(), 0), prev[0], prev[1]]);
     };
-    const id = setInterval(tick, 8000 + Math.random() * 7000);
+    const id = setInterval(tick, 6000 + Math.random() * 9000);
     return () => clearInterval(id);
   }, []);
 
-  const AVATAR_COLORS = ["#F0B35A", "#38F8A6", "#FF4D6D", "#E8715A", "#FFD166", "#C09A5C"];
-
   return (
     <div className="d8h-social-proof">
-      <div className="d8h-avatars">
-        {AVATAR_COLORS.map((c, i) => (
-          <span key={i} className="d8h-avatar" style={{ background: c, marginLeft: i > 0 ? -8 : 0, zIndex: AVATAR_COLORS.length - i }} />
+      <div className="d8h-feed-header">
+        <span className="d8h-feed-dot" />
+        <span className="d8h-feed-title">LIVE DEPLOY FEED</span>
+      </div>
+      <div className="d8h-feed-log">
+        {feed.map((entry) => (
+          <div key={entry.id} className="d8h-feed-row">
+            <span className="d8h-feed-ts">{entry.ts}</span>
+            <span className="d8h-feed-name">{entry.name}</span>
+            <span className="d8h-feed-action" style={{ color: entry.action.color }}>{entry.action.label}</span>
+          </div>
         ))}
       </div>
-      <span className="d8h-sp-count">
-        <span className="d8h-sp-num">{count.toLocaleString()}</span> sites built today
-      </span>
-      <span className="d8h-sp-divider">·</span>
-      <span className="d8h-sp-tag">No credit card</span>
-      <span className="d8h-sp-divider">·</span>
-      <span className="d8h-sp-tag">HTML export</span>
-      <span className="d8h-sp-divider">·</span>
-      <span className="d8h-sp-tag">1-click deploy</span>
+      <div className="d8h-feed-footer">
+        <span className="d8h-feed-stat">
+          <span className="d8h-feed-stat-num">{count.toLocaleString()}</span> sites today
+        </span>
+        <span className="d8h-feed-rate">+{rate}/min</span>
+      </div>
+      <div className="d8h-feed-tags">
+        <span className="d8h-sp-tag">NO CARD</span>
+        <span className="d8h-sp-tag">HTML EXPORT</span>
+        <span className="d8h-sp-tag">1-CLICK DEPLOY</span>
+      </div>
     </div>
   );
 }
@@ -3510,30 +3548,98 @@ function HomeStyles() {
         box-shadow: 0 0 16px rgba(0,240,255,0.08);
       }
 
-      /* ── Social proof ── */
+      /* ── Live Deploy Feed ── */
       .d8h-social-proof {
+        display: flex; flex-direction: column;
+        width: min(420px, calc(100% - 48px));
+        margin: 28px auto 0;
+        border: 1px solid rgba(0,240,255,0.12);
+        border-radius: 8px;
+        background: rgba(4,6,12,0.70);
+        backdrop-filter: blur(12px);
+        overflow: hidden;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+      }
+      .d8h-feed-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 14px;
+        border-bottom: 1px solid rgba(0,240,255,0.08);
+        background: rgba(0,240,255,0.03);
+      }
+      .d8h-feed-dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: #10FF90;
+        box-shadow: 0 0 6px rgba(16,255,144,0.6);
+        animation: d8h-dot-pulse 2s ease-in-out infinite;
+      }
+      @keyframes d8h-dot-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+      .d8h-feed-title {
+        font-size: 10px; font-weight: 600;
+        letter-spacing: 0.12em;
+        color: rgba(200,215,240,0.45);
+      }
+      .d8h-feed-log {
+        display: flex; flex-direction: column; gap: 0;
+      }
+      .d8h-feed-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 6px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.025);
+        animation: d8h-feed-slide 0.4s ease-out;
+      }
+      .d8h-feed-row:first-child {
+        background: rgba(0,240,255,0.03);
+      }
+      @keyframes d8h-feed-slide {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .d8h-feed-ts {
+        font-size: 11px; color: rgba(200,215,240,0.30);
+        flex-shrink: 0; min-width: 62px;
+      }
+      .d8h-feed-name {
+        font-size: 11px; color: rgba(200,215,240,0.55);
+        flex: 1; min-width: 0;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .d8h-feed-action {
+        font-size: 10px; font-weight: 600;
+        letter-spacing: 0.06em; text-transform: uppercase;
+        flex-shrink: 0;
+      }
+      .d8h-feed-footer {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 14px;
+        border-top: 1px solid rgba(0,240,255,0.08);
+        background: rgba(0,240,255,0.02);
+      }
+      .d8h-feed-stat {
+        font-size: 12px; color: rgba(200,215,240,0.45);
+      }
+      .d8h-feed-stat-num {
+        font-weight: 700; color: #00F0FF;
+        text-shadow: 0 0 8px rgba(0,240,255,0.3);
+      }
+      .d8h-feed-rate {
+        font-size: 10px; color: #10FF90;
+        font-weight: 600; letter-spacing: 0.06em;
+      }
+      .d8h-feed-tags {
         display: flex; align-items: center; justify-content: center;
-        flex-wrap: wrap; gap: 8px 12px;
-        margin: 24px 0 0;
-        padding: 0 24px;
+        gap: 8px; padding: 8px 14px;
+        border-top: 1px solid rgba(255,255,255,0.03);
       }
-      .d8h-avatars { display: flex; align-items: center; }
-      .d8h-avatar {
-        width: 24px; height: 24px; border-radius: 50%;
-        border: 2px solid #06080F;
-        display: inline-block; flex-shrink: 0;
-      }
-      .d8h-sp-count {
-        font-size: 13px; color: rgba(200,215,240,0.55);
-      }
-      .d8h-sp-num { font-weight: 700; color: #00F0FF; }
-      .d8h-sp-divider { color: rgba(0,240,255,0.15); font-size: 13px; }
       .d8h-sp-tag {
-        font-size: 11px; color: rgba(200,215,240,0.40);
-        padding: 3px 10px; border-radius: 6px;
+        font-size: 9px; color: rgba(200,215,240,0.35);
+        padding: 2px 8px; border-radius: 4px;
         border: 1px solid rgba(255,255,255,0.06);
         background: rgba(255,255,255,0.02);
         font-family: 'JetBrains Mono', ui-monospace, monospace;
+        letter-spacing: 0.08em; font-weight: 500;
       }
 
       /* ── Deployments ── */
@@ -3749,6 +3855,8 @@ function HomeStyles() {
         .d8h-bg-mesh, .d8h-scanline, .d8h-bg-dotgrid { animation: none !important; }
         .d8h-gen-btn::after { animation: none !important; }
         .d8h-status-bar::after { animation: none !important; }
+        .d8h-feed-dot { animation: none !important; }
+        .d8h-feed-row { animation: none !important; }
       }
     `}</style>
   );
