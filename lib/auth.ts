@@ -8,7 +8,7 @@ export type AppUser = { id: string };
  * - Throws if not signed in.
  */
 export async function requireUser(): Promise<AppUser> {
-  const { userId } = auth();
+  const { userId } = await auth();
 
   if (!userId) {
     // Route handlers can let this throw; the caller should be authenticated.

@@ -225,7 +225,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Auth + credit enforcement ──────────────────────────────────────────────
-  const { userId } = auth();
+  const { userId } = await auth();
 
   let creditBalance = null;
   if (userId && !isAdminUser(userId)) {

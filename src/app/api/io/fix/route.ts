@@ -30,7 +30,7 @@ OUTPUT RULES:
 
 export async function POST(req: NextRequest) {
   // ── Auth + credit check ────────────────────────────────────────────────────
-  const { userId } = auth();
+  const { userId } = await auth();
   if (userId && !isAdminUser(userId)) {
     const check = await checkAndConsumeCredits(userId, "design-fixer");
     if (!check.ok) {

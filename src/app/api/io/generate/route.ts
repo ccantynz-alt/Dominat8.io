@@ -297,7 +297,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Auth + quota check ────────────────────────────────────────────────────
-  const { userId } = auth();
+  const { userId } = await auth();
 
   if (userId) {
     // Authenticated: enforce monthly quota
