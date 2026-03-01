@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
+export const runtime = "nodejs";
 export const maxDuration = 60;
 
 // ── Plan limits ────────────────────────────────────────────────────────────────
@@ -279,7 +280,7 @@ const VIBE_HINTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { prompt, industry, vibe } = await req.json();
+  const { prompt, industry, vibe, model: requestedModel } = await req.json();
 
   if (!prompt?.trim()) {
     return new Response(
@@ -323,10 +324,12 @@ export async function POST(req: NextRequest) {
   // Unauthenticated users get 3 free generations tracked client-side (localStorage).
   // ─────────────────────────────────────────────────────────────────────────
 
-  // ── Determine which model to use ──────────────────────────────────────────
-  // Claude is preferred for website generation when ANTHROPIC_API_KEY is set.
-  // Falls back to OpenAI only when Anthropic key is absent.
-  const useClaude = !!process.env.ANTHROPIC_API_KEY;
+  // ── Determine which provider to use ──────────────────────────────────────
+  // Claude is preferred. Falls back to OpenAI if Claude is unavailable or fails.
+  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasOpenAI = !!process.env.OPENAI_API_KEY;
+  const wantsClaude = requestedModel === "claude-sonnet-4-6" || !requestedModel;
+  const useClaude = wantsClaude && hasAnthropic;
 
   const industryHint = industry && INDUSTRY_HINTS[industry]
     ? `\nINDUSTRY GUIDANCE: ${INDUSTRY_HINTS[industry]}`
@@ -354,14 +357,21 @@ export async function POST(req: NextRequest) {
     { role: "user" as const, content: userMessage },
   ];
 
+  const streamHeaders = {
+    "Content-Type": "text/plain; charset=utf-8",
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+  };
+
   // ── Claude path (preferred) ─────────────────────────────────────────────
   if (useClaude) {
     try {
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-      const stream = client.messages.stream({
+      const stream = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 16000,
         temperature: 0.80,
+        stream: true,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
       });
@@ -372,7 +382,10 @@ export async function POST(req: NextRequest) {
         async start(controller) {
           try {
             for await (const event of stream) {
-              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+              if (
+                event.type === "content_block_delta" &&
+                event.delta.type === "text_delta"
+              ) {
                 controller.enqueue(encoder.encode(event.delta.text));
               }
             }
@@ -385,23 +398,29 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      return new Response(readable, {
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "X-Content-Type-Options": "nosniff",
-          "Cache-Control": "no-store",
-        },
-      });
+      return new Response(readable, { headers: streamHeaders });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      return new Response(
-        JSON.stringify({ error: `Claude generation failed: ${message}`, code: "AI_ERROR" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      // Claude failed — fall back to OpenAI if available
+      if (hasOpenAI) {
+        console.warn("[generate] Claude failed, falling back to OpenAI:", err instanceof Error ? err.message : err);
+      } else {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        return new Response(
+          JSON.stringify({ error: `Generation failed: ${message}`, code: "AI_ERROR" }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        );
+      }
     }
   }
 
   // ── OpenAI path (fallback) ──────────────────────────────────────────────
+  if (!hasOpenAI) {
+    return new Response(
+      JSON.stringify({ error: "AI service not available. Please try again later.", code: "NO_API_KEY" }),
+      { status: 503, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   let stream;
   try {
@@ -447,11 +466,5 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return new Response(readable, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "no-store",
-    },
-  });
+  return new Response(readable, { headers: streamHeaders });
 }

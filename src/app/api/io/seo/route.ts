@@ -61,8 +61,9 @@ export async function POST(req: NextRequest) {
     return new Response("HTML required", { status: 400 });
   }
 
-  const useClaude = !!process.env.ANTHROPIC_API_KEY;
-  if (!useClaude && !process.env.OPENAI_API_KEY) {
+  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasOpenAI = !!process.env.OPENAI_API_KEY;
+  if (!hasAnthropic && !hasOpenAI) {
     return new Response("No AI provider configured", { status: 503 });
   }
 
@@ -70,20 +71,32 @@ export async function POST(req: NextRequest) {
   const truncated = html.length > 8000 ? html.slice(0, 8000) + "\n<!-- truncated -->" : html;
   const userContent = `Analyse this HTML:\n\n${truncated}`;
 
-  let raw: string;
+  let raw: string | null = null;
 
-  if (useClaude) {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const msg = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1200,
-      temperature: 0.1,
-      system: SEO_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userContent }],
-    });
-    const block = msg.content[0];
-    raw = block.type === "text" ? block.text : "{}";
-  } else {
+  // ── Claude path (preferred) ─────────────────────────────────────────────
+  if (hasAnthropic) {
+    try {
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const msg = await client.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 1200,
+        temperature: 0.1,
+        system: SEO_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userContent }],
+      });
+      const block = msg.content[0];
+      raw = block.type === "text" ? block.text : "{}";
+    } catch (err: unknown) {
+      if (hasOpenAI) {
+        console.warn("[seo] Claude failed, falling back to OpenAI:", err instanceof Error ? err.message : err);
+      } else {
+        return new Response("AI analysis failed", { status: 500 });
+      }
+    }
+  }
+
+  // ── OpenAI path (fallback) ──────────────────────────────────────────────
+  if (raw === null && hasOpenAI) {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -99,8 +112,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Ensure we return valid JSON even if Claude wraps in code fences
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  const cleaned = jsonMatch ? jsonMatch[0] : raw;
+  const jsonMatch = (raw ?? "{}").match(/\{[\s\S]*\}/);
+  const cleaned = jsonMatch ? jsonMatch[0] : raw ?? "{}";
 
   return new Response(cleaned, {
     headers: {

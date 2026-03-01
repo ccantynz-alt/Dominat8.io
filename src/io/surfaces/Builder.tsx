@@ -420,7 +420,7 @@ export function Builder() {
   const [industry, setIndustry] = useState("");
   const [state, setState] = useState<BuildState>("idle");
   const [html, setHtml] = useState("");
-  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-sonnet-4-6">("gpt-4o");
+  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-sonnet-4-6">("claude-sonnet-4-6");
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [sites, setSites] = useState<Site[]>(() => {
