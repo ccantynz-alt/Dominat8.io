@@ -10,7 +10,8 @@ on:
   workflow_run:
     workflows:
       - "d8-keep-green"
-      - "Staging smoke check"
+      - "CI"
+      - "D8 Quality Gates"
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -41,6 +42,11 @@ jobs:
         run: |
           if [ "$HAS_PAT" != "true" ]; then
             echo "::error::GH_CLAUDE_PAT secret is not set. Auto-approve requires a PAT from a separate account (ccantyusa-hue). GITHUB_TOKEN cannot self-approve PRs."
+            echo ""
+            echo "To fix:"
+            echo "  1. Create a Classic PAT at https://github.com/settings/tokens (logged in as ccantyusa-hue)"
+            echo "  2. Scopes needed: repo, workflow, admin:repo_hook"
+            echo "  3. Set it: gh secret set GH_CLAUDE_PAT --repo ccantynz-alt/Dominat8.io"
             exit 1
           fi
           echo "✓ GH_CLAUDE_PAT is configured"
@@ -59,10 +65,16 @@ jobs:
             PR_NUMBER=$(gh pr list --repo ${{ github.repository }} \
               --head "$BRANCH" --state open --json number -q '.[0].number')
           fi
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "Found PR: $PR_NUMBER"
 
-      - name: Approve PR
+          if [ -z "$PR_NUMBER" ]; then
+            echo "::warning::No open PR found for this branch. Skipping."
+            echo "pr_number=" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "Found PR: #$PR_NUMBER"
+          fi
+
+      - name: Approve PR (as ccantyusa-hue)
         if: steps.find_pr.outputs.pr_number != ''
         env:
           GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT }}
@@ -70,39 +82,49 @@ jobs:
           PR="${{ steps.find_pr.outputs.pr_number }}"
           # GH_CLAUDE_PAT is from ccantyusa-hue — a separate account so it can approve ccantynz-alt PRs
           gh pr review "$PR" --repo ${{ github.repository }} \
-            --approve --body "Auto-approved: all checks green on claude/* branch."
+            --approve --body "Auto-approved: claude/* branch — all checks green." \
+            && echo "✓ PR #$PR approved" \
+            || echo "::warning::Approval failed (may already be approved)"
 
-      - name: Wait for all checks to pass
+      - name: Wait for mergeStateStatus == CLEAN
         if: steps.find_pr.outputs.pr_number != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR="${{ steps.find_pr.outputs.pr_number }}"
-          echo "Waiting for checks on PR #$PR…"
-          for i in $(seq 1 20); do
+          echo "Waiting for all checks to pass on PR #$PR…"
+          MERGED=false
+          for i in $(seq 1 40); do
             STATE=$(gh pr view "$PR" --repo ${{ github.repository }} \
-              --json mergeable,mergeStateStatus \
-              -q '.mergeStateStatus')
-            echo "  attempt $i: mergeStateStatus=$STATE"
+              --json mergeStateStatus -q '.mergeStateStatus')
+            echo "  [$i/40] mergeStateStatus=$STATE"
             if [ "$STATE" = "CLEAN" ]; then
-              echo "All checks passed."
+              echo "✓ All checks passed — ready to merge."
               break
             fi
             if [ "$STATE" = "DIRTY" ]; then
-              echo "PR has conflicts (state=$STATE). Skipping."
-              exit 0
+              echo "::error::PR has merge conflicts (DIRTY). Fix conflicts and re-push."
+              exit 1
             fi
             sleep 15
           done
 
-      - name: Merge PR
+          # Final check
+          FINAL=$(gh pr view "$PR" --repo ${{ github.repository }} \
+            --json mergeStateStatus -q '.mergeStateStatus')
+          if [ "$FINAL" != "CLEAN" ]; then
+            echo "::error::Timed out waiting for checks. mergeStateStatus=$FINAL (expected CLEAN)"
+            exit 1
+          fi
+
+      - name: Squash-merge PR
         if: steps.find_pr.outputs.pr_number != ''
         env:
           GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT }}
         run: |
           PR="${{ steps.find_pr.outputs.pr_number }}"
+          TITLE=$(gh pr view "$PR" --repo ${{ github.repository }} --json title -q .title)
           gh pr merge "$PR" --repo ${{ github.repository }} \
             --squash --delete-branch \
-            --subject "$(gh pr view $PR --repo ${{ github.repository }} --json title -q .title)" \
-            && echo "✓ PR #$PR merged" \
-            || echo "Merge failed — may need manual approval if branch protection requires it"
+            --subject "$TITLE (#$PR)"
+          echo "✓ PR #$PR squash-merged into main"
