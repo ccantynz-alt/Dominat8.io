@@ -35,15 +35,25 @@ jobs:
         startsWith(github.event.workflow_run.head_branch, 'claude/')) ||
       github.event_name == 'workflow_dispatch'
     steps:
-      - name: Verify GH_CLAUDE_PAT is configured
+      - name: Validate GH_CLAUDE_PAT credentials
+        id: validate_pat
         env:
           HAS_PAT: ${{ secrets.GH_CLAUDE_PAT != '' }}
+          GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT }}
         run: |
           if [ "$HAS_PAT" != "true" ]; then
             echo "::error::GH_CLAUDE_PAT secret is not set. Auto-approve requires a PAT from a separate account (ccantyusa-hue). GITHUB_TOKEN cannot self-approve PRs."
             exit 1
           fi
-          echo "✓ GH_CLAUDE_PAT is configured"
+          # Verify the token is actually valid by calling the API
+          if PAT_USER=$(gh api user --jq '.login' 2>/dev/null); then
+            echo "✓ GH_CLAUDE_PAT is valid (authenticated as $PAT_USER)"
+            echo "pat_valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "::error::GH_CLAUDE_PAT is set but has invalid credentials (expired or revoked). Regenerate the PAT for ccantyusa-hue and update the repo secret. See CLAUDE.md for instructions."
+            echo "pat_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
 
       - name: Find open PR for branch
         id: find_pr
@@ -63,7 +73,7 @@ jobs:
           echo "Found PR: $PR_NUMBER"
 
       - name: Approve PR
-        if: steps.find_pr.outputs.pr_number != ''
+        if: steps.find_pr.outputs.pr_number != '' && steps.validate_pat.outputs.pat_valid == 'true'
         env:
           GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT }}
         run: |
@@ -73,7 +83,7 @@ jobs:
             --approve --body "Auto-approved: all checks green on claude/* branch."
 
       - name: Wait for all checks to pass
-        if: steps.find_pr.outputs.pr_number != ''
+        if: steps.find_pr.outputs.pr_number != '' && steps.validate_pat.outputs.pat_valid == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -96,7 +106,7 @@ jobs:
           done
 
       - name: Merge PR
-        if: steps.find_pr.outputs.pr_number != ''
+        if: steps.find_pr.outputs.pr_number != '' && steps.validate_pat.outputs.pat_valid == 'true'
         env:
           GH_TOKEN: ${{ secrets.GH_CLAUDE_PAT }}
         run: |
