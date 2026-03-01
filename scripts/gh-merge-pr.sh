@@ -19,6 +19,22 @@ fi
 
 GH="HTTPS_PROXY=${HTTPS_PROXY:-${GLOBAL_AGENT_HTTP_PROXY:-}} gh"
 
+# Validate credentials before proceeding
+echo "==> Validating credentials"
+if ! AUTH_USER=$(eval "$GH api user --jq '.login'" 2>&1); then
+  echo "ERROR: Bad credentials. Your GH_TOKEN is expired, revoked, or not set."
+  echo "  Detail: $AUTH_USER"
+  echo ""
+  echo "Fix: regenerate the PAT and re-export:"
+  echo "  export GH_TOKEN=ghp_..."
+  echo "  bash scripts/gh-merge-pr.sh $PR"
+  echo ""
+  echo "Or re-run gh-auth-setup.sh:"
+  echo "  GH_TOKEN=ghp_... bash scripts/gh-auth-setup.sh"
+  exit 1
+fi
+echo "✓ Authenticated as $AUTH_USER"
+
 echo "==> PR #$PR status"
 eval "$GH pr view $PR --repo $REPO --json title,state,mergeable,reviews"
 
