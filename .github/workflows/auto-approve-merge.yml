@@ -4,9 +4,8 @@ name: Auto Approve + Merge (Claude PRs)
 # Approves + squash-merges once all required checks pass.
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main]
+  # Do NOT use pull_request — it creates a check on the PR which blocks
+  # mergeStateStatus from reaching CLEAN (circular dependency).
   workflow_run:
     workflows:
       - "d8-keep-green"
@@ -30,8 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     # Only act on claude/* branches
     if: |
-      (github.event_name == 'pull_request' &&
-        startsWith(github.head_ref, 'claude/')) ||
       (github.event_name == 'workflow_run' &&
         startsWith(github.event.workflow_run.head_branch, 'claude/')) ||
       github.event_name == 'workflow_dispatch'
