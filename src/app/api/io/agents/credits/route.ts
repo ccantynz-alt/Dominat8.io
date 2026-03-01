@@ -23,8 +23,10 @@ export async function GET() {
   if (admin) {
     return Response.json({
       admin: true,
+      isAdmin: true,
+      plan: "agency",
       balance: {
-        plan: "admin",
+        plan: "agency",
         monthlyAllowance: 0,
         monthlyUsed: 0,
         monthlyRemaining: 999999,
@@ -32,7 +34,7 @@ export async function GET() {
         total: 999999,
       },
       costs: AGENT_COSTS,
-      access: ["seo-sweep", "design-fixer", "responsive-audit", "performance-optimizer", "accessibility-checker", "link-scanner"],
+      access: PLAN_AGENT_ACCESS.agency,
       packs: CREDIT_PACKS,
     });
   }
@@ -41,6 +43,8 @@ export async function GET() {
 
   return Response.json({
     admin: false,
+    isAdmin: false,
+    plan: balance.plan,
     balance,
     costs: AGENT_COSTS,
     access: PLAN_AGENT_ACCESS[balance.plan] ?? PLAN_AGENT_ACCESS.free,

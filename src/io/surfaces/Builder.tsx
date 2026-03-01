@@ -420,7 +420,8 @@ export function Builder() {
   const [industry, setIndustry] = useState("");
   const [state, setState] = useState<BuildState>("idle");
   const [html, setHtml] = useState("");
-  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-haiku" | "claude-sonnet" | "claude-opus">("gpt-4o");
+  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-haiku" | "claude-sonnet" | "claude-opus">("claude-sonnet");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [sites, setSites] = useState<Site[]>(() => {
@@ -470,6 +471,20 @@ export function Builder() {
     return () => {
       abortRef.current?.abort();
     };
+  }, []);
+
+  // Detect admin user and set premium defaults
+  useEffect(() => {
+    fetch("/api/io/agents/credits")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.plan === "agency" || d.plan === "pro" || d.isAdmin) {
+          setIsAdmin(!!d.isAdmin);
+          // Admin/pro users default to Claude Opus
+          if (d.isAdmin) setGenModel("claude-opus");
+        }
+      })
+      .catch(() => {});
   }, []);
   const placeholder = useTypewriter(EXAMPLE_PROMPTS);
   const { deployments, loaded } = useDeployments();
@@ -552,6 +567,11 @@ export function Builder() {
           if (errData.error) msg = errData.error;
           if (res.status === 429) code = "quota";
           else if (res.status === 401) code = "auth";
+          else if (res.status === 503 && errData.code === "NO_API_KEY") {
+            // Claude not configured — fall back to GPT-4o automatically
+            msg = "Claude is temporarily unavailable. Retrying with GPT-4o...";
+            setGenModel("gpt-4o");
+          }
         } catch { /* no JSON body */ }
         setErrorCode(code);
         setErrorMsg(msg);
@@ -1496,7 +1516,7 @@ export function Builder() {
             {/* Canvas */}
             {viewMode === "preview" ? (
               <div className={device === "mobile" ? "d8b-iframe-mobile-wrap" : "d8b-iframe-wrap"}>
-                {isBuilding && progress < 15 && (
+                {isBuilding && !html && (
                   <div className="d8b-iframe-loader">
                     <GeneratingAnimation progress={progress} />
                   </div>
@@ -1506,7 +1526,7 @@ export function Builder() {
                     <div className="d8b-phone-notch" />
                     <iframe
                       ref={iframeRef}
-                      srcDoc={html || "<html><body style='background:#fff'></body></html>"}
+                      srcDoc={html || "<html><body style='background:#07090f'></body></html>"}
                       sandbox="allow-scripts"
                       className="d8b-phone-iframe"
                       title="Generated website mobile preview"
@@ -2628,7 +2648,7 @@ function BuilderStyles() {
       .d8b-deploy-btn:disabled { opacity: 0.30; cursor: not-allowed; }
 
       /* ── iframe ── */
-      .d8b-iframe-wrap { flex: 1; position: relative; overflow: hidden; background: #fff; }
+      .d8b-iframe-wrap { flex: 1; position: relative; overflow: hidden; background: #07090f; }
       .d8b-iframe-loader {
         position: absolute; inset: 0; z-index: 10;
         background: #030712;
