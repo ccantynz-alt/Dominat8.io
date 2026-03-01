@@ -420,7 +420,7 @@ export function Builder() {
   const [industry, setIndustry] = useState("");
   const [state, setState] = useState<BuildState>("idle");
   const [html, setHtml] = useState("");
-  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-sonnet-4-6">("claude-sonnet-4-6");
+  const [genModel, setGenModel] = useState<"auto" | "claude-sonnet-4-6" | "claude-haiku-4-5-20251001">("auto");
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [sites, setSites] = useState<Site[]>(() => {
@@ -882,9 +882,11 @@ export function Builder() {
           <div className="d8h-quick-row">
             {industry && <span className="d8h-tag" onClick={() => setIndustry("")}>{INDUSTRIES.find(i => i.label === industry)?.icon} {industry} ✕</span>}
             {vibe && <span className="d8h-tag" onClick={() => setVibe("")}>{VIBES.find(v => v.label === vibe)?.icon} {vibe} ✕</span>}
-            <button type="button" className="d8h-tag d8h-tag--model" onClick={() => setGenModel((m) => m === "claude-sonnet-4-6" ? "gpt-4o" : "claude-sonnet-4-6")} title="Switch AI model">
-              {genModel === "claude-sonnet-4-6" ? "◈ Claude" : "⬢ GPT-4o"}
-            </button>
+            <select className="d8h-model-select" value={genModel} onChange={(e) => setGenModel(e.target.value as typeof genModel)} title="AI engine">
+              <option value="auto">Auto</option>
+              <option value="claude-sonnet-4-6">Sonnet</option>
+              <option value="claude-haiku-4-5-20251001">Haiku</option>
+            </select>
             <button type="button" className={`d8h-tag d8h-tag--toggle ${showOptions ? "d8h-tag--open" : ""}`} onClick={() => setShowOptions(!showOptions)}>
               {showOptions ? "Less options" : "+ Customize"}
             </button>
@@ -1163,20 +1165,19 @@ export function Builder() {
               </div>
             </div>
 
-            {/* Model selector */}
+            {/* AI engine selector */}
             <div className="d8b-model-selector">
-              {(["claude-sonnet-4-6", "gpt-4o"] as const).map(m => (
-                <button
-                  key={m}
-                  className={`d8b-model-btn ${genModel === m ? "d8b-model-btn--active" : ""}`}
-                  onClick={() => setGenModel(m)}
-                  type="button"
-                  disabled={isBuilding}
-                  title={m === "claude-sonnet-4-6" ? "Anthropic Claude Sonnet (Recommended)" : "OpenAI GPT-4o"}
-                >
-                  {m === "claude-sonnet-4-6" ? "◈ Claude" : "GPT-4o"}
-                </button>
-              ))}
+              <label className="d8b-model-label">AI Engine</label>
+              <select
+                className="d8b-model-select"
+                value={genModel}
+                onChange={(e) => setGenModel(e.target.value as typeof genModel)}
+                disabled={isBuilding}
+              >
+                <option value="auto">Auto (Recommended)</option>
+                <option value="claude-sonnet-4-6">Sonnet — Premium quality</option>
+                <option value="claude-haiku-4-5-20251001">Haiku — Fast &amp; budget-friendly</option>
+              </select>
             </div>
 
             {/* Generate button */}
@@ -2032,34 +2033,45 @@ function BuilderStyles() {
       }
       .d8b-chip:disabled { opacity: 0.25; cursor: not-allowed; }
 
-      /* ── Model selector ── */
+      /* ── AI engine selector (dropdown) ── */
       .d8b-model-selector {
         display: flex;
-        gap: 4px;
-        background: rgba(255,255,255,0.02);
-        border: 1px solid rgba(255,255,255,0.05);
-        border-radius: 12px;
-        padding: 4px;
+        flex-direction: column;
+        gap: 6px;
       }
-      .d8b-model-btn {
-        flex: 1;
-        padding: 8px 10px;
-        border-radius: 9px;
-        border: none;
-        background: transparent;
+      .d8b-model-label {
+        font-size: 11px; font-weight: 600;
         color: rgba(140,160,200,0.40);
-        font-size: 12px;
-        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .d8b-model-select {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        color: #E8F0FF;
+        font-size: 13px;
+        font-weight: 500;
         font-family: inherit;
         cursor: pointer;
-        transition: all 200ms cubic-bezier(0.16,1,0.3,1);
+        transition: all 180ms ease;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(200,220,255,0.4)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
       }
-      .d8b-model-btn:hover:not(:disabled) { color: rgba(200,215,240,0.70); }
-      .d8b-model-btn:disabled { opacity: 0.30; cursor: not-allowed; }
-      .d8b-model-btn--active {
-        background: rgba(255,255,255,0.06);
-        color: #fff;
-        box-shadow: 0 1px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+      .d8b-model-select:hover { border-color: rgba(0,212,255,0.25); }
+      .d8b-model-select:focus {
+        outline: none;
+        border-color: rgba(0,212,255,0.40);
+        box-shadow: 0 0 0 3px rgba(0,212,255,0.06);
+      }
+      .d8b-model-select:disabled { opacity: 0.30; cursor: not-allowed; }
+      .d8b-model-select option {
+        background: #0d1117; color: #E8F0FF;
       }
 
       /* ── Generate button — THE HERO ── */
@@ -3193,11 +3205,22 @@ function HomeStyles() {
         transition: all 150ms ease;
       }
       .d8h-tag:hover { border-color: rgba(255,255,255,0.15); color: rgba(240,240,245,0.75); }
-      .d8h-tag--model {
-        border-color: rgba(0,212,255,0.20);
+      .d8h-model-select {
+        padding: 5px 28px 5px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(0,212,255,0.20);
+        background: rgba(0,212,255,0.04);
         color: rgba(0,212,255,0.80);
+        font-size: 12px; font-weight: 500; font-family: inherit;
+        cursor: pointer; transition: all 150ms ease;
+        appearance: none; -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='rgba(0,212,255,0.5)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
       }
-      .d8h-tag--model:hover { border-color: rgba(0,212,255,0.40); }
+      .d8h-model-select:hover { border-color: rgba(0,212,255,0.40); }
+      .d8h-model-select:focus { outline: none; border-color: rgba(0,212,255,0.50); box-shadow: 0 0 0 3px rgba(0,212,255,0.06); }
+      .d8h-model-select option { background: #08090d; color: #f0f0f5; }
       .d8h-tag--open {
         border-color: rgba(0,212,255,0.30);
         color: #00D4FF;
