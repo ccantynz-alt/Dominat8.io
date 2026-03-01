@@ -7,7 +7,9 @@ export type AgentType =
   | "responsive-audit"
   | "performance-optimizer"
   | "accessibility-checker"
-  | "link-scanner";
+  | "link-scanner"
+  | "claude-builder"
+  | "claude-refiner";
 
 export type RunStatus = "queued" | "running" | "succeeded" | "failed";
 
@@ -29,6 +31,8 @@ export const AGENT_LABELS: Record<AgentType, string> = {
   "performance-optimizer":  "Performance Optimizer",
   "accessibility-checker":  "Accessibility Checker",
   "link-scanner":           "Link Scanner",
+  "claude-builder":         "Claude Builder",
+  "claude-refiner":         "Claude Refiner",
 };
 
 const MAX_RUNS = 60;

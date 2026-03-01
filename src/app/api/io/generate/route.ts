@@ -1,8 +1,27 @@
 import { OpenAI } from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
+import { calculateCost, trackGenerationCost } from "@/lib/cost-tracker";
+import { formatMemoriesForPrompt } from "@/lib/memory";
 
 export const maxDuration = 60;
+
+// ── Supported Claude models for the builder ─────────────────────────────────
+
+const CLAUDE_MODELS: Record<string, string> = {
+  "claude-opus":    "claude-opus-4-6-20250514",
+  "claude-sonnet":  "claude-sonnet-4-6-20250514",
+  "claude-haiku":   "claude-haiku-4-5-20251001",
+};
+
+function isClaudeModel(model: string | undefined): boolean {
+  return !!model && model.startsWith("claude-");
+}
+
+function resolveClaudeModel(model: string): string {
+  return CLAUDE_MODELS[model] ?? CLAUDE_MODELS["claude-sonnet"];
+}
 
 // ── Plan limits ────────────────────────────────────────────────────────────────
 
@@ -287,12 +306,32 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: "AI service not configured. Please contact support.", code: "NO_API_KEY" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+  // Validate that at least one AI provider is configured
+  let wantsClaude = isClaudeModel(requestedModel);
+  if (wantsClaude && !anthropicKey) {
+    // If OpenAI is available, silently fall back instead of erroring
+    if (openaiKey) {
+      wantsClaude = false;
+    } else {
+      return new Response(
+        JSON.stringify({ error: "No AI provider configured. Please set ANTHROPIC_API_KEY or OPENAI_API_KEY.", code: "NO_API_KEY" }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }
+  if (!wantsClaude && !openaiKey) {
+    // If Anthropic is available, silently fall back
+    if (anthropicKey) {
+      wantsClaude = true;
+    } else {
+      return new Response(
+        JSON.stringify({ error: "No AI provider configured. Please set ANTHROPIC_API_KEY or OPENAI_API_KEY.", code: "NO_API_KEY" }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
   }
 
   // ── Auth + quota check ────────────────────────────────────────────────────
@@ -324,8 +363,7 @@ export async function POST(req: NextRequest) {
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── Determine which model to use ──────────────────────────────────────────
-  const useClaude = requestedModel === "claude-sonnet-4-6" && !!process.env.ANTHROPIC_API_KEY;
-  const openai = new OpenAI({ apiKey });
+  const useClaude = wantsClaude && !!anthropicKey;
 
   const industryHint = industry && INDUSTRY_HINTS[industry]
     ? `\nINDUSTRY GUIDANCE: ${INDUSTRY_HINTS[industry]}`
@@ -335,11 +373,20 @@ export async function POST(req: NextRequest) {
     ? `\n${VIBE_HINTS[vibe]}`
     : "";
 
+  // Inject user memories (brand colors, fonts, business info, etc.)
+  let memoryContext = "";
+  if (userId) {
+    try {
+      memoryContext = await formatMemoriesForPrompt(userId);
+    } catch { /* no memories — continue */ }
+  }
+
   const userMessage = [
     `Build a world-class website for: ${prompt.trim()}`,
     industryHint,
     vibeHint,
     industry ? `Industry category: ${industry}` : "",
+    memoryContext,
     "",
     "This website must be so visually stunning it wins a Webby Award.",
     "Invent real, specific, compelling content — zero lorem ipsum, zero generic placeholders.",
@@ -353,65 +400,82 @@ export async function POST(req: NextRequest) {
     { role: "user" as const, content: userMessage },
   ];
 
-  // ── Claude path (Anthropic API) ─────────────────────────────────────────
+  // ── Claude path (Anthropic SDK) ─────────────────────────────────────────
   if (useClaude) {
-    try {
-      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.ANTHROPIC_API_KEY!,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6-20250514",
-          max_tokens: 16000,
-          system: SYSTEM_PROMPT,
-          stream: true,
-          messages: [{ role: "user", content: userMessage }],
-        }),
-      });
+    const claudeModelId = resolveClaudeModel(requestedModel);
+    const isHaiku = claudeModelId.includes("haiku");
+    const isOpus = claudeModelId.includes("opus");
+    const maxTokens = isHaiku ? 12000 : isOpus ? 32000 : 16000;
 
-      if (!anthropicRes.ok || !anthropicRes.body) {
-        const errText = await anthropicRes.text().catch(() => "Unknown error");
-        return new Response(
-          JSON.stringify({ error: `Claude generation failed: ${errText}`, code: "AI_ERROR" }),
-          { status: 502, headers: { "Content-Type": "application/json" } }
-        );
+    // Extended thinking: Sonnet 4.6 and Opus 4.6 plan the entire site
+    // architecture before writing code — dramatically better output.
+    const useThinking = !isHaiku; // Haiku doesn't benefit as much
+    const thinkingBudget = isOpus ? 16000 : 8000;
+
+    try {
+      const client = new Anthropic({ apiKey: anthropicKey! });
+
+      // Prompt caching: system prompt is 240+ lines and identical every call.
+      // Mark it as cacheable so subsequent requests are ~90% cheaper on that portion.
+      const streamParams: Record<string, unknown> = {
+        model: claudeModelId,
+        max_tokens: maxTokens,
+        system: [
+          {
+            type: "text",
+            text: SYSTEM_PROMPT,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+        messages: [{ role: "user", content: userMessage }],
+      };
+
+      // Add extended thinking for Sonnet/Opus (not Haiku)
+      if (useThinking) {
+        streamParams.thinking = {
+          type: "enabled",
+          budget_tokens: thinkingBudget,
+        };
+        // temperature must be 1 when thinking is enabled
+        streamParams.temperature = 1;
+      } else {
+        streamParams.temperature = 0.80;
       }
 
+      const stream = client.messages.stream(streamParams as Parameters<typeof client.messages.stream>[0]);
+
       const encoder = new TextEncoder();
-      const decoder = new TextDecoder();
 
       const readable = new ReadableStream({
         async start(controller) {
-          const reader = anthropicRes.body!.getReader();
           try {
-            let buffer = "";
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split("\n");
-              buffer = lines.pop() ?? "";
-              for (const line of lines) {
-                if (!line.startsWith("data: ")) continue;
-                const data = line.slice(6);
-                if (data === "[DONE]") continue;
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.type === "content_block_delta" && parsed.delta?.text) {
-                    controller.enqueue(encoder.encode(parsed.delta.text));
-                  }
-                } catch { /* skip non-JSON lines */ }
+            for await (const event of stream) {
+              if (
+                event.type === "content_block_delta" &&
+                event.delta.type === "text_delta"
+              ) {
+                controller.enqueue(encoder.encode(event.delta.text));
               }
             }
           } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Stream interrupted";
             controller.enqueue(encoder.encode(`\n<!-- GENERATION_ERROR: ${message} -->`));
           } finally {
-            reader.releaseLock();
             controller.close();
+            // Track cost asynchronously (don't block the response)
+            try {
+              const finalMsg = await stream.finalMessage();
+              const usage = finalMsg.usage;
+              const cost = calculateCost(
+                claudeModelId,
+                usage.input_tokens,
+                usage.output_tokens,
+                (usage as unknown as Record<string, number>).thinking_tokens ?? 0,
+                (usage as unknown as Record<string, number>).cache_read_input_tokens ?? 0,
+                "pro",
+              );
+              if (userId) trackGenerationCost(userId, cost).catch(() => {});
+            } catch { /* usage tracking is best-effort */ }
           }
         },
       });
@@ -421,6 +485,7 @@ export async function POST(req: NextRequest) {
           "Content-Type": "text/plain; charset=utf-8",
           "X-Content-Type-Options": "nosniff",
           "Cache-Control": "no-store",
+          "X-D8-Model": claudeModelId,
         },
       });
     } catch (err: unknown) {
@@ -433,6 +498,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── OpenAI path (default) ───────────────────────────────────────────────
+  const openai = new OpenAI({ apiKey: openaiKey });
   let stream;
   try {
     stream = await openai.chat.completions.create({

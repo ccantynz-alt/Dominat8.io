@@ -266,7 +266,16 @@ function QuickActionsPanel() {
 
 type CockpitAgentState = "idle" | "running" | "done";
 
-const COCKPIT_AGENTS = ["seo-sweep", "performance-optimizer", "accessibility-checker", "link-scanner"] as const;
+const COCKPIT_AGENTS = [
+  "claude-builder",
+  "claude-refiner",
+  "seo-sweep",
+  "design-fixer",
+  "performance-optimizer",
+  "accessibility-checker",
+  "link-scanner",
+  "responsive-audit",
+] as const;
 
 export function RocketCockpit(props: { patchId: string }) {
   const [runAllState, setRunAllState] = React.useState<CockpitAgentState>("idle");
