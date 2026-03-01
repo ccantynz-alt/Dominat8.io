@@ -35,9 +35,9 @@ jobs:
             echo "Bypass accepted via PR title tag."
             exit 0
           fi
-          # Auto-allow claude/* branches (auto-approved via separate workflow)
-          if echo "${{ github.head_ref }}" | grep -q "^claude/"; then
-            echo "Bypass accepted: claude/* branch (auto-approved)."
+          # Auto-allow claude/* and copilot/* branches (auto-approved via separate workflow)
+          if echo "${{ github.head_ref }}" | grep -qE "^(claude|copilot)/"; then
+            echo "Bypass accepted: AI agent branch (auto-approved)."
             exit 0
           fi
           echo ""
