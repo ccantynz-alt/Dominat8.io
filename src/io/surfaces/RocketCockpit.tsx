@@ -178,13 +178,24 @@ type QAState = "idle" | "running" | "done" | "failed";
 type QAResult = { summary?: string; error?: string };
 
 const QA_ACTIONS = [
-  { id: "seo-sweep",             label: "SEO Sweep",       sub: "Titles, descriptions, keywords",  badge: "RUN",   cls: "badge hot" },
-  { id: "design-fixer",          label: "Design Fixer",    sub: "Layout, contrast, UX polish",     badge: "FIX",   cls: "badge hot" },
-  { id: "responsive-audit",      label: "Responsive Audit",sub: "320px → 1440px breakpoints",      badge: "SCAN",  cls: "badge" },
-  { id: "performance-optimizer", label: "Perf Audit",      sub: "LCP, CLS, render-blocking",       badge: "SCAN",  cls: "badge" },
-  { id: "accessibility-checker", label: "A11y Check",      sub: "ARIA, contrast, keyboard nav",    badge: "CHECK", cls: "badge" },
-  { id: "link-scanner",          label: "Link Scanner",    sub: "Broken links, CTAs, anchors",     badge: "SCAN",  cls: "badge" },
-  { id: "sit",                   label: "Sitemap Rebuild", sub: "Trigger sitemap refresh",         badge: "RUN",   cls: "badge ok" },
+  // ── Original 6 audit agents ──
+  { id: "seo-sweep",             label: "SEO Sweep",          sub: "Titles, descriptions, keywords",         badge: "RUN",   cls: "badge hot" },
+  { id: "design-fixer",          label: "Design Fixer",       sub: "Layout, contrast, UX polish",            badge: "FIX",   cls: "badge hot" },
+  { id: "responsive-audit",      label: "Responsive Audit",   sub: "320px → 1440px breakpoints",             badge: "SCAN",  cls: "badge" },
+  { id: "performance-optimizer", label: "Perf Audit",         sub: "LCP, CLS, render-blocking",              badge: "SCAN",  cls: "badge" },
+  { id: "accessibility-checker", label: "A11y Check",         sub: "ARIA, contrast, keyboard nav",           badge: "CHECK", cls: "badge" },
+  { id: "link-scanner",          label: "Link Scanner",       sub: "Broken links, CTAs, anchors",            badge: "SCAN",  cls: "badge" },
+  // ── 8 high-end agents ──
+  { id: "creative-director",     label: "Creative Director",  sub: "Typography, spacing, colour, hierarchy", badge: "PRO",   cls: "badge hot" },
+  { id: "motion-designer",       label: "Motion Designer",    sub: "Animations, scroll, easing, a11y",       badge: "PRO",   cls: "badge hot" },
+  { id: "conversion-architect",  label: "Conversion Arch.",   sub: "Funnel, CTAs, objections, A/B",          badge: "SCAN",  cls: "badge" },
+  { id: "copy-chief",            label: "Copy Chief",         sub: "Headlines, copy, tone, persuasion",      badge: "PRO",   cls: "badge hot" },
+  { id: "proof-engine",          label: "Proof Engine",       sub: "Testimonials, trust, social proof",      badge: "PRO",   cls: "badge hot" },
+  { id: "seo-gsc",               label: "SEO + GSC",          sub: "Schema, sitemap, GSC onboarding",        badge: "SCAN",  cls: "badge" },
+  { id: "domain-ssl",            label: "Domain + SSL",       sub: "DNS, verification, SSL setup",           badge: "SCAN",  cls: "badge" },
+  { id: "monetization",          label: "Monetization",       sub: "Pricing, gating, Stripe, revenue",       badge: "SCAN",  cls: "badge" },
+  // ── Utility ──
+  { id: "sit",                   label: "Sitemap Rebuild",    sub: "Trigger sitemap refresh",                badge: "RUN",   cls: "badge ok" },
 ] as const;
 
 type QAId = typeof QA_ACTIONS[number]["id"];
@@ -269,7 +280,12 @@ function QuickActionsPanel() {
 
 type CockpitAgentState = "idle" | "running" | "done";
 
-const COCKPIT_AGENTS = ["seo-sweep", "design-fixer", "responsive-audit", "performance-optimizer", "accessibility-checker", "link-scanner"] as const;
+const COCKPIT_AGENTS = [
+  "seo-sweep", "design-fixer", "responsive-audit", "performance-optimizer",
+  "accessibility-checker", "link-scanner",
+  "creative-director", "motion-designer", "conversion-architect", "copy-chief",
+  "proof-engine", "seo-gsc", "domain-ssl", "monetization",
+] as const;
 
 export function RocketCockpit(props: { patchId: string }) {
   const [runAllState, setRunAllState] = React.useState<CockpitAgentState>("idle");

@@ -19,15 +19,31 @@ export type AgentType =
   | "responsive-audit"
   | "performance-optimizer"
   | "accessibility-checker"
-  | "link-scanner";
+  | "link-scanner"
+  | "creative-director"
+  | "motion-designer"
+  | "conversion-architect"
+  | "copy-chief"
+  | "proof-engine"
+  | "seo-gsc"
+  | "domain-ssl"
+  | "monetization";
 
 // ── Credit cost per agent run ──────────────────────────────────────────────────
 export const AGENT_COSTS: Record<AgentType, number> = {
   "seo-sweep":             1,
   "responsive-audit":      1,
   "link-scanner":          1,
+  "seo-gsc":               1,
+  "domain-ssl":            1,
   "accessibility-checker": 2,
   "performance-optimizer": 2,
+  "conversion-architect":  2,
+  "monetization":          2,
+  "creative-director":     3,
+  "motion-designer":       3,
+  "copy-chief":            3,
+  "proof-engine":          3,
   "design-fixer":          5,
 };
 
@@ -44,6 +60,8 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
     "link-scanner",
     "accessibility-checker",
     "performance-optimizer",
+    "conversion-architect",
+    "seo-gsc",
   ],
   pro: [
     "seo-sweep",
@@ -51,7 +69,15 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
     "link-scanner",
     "accessibility-checker",
     "performance-optimizer",
+    "conversion-architect",
+    "seo-gsc",
     "design-fixer",
+    "creative-director",
+    "motion-designer",
+    "copy-chief",
+    "proof-engine",
+    "domain-ssl",
+    "monetization",
   ],
   agency: [
     "seo-sweep",
@@ -59,7 +85,15 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
     "link-scanner",
     "accessibility-checker",
     "performance-optimizer",
+    "conversion-architect",
+    "seo-gsc",
     "design-fixer",
+    "creative-director",
+    "motion-designer",
+    "copy-chief",
+    "proof-engine",
+    "domain-ssl",
+    "monetization",
   ],
 };
 
@@ -143,7 +177,8 @@ export async function checkAndConsumeCredits(
   // Plan access gate
   const accessible = PLAN_AGENT_ACCESS[plan] ?? PLAN_AGENT_ACCESS.free;
   if (!accessible.includes(agentId)) {
-    const neededPlan = agentId === "design-fixer" ? "Pro" : "Starter";
+    const proAgents: AgentType[] = ["design-fixer", "creative-director", "motion-designer", "copy-chief", "proof-engine", "domain-ssl", "monetization"];
+    const neededPlan = proAgents.includes(agentId) ? "Pro" : "Starter";
     return {
       ok: false,
       code: "NO_ACCESS",
