@@ -872,8 +872,8 @@ export function Builder() {
           <div className="d8h-quick-row">
             {industry && <span className="d8h-quick-tag" onClick={() => setIndustry("")}>{INDUSTRIES.find(i => i.label === industry)?.icon} {industry} ✕</span>}
             {vibe && <span className="d8h-quick-tag" onClick={() => setVibe("")}>{VIBES.find(v => v.label === vibe)?.icon} {vibe} ✕</span>}
-            <button type="button" className="d8h-quick-tag" onClick={() => setGenModel((m) => m === "gpt-4o" ? "claude-sonnet-4-6" : "gpt-4o")} title="Switch AI model">
-              {genModel === "gpt-4o" ? "⬢ GPT-4o" : "◈ Claude"}
+            <button type="button" className="d8h-quick-tag" onClick={() => setGenModel((m) => m === "claude-sonnet-4-6" ? "gpt-4o" : "claude-sonnet-4-6")} title="Switch AI model">
+              {genModel === "claude-sonnet-4-6" ? "◈ Claude" : "⬢ GPT-4o"}
             </button>
             <button type="button" className={`d8h-customize-toggle ${showOptions ? "d8h-customize-toggle--open" : ""}`} onClick={() => setShowOptions(!showOptions)}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M3 12h18"/></svg>
@@ -1137,16 +1137,16 @@ export function Builder() {
 
             {/* Model selector */}
             <div className="d8b-model-selector">
-              {(["gpt-4o", "claude-sonnet-4-6"] as const).map(m => (
+              {(["claude-sonnet-4-6", "gpt-4o"] as const).map(m => (
                 <button
                   key={m}
                   className={`d8b-model-btn ${genModel === m ? "d8b-model-btn--active" : ""}`}
                   onClick={() => setGenModel(m)}
                   type="button"
                   disabled={isBuilding}
-                  title={m === "gpt-4o" ? "OpenAI GPT-4o" : "Anthropic Claude Sonnet"}
+                  title={m === "claude-sonnet-4-6" ? "Anthropic Claude Sonnet (Recommended)" : "OpenAI GPT-4o"}
                 >
-                  {m === "gpt-4o" ? "GPT-4o" : "Claude"}
+                  {m === "claude-sonnet-4-6" ? "◈ Claude" : "GPT-4o"}
                 </button>
               ))}
             </div>
