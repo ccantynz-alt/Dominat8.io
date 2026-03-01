@@ -5,6 +5,28 @@ import { useSearchParams } from "next/navigation";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import { HomeSections } from "./HomeSections";
 
+// ─── Robust HTML extraction ───────────────────────────────────────────────────
+// AI models sometimes wrap HTML in code fences or add preamble text.
+// This function extracts the actual HTML from the response.
+function extractHtml(raw: string): string {
+  let s = raw;
+  // 1. Strip markdown code fences: ```html ... ``` or ``` ... ```
+  s = s.replace(/^\s*```(?:html|HTML)?\s*\n?/, "").replace(/\n?\s*```\s*$/, "");
+  // 2. If there's preamble text before <!DOCTYPE or <html, strip it
+  const docIdx = s.search(/<!DOCTYPE\s+html/i);
+  const htmlIdx = s.search(/<html[\s>]/i);
+  const startIdx = docIdx >= 0 ? docIdx : htmlIdx >= 0 ? htmlIdx : -1;
+  if (startIdx > 0) {
+    s = s.slice(startIdx);
+  }
+  // 3. Strip any trailing content after </html>
+  const endMatch = s.search(/<\/html\s*>/i);
+  if (endMatch >= 0) {
+    s = s.slice(0, endMatch + s.slice(endMatch).indexOf(">") + 1);
+  }
+  return s.trim();
+}
+
 // ─── Anonymous usage tracking (localStorage, 3 free generations) ──────────────
 
 const ANON_KEY = "d8_anon_v1";
@@ -683,7 +705,12 @@ export function Builder() {
           const { done, value } = await reader.read();
           if (done) break;
           accumulated += decoder.decode(value, { stream: true });
-          setHtml(accumulated);
+          // Show clean HTML during streaming (strip leading fences/preamble)
+          const preview = accumulated.replace(/^\s*```(?:html|HTML)?\s*\n?/, "");
+          const docStart = preview.search(/<!DOCTYPE\s+html/i);
+          const htmlStart = preview.search(/<html[\s>]/i);
+          const cleanStart = docStart >= 0 ? docStart : htmlStart >= 0 ? htmlStart : 0;
+          setHtml(cleanStart > 0 ? preview.slice(cleanStart) : preview);
         }
       } finally {
         reader.releaseLock();
@@ -694,11 +721,9 @@ export function Builder() {
       const dur = Date.now() - startRef.current;
       setDurationMs(dur);
 
-      // Strip markdown code fences if the AI wrapped the HTML in them
-      if (accumulated.trimStart().startsWith("```")) {
-        accumulated = accumulated.replace(/^\s*```(?:html)?\s*\n?/, "").replace(/\n?\s*```\s*$/, "");
-        setHtml(accumulated);
-      }
+      // Final extraction: strip code fences, preamble, and trailing content
+      accumulated = extractHtml(accumulated);
+      setHtml(accumulated);
 
       const site: Site = {
         id: crypto.randomUUID(),
@@ -834,6 +859,8 @@ export function Builder() {
       }
       clearInterval(progressTimer);
       setProgress(100);
+      accumulated = extractHtml(accumulated);
+      setHtml(accumulated);
       const dur = Date.now() - startRef.current;
       setDurationMs(dur);
       const site: Site = { id: crypto.randomUUID(), prompt: `[Fixed] ${prompt}`, industry, html: accumulated, createdAt: new Date(), durationMs: dur };
@@ -1733,7 +1760,7 @@ export function Builder() {
                 ) : (
                   <iframe
                     ref={iframeRef}
-                    srcDoc={html || "<html><body style='background:#07090f'></body></html>"}
+                    srcDoc={html || "<html><body style='background:#fff'></body></html>"}
                     sandbox="allow-scripts"
                     className="d8b-iframe"
                     title="Generated website preview"
