@@ -2,6 +2,7 @@ import { OpenAI } from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
+import { calculateCost, trackGenerationCost } from "@/lib/cost-tracker";
 
 export const maxDuration = 60;
 
@@ -386,15 +387,42 @@ export async function POST(req: NextRequest) {
     const isOpus = claudeModelId.includes("opus");
     const maxTokens = isHaiku ? 12000 : isOpus ? 32000 : 16000;
 
+    // Extended thinking: Sonnet 4.6 and Opus 4.6 plan the entire site
+    // architecture before writing code — dramatically better output.
+    const useThinking = !isHaiku; // Haiku doesn't benefit as much
+    const thinkingBudget = isOpus ? 16000 : 8000;
+
     try {
       const client = new Anthropic({ apiKey: anthropicKey! });
-      const stream = client.messages.stream({
+
+      // Prompt caching: system prompt is 240+ lines and identical every call.
+      // Mark it as cacheable so subsequent requests are ~90% cheaper on that portion.
+      const streamParams: Record<string, unknown> = {
         model: claudeModelId,
         max_tokens: maxTokens,
-        temperature: 0.80,
-        system: SYSTEM_PROMPT,
+        system: [
+          {
+            type: "text",
+            text: SYSTEM_PROMPT,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
         messages: [{ role: "user", content: userMessage }],
-      });
+      };
+
+      // Add extended thinking for Sonnet/Opus (not Haiku)
+      if (useThinking) {
+        streamParams.thinking = {
+          type: "enabled",
+          budget_tokens: thinkingBudget,
+        };
+        // temperature must be 1 when thinking is enabled
+        streamParams.temperature = 1;
+      } else {
+        streamParams.temperature = 0.80;
+      }
+
+      const stream = client.messages.stream(streamParams as Parameters<typeof client.messages.stream>[0]);
 
       const encoder = new TextEncoder();
 
@@ -414,6 +442,20 @@ export async function POST(req: NextRequest) {
             controller.enqueue(encoder.encode(`\n<!-- GENERATION_ERROR: ${message} -->`));
           } finally {
             controller.close();
+            // Track cost asynchronously (don't block the response)
+            try {
+              const finalMsg = await stream.finalMessage();
+              const usage = finalMsg.usage;
+              const cost = calculateCost(
+                claudeModelId,
+                usage.input_tokens,
+                usage.output_tokens,
+                (usage as Record<string, number>).thinking_tokens ?? 0,
+                (usage as Record<string, number>).cache_read_input_tokens ?? 0,
+                "pro",
+              );
+              if (userId) trackGenerationCost(userId, cost).catch(() => {});
+            } catch { /* usage tracking is best-effort */ }
           }
         },
       });

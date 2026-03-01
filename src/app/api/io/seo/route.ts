@@ -78,7 +78,13 @@ export async function POST(req: NextRequest) {
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1200,
       temperature: 0.1,
-      system: SEO_SYSTEM_PROMPT,
+      system: [
+        {
+          type: "text" as const,
+          text: SEO_SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" as const },
+        },
+      ],
       messages: [{ role: "user", content: userContent }],
     });
     const block = msg.content[0];

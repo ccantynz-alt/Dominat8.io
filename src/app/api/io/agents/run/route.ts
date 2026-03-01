@@ -246,7 +246,13 @@ async function runWithClaude(agent: AgentType, userContent: string): Promise<str
     model: claudeModel(agent),
     max_tokens: isHeavy ? 16000 : 2048,
     temperature: isHeavy ? 0.2 : 0.1,
-    system: SYSTEM_PROMPTS[agent],
+    system: [
+      {
+        type: "text" as const,
+        text: SYSTEM_PROMPTS[agent],
+        cache_control: { type: "ephemeral" as const },
+      },
+    ],
     messages: [{ role: "user", content: userContent }],
   });
   const block = msg.content[0];
