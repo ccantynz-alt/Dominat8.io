@@ -30,11 +30,14 @@ function chooseProvider(agent: AgentType): Provider {
 }
 
 function claudeModel(agent: AgentType): string {
-  return agent === "design-fixer" ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001";
+  if (agent === "design-fixer" || agent === "claude-refiner") return "claude-sonnet-4-6-20250514";
+  if (agent === "claude-builder") return "claude-sonnet-4-6-20250514";
+  return "claude-haiku-4-5-20251001";
 }
 
 function openaiModel(agent: AgentType): string {
-  return agent === "design-fixer" ? "gpt-4o" : "gpt-4o-mini";
+  if (agent === "design-fixer" || agent === "claude-builder" || agent === "claude-refiner") return "gpt-4o";
+  return "gpt-4o-mini";
 }
 
 // ── System prompts ─────────────────────────────────────────────────────────────
@@ -138,6 +141,49 @@ Analyse the HTML and return ONLY valid JSON (no markdown, no code fences):
   "passes": ["<what is good about the links/CTAs>"]
 }
 Check: href="#" placeholders, href="" empty, javascript:void(0), anchor text that is generic ("click here", "read more", "here"), buttons with no text, CTAs that don't communicate value, duplicate link destinations, external links missing rel=noopener, missing mailto/tel format, anchor IDs that don't exist.`,
+
+  "claude-builder": `You are the world's most elite creative director and principal front-end engineer — your work wins Webby Awards, Awwwards, and FWA Site of the Day.
+The user provides a brief. Generate a complete, single-page website as ONE self-contained HTML file.
+
+Return ONLY valid JSON (no markdown, no code fences):
+{
+  "summary": "<1 sentence describing what was built>",
+  "sections": <number of sections built>,
+  "features": ["<list of notable features included>"],
+  "designChoices": "<brief explanation of design direction taken>",
+  "html": "<the complete HTML file>"
+}
+
+RULES:
+• ALL CSS inside ONE <style> tag. ALL JS inline at bottom of <body>.
+• Google Fonts: ONE @import at top of <style>.
+• Zero external dependencies. Zero CDN links.
+• Build: nav, hero (full-screen, animated), social proof, features bento grid, about/stats, testimonials, process steps, CTA section, footer.
+• Mobile-first. CSS Grid + Flexbox. Zero layout breaks at 320px, 768px, 1440px.
+• Micro-interactions: scroll reveal, counter animations, hover effects, parallax.
+• Invent specific, memorable business name, address, phone, pricing, testimonials. NO lorem ipsum.`,
+
+  "claude-refiner": `You are an elite front-end engineer and UX designer specialising in website refinement and polish.
+Given an existing website HTML and refinement instructions, improve the website while preserving its brand identity.
+
+Return ONLY valid JSON (no markdown, no code fences):
+{
+  "summary": "<1 sentence describing refinements made>",
+  "changes": [
+    { "area": "<what was changed>", "description": "<how it was improved>" }
+  ],
+  "html": "<the complete refined HTML file>"
+}
+
+WHAT TO IMPROVE:
+• Fix any layout bugs, overflow issues, z-index conflicts
+• Improve typography hierarchy and spacing consistency
+• Enhance colour contrast and brand colour usage
+• Add or fix micro-interactions (hover, scroll, transitions)
+• Ensure mobile responsiveness at all breakpoints
+• Polish animations and timing curves
+• Strengthen CTAs and conversion elements
+• Preserve the original design intent — refine, don't redesign`,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -173,6 +219,14 @@ function buildSummary(agent: AgentType, result: unknown): string {
         const issues = (r.issues as unknown[])?.length ?? 0;
         return `${r.total_links} links · ${issues} issue${issues !== 1 ? "s" : ""} — ${r.summary}`;
       }
+      case "claude-builder": {
+        const sections = r.sections ?? "?";
+        return `Website built · ${sections} sections — ${r.summary}`;
+      }
+      case "claude-refiner": {
+        const changes = (r.changes as unknown[])?.length ?? 0;
+        return `${changes} refinement${changes !== 1 ? "s" : ""} applied — ${r.summary}`;
+      }
       default:
         return "Agent completed.";
     }
@@ -183,12 +237,15 @@ function buildSummary(agent: AgentType, result: unknown): string {
 
 // ── Provider execution ─────────────────────────────────────────────────────────
 
+const HIGH_TOKEN_AGENTS: AgentType[] = ["design-fixer", "claude-builder", "claude-refiner"];
+
 async function runWithClaude(agent: AgentType, userContent: string): Promise<string> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const isHeavy = HIGH_TOKEN_AGENTS.includes(agent);
   const msg = await client.messages.create({
     model: claudeModel(agent),
-    max_tokens: agent === "design-fixer" ? 16000 : 2048,
-    temperature: agent === "design-fixer" ? 0.2 : 0.1,
+    max_tokens: isHeavy ? 16000 : 2048,
+    temperature: isHeavy ? 0.2 : 0.1,
     system: SYSTEM_PROMPTS[agent],
     messages: [{ role: "user", content: userContent }],
   });
@@ -198,10 +255,11 @@ async function runWithClaude(agent: AgentType, userContent: string): Promise<str
 
 async function runWithOpenAI(agent: AgentType, userContent: string): Promise<string> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const isHeavy = HIGH_TOKEN_AGENTS.includes(agent);
   const completion = await client.chat.completions.create({
     model: openaiModel(agent),
-    temperature: agent === "design-fixer" ? 0.25 : 0.1,
-    max_tokens: agent === "design-fixer" ? 12000 : 2000,
+    temperature: isHeavy ? 0.25 : 0.1,
+    max_tokens: isHeavy ? 12000 : 2000,
     messages: [
       { role: "system", content: SYSTEM_PROMPTS[agent] },
       { role: "user", content: userContent },
@@ -219,7 +277,7 @@ export async function POST(req: NextRequest) {
   }
 
   const agent = body.agent as AgentType;
-  const validAgents: AgentType[] = ["seo-sweep", "design-fixer", "responsive-audit", "performance-optimizer", "accessibility-checker", "link-scanner"];
+  const validAgents: AgentType[] = ["seo-sweep", "design-fixer", "responsive-audit", "performance-optimizer", "accessibility-checker", "link-scanner", "claude-builder", "claude-refiner"];
   if (!agent || !validAgents.includes(agent)) {
     return Response.json({ ok: false, error: `Unknown agent: ${agent}` }, { status: 400 });
   }
@@ -252,12 +310,24 @@ export async function POST(req: NextRequest) {
   const html = body.html?.trim() || "";
   const prompt = body.prompt?.trim() || "";
 
-  const userContent = html
-    ? [
-        prompt ? `Business context: ${prompt}\n\n` : "",
-        `Analyse this HTML:\n\n${truncateHtml(html)}`,
-      ].join("")
-    : "No HTML provided. Return a general best-practice audit checklist as if for a typical business landing page. Score 70, note the most common issues.";
+  let userContent: string;
+  if (agent === "claude-builder") {
+    userContent = prompt
+      ? `Build a world-class website for: ${prompt}`
+      : "Build a world-class landing page for a modern SaaS company. Invent all details.";
+  } else if (agent === "claude-refiner") {
+    userContent = [
+      prompt ? `Refinement instructions: ${prompt}\n\n` : "Refine and polish this website:\n\n",
+      html ? `HTML to refine:\n\n${truncateHtml(html)}` : "",
+    ].join("");
+  } else {
+    userContent = html
+      ? [
+          prompt ? `Business context: ${prompt}\n\n` : "",
+          `Analyse this HTML:\n\n${truncateHtml(html)}`,
+        ].join("")
+      : "No HTML provided. Return a general best-practice audit checklist as if for a typical business landing page. Score 70, note the most common issues.";
+  }
 
   const runId = startRun(agent);
 
@@ -266,11 +336,13 @@ export async function POST(req: NextRequest) {
       ? await runWithClaude(agent, userContent)
       : await runWithOpenAI(agent, userContent);
 
-    const isHtmlAgent = agent === "design-fixer";
+    const isRawHtmlAgent = agent === "design-fixer";
     let result: unknown;
-    if (isHtmlAgent) {
+    if (isRawHtmlAgent) {
+      // design-fixer returns raw HTML (not JSON)
       result = raw.replace(/^```(?:html)?\n?/i, "").replace(/\n?```$/i, "").trim();
     } else {
+      // All other agents (including claude-builder/refiner) return JSON
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       result = jsonMatch ? JSON.parse(jsonMatch[0]) : { raw };
     }

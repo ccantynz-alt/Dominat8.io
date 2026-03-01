@@ -19,7 +19,9 @@ export type AgentType =
   | "responsive-audit"
   | "performance-optimizer"
   | "accessibility-checker"
-  | "link-scanner";
+  | "link-scanner"
+  | "claude-builder"
+  | "claude-refiner";
 
 // ── Credit cost per agent run ──────────────────────────────────────────────────
 export const AGENT_COSTS: Record<AgentType, number> = {
@@ -29,6 +31,8 @@ export const AGENT_COSTS: Record<AgentType, number> = {
   "accessibility-checker": 2,
   "performance-optimizer": 2,
   "design-fixer":          5,
+  "claude-builder":        3,
+  "claude-refiner":        2,
 };
 
 // ── Which agents are unlocked per plan ────────────────────────────────────────
@@ -37,6 +41,7 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
   free: [
     "seo-sweep",
     "responsive-audit",
+    "claude-builder",
   ],
   starter: [
     "seo-sweep",
@@ -44,6 +49,8 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
     "link-scanner",
     "accessibility-checker",
     "performance-optimizer",
+    "claude-builder",
+    "claude-refiner",
   ],
   pro: [
     "seo-sweep",
@@ -52,6 +59,8 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
     "accessibility-checker",
     "performance-optimizer",
     "design-fixer",
+    "claude-builder",
+    "claude-refiner",
   ],
   agency: [
     "seo-sweep",
@@ -60,6 +69,8 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
     "accessibility-checker",
     "performance-optimizer",
     "design-fixer",
+    "claude-builder",
+    "claude-refiner",
   ],
 };
 

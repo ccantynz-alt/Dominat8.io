@@ -420,7 +420,7 @@ export function Builder() {
   const [industry, setIndustry] = useState("");
   const [state, setState] = useState<BuildState>("idle");
   const [html, setHtml] = useState("");
-  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-sonnet-4-6">("gpt-4o");
+  const [genModel, setGenModel] = useState<"gpt-4o" | "claude-haiku" | "claude-sonnet" | "claude-opus">("gpt-4o");
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [sites, setSites] = useState<Site[]>(() => {
@@ -872,8 +872,12 @@ export function Builder() {
           <div className="d8h-quick-row">
             {industry && <span className="d8h-quick-tag" onClick={() => setIndustry("")}>{INDUSTRIES.find(i => i.label === industry)?.icon} {industry} ✕</span>}
             {vibe && <span className="d8h-quick-tag" onClick={() => setVibe("")}>{VIBES.find(v => v.label === vibe)?.icon} {vibe} ✕</span>}
-            <button type="button" className="d8h-quick-tag" onClick={() => setGenModel((m) => m === "gpt-4o" ? "claude-sonnet-4-6" : "gpt-4o")} title="Switch AI model">
-              {genModel === "gpt-4o" ? "⬢ GPT-4o" : "◈ Claude"}
+            <button type="button" className="d8h-quick-tag" onClick={() => setGenModel((m) => {
+              const cycle = ["gpt-4o", "claude-haiku", "claude-sonnet", "claude-opus"] as const;
+              const idx = cycle.indexOf(m);
+              return cycle[(idx + 1) % cycle.length];
+            })} title="Cycle AI model">
+              {genModel === "gpt-4o" ? "⬢ GPT-4o" : genModel === "claude-haiku" ? "◈ Haiku" : genModel === "claude-sonnet" ? "◈ Sonnet" : "◈ Opus"}
             </button>
             <button type="button" className={`d8h-customize-toggle ${showOptions ? "d8h-customize-toggle--open" : ""}`} onClick={() => setShowOptions(!showOptions)}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M3 12h18"/></svg>
@@ -1137,16 +1141,21 @@ export function Builder() {
 
             {/* Model selector */}
             <div className="d8b-model-selector">
-              {(["gpt-4o", "claude-sonnet-4-6"] as const).map(m => (
+              {([
+                { id: "gpt-4o" as const, label: "GPT-4o", title: "OpenAI GPT-4o — fast, reliable" },
+                { id: "claude-haiku" as const, label: "Haiku", title: "Claude Haiku — fast, lightweight" },
+                { id: "claude-sonnet" as const, label: "Sonnet", title: "Claude Sonnet — balanced quality" },
+                { id: "claude-opus" as const, label: "Opus", title: "Claude Opus — highest quality" },
+              ]).map(m => (
                 <button
-                  key={m}
-                  className={`d8b-model-btn ${genModel === m ? "d8b-model-btn--active" : ""}`}
-                  onClick={() => setGenModel(m)}
+                  key={m.id}
+                  className={`d8b-model-btn ${genModel === m.id ? "d8b-model-btn--active" : ""} ${m.id.startsWith("claude-") ? "d8b-model-btn--claude" : ""}`}
+                  onClick={() => setGenModel(m.id)}
                   type="button"
                   disabled={isBuilding}
-                  title={m === "gpt-4o" ? "OpenAI GPT-4o" : "Anthropic Claude Sonnet"}
+                  title={m.title}
                 >
-                  {m === "gpt-4o" ? "GPT-4o" : "Claude"}
+                  {m.label}
                 </button>
               ))}
             </div>
@@ -2032,6 +2041,12 @@ function BuilderStyles() {
         background: rgba(255,255,255,0.06);
         color: #fff;
         box-shadow: 0 1px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+      }
+      .d8b-model-btn--claude.d8b-model-btn--active {
+        background: linear-gradient(135deg, rgba(217,115,60,0.12), rgba(190,80,40,0.08));
+        color: #E8A070;
+        border: 1px solid rgba(217,115,60,0.20);
+        box-shadow: 0 1px 6px rgba(217,115,60,0.15), inset 0 1px 0 rgba(255,255,255,0.03);
       }
 
       /* ── Generate button — THE HERO ── */

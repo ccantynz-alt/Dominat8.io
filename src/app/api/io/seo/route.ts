@@ -1,4 +1,5 @@
 import { OpenAI } from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { isAdminUser, checkAndConsumeCredits } from "@/lib/agent-credits";
@@ -60,21 +61,46 @@ export async function POST(req: NextRequest) {
     return new Response("HTML required", { status: 400 });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return new Response("OpenAI API key not configured", { status: 500 });
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!anthropicKey && !openaiKey) {
+    return new Response("No AI provider configured", { status: 500 });
   }
-
-  const openai = new OpenAI({ apiKey });
 
   // Truncate HTML to keep costs low — first 8000 chars covers all meta + structure
   const truncated = html.length > 8000 ? html.slice(0, 8000) + "\n<!-- truncated -->" : html;
+  const userContent = `Analyse this HTML:\n\n${truncated}`;
 
+  // ── Prefer Claude Haiku for analysis (fast, cheap, excellent structured JSON) ─
+  if (anthropicKey) {
+    const client = new Anthropic({ apiKey: anthropicKey });
+    const msg = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1200,
+      temperature: 0.1,
+      system: SEO_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userContent }],
+    });
+    const block = msg.content[0];
+    const raw = block.type === "text" ? block.text : "{}";
+    // Extract JSON from response
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    return new Response(jsonMatch ? jsonMatch[0] : raw, {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+        "X-D8-Model": "claude-haiku-4-5",
+      },
+    });
+  }
+
+  // ── OpenAI fallback ──────────────────────────────────────────────────────
+  const openai = new OpenAI({ apiKey: openaiKey });
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: SEO_SYSTEM_PROMPT },
-      { role: "user", content: `Analyse this HTML:\n\n${truncated}` },
+      { role: "user", content: userContent },
     ],
     max_tokens: 1200,
     temperature: 0.1,
