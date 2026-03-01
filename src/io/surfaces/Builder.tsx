@@ -579,6 +579,12 @@ export function Builder() {
       const dur = Date.now() - startRef.current;
       setDurationMs(dur);
 
+      // Strip markdown code fences if the AI wrapped the HTML in them
+      if (accumulated.trimStart().startsWith("```")) {
+        accumulated = accumulated.replace(/^\s*```(?:html)?\s*\n?/, "").replace(/\n?\s*```\s*$/, "");
+        setHtml(accumulated);
+      }
+
       const site: Site = {
         id: crypto.randomUUID(),
         prompt: activePrompt,
