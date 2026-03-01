@@ -2,7 +2,6 @@ import { OpenAI } from "openai";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 
-export const runtime = "edge";
 export const maxDuration = 60;
 
 // ── Plan limits ────────────────────────────────────────────────────────────────
@@ -297,7 +296,13 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Auth + quota check ────────────────────────────────────────────────────
-  const { userId } = await auth();
+  let userId: string | null = null;
+  try {
+    const session = await auth();
+    userId = session.userId;
+  } catch {
+    // Auth unavailable (missing keys, edge runtime issue) — continue as anonymous
+  }
 
   if (userId) {
     // Authenticated: enforce monthly quota
