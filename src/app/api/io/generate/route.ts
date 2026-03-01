@@ -310,18 +310,28 @@ export async function POST(req: NextRequest) {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
   // Validate that at least one AI provider is configured
-  const wantsClaude = isClaudeModel(requestedModel);
+  let wantsClaude = isClaudeModel(requestedModel);
   if (wantsClaude && !anthropicKey) {
-    return new Response(
-      JSON.stringify({ error: "Claude is not configured. Please set ANTHROPIC_API_KEY.", code: "NO_API_KEY" }),
-      { status: 503, headers: { "Content-Type": "application/json" } }
-    );
+    // If OpenAI is available, silently fall back instead of erroring
+    if (openaiKey) {
+      wantsClaude = false;
+    } else {
+      return new Response(
+        JSON.stringify({ error: "No AI provider configured. Please set ANTHROPIC_API_KEY or OPENAI_API_KEY.", code: "NO_API_KEY" }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
   }
   if (!wantsClaude && !openaiKey) {
-    return new Response(
-      JSON.stringify({ error: "AI service not configured. Please contact support.", code: "NO_API_KEY" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    // If Anthropic is available, silently fall back
+    if (anthropicKey) {
+      wantsClaude = true;
+    } else {
+      return new Response(
+        JSON.stringify({ error: "No AI provider configured. Please set ANTHROPIC_API_KEY or OPENAI_API_KEY.", code: "NO_API_KEY" }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
   }
 
   // ── Auth + quota check ────────────────────────────────────────────────────

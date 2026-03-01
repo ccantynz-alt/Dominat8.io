@@ -521,8 +521,9 @@ export function Builder() {
     htmlRef.current = html;
   }, [html]);
 
-  const generate = useCallback(async (overridePrompt?: string) => {
+  const generate = useCallback(async (overridePrompt?: string, overrideModel?: string) => {
     const activePrompt = overridePrompt ?? prompt;
+    const activeModel = overrideModel ?? genModel;
     if (!activePrompt.trim() || state === "generating") return;
 
     // Anonymous limit check (client-side honesty gate)
@@ -555,7 +556,7 @@ export function Builder() {
       const res = await fetch("/api/io/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: activePrompt, industry, vibe, model: genModel }),
+        body: JSON.stringify({ prompt: activePrompt, industry, vibe, model: activeModel }),
         signal: abortRef.current.signal,
       });
 
@@ -567,10 +568,10 @@ export function Builder() {
           if (errData.error) msg = errData.error;
           if (res.status === 429) code = "quota";
           else if (res.status === 401) code = "auth";
-          else if (res.status === 503 && errData.code === "NO_API_KEY") {
-            // Claude not configured — fall back to GPT-4o automatically
-            msg = "Claude is temporarily unavailable. Retrying with GPT-4o...";
-            setGenModel("gpt-4o");
+          else if (res.status === 503 && errData.code === "NO_API_KEY" && activeModel !== "gpt-4o") {
+            // Claude not configured — actually retry with GPT-4o
+            clearInterval(progressTimer);
+            return generate(activePrompt, "gpt-4o");
           }
         } catch { /* no JSON body */ }
         setErrorCode(code);
