@@ -296,7 +296,6 @@ export function HomeSections() {
                   <div className="d8hs-step-desc">{step.desc}</div>
                   <div className="d8hs-step-detail">{step.detail}</div>
                 </div>
-                {i < STEPS.length - 1 && <div className="d8hs-step-arrow">→</div>}
               </div>
             ))}
           </div>
@@ -411,11 +410,11 @@ function HomeSectionsStyles() {
       /* ── Layout ── */
       .d8hs-section {
         width: 100%;
-        padding: 80px 24px;
+        padding: 100px 32px;
         position: relative;
         z-index: 1;
       }
-      .d8hs-section--live { padding: 32px 24px; }
+      .d8hs-section--live { padding: 40px 32px; }
       .d8hs-section-inner {
         max-width: 1040px;
         margin: 0 auto;
@@ -423,15 +422,15 @@ function HomeSectionsStyles() {
 
       /* ── Section headings ── */
       .d8hs-eyebrow-label {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 700;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
         color: #00D4FF;
-        margin-bottom: 14px;
+        margin-bottom: 16px;
       }
       .d8hs-h2 {
-        margin: 0 0 16px;
+        margin: 0 0 18px;
         font-size: clamp(30px, 4.5vw, 48px);
         font-weight: 900;
         background: linear-gradient(135deg, #E8F0FF 30%, #00D4FF 100%);
@@ -442,27 +441,27 @@ function HomeSectionsStyles() {
       }
       .d8hs-h2-sub {
         margin: 0;
-        font-size: 16px;
+        font-size: 17px;
         color: rgba(200,220,255,0.45);
-        max-width: 540px;
-        line-height: 1.65;
+        max-width: 560px;
+        line-height: 1.7;
         font-family: 'Inter', system-ui, sans-serif;
       }
       .d8hs-section-heading {
-        margin-bottom: 52px;
+        margin-bottom: 56px;
       }
 
       /* ── Stats strip ── */
       .d8hs-stats-section {
         width: 100%;
-        padding: 36px 24px;
+        padding: 48px 32px;
         border-top: 1px solid rgba(0,212,255,0.08);
         border-bottom: 1px solid rgba(0,212,255,0.08);
         position: relative; z-index: 1;
         background: rgba(0,212,255,0.015);
       }
       .d8hs-stats-inner {
-        max-width: 840px;
+        max-width: 900px;
         margin: 0 auto;
         display: flex;
         align-items: center;
@@ -472,26 +471,26 @@ function HomeSectionsStyles() {
       }
       .d8hs-stat {
         flex: 1;
-        min-width: 140px;
+        min-width: 160px;
         text-align: center;
-        padding: 18px 24px;
+        padding: 20px 28px;
       }
       .d8hs-stat-num {
         font-size: clamp(32px, 4.5vw, 46px);
         font-weight: 900;
         letter-spacing: -0.04em;
         line-height: 1;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         text-shadow: 0 0 30px currentColor;
       }
       .d8hs-stat-label {
-        font-size: 12px;
+        font-size: 13px;
         color: rgba(200,220,255,0.40);
         letter-spacing: 0.02em;
       }
       .d8hs-stats-div {
         width: 1px;
-        height: 40px;
+        height: 44px;
         background: linear-gradient(180deg, transparent, rgba(0,212,255,0.15), transparent);
         flex-shrink: 0;
       }
@@ -525,17 +524,17 @@ function HomeSectionsStyles() {
       .d8hs-feed-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
       }
       .d8hs-feed-row {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
+        gap: 10px;
+        padding: 10px 18px;
         border-radius: 12px;
         background: rgba(100,180,255,0.03);
         border: 1px solid rgba(100,180,255,0.08);
-        font-size: 12px;
+        font-size: 13px;
         animation: d8hs-feed-in 300ms ease;
         transition: opacity 500ms ease, background 150ms ease, border-color 150ms ease;
       }
@@ -563,22 +562,22 @@ function HomeSectionsStyles() {
       }
       .d8hs-feed-time { margin-left: auto; color: rgba(200,220,255,0.25); font-size: 11px; font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
-      /* ── Steps — futuristic glass cards ── */
+      /* ── Steps — glass cards ── */
       .d8hs-steps {
         display: grid;
-        grid-template-columns: 1fr auto 1fr auto 1fr;
-        gap: 0;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
         align-items: stretch;
       }
-      @media (max-width: 700px) {
-        .d8hs-steps { grid-template-columns: 1fr; gap: 16px; }
-        .d8hs-step-arrow { display: none; }
+      .d8hs-step-arrow { display: none; }
+      @media (max-width: 768px) {
+        .d8hs-steps { grid-template-columns: 1fr; gap: 18px; }
       }
       .d8hs-step {
         display: flex;
         flex-direction: column;
-        gap: 16px;
-        padding: 32px 26px;
+        gap: 18px;
+        padding: 36px 30px;
         border-radius: 22px;
         border: 1px solid rgba(100,180,255,0.10);
         background: rgba(100,180,255,0.03);
@@ -602,40 +601,31 @@ function HomeSectionsStyles() {
         box-shadow: 0 12px 40px rgba(0,0,0,0.30), 0 0 30px rgba(0,212,255,0.06);
       }
       .d8hs-step:hover::before { opacity: 1; }
-      .d8hs-step-arrow {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 14px;
-        color: rgba(0,212,255,0.30);
-        font-size: 20px;
-        padding-top: 36px;
-      }
       .d8hs-step-num {
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 900;
         letter-spacing: 0.10em;
         color: #00D4FF;
         text-shadow: 0 0 12px rgba(0,212,255,0.4);
       }
       .d8hs-step-title {
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 800;
         color: #E8F0FF;
         letter-spacing: -0.02em;
       }
       .d8hs-step-desc {
-        font-size: 13px;
+        font-size: 14px;
         color: rgba(200,220,255,0.50);
-        line-height: 1.70;
+        line-height: 1.75;
       }
       .d8hs-step-detail {
-        font-size: 11px;
+        font-size: 12px;
         color: rgba(0,212,255,0.50);
         font-family: 'JetBrains Mono', ui-monospace, monospace;
         border-top: 1px solid rgba(100,180,255,0.08);
-        padding-top: 12px;
-        margin-top: 4px;
+        padding-top: 14px;
+        margin-top: 6px;
         line-height: 1.8;
       }
 
@@ -643,21 +633,21 @@ function HomeSectionsStyles() {
       .d8hs-style-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
+        gap: 18px;
       }
-      @media (max-width: 700px) { .d8hs-style-grid { grid-template-columns: repeat(2, 1fr); } }
-      @media (max-width: 420px) { .d8hs-style-grid { grid-template-columns: 1fr; } }
+      @media (max-width: 768px) { .d8hs-style-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 480px) { .d8hs-style-grid { grid-template-columns: 1fr; } }
       .d8hs-style-card {
-        border-radius: 20px;
+        border-radius: 22px;
         border: 1px solid;
-        padding: 24px 22px;
+        padding: 28px 26px;
         cursor: default;
         transition: all 220ms ease;
         position: relative;
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 16px;
       }
       .d8hs-style-card::after {
         content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
@@ -669,7 +659,7 @@ function HomeSectionsStyles() {
         box-shadow: 0 16px 50px rgba(0,0,0,0.50);
       }
       .d8hs-style-card-label {
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 900;
         letter-spacing: -0.01em;
         position: relative; z-index: 1;
@@ -677,18 +667,18 @@ function HomeSectionsStyles() {
       .d8hs-style-card-lines {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 7px;
         position: relative; z-index: 1;
       }
       .d8hs-style-card-line {
-        font-size: 11px;
+        font-size: 12px;
         color: rgba(200,220,255,0.55);
         font-family: 'JetBrains Mono', ui-monospace, monospace;
       }
       .d8hs-style-card-dot {
         width: 10px; height: 10px;
         border-radius: 50%;
-        margin-top: 10px;
+        margin-top: 12px;
         box-shadow: 0 0 12px currentColor;
         position: relative; z-index: 1;
       }
@@ -696,19 +686,19 @@ function HomeSectionsStyles() {
       /* ── Features — glass cards with glow ── */
       .d8hs-feature-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
       }
-      @media (max-width: 900px) { .d8hs-feature-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 768px) { .d8hs-feature-grid { grid-template-columns: repeat(2, 1fr); } }
       @media (max-width: 500px) { .d8hs-feature-grid { grid-template-columns: 1fr; } }
       .d8hs-feature-card {
-        padding: 24px 22px;
+        padding: 28px 26px;
         border-radius: 20px;
         border: 1px solid rgba(100,180,255,0.10);
         background: rgba(100,180,255,0.03);
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 14px;
         transition: all 220ms ease;
         position: relative;
         overflow: hidden;
@@ -729,40 +719,40 @@ function HomeSectionsStyles() {
       }
       .d8hs-feature-card:hover::before { opacity: 1; }
       .d8hs-feature-icon {
-        width: 42px; height: 42px;
-        border-radius: 12px;
+        width: 46px; height: 46px;
+        border-radius: 14px;
         border: 1px solid;
         display: flex; align-items: center; justify-content: center;
-        font-size: 18px;
+        font-size: 20px;
         flex-shrink: 0;
       }
       .d8hs-feature-title {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 800;
         color: #E8F0FF;
         letter-spacing: -0.01em;
       }
       .d8hs-feature-desc {
-        font-size: 12px;
+        font-size: 13px;
         color: rgba(200,220,255,0.45);
-        line-height: 1.70;
+        line-height: 1.75;
       }
 
       /* ── Testimonials — glass cards ── */
       .d8hs-testimonials {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
+        gap: 20px;
       }
-      @media (max-width: 700px) { .d8hs-testimonials { grid-template-columns: 1fr; } }
+      @media (max-width: 768px) { .d8hs-testimonials { grid-template-columns: 1fr; } }
       .d8hs-testimonial {
-        padding: 26px 24px;
+        padding: 32px 28px;
         border-radius: 22px;
         border: 1px solid rgba(100,180,255,0.10);
         background: rgba(100,180,255,0.03);
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 18px;
         transition: all 220ms ease;
         position: relative; overflow: hidden;
       }
@@ -781,48 +771,50 @@ function HomeSectionsStyles() {
         box-shadow: 0 10px 36px rgba(0,0,0,0.30);
       }
       .d8hs-testimonial:hover::before { opacity: 1; }
-      .d8hs-testimonial-stars { font-size: 14px; color: #00D4FF; letter-spacing: 2px; }
+      .d8hs-testimonial-stars { font-size: 15px; color: #00D4FF; letter-spacing: 3px; }
       .d8hs-testimonial-quote {
         margin: 0;
-        font-size: 14px;
+        font-size: 15px;
         color: rgba(200,220,255,0.70);
-        line-height: 1.70;
+        line-height: 1.75;
         font-style: normal;
         flex: 1;
       }
       .d8hs-testimonial-author {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
+        padding-top: 4px;
       }
       .d8hs-testimonial-avatar {
-        width: 36px; height: 36px;
+        width: 40px; height: 40px;
         border-radius: 50%;
         border: 1px solid;
         display: flex; align-items: center; justify-content: center;
-        font-size: 11px; font-weight: 800;
+        font-size: 12px; font-weight: 800;
         flex-shrink: 0;
         box-shadow: 0 0 10px currentColor;
       }
       .d8hs-testimonial-name {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 700;
         color: #E8F0FF;
       }
       .d8hs-testimonial-role {
-        font-size: 11px;
-        color: rgba(200,220,255,0.38);
+        font-size: 12px;
+        color: rgba(200,220,255,0.40);
+        margin-top: 2px;
       }
 
       /* ── CTA Section — vivid glow ── */
       .d8hs-cta-section {
         width: 100%;
-        padding: 90px 24px;
+        padding: 120px 32px;
         position: relative; z-index: 1;
         text-align: center;
       }
       .d8hs-cta-inner {
-        max-width: 620px;
+        max-width: 660px;
         margin: 0 auto;
         position: relative;
       }
@@ -866,15 +858,15 @@ function HomeSectionsStyles() {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
       }
       .d8hs-cta-tag {
-        padding: 7px 16px;
+        padding: 8px 18px;
         border-radius: 999px;
         border: 1px solid rgba(0,212,255,0.15);
         background: rgba(0,212,255,0.05);
         color: rgba(0,212,255,0.70);
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 500;
         transition: all 150ms ease;
       }
