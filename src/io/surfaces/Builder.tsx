@@ -56,6 +56,7 @@ interface Site {
   id: string;
   prompt: string;
   industry: string;
+  vibe?: string;
   html: string;
   createdAt: Date;
   tokens?: number;
@@ -756,6 +757,7 @@ export function Builder() {
         id: crypto.randomUUID(),
         prompt: activePrompt,
         industry,
+        vibe,
         html: accumulated,
         createdAt: new Date(),
         durationMs: dur,
@@ -831,10 +833,11 @@ export function Builder() {
     if (!html || shareState === "sharing") return;
     setShareState("sharing");
     try {
+      const siteTitle = activeSite?.prompt?.slice(0, 60) || prompt?.slice(0, 60) || "Untitled";
       const res = await fetch("/api/sites/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html, prompt, industry, vibe }),
+        body: JSON.stringify({ html, prompt, title: siteTitle, industry, vibe }),
       });
       const data = await res.json() as { ok?: boolean; shareUrl?: string };
       if (data.ok && data.shareUrl) {
@@ -851,7 +854,7 @@ export function Builder() {
       setShareState("error");
       setTimeout(() => setShareState("idle"), 3000);
     }
-  }, [html, prompt, shareState]);
+  }, [html, prompt, industry, vibe, shareState, activeSite]);
 
   const handleFix = useCallback(async () => {
     if (fixState === "fixing") return;
@@ -882,7 +885,12 @@ export function Builder() {
         const { done, value } = await reader.read();
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });
-        setHtml(accumulated);
+        // Show clean HTML during streaming (strip leading fences/preamble)
+        const preview = accumulated.replace(/^\s*```(?:html|HTML)?\s*\n?/, "");
+        const docStart = preview.search(/<!DOCTYPE\s+html/i);
+        const htmlStart = preview.search(/<html[\s>]/i);
+        const cleanStart = docStart >= 0 ? docStart : htmlStart >= 0 ? htmlStart : 0;
+        setHtml(cleanStart > 0 ? preview.slice(cleanStart) : preview);
       }
       clearInterval(progressTimer);
       setProgress(100);
@@ -890,7 +898,7 @@ export function Builder() {
       setHtml(accumulated);
       const dur = Date.now() - startRef.current;
       setDurationMs(dur);
-      const site: Site = { id: crypto.randomUUID(), prompt: `[Fixed] ${prompt}`, industry, html: accumulated, createdAt: new Date(), durationMs: dur };
+      const site: Site = { id: crypto.randomUUID(), prompt: `[Fixed] ${prompt}`, industry, vibe, html: accumulated, createdAt: new Date(), durationMs: dur };
       setSites((prev) => [site, ...prev]);
       setActiveSite(site);
       setState("done");
@@ -900,7 +908,7 @@ export function Builder() {
     } finally {
       setFixState("idle");
     }
-  }, [fixState, activeSite, html, prompt, industry]);
+  }, [fixState, activeSite, html, prompt, industry, vibe]);
 
   const handleSeo = useCallback(async () => {
     if (seoState === "scanning" || !html) return;
