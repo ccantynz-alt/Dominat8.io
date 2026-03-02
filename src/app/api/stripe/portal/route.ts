@@ -1,7 +1,8 @@
 import Stripe from "stripe";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { eq } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -22,9 +23,14 @@ export async function POST(_req: NextRequest) {
 
   let customerId: string | null = null;
   try {
-    customerId = await kv.get<string>(`stripe:customer:${userId}`);
+    const rows = await db
+      .select({ stripeCustomerId: schema.users.stripeCustomerId })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+    customerId = rows[0]?.stripeCustomerId ?? null;
   } catch {
-    // KV unavailable
+    // DB unavailable
   }
 
   if (!customerId) {

@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { eq, sql } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
 import { addPurchasedCredits } from "@/lib/agent-credits";
 import { sendUpgradeEmail } from "@/lib/email";
 
@@ -14,12 +15,26 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 async function setUserPlan(userId: string, plan: string) {
-  await kv.set(`user:${userId}:plan`, plan);
+  await db
+    .update(schema.users)
+    .set({ plan, updatedAt: new Date() })
+    .where(eq(schema.users.id, userId));
 }
 
 async function storeCustomerId(userId: string, customerId: string) {
-  await kv.set(`stripe:customer:${userId}`, customerId);
-  await kv.set(`stripe:user:${customerId}`, userId);
+  await db
+    .update(schema.users)
+    .set({ stripeCustomerId: customerId, updatedAt: new Date() })
+    .where(eq(schema.users.id, userId));
+}
+
+async function getUserIdByCustomer(customerId: string): Promise<string | null> {
+  const rows = await db
+    .select({ id: schema.users.id })
+    .from(schema.users)
+    .where(eq(schema.users.stripeCustomerId, customerId))
+    .limit(1);
+  return rows[0]?.id ?? null;
 }
 
 export async function POST(req: NextRequest) {
@@ -79,7 +94,7 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         const userId =
           sub.metadata?.userId ??
-          (await kv.get<string>(`stripe:user:${sub.customer}`));
+          (await getUserIdByCustomer(sub.customer as string));
 
         if (userId) {
           const plan = sub.metadata?.plan;
@@ -97,7 +112,7 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         const userId =
           sub.metadata?.userId ??
-          (await kv.get<string>(`stripe:user:${sub.customer}`));
+          (await getUserIdByCustomer(sub.customer as string));
 
         if (userId) {
           await setUserPlan(userId, "free");

@@ -12,7 +12,8 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { eq } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
 import { isAdminUser, getAgentBalance, addPurchasedCredits } from "@/lib/agent-credits";
 
 export const runtime = "nodejs";
@@ -41,8 +42,8 @@ export async function POST(req: NextRequest) {
   switch (action) {
     case "getBalance": {
       const balance = await getAgentBalance(tid);
-      const planRaw = await kv.get<string>(`user:${tid}:plan`);
-      return NextResponse.json({ ok: true, balance, planRaw });
+      const userRows = await db.select({ plan: schema.users.plan }).from(schema.users).where(eq(schema.users.id, tid)).limit(1);
+      return NextResponse.json({ ok: true, balance, planRaw: userRows[0]?.plan ?? null });
     }
 
     case "addCredits": {
@@ -59,7 +60,10 @@ export async function POST(req: NextRequest) {
       if (!plan || !validPlans.includes(plan)) {
         return NextResponse.json({ error: `plan must be one of: ${validPlans.join(", ")}` }, { status: 400 });
       }
-      await kv.set(`user:${tid}:plan`, plan);
+      await db
+        .update(schema.users)
+        .set({ plan, updatedAt: new Date() })
+        .where(eq(schema.users.id, tid));
       const balance = await getAgentBalance(tid);
       return NextResponse.json({ ok: true, balance });
     }

@@ -1,7 +1,7 @@
 import { put } from "@vercel/blob";
-import { kv } from "@vercel/kv";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { db, schema } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -13,7 +13,7 @@ export type SavedSiteMeta = {
   industry: string;
   vibe: string;
   blobUrl: string;
-  slug: string | null;  // e.g. "acme-plumbing" → slug.dominat8.io
+  slug: string | null;
   createdAt: string;
 };
 
@@ -45,7 +45,8 @@ export async function POST(req: NextRequest) {
       || prompt?.slice(0, 60).replace(/^a\s+/i, "").replace(/^an?\s+/i, "").trim()
       || "Untitled Site";
 
-    const meta: SavedSiteMeta = {
+    // Insert site into Postgres
+    await db.insert(schema.sites).values({
       id,
       userId: userId ?? null,
       prompt: prompt?.slice(0, 300) ?? "",
@@ -54,23 +55,7 @@ export async function POST(req: NextRequest) {
       vibe: vibe ?? "",
       blobUrl: blob.url,
       slug: null,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Store site metadata — 90 days TTL for anon, never expire for logged-in
-    const ttl = userId ? undefined : 60 * 60 * 24 * 90;
-    if (ttl) {
-      await kv.set(`site:${id}`, meta, { ex: ttl });
-    } else {
-      await kv.set(`site:${id}`, meta);
-    }
-
-    // If logged in, add to user's site list (prepend so newest first)
-    if (userId) {
-      await kv.lpush(`user:${userId}:sites`, id);
-      // Keep max 100 sites per user
-      await kv.ltrim(`user:${userId}:sites`, 0, 99);
-    }
+    });
 
     return NextResponse.json({
       ok: true,
@@ -79,7 +64,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("BLOB_READ_WRITE_TOKEN") || msg.includes("KV_")) {
+    if (msg.includes("BLOB_READ_WRITE_TOKEN") || msg.includes("DATABASE_URL")) {
       return NextResponse.json(
         { error: "Share feature requires Vercel deployment", code: "STORAGE_NOT_CONFIGURED" },
         { status: 503 }

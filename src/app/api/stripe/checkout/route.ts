@@ -1,7 +1,8 @@
 import Stripe from "stripe";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { eq } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -39,10 +40,14 @@ export async function POST(req: NextRequest) {
   // Check if this user already has a Stripe customer ID
   let customerId: string | undefined;
   try {
-    const stored = await kv.get<string>(`stripe:customer:${userId}`);
-    if (stored) customerId = stored;
+    const rows = await db
+      .select({ stripeCustomerId: schema.users.stripeCustomerId })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+    if (rows[0]?.stripeCustomerId) customerId = rows[0].stripeCustomerId;
   } catch {
-    // KV not available — continue without customer reuse
+    // DB not available — continue without customer reuse
   }
 
   const session = await stripe.checkout.sessions.create({

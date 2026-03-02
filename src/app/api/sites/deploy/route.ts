@@ -5,10 +5,10 @@
  * Body: { siteId: string, slug: string }
  * Returns: { ok: true, url: "https://{slug}.dominat8.io" }
  */
-import { kv } from "@vercel/kv";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import type { SavedSiteMeta } from "../save/route";
+import { eq, and } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Check plan — only Pro+ can deploy
-  const plan = (await kv.get<string>(`user:${userId}:plan`)) ?? "free";
+  const userRows = await db.select({ plan: schema.users.plan }).from(schema.users).where(eq(schema.users.id, userId)).limit(1);
+  const plan = userRows[0]?.plan ?? "free";
   const isAdmin = (process.env.ADMIN_USER_IDS ?? "").split(",").includes(userId);
   if (!DEPLOY_PLANS.has(plan) && !isAdmin) {
     return NextResponse.json({
@@ -51,27 +52,42 @@ export async function POST(req: NextRequest) {
   }
 
   // Verify site ownership
-  const meta = await kv.get<SavedSiteMeta>(`site:${siteId}`);
-  if (!meta || meta.userId !== userId) {
+  const siteRows = await db
+    .select()
+    .from(schema.sites)
+    .where(and(eq(schema.sites.id, siteId), eq(schema.sites.userId, userId)))
+    .limit(1);
+  const site = siteRows[0];
+  if (!site) {
     return NextResponse.json({ error: "Site not found" }, { status: 404 });
   }
 
   // Check slug availability
-  const existing = await kv.get<string>(`domain:${cleanSlug}`);
-  if (existing && existing !== siteId) {
+  const existingDomain = await db
+    .select()
+    .from(schema.domains)
+    .where(eq(schema.domains.slug, cleanSlug))
+    .limit(1);
+  if (existingDomain[0] && existingDomain[0].siteId !== siteId) {
     return NextResponse.json({ error: "That slug is already taken" }, { status: 409 });
   }
 
   // Release old slug if user had one for this site
-  if (meta.slug && meta.slug !== cleanSlug) {
-    await kv.del(`domain:${meta.slug}`);
+  if (site.slug && site.slug !== cleanSlug) {
+    await db.delete(schema.domains).where(eq(schema.domains.slug, site.slug));
   }
 
-  // Claim the new slug
-  await kv.set(`domain:${cleanSlug}`, siteId);
+  // Claim the new slug (upsert)
+  await db
+    .insert(schema.domains)
+    .values({ slug: cleanSlug, siteId })
+    .onConflictDoUpdate({ target: schema.domains.slug, set: { siteId } });
 
   // Update site metadata with slug
-  await kv.set(`site:${siteId}`, { ...meta, slug: cleanSlug });
+  await db
+    .update(schema.sites)
+    .set({ slug: cleanSlug })
+    .where(eq(schema.sites.id, siteId));
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://dominat8.io";
   const host = new URL(appUrl).hostname;
