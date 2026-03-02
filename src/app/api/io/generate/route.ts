@@ -325,11 +325,13 @@ export async function POST(req: NextRequest) {
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── Determine which provider to use ──────────────────────────────────────
-  // Claude is preferred. Falls back to OpenAI if Claude is unavailable or fails.
+  // Claude is always preferred. "auto" defaults to Sonnet when Anthropic key is available.
   const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
   const hasOpenAI = !!process.env.OPENAI_API_KEY;
-  const wantsClaude = requestedModel === "claude-sonnet-4-6" || !requestedModel;
-  const useClaude = wantsClaude && hasAnthropic;
+  const claudeModel: string = requestedModel === "claude-haiku-4-5-20251001"
+    ? "claude-haiku-4-5-20251001"
+    : "claude-sonnet-4-6";
+  const useClaude = hasAnthropic;
 
   const industryHint = industry && INDUSTRY_HINTS[industry]
     ? `\nINDUSTRY GUIDANCE: ${INDUSTRY_HINTS[industry]}`
@@ -367,9 +369,10 @@ export async function POST(req: NextRequest) {
   if (useClaude) {
     try {
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const isHaiku = claudeModel.includes("haiku");
       const stream = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 16000,
+        model: claudeModel as "claude-sonnet-4-6",
+        max_tokens: isHaiku ? 8000 : 16000,
         temperature: 0.80,
         stream: true,
         system: SYSTEM_PROMPT,
