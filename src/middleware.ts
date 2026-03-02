@@ -33,6 +33,7 @@ const DIRECT_PREFIXES = [
   "/tv/",
   "/admin",
   "/io",
+  "/build",
 ];
 
 function shouldPassThrough(pathname: string): boolean {
