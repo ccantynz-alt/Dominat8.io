@@ -3853,7 +3853,7 @@ function HomeStyles() {
         font-size: 13px; color: rgba(240,240,245,0.40);
       }
       .d8h-live-dot {
-        width: 7px; height: 7px; border-radius: 50%;
+        width: 6px; height: 6px; border-radius: 50%;
         background: #00FFB2;
         box-shadow: 0 0 8px rgba(0,255,178,0.5);
         animation: d8h-blink 2.5s ease-in-out infinite;
