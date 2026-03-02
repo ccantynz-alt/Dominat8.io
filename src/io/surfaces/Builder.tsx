@@ -56,6 +56,7 @@ interface Site {
   id: string;
   prompt: string;
   industry: string;
+  vibe?: string;
   html: string;
   createdAt: Date;
   tokens?: number;
@@ -156,7 +157,7 @@ function SiteCard({ site, onSelect }: { site: Site; onSelect: () => void }) {
       <div className="d8b-site-preview">
         <iframe
           srcDoc={site.html}
-          sandbox="allow-scripts"
+          sandbox="allow-scripts allow-same-origin"
           className="d8b-site-thumb"
           title={`Preview: ${site.prompt}`}
         />
@@ -391,6 +392,7 @@ function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishe
   const [searchResults, setSearchResults] = useState<{ domain: string; available: boolean; price: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [registeringDomain, setRegisteringDomain] = useState<string | null>(null);
 
   const TLDS = [".com", ".io", ".co", ".ai", ".dev", ".app", ".site", ".online"];
 
@@ -398,6 +400,7 @@ function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishe
     if (!domainQuery.trim()) return;
     setSearching(true);
     setSearched(false);
+    setRegisteringDomain(null);
     // Simulate domain availability check (frontend-only for now)
     const clean = domainQuery.trim().toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 63);
     setTimeout(() => {
@@ -416,6 +419,14 @@ function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishe
       setSearching(false);
       setSearched(true);
     }, 800);
+  }
+
+  function handleRegister(domain: string) {
+    setRegisteringDomain(domain);
+    // Domain registration backend is coming soon — show feedback
+    setTimeout(() => {
+      setRegisteringDomain(null);
+    }, 2000);
   }
 
   return (
@@ -470,7 +481,14 @@ function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishe
                     {r.available ? (
                       <>
                         <span className="d8b-domain-price">{r.price}</span>
-                        <button className="d8b-domain-buy-btn" type="button">Register</button>
+                        <button
+                          className="d8b-domain-buy-btn"
+                          type="button"
+                          onClick={() => handleRegister(r.domain)}
+                          disabled={registeringDomain === r.domain}
+                        >
+                          {registeringDomain === r.domain ? "Coming soon!" : "Register"}
+                        </button>
                       </>
                     ) : (
                       <span className="d8b-domain-taken">Taken</span>
@@ -558,6 +576,7 @@ export function Builder() {
   const [state, setState] = useState<BuildState>("idle");
   const [html, setHtml] = useState("");
   const [genModel, setGenModel] = useState<"auto" | "claude-sonnet-4-6" | "claude-haiku-4-5-20251001">("auto");
+  const [genKey, setGenKey] = useState(0);
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [sites, setSites] = useState<Site[]>(() => {
@@ -613,7 +632,7 @@ export function Builder() {
   const searchParams = useSearchParams();
 
   // Pre-fill prompt from URL ?prompt= param (e.g. from /templates)
-  // Also detect ?payment=success return from Stripe
+  // Also detect ?payment=success return from Stripe and verify server-side
   useEffect(() => {
     const p = searchParams?.get("prompt");
     if (p && p.trim()) {
@@ -621,8 +640,17 @@ export function Builder() {
     }
     const payment = searchParams?.get("payment");
     const plan = searchParams?.get("plan");
-    if (payment === "success") {
-      setPaymentSuccess(plan ?? "pro");
+    const sid = searchParams?.get("session_id");
+    if (payment === "success" && sid) {
+      // Verify payment server-side before showing success banner
+      fetch(`/api/stripe/verify?session_id=${encodeURIComponent(sid)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.verified) {
+            setPaymentSuccess(data.plan ?? plan ?? "pro");
+          }
+        })
+        .catch(() => {});
     }
     // Clean params from URL
     try {
@@ -630,6 +658,7 @@ export function Builder() {
       url.searchParams.delete("prompt");
       url.searchParams.delete("payment");
       url.searchParams.delete("plan");
+      url.searchParams.delete("session_id");
       window.history.replaceState({}, "", url.toString());
     } catch { /* noop */ }
   }, [searchParams]);
@@ -664,6 +693,7 @@ export function Builder() {
     setHtml("");
     setProgress(0);
     setActiveSite(null);
+    setGenKey(k => k + 1);
     startRef.current = Date.now();
     progressRef.current = 0;
 
@@ -729,6 +759,7 @@ export function Builder() {
         id: crypto.randomUUID(),
         prompt: activePrompt,
         industry,
+        vibe,
         html: accumulated,
         createdAt: new Date(),
         durationMs: dur,
@@ -804,10 +835,11 @@ export function Builder() {
     if (!html || shareState === "sharing") return;
     setShareState("sharing");
     try {
+      const siteTitle = activeSite?.prompt?.slice(0, 60) || prompt?.slice(0, 60) || "Untitled";
       const res = await fetch("/api/sites/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html, prompt, industry, vibe }),
+        body: JSON.stringify({ html, prompt, title: siteTitle, industry, vibe }),
       });
       const data = await res.json() as { ok?: boolean; shareUrl?: string };
       if (data.ok && data.shareUrl) {
@@ -824,7 +856,7 @@ export function Builder() {
       setShareState("error");
       setTimeout(() => setShareState("idle"), 3000);
     }
-  }, [html, prompt, shareState]);
+  }, [html, prompt, industry, vibe, shareState, activeSite]);
 
   const handleFix = useCallback(async () => {
     if (fixState === "fixing") return;
@@ -835,6 +867,7 @@ export function Builder() {
     setHtml("");
     setProgress(0);
     setActiveSite(null);
+    setGenKey(k => k + 1);
     startRef.current = Date.now();
     progressRef.current = 0;
     const progressTimer = setInterval(() => {
@@ -855,7 +888,12 @@ export function Builder() {
         const { done, value } = await reader.read();
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });
-        setHtml(accumulated);
+        // Show clean HTML during streaming (strip leading fences/preamble)
+        const preview = accumulated.replace(/^\s*```(?:html|HTML)?\s*\n?/, "");
+        const docStart = preview.search(/<!DOCTYPE\s+html/i);
+        const htmlStart = preview.search(/<html[\s>]/i);
+        const cleanStart = docStart >= 0 ? docStart : htmlStart >= 0 ? htmlStart : 0;
+        setHtml(cleanStart > 0 ? preview.slice(cleanStart) : preview);
       }
       clearInterval(progressTimer);
       setProgress(100);
@@ -863,7 +901,7 @@ export function Builder() {
       setHtml(accumulated);
       const dur = Date.now() - startRef.current;
       setDurationMs(dur);
-      const site: Site = { id: crypto.randomUUID(), prompt: `[Fixed] ${prompt}`, industry, html: accumulated, createdAt: new Date(), durationMs: dur };
+      const site: Site = { id: crypto.randomUUID(), prompt: `[Fixed] ${prompt}`, industry, vibe, html: accumulated, createdAt: new Date(), durationMs: dur };
       setSites((prev) => [site, ...prev]);
       setActiveSite(site);
       setState("done");
@@ -873,7 +911,7 @@ export function Builder() {
     } finally {
       setFixState("idle");
     }
-  }, [fixState, activeSite, html, prompt, industry]);
+  }, [fixState, activeSite, html, prompt, industry, vibe]);
 
   const handleSeo = useCallback(async () => {
     if (seoState === "scanning" || !html) return;
@@ -1570,6 +1608,7 @@ export function Builder() {
                       setActiveSite(s);
                       setHtml(s.html);
                       setState("done");
+                      setGenKey(k => k + 1);
                       setSidebarTab("new");
                     }}
                   />
@@ -1750,18 +1789,20 @@ export function Builder() {
                   <div className="d8b-phone-frame">
                     <div className="d8b-phone-notch" />
                     <iframe
+                      key={genKey}
                       ref={iframeRef}
                       srcDoc={html || "<html><body style='background:#fff'></body></html>"}
-                      sandbox="allow-scripts"
+                      sandbox="allow-scripts allow-same-origin"
                       className="d8b-phone-iframe"
                       title="Generated website mobile preview"
                     />
                   </div>
                 ) : (
                   <iframe
+                    key={genKey}
                     ref={iframeRef}
                     srcDoc={html || "<html><body style='background:#fff'></body></html>"}
-                    sandbox="allow-scripts"
+                    sandbox="allow-scripts allow-same-origin"
                     className="d8b-iframe"
                     title="Generated website preview"
                   />
@@ -2542,6 +2583,8 @@ function BuilderStyles() {
         overflow: hidden;
         position: relative;
         z-index: 5;
+        min-height: 0;
+        min-width: 0;
       }
 
       /* ── Empty canvas ── */
@@ -2844,6 +2887,7 @@ function BuilderStyles() {
         flex-direction: column;
         overflow: hidden;
         position: relative;
+        min-height: 0;
       }
 
       /* ── Toolbar ── */
@@ -2851,19 +2895,19 @@ function BuilderStyles() {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 20px;
-        height: 52px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-        background: rgba(3,7,18,0.60);
+        padding: 0 24px;
+        height: 56px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        background: rgba(3,7,18,0.70);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         flex-shrink: 0;
-        gap: 12px;
+        gap: 16px;
         position: relative;
         z-index: 10;
       }
-      .d8b-toolbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-      .d8b-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+      .d8b-toolbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .d8b-toolbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
       .d8b-live-badge {
         display: flex;
@@ -2888,19 +2932,19 @@ function BuilderStyles() {
       @keyframes d8b-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
 
       .d8b-done-badge {
-        background: rgba(0,255,180,0.05);
-        border: 1px solid rgba(0,255,180,0.15);
+        background: rgba(0,255,180,0.06);
+        border: 1px solid rgba(0,255,180,0.18);
         border-radius: 999px;
-        padding: 4px 10px;
-        font-size: 10px;
+        padding: 5px 12px;
+        font-size: 11px;
         font-weight: 700;
-        color: rgba(0,255,180,0.85);
+        color: rgba(0,255,180,0.90);
         letter-spacing: 0.04em;
       }
 
       .d8b-toolbar-prompt {
-        font-size: 13px;
-        color: rgba(140,160,200,0.40);
+        font-size: 14px;
+        color: rgba(140,160,200,0.45);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -2909,54 +2953,54 @@ function BuilderStyles() {
       .d8b-view-toggle {
         display: flex;
         background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.06);
         border-radius: 10px;
         padding: 3px;
         gap: 2px;
       }
       .d8b-view-btn {
-        padding: 6px 14px;
+        padding: 7px 16px;
         border-radius: 7px;
         border: none;
         background: transparent;
-        color: rgba(140,160,200,0.40);
-        font-size: 12px;
+        color: rgba(140,160,200,0.45);
+        font-size: 13px;
         font-weight: 500;
         font-family: inherit;
         cursor: pointer;
         transition: all 180ms ease;
       }
       .d8b-view-btn--active {
-        background: rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.07);
         color: #fff;
       }
 
       .d8b-action-btn {
-        padding: 7px 14px;
-        border-radius: 9px;
-        border: 1px solid rgba(255,255,255,0.06);
-        background: rgba(255,255,255,0.02);
-        color: rgba(170,185,215,0.55);
-        font-size: 12px;
+        padding: 8px 16px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.07);
+        background: rgba(255,255,255,0.03);
+        color: rgba(170,185,215,0.60);
+        font-size: 13px;
         font-weight: 500;
         font-family: inherit;
         cursor: pointer;
         transition: all 200ms cubic-bezier(0.16,1,0.3,1);
       }
-      .d8b-action-btn:hover { border-color: rgba(0,200,255,0.18); color: #E8F0FF; background: rgba(0,200,255,0.04); }
+      .d8b-action-btn:hover { border-color: rgba(0,200,255,0.20); color: #E8F0FF; background: rgba(0,200,255,0.05); }
 
       .d8b-deploy-btn {
-        padding: 8px 16px;
+        padding: 9px 18px;
         border-radius: 10px;
         border: 1px solid rgba(0,200,255,0.25);
-        background: linear-gradient(135deg, rgba(0,180,255,0.10), rgba(123,97,255,0.06));
+        background: linear-gradient(135deg, rgba(0,180,255,0.12), rgba(123,97,255,0.08));
         color: #fff;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 700;
         font-family: inherit;
         cursor: pointer;
         transition: all 200ms cubic-bezier(0.16,1,0.3,1);
-        box-shadow: 0 0 16px rgba(0,200,255,0.06);
+        box-shadow: 0 0 16px rgba(0,200,255,0.08);
       }
       .d8b-deploy-btn:hover:not(:disabled) {
         border-color: rgba(0,220,255,0.45);
@@ -2966,13 +3010,22 @@ function BuilderStyles() {
       .d8b-deploy-btn:disabled { opacity: 0.30; cursor: not-allowed; }
 
       /* ── iframe ── */
-      .d8b-iframe-wrap { flex: 1; position: relative; overflow: hidden; background: #fff; }
+      .d8b-iframe-wrap {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #ffffff;
+        min-height: 0;
+        border: 2px solid rgba(255,255,255,0.12);
+        border-radius: 0 0 8px 8px;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 24px rgba(0,0,0,0.4);
+      }
       .d8b-iframe-loader {
         position: absolute; inset: 0; z-index: 10;
         background: #030712;
         display: flex; align-items: center; justify-content: center;
       }
-      .d8b-iframe { width: 100%; height: 100%; border: none; display: block; }
+      .d8b-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: block; }
 
       /* ── Code view ── */
       .d8b-code-wrap { flex: 1; overflow: auto; background: rgba(3,7,18,0.95); }
@@ -3004,6 +3057,7 @@ function BuilderStyles() {
       .d8b-iframe-mobile-wrap {
         flex: 1; display: flex; align-items: center; justify-content: center;
         background: #030712; overflow: hidden; padding: 24px 0 16px;
+        min-height: 0;
       }
       .d8b-phone-frame {
         width: 375px; height: calc(100% - 8px); max-height: 780px;
@@ -3017,7 +3071,7 @@ function BuilderStyles() {
         width: 120px; height: 32px; background: #000;
         border-radius: 0 0 20px 20px; z-index: 10;
       }
-      .d8b-phone-iframe { width: 100%; height: 100%; border: none; border-radius: 40px; }
+      .d8b-phone-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; border-radius: 40px; }
 
       /* ── Deploy Modal ── */
       .d8b-modal-backdrop {

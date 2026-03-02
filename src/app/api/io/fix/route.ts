@@ -90,6 +90,9 @@ export async function POST(req: NextRequest) {
                 controller.enqueue(encoder.encode(event.delta.text));
               }
             }
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Stream interrupted";
+            controller.enqueue(encoder.encode(`\n<!-- GENERATION_ERROR: ${message} -->`));
           } finally {
             controller.close();
           }
@@ -126,6 +129,9 @@ export async function POST(req: NextRequest) {
           const text = chunk.choices[0]?.delta?.content ?? "";
           if (text) controller.enqueue(encoder.encode(text));
         }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Stream interrupted";
+        controller.enqueue(encoder.encode(`\n<!-- GENERATION_ERROR: ${message} -->`));
       } finally {
         controller.close();
       }

@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       credits: String(pack.credits),
       packId: pack.id,
     },
-    success_url: `${appUrl}/io?credits=added&amount=${pack.credits}`,
+    success_url: `${appUrl}/io?credits=added&amount=${pack.credits}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/io?credits=cancelled`,
   });
 

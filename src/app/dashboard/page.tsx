@@ -35,15 +35,16 @@ function DashboardInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const paymentSuccess = searchParams?.get("payment") === "success";
+  const paymentParam = searchParams?.get("payment") === "success";
   const newPlan = searchParams?.get("plan") ?? "";
+  const sessionId = searchParams?.get("session_id") ?? "";
 
   const [creditInfo, setCreditInfo] = useState<CreditInfo | null>(null);
   const [sites, setSites] = useState<SiteMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [sitesLoading, setSitesLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [showBanner, setShowBanner] = useState(paymentSuccess);
+  const [showBanner, setShowBanner] = useState(false);
   const [deployModal, setDeployModal] = useState<SiteMeta | null>(null);
   const [deploySlug, setDeploySlug] = useState("");
   const [deploying, setDeploying] = useState(false);
@@ -64,14 +65,25 @@ function DashboardInner() {
       .finally(() => setSitesLoading(false));
   }, []);
 
+  // Verify payment server-side before showing success banner
   useEffect(() => {
-    if (paymentSuccess) {
-      const t = setTimeout(() => {
-        router.replace("/dashboard", { scroll: false });
-      }, 6000);
-      return () => clearTimeout(t);
-    }
-  }, [paymentSuccess, router]);
+    if (!paymentParam || !sessionId) return;
+    let cancelled = false;
+    fetch(`/api/stripe/verify?session_id=${encodeURIComponent(sessionId)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!cancelled && data?.verified) {
+          setShowBanner(true);
+          // Clear URL params after verification
+          const t = setTimeout(() => {
+            router.replace("/dashboard", { scroll: false });
+          }, 6000);
+          return () => clearTimeout(t);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [paymentParam, sessionId, router]);
 
   async function openBillingPortal() {
     setPortalLoading(true);

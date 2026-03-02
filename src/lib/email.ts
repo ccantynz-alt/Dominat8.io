@@ -19,8 +19,8 @@ async function send(opts: {
   if (!resend) return; // Silently skip if not configured
   try {
     await resend.emails.send({ from: FROM, ...opts });
-  } catch {
-    // Email failures are non-fatal
+  } catch (err) {
+    console.error("[email] Send failed:", { to: opts.to, subject: opts.subject, error: err });
   }
 }
 

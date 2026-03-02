@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -13,6 +13,8 @@ interface Props {
 export function CheckoutButton({ plan, label, style, className }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const clickedRef = useRef(false);
 
   async function handleClick() {
     // Free plan → go straight to builder
@@ -21,7 +23,12 @@ export function CheckoutButton({ plan, label, style, className }: Props) {
       return;
     }
 
+    // Prevent double-click
+    if (clickedRef.current) return;
+    clickedRef.current = true;
     setLoading(true);
+    setError("");
+
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -38,29 +45,39 @@ export function CheckoutButton({ plan, label, style, className }: Props) {
 
       if (data.url) {
         window.location.href = data.url;
+        // Don't reset loading — we're navigating away
       } else {
-        alert(data.error ?? "Something went wrong. Please try again.");
+        setError(data.error ?? "Something went wrong. Please try again.");
         setLoading(false);
+        clickedRef.current = false;
       }
     } catch {
-      alert("Network error. Please try again.");
+      setError("Network error. Please try again.");
       setLoading(false);
+      clickedRef.current = false;
     }
   }
 
   return (
-    <button
-      onClick={handleClick}
-      type="button"
-      disabled={loading}
-      className={className}
-      style={{
-        ...style,
-        opacity: loading ? 0.65 : 1,
-        cursor: loading ? "wait" : "pointer",
-      }}
-    >
-      {loading ? "Redirecting…" : label}
-    </button>
+    <>
+      <button
+        onClick={handleClick}
+        type="button"
+        disabled={loading}
+        className={className}
+        style={{
+          ...style,
+          opacity: loading ? 0.65 : 1,
+          cursor: loading ? "wait" : "pointer",
+        }}
+      >
+        {loading ? "Redirecting…" : label}
+      </button>
+      {error && (
+        <div style={{ color: "#FF4757", fontSize: 12, marginTop: 6, textAlign: "center" }}>
+          {error}
+        </div>
+      )}
+    </>
   );
 }

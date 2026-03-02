@@ -9,8 +9,8 @@ type SavedSiteMeta = {
   createdAt: string;
 };
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   if (!id || !/^[a-f0-9]{12}$/.test(id)) {
     return new Response("Not found", { status: 404 });
