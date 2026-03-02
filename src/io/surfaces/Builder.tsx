@@ -391,6 +391,7 @@ function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishe
   const [searchResults, setSearchResults] = useState<{ domain: string; available: boolean; price: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [registeringDomain, setRegisteringDomain] = useState<string | null>(null);
 
   const TLDS = [".com", ".io", ".co", ".ai", ".dev", ".app", ".site", ".online"];
 
@@ -398,6 +399,7 @@ function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishe
     if (!domainQuery.trim()) return;
     setSearching(true);
     setSearched(false);
+    setRegisteringDomain(null);
     // Simulate domain availability check (frontend-only for now)
     const clean = domainQuery.trim().toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 63);
     setTimeout(() => {
@@ -416,6 +418,14 @@ function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishe
       setSearching(false);
       setSearched(true);
     }, 800);
+  }
+
+  function handleRegister(domain: string) {
+    setRegisteringDomain(domain);
+    // Domain registration backend is coming soon — show feedback
+    setTimeout(() => {
+      setRegisteringDomain(null);
+    }, 2000);
   }
 
   return (
@@ -470,7 +480,14 @@ function DomainsModal({ onClose, publishedUrl }: { onClose: () => void; publishe
                     {r.available ? (
                       <>
                         <span className="d8b-domain-price">{r.price}</span>
-                        <button className="d8b-domain-buy-btn" type="button">Register</button>
+                        <button
+                          className="d8b-domain-buy-btn"
+                          type="button"
+                          onClick={() => handleRegister(r.domain)}
+                          disabled={registeringDomain === r.domain}
+                        >
+                          {registeringDomain === r.domain ? "Coming soon!" : "Register"}
+                        </button>
                       </>
                     ) : (
                       <span className="d8b-domain-taken">Taken</span>
@@ -613,7 +630,7 @@ export function Builder() {
   const searchParams = useSearchParams();
 
   // Pre-fill prompt from URL ?prompt= param (e.g. from /templates)
-  // Also detect ?payment=success return from Stripe
+  // Also detect ?payment=success return from Stripe and verify server-side
   useEffect(() => {
     const p = searchParams?.get("prompt");
     if (p && p.trim()) {
@@ -621,8 +638,17 @@ export function Builder() {
     }
     const payment = searchParams?.get("payment");
     const plan = searchParams?.get("plan");
-    if (payment === "success") {
-      setPaymentSuccess(plan ?? "pro");
+    const sid = searchParams?.get("session_id");
+    if (payment === "success" && sid) {
+      // Verify payment server-side before showing success banner
+      fetch(`/api/stripe/verify?session_id=${encodeURIComponent(sid)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.verified) {
+            setPaymentSuccess(data.plan ?? plan ?? "pro");
+          }
+        })
+        .catch(() => {});
     }
     // Clean params from URL
     try {
@@ -630,6 +656,7 @@ export function Builder() {
       url.searchParams.delete("prompt");
       url.searchParams.delete("payment");
       url.searchParams.delete("plan");
+      url.searchParams.delete("session_id");
       window.history.replaceState({}, "", url.toString());
     } catch { /* noop */ }
   }, [searchParams]);

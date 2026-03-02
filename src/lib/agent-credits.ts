@@ -197,19 +197,38 @@ export async function checkAndConsumeCredits(
     };
   }
 
-  // Deduct monthly first, then purchased
+  // Deduct monthly first, then purchased — use pipeline for atomicity
   const month = new Date().toISOString().slice(0, 7);
   const usageKey = agentUsageKey(userId, month);
   const fromMonthly = Math.min(cost, balance.monthlyRemaining);
   const fromPurchased = cost - fromMonthly;
 
-  if (fromMonthly > 0) {
-    await kv.incrby(usageKey, fromMonthly);
-    await kv.expire(usageKey, 60 * 60 * 24 * 35);
-  }
-  if (fromPurchased > 0) {
-    const remaining = await kv.decrby(purchasedKey(userId), fromPurchased);
-    if (remaining < 0) await kv.set(purchasedKey(userId), 0);
+  try {
+    const pipe = kv.pipeline();
+    if (fromMonthly > 0) {
+      pipe.incrby(usageKey, fromMonthly);
+      pipe.expire(usageKey, 60 * 60 * 24 * 35);
+    }
+    if (fromPurchased > 0) {
+      pipe.decrby(purchasedKey(userId), fromPurchased);
+    }
+    const results = await pipe.exec();
+
+    // If purchased credits went negative, clamp to 0
+    if (fromPurchased > 0) {
+      const purchasedResult = results[results.length - 1] as number;
+      if (purchasedResult < 0) {
+        await kv.set(purchasedKey(userId), 0);
+      }
+    }
+  } catch (err) {
+    console.error(`[agent-credits] Deduction failed for user ${userId}, agent ${agentId}:`, err);
+    return {
+      ok: false,
+      code: "INSUFFICIENT_CREDITS" as const,
+      message: "Credit deduction failed. Please try again.",
+      balance,
+    };
   }
 
   return { ok: true, balance: await getAgentBalance(userId) };
