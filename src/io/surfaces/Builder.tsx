@@ -157,7 +157,7 @@ function SiteCard({ site, onSelect }: { site: Site; onSelect: () => void }) {
       <div className="d8b-site-preview">
         <iframe
           srcDoc={site.html}
-          sandbox="allow-scripts"
+          sandbox="allow-scripts allow-same-origin"
           className="d8b-site-thumb"
           title={`Preview: ${site.prompt}`}
         />
@@ -576,6 +576,7 @@ export function Builder() {
   const [state, setState] = useState<BuildState>("idle");
   const [html, setHtml] = useState("");
   const [genModel, setGenModel] = useState<"auto" | "claude-sonnet-4-6" | "claude-haiku-4-5-20251001">("auto");
+  const [genKey, setGenKey] = useState(0);
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [sites, setSites] = useState<Site[]>(() => {
@@ -692,6 +693,7 @@ export function Builder() {
     setHtml("");
     setProgress(0);
     setActiveSite(null);
+    setGenKey(k => k + 1);
     startRef.current = Date.now();
     progressRef.current = 0;
 
@@ -865,6 +867,7 @@ export function Builder() {
     setHtml("");
     setProgress(0);
     setActiveSite(null);
+    setGenKey(k => k + 1);
     startRef.current = Date.now();
     progressRef.current = 0;
     const progressTimer = setInterval(() => {
@@ -1605,6 +1608,7 @@ export function Builder() {
                       setActiveSite(s);
                       setHtml(s.html);
                       setState("done");
+                      setGenKey(k => k + 1);
                       setSidebarTab("new");
                     }}
                   />
@@ -1785,18 +1789,20 @@ export function Builder() {
                   <div className="d8b-phone-frame">
                     <div className="d8b-phone-notch" />
                     <iframe
+                      key={genKey}
                       ref={iframeRef}
                       srcDoc={html || "<html><body style='background:#fff'></body></html>"}
-                      sandbox="allow-scripts"
+                      sandbox="allow-scripts allow-same-origin"
                       className="d8b-phone-iframe"
                       title="Generated website mobile preview"
                     />
                   </div>
                 ) : (
                   <iframe
+                    key={genKey}
                     ref={iframeRef}
                     srcDoc={html || "<html><body style='background:#fff'></body></html>"}
-                    sandbox="allow-scripts"
+                    sandbox="allow-scripts allow-same-origin"
                     className="d8b-iframe"
                     title="Generated website preview"
                   />
@@ -3008,11 +3014,11 @@ function BuilderStyles() {
         flex: 1;
         position: relative;
         overflow: hidden;
-        background: #fff;
+        background: #ffffff;
         min-height: 0;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 0 0 4px 4px;
-        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
+        border: 2px solid rgba(255,255,255,0.12);
+        border-radius: 0 0 8px 8px;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 24px rgba(0,0,0,0.4);
       }
       .d8b-iframe-loader {
         position: absolute; inset: 0; z-index: 10;
