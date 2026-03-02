@@ -2542,6 +2542,8 @@ function BuilderStyles() {
         overflow: hidden;
         position: relative;
         z-index: 5;
+        min-height: 0;
+        min-width: 0;
       }
 
       /* ── Empty canvas ── */
@@ -2844,6 +2846,7 @@ function BuilderStyles() {
         flex-direction: column;
         overflow: hidden;
         position: relative;
+        min-height: 0;
       }
 
       /* ── Toolbar ── */
@@ -2851,19 +2854,19 @@ function BuilderStyles() {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 20px;
-        height: 52px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-        background: rgba(3,7,18,0.60);
+        padding: 0 24px;
+        height: 56px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        background: rgba(3,7,18,0.70);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         flex-shrink: 0;
-        gap: 12px;
+        gap: 16px;
         position: relative;
         z-index: 10;
       }
-      .d8b-toolbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-      .d8b-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+      .d8b-toolbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .d8b-toolbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
       .d8b-live-badge {
         display: flex;
@@ -2888,19 +2891,19 @@ function BuilderStyles() {
       @keyframes d8b-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
 
       .d8b-done-badge {
-        background: rgba(0,255,180,0.05);
-        border: 1px solid rgba(0,255,180,0.15);
+        background: rgba(0,255,180,0.06);
+        border: 1px solid rgba(0,255,180,0.18);
         border-radius: 999px;
-        padding: 4px 10px;
-        font-size: 10px;
+        padding: 5px 12px;
+        font-size: 11px;
         font-weight: 700;
-        color: rgba(0,255,180,0.85);
+        color: rgba(0,255,180,0.90);
         letter-spacing: 0.04em;
       }
 
       .d8b-toolbar-prompt {
-        font-size: 13px;
-        color: rgba(140,160,200,0.40);
+        font-size: 14px;
+        color: rgba(140,160,200,0.45);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -2909,54 +2912,54 @@ function BuilderStyles() {
       .d8b-view-toggle {
         display: flex;
         background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.06);
         border-radius: 10px;
         padding: 3px;
         gap: 2px;
       }
       .d8b-view-btn {
-        padding: 6px 14px;
+        padding: 7px 16px;
         border-radius: 7px;
         border: none;
         background: transparent;
-        color: rgba(140,160,200,0.40);
-        font-size: 12px;
+        color: rgba(140,160,200,0.45);
+        font-size: 13px;
         font-weight: 500;
         font-family: inherit;
         cursor: pointer;
         transition: all 180ms ease;
       }
       .d8b-view-btn--active {
-        background: rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.07);
         color: #fff;
       }
 
       .d8b-action-btn {
-        padding: 7px 14px;
-        border-radius: 9px;
-        border: 1px solid rgba(255,255,255,0.06);
-        background: rgba(255,255,255,0.02);
-        color: rgba(170,185,215,0.55);
-        font-size: 12px;
+        padding: 8px 16px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.07);
+        background: rgba(255,255,255,0.03);
+        color: rgba(170,185,215,0.60);
+        font-size: 13px;
         font-weight: 500;
         font-family: inherit;
         cursor: pointer;
         transition: all 200ms cubic-bezier(0.16,1,0.3,1);
       }
-      .d8b-action-btn:hover { border-color: rgba(0,200,255,0.18); color: #E8F0FF; background: rgba(0,200,255,0.04); }
+      .d8b-action-btn:hover { border-color: rgba(0,200,255,0.20); color: #E8F0FF; background: rgba(0,200,255,0.05); }
 
       .d8b-deploy-btn {
-        padding: 8px 16px;
+        padding: 9px 18px;
         border-radius: 10px;
         border: 1px solid rgba(0,200,255,0.25);
-        background: linear-gradient(135deg, rgba(0,180,255,0.10), rgba(123,97,255,0.06));
+        background: linear-gradient(135deg, rgba(0,180,255,0.12), rgba(123,97,255,0.08));
         color: #fff;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 700;
         font-family: inherit;
         cursor: pointer;
         transition: all 200ms cubic-bezier(0.16,1,0.3,1);
-        box-shadow: 0 0 16px rgba(0,200,255,0.06);
+        box-shadow: 0 0 16px rgba(0,200,255,0.08);
       }
       .d8b-deploy-btn:hover:not(:disabled) {
         border-color: rgba(0,220,255,0.45);
@@ -2966,13 +2969,22 @@ function BuilderStyles() {
       .d8b-deploy-btn:disabled { opacity: 0.30; cursor: not-allowed; }
 
       /* ── iframe ── */
-      .d8b-iframe-wrap { flex: 1; position: relative; overflow: hidden; background: #fff; }
+      .d8b-iframe-wrap {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #fff;
+        min-height: 0;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 0 0 4px 4px;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
+      }
       .d8b-iframe-loader {
         position: absolute; inset: 0; z-index: 10;
         background: #030712;
         display: flex; align-items: center; justify-content: center;
       }
-      .d8b-iframe { width: 100%; height: 100%; border: none; display: block; }
+      .d8b-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: block; }
 
       /* ── Code view ── */
       .d8b-code-wrap { flex: 1; overflow: auto; background: rgba(3,7,18,0.95); }
@@ -3004,6 +3016,7 @@ function BuilderStyles() {
       .d8b-iframe-mobile-wrap {
         flex: 1; display: flex; align-items: center; justify-content: center;
         background: #030712; overflow: hidden; padding: 24px 0 16px;
+        min-height: 0;
       }
       .d8b-phone-frame {
         width: 375px; height: calc(100% - 8px); max-height: 780px;
@@ -3017,7 +3030,7 @@ function BuilderStyles() {
         width: 120px; height: 32px; background: #000;
         border-radius: 0 0 20px 20px; z-index: 10;
       }
-      .d8b-phone-iframe { width: 100%; height: 100%; border: none; border-radius: 40px; }
+      .d8b-phone-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; border-radius: 40px; }
 
       /* ── Deploy Modal ── */
       .d8b-modal-backdrop {
