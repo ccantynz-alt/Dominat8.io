@@ -2,6 +2,7 @@ import { OpenAI } from "openai";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { isAdminUser } from "@/lib/agent-credits";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -308,8 +309,8 @@ export async function POST(req: NextRequest) {
     // Auth unavailable (missing keys, timeout, edge runtime issue) — continue as anonymous
   }
 
-  if (userId) {
-    // Authenticated: enforce monthly quota (with timeout — be lenient if KV is slow)
+  if (userId && !isAdminUser(userId)) {
+    // Authenticated non-admin: enforce monthly quota (with timeout — be lenient if KV is slow)
     try {
       const { allowed, plan, usage, limit } = await Promise.race([
         checkUsage(userId),
@@ -331,7 +332,8 @@ export async function POST(req: NextRequest) {
       // KV unavailable or timeout — allow generation rather than blocking
     }
   }
-  // Unauthenticated users get 3 free generations tracked client-side (localStorage).
+  // Admins and unauthenticated users proceed without server-side quota check.
+  // Anonymous users get 3 free generations tracked client-side (localStorage).
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── Determine which provider to use ──────────────────────────────────────
