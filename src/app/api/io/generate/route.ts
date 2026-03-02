@@ -296,29 +296,39 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── Auth + quota check ────────────────────────────────────────────────────
+  // ── Auth + quota check (with timeout to avoid hangs) ─────────────────────
   let userId: string | null = null;
   try {
-    const session = await auth();
+    const session = await Promise.race([
+      auth(),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("auth timeout")), 5000)),
+    ]);
     userId = session.userId;
   } catch {
-    // Auth unavailable (missing keys, edge runtime issue) — continue as anonymous
+    // Auth unavailable (missing keys, timeout, edge runtime issue) — continue as anonymous
   }
 
   if (userId) {
-    // Authenticated: enforce monthly quota
-    const { allowed, plan, usage, limit } = await checkUsage(userId);
-    if (!allowed) {
-      return new Response(
-        JSON.stringify({
-          error: `Monthly limit reached. You've used ${usage}/${limit} generations on the ${plan} plan.`,
-          code: "QUOTA_EXCEEDED",
-          plan,
-          usage,
-          limit,
-        }),
-        { status: 429, headers: { "Content-Type": "application/json" } }
-      );
+    // Authenticated: enforce monthly quota (with timeout — be lenient if KV is slow)
+    try {
+      const { allowed, plan, usage, limit } = await Promise.race([
+        checkUsage(userId),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("KV timeout")), 5000)),
+      ]);
+      if (!allowed) {
+        return new Response(
+          JSON.stringify({
+            error: `Monthly limit reached. You've used ${usage}/${limit} generations on the ${plan} plan.`,
+            code: "QUOTA_EXCEEDED",
+            plan,
+            usage,
+            limit,
+          }),
+          { status: 429, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    } catch {
+      // KV unavailable or timeout — allow generation rather than blocking
     }
   }
   // Unauthenticated users get 3 free generations tracked client-side (localStorage).
@@ -368,8 +378,12 @@ export async function POST(req: NextRequest) {
   // ── Claude path (preferred) ─────────────────────────────────────────────
   if (useClaude) {
     try {
-      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const client = new Anthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY,
+        timeout: 55_000, // 55s — stay under Vercel's 60s maxDuration
+      });
       const isHaiku = claudeModel.includes("haiku");
+      console.log("[generate] Starting Claude stream", { model: claudeModel, isHaiku });
       const stream = await client.messages.create({
         model: claudeModel as "claude-sonnet-4-6",
         max_tokens: isHaiku ? 8000 : 16000,
