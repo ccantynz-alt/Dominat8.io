@@ -2,7 +2,21 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
+import { useUser as _useUser, SignInButton, UserButton } from "@clerk/nextjs";
+
+// Safe wrapper: returns fallback values when ClerkProvider is absent so the
+// page still renders without Clerk configured (no NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY).
+// useUser() throws synchronously if there's no provider in the tree.  The
+// underlying useContext() call succeeds (preserving hook order), and the throw
+// happens afterwards, so catching here is safe.
+function useSafeUser() {
+  try {
+    const r = _useUser();
+    return { isSignedIn: !!r.isSignedIn, clerkAvailable: true };
+  } catch {
+    return { isSignedIn: false, clerkAvailable: false };
+  }
+}
 import { HomeSections } from "./HomeSections";
 
 // ─── Robust HTML extraction ───────────────────────────────────────────────────
@@ -676,7 +690,7 @@ export function Builder() {
   const [showOptions, setShowOptions] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
 
-  const { isSignedIn } = useUser();
+  const { isSignedIn, clerkAvailable } = useSafeUser();
 
   // Generation usage / quota
   const [usageInfo, setUsageInfo] = useState<{
@@ -1062,12 +1076,14 @@ export function Builder() {
             <a href="/pricing" className="d8h-nav-link">Pricing</a>
           </nav>
           <div className="d8h-header-actions">
-            {isSignedIn ? (
+            {clerkAvailable && isSignedIn ? (
               <UserButton afterSignOutUrl="/" />
-            ) : (
+            ) : clerkAvailable ? (
               <SignInButton mode="redirect">
                 <button type="button" className="d8h-nav-signin">Get Started</button>
               </SignInButton>
+            ) : (
+              <a href="/sign-in" className="d8h-nav-signin" style={{ textDecoration: "none" }}>Get Started</a>
             )}
           </div>
         </header>
@@ -1426,12 +1442,14 @@ export function Builder() {
           <a href="/pricing" className="d8b-topnav-link">Pricing</a>
         </div>
         <div className="d8b-topnav-right">
-          {isSignedIn ? (
+          {clerkAvailable && isSignedIn ? (
             <UserButton afterSignOutUrl="/" />
-          ) : (
+          ) : clerkAvailable ? (
             <SignInButton mode="redirect">
               <button type="button" className="d8b-topnav-signin">Sign in</button>
             </SignInButton>
+          ) : (
+            <a href="/sign-in" className="d8b-topnav-signin" style={{ textDecoration: "none" }}>Sign in</a>
           )}
         </div>
       </nav>
