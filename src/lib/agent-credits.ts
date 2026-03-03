@@ -27,7 +27,12 @@ export type AgentType =
   | "proof-engine"
   | "seo-gsc"
   | "domain-ssl"
-  | "monetization";
+  | "monetization"
+  | "video-script"
+  | "video-pro"
+  | "seo-deep"
+  | "ai-copywriter"
+  | "social-kit";
 
 // ── Credit cost per agent run ──────────────────────────────────────────────────
 export const AGENT_COSTS: Record<AgentType, number> = {
@@ -36,6 +41,7 @@ export const AGENT_COSTS: Record<AgentType, number> = {
   "link-scanner":          1,
   "seo-gsc":               1,
   "domain-ssl":            1,
+  "video-script":          2,
   "accessibility-checker": 2,
   "performance-optimizer": 2,
   "conversion-architect":  2,
@@ -44,7 +50,11 @@ export const AGENT_COSTS: Record<AgentType, number> = {
   "motion-designer":       3,
   "copy-chief":            3,
   "proof-engine":          3,
+  "ai-copywriter":         3,
+  "social-kit":            3,
   "design-fixer":          5,
+  "seo-deep":              5,
+  "video-pro":            10,
 };
 
 // ── Which agents are unlocked per plan ────────────────────────────────────────
@@ -62,6 +72,9 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
     "performance-optimizer",
     "conversion-architect",
     "seo-gsc",
+    "video-script",
+    "ai-copywriter",
+    "social-kit",
   ],
   pro: [
     "seo-sweep",
@@ -78,6 +91,11 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
     "proof-engine",
     "domain-ssl",
     "monetization",
+    "video-script",
+    "video-pro",
+    "seo-deep",
+    "ai-copywriter",
+    "social-kit",
   ],
   agency: [
     "seo-sweep",
@@ -94,6 +112,11 @@ export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
     "proof-engine",
     "domain-ssl",
     "monetization",
+    "video-script",
+    "video-pro",
+    "seo-deep",
+    "ai-copywriter",
+    "social-kit",
   ],
 };
 
@@ -107,9 +130,10 @@ export const PLAN_MONTHLY_CREDITS: Record<string, number> = {
 
 // ── Credit packs available for purchase ───────────────────────────────────────
 export const CREDIT_PACKS = [
-  { id: "pack_50",  credits: 50,  priceInCents: 499,  label: "50 credits",  tag: "starter" },
-  { id: "pack_200", credits: 200, priceInCents: 1499, label: "200 credits", tag: "popular" },
-  { id: "pack_500", credits: 500, priceInCents: 2999, label: "500 credits", tag: "best value" },
+  { id: "pack_50",   credits: 50,   priceInCents: 499,  label: "50 credits",    tag: "starter" },
+  { id: "pack_200",  credits: 200,  priceInCents: 1499, label: "200 credits",   tag: "popular" },
+  { id: "pack_500",  credits: 500,  priceInCents: 2999, label: "500 credits",   tag: "best value" },
+  { id: "pack_1500", credits: 1500, priceInCents: 7499, label: "1,500 credits", tag: "agency pack" },
 ] as const;
 
 // ── Admin bypass ──────────────────────────────────────────────────────────────
@@ -177,7 +201,7 @@ export async function checkAndConsumeCredits(
   // Plan access gate
   const accessible = PLAN_AGENT_ACCESS[plan] ?? PLAN_AGENT_ACCESS.free;
   if (!accessible.includes(agentId)) {
-    const proAgents: AgentType[] = ["design-fixer", "creative-director", "motion-designer", "copy-chief", "proof-engine", "domain-ssl", "monetization"];
+    const proAgents: AgentType[] = ["design-fixer", "creative-director", "motion-designer", "copy-chief", "proof-engine", "domain-ssl", "monetization", "video-pro", "seo-deep"];
     const neededPlan = proAgents.includes(agentId) ? "Pro" : "Starter";
     return {
       ok: false,

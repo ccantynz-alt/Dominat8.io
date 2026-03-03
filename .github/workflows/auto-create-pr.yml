@@ -1,0 +1,73 @@
+name: Auto Create PR (Claude branches)
+
+# Creates a PR automatically when a claude/* branch is pushed.
+# The auto-approve-merge workflow handles approval + merge after CI passes.
+
+on:
+  push:
+    branches:
+      - "claude/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for existing PR
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          EXISTING=$(gh pr list --repo "$GITHUB_REPOSITORY" \
+            --head "$BRANCH" --state open --json number -q '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR #$EXISTING already exists for $BRANCH — skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No existing PR for $BRANCH — will create one."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build PR body from commits
+        if: steps.check.outputs.skip == 'false'
+        id: body
+        run: |
+          BRANCH="${{ steps.check.outputs.branch }}"
+          COMMITS=$(git log origin/main..HEAD --pretty=format:"- %s" | head -20)
+          BODY="## Auto-created PR for \`${BRANCH}\`
+
+          ### Commits
+          ${COMMITS}
+
+          ---
+          *Auto-created by auto-create-pr workflow.*"
+          # Write to file to avoid quoting issues
+          echo "$BODY" > /tmp/pr-body.md
+
+      - name: Create PR
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ steps.check.outputs.branch }}"
+          # Use the first commit message as the PR title
+          TITLE=$(git log origin/main..HEAD --pretty=format:"%s" | tail -1)
+          if [ -z "$TITLE" ]; then
+            TITLE="$BRANCH"
+          fi
+          gh pr create --repo "$GITHUB_REPOSITORY" \
+            --head "$BRANCH" \
+            --base main \
+            --title "$TITLE" \
+            --body-file /tmp/pr-body.md
+

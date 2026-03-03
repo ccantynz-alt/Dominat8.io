@@ -248,6 +248,32 @@ const STYLE_CARDS = [
   { label: "Futuristic", preview: ["◈ Glassmorphism.", "AI-age feel.", "Animated gradients."],       bg: "linear-gradient(135deg, #020818 0%, #061028 100%)", accent: "#00FFB2", border: "rgba(0,255,178,0.28)" },
 ];
 
+// ─── Scroll reveal wrapper ────────────────────────────────────────────────────
+
+function RevealSection({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.12 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      className={`d8hs-reveal ${visible ? "d8hs-reveal--visible" : ""} ${className ?? ""}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export function HomeSections() {
@@ -256,7 +282,7 @@ export function HomeSections() {
       <HomeSectionsStyles />
 
       {/* ── Stats Strip ── */}
-      <section className="d8hs-stats-section">
+      <RevealSection className="d8hs-stats-section">
         <div className="d8hs-stats-inner">
           <StatCard value={50000} suffix="+" label="Sites generated" color="#00D4FF" />
           <div className="d8hs-stats-div" />
@@ -266,10 +292,10 @@ export function HomeSections() {
           <div className="d8hs-stats-div" />
           <StatCard value={4.9} suffix="★" label="Avg rating" color="#0088FF" decimals={1} />
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── Live Activity ── */}
-      <section className="d8hs-section d8hs-section--live">
+      <RevealSection className="d8hs-section d8hs-section--live" delay={100}>
         <div className="d8hs-section-inner">
           <div className="d8hs-live-header">
             <span className="d8hs-live-pulse" />
@@ -277,10 +303,10 @@ export function HomeSections() {
           </div>
           <LiveFeed />
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── How it works ── */}
-      <section className="d8hs-section">
+      <RevealSection className="d8hs-section" delay={100}>
         <div className="d8hs-section-inner">
           <div className="d8hs-section-heading">
             <div className="d8hs-eyebrow-label">How it works</div>
@@ -300,10 +326,10 @@ export function HomeSections() {
             ))}
           </div>
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── Style Showcase ── */}
-      <section className="d8hs-section">
+      <RevealSection className="d8hs-section" delay={100}>
         <div className="d8hs-section-inner">
           <div className="d8hs-section-heading">
             <div className="d8hs-eyebrow-label">6 design languages</div>
@@ -330,10 +356,10 @@ export function HomeSections() {
             ))}
           </div>
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── Features Grid ── */}
-      <section className="d8hs-section">
+      <RevealSection className="d8hs-section" delay={100}>
         <div className="d8hs-section-inner">
           <div className="d8hs-section-heading">
             <div className="d8hs-eyebrow-label">What you get</div>
@@ -352,10 +378,10 @@ export function HomeSections() {
             ))}
           </div>
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── Testimonials ── */}
-      <section className="d8hs-section">
+      <RevealSection className="d8hs-section" delay={100}>
         <div className="d8hs-section-inner">
           <div className="d8hs-section-heading">
             <div className="d8hs-eyebrow-label">What builders say</div>
@@ -381,10 +407,10 @@ export function HomeSections() {
             ))}
           </div>
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── CTA Strip ── */}
-      <section className="d8hs-cta-section">
+      <RevealSection className="d8hs-cta-section" delay={100}>
         <div className="d8hs-cta-inner">
           <div className="d8hs-cta-glow" />
           <div className="d8hs-cta-eyebrow">Ready?</div>
@@ -397,7 +423,7 @@ export function HomeSections() {
             <span className="d8hs-cta-tag">✓ 75+ industry templates</span>
           </div>
         </div>
-      </section>
+      </RevealSection>
     </>
   );
 }
@@ -876,7 +902,20 @@ function HomeSectionsStyles() {
         color: #00D4FF;
       }
 
+      /* ── Scroll reveal ── */
+      .d8hs-reveal {
+        opacity: 0;
+        transform: translateY(32px);
+        transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: opacity, transform;
+      }
+      .d8hs-reveal--visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
       @media (prefers-reduced-motion: reduce) {
+        .d8hs-reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
         .d8hs-style-card, .d8hs-feature-card, .d8hs-step, .d8hs-testimonial { transition: none !important; }
         .d8hs-style-card:hover, .d8hs-feature-card:hover, .d8hs-step:hover, .d8hs-testimonial:hover { transform: none !important; }
       }

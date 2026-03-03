@@ -11,37 +11,78 @@ const PLANS = [
   {
     name: "Free", price: "$0", period: "forever", desc: "Try it out, no card needed",
     highlight: false, badge: null, plan: "free",
-    features: ["3 AI generations / month", "Vibe & style presets", "HTML download", "Mobile-responsive output", "Share link (7-day)"],
+    features: ["3 AI generations / month", "5 agent credits / month", "Vibe & style presets", "HTML download", "Mobile-responsive output", "Share link (7-day)"],
     cta: "Get started free",
   },
   {
     name: "Starter", price: "$9", period: "per month", desc: "For individuals & side projects",
     highlight: false, badge: null, plan: "starter",
-    features: ["20 AI generations / month", "Refine & iterate (unlimited)", "Fix agent", "SEO scan + score", "Embed / iframe export", "Share links (90-day)", "Site history"],
+    features: ["20 AI generations / month", "25 agent credits / month", "Refine & iterate (unlimited)", "Fix agent", "SEO scan + score", "Video script generator", "AI Copywriter", "Social media kit", "Embed / iframe export", "Share links (90-day)", "Site history"],
     cta: "Start Starter — $9/mo",
   },
   {
     name: "Pro", price: "$29", period: "per month", desc: "For freelancers & growing businesses",
     highlight: true, badge: "MOST POPULAR", plan: "pro",
-    features: ["100 AI generations / month", "Everything in Starter", "A/B variants (2 versions)", "Seasonal variants (Christmas, EOFY…)", "Scheduled auto-rebuild (monthly)", "Password-protected shares", "Deploy to Dominat8 CDN", "Custom domain + auto-SSL", "Priority queue", "Email support"],
+    features: ["100 AI generations / month", "150 agent credits / month", "Everything in Starter", "Video production package", "Deep SEO audit", "A/B variants (2 versions)", "Seasonal variants (Christmas, EOFY\u2026)", "Scheduled auto-rebuild (monthly)", "Password-protected shares", "Deploy to Dominat8 CDN", "Custom domain + auto-SSL", "Priority queue", "Email support"],
     cta: "Start Pro — $29/mo",
   },
   {
     name: "Agency", price: "$99", period: "per month", desc: "For teams & high-volume builders",
     highlight: false, badge: null, plan: "agency",
-    features: ["500 AI generations / month", "Everything in Pro", "Scheduled rebuild (weekly)", "White-label output", "API access", "Bulk generation", "5 team seats", "Multi-site dashboard", "SLA + dedicated support"],
+    features: ["500 AI generations / month", "600 agent credits / month", "Everything in Pro", "Scheduled rebuild (weekly)", "White-label output", "API access", "Bulk generation", "5 team seats", "Multi-site dashboard", "SLA + dedicated support"],
     cta: "Start Agency — $99/mo",
   },
 ];
 
+const AI_ADDONS = [
+  {
+    name: "Video Script", credits: 2, plan: "Starter+", icon: "\u{1F4DD}",
+    desc: "Hook, voiceover, captions, hashtags — copy-paste ready for TikTok & Reels",
+    color: "#FF0050",
+  },
+  {
+    name: "AI Copywriter", credits: 3, plan: "Starter+", icon: "\u270D\uFE0F",
+    desc: "Landing page copy, email sequences, ad variations, product descriptions",
+    color: "#F59E0B",
+  },
+  {
+    name: "Social Media Kit", credits: 3, plan: "Starter+", icon: "\u{1F4F1}",
+    desc: "7-day content calendar, platform bios, hashtag strategy, engagement tips",
+    color: "#3B82F6",
+  },
+  {
+    name: "Deep SEO Audit", credits: 5, plan: "Pro+", icon: "\u{1F50D}",
+    desc: "Technical SEO, keyword strategy, content calendar, backlink plan, schema markup",
+    color: "#10B981", badge: "PREMIUM",
+  },
+  {
+    name: "Video Production", credits: 10, plan: "Pro+", icon: "\u{1F3AC}",
+    desc: "Full storyboard, shot list, B-roll, music cues, timed voiceover, motion graphics",
+    color: "#A855F7", badge: "PREMIUM",
+  },
+];
+
+const CREDIT_PACKS = [
+  { credits: 50, price: "$4.99", perCredit: "$0.10", popular: false },
+  { credits: 200, price: "$14.99", perCredit: "$0.075", popular: true },
+  { credits: 500, price: "$29.99", perCredit: "$0.06", popular: false },
+  { credits: 1500, price: "$74.99", perCredit: "$0.05", popular: false },
+];
+
 const COMPARISON = [
   { feature: "AI generations / month",     free: "3",     starter: "20",    pro: "100",  agency: "500" },
+  { feature: "Agent credits / month",      free: "5",     starter: "25",    pro: "150",  agency: "600" },
   { feature: "Overage per generation",      free: "—",     starter: "$0.49", pro: "$0.49", agency: "$0.49" },
   { feature: "Vibe / style presets",        free: "✓",     starter: "✓",     pro: "✓",    agency: "✓" },
   { feature: "HTML download",              free: "✓",     starter: "✓",     pro: "✓",    agency: "✓" },
   { feature: "Refine & iterate",           free: "✓",     starter: "✓",     pro: "✓",    agency: "✓" },
   { feature: "Fix agent",                  free: "—",     starter: "✓",     pro: "✓",    agency: "✓" },
   { feature: "SEO scan",                   free: "—",     starter: "✓",     pro: "✓",    agency: "✓" },
+  { feature: "Video script generator",     free: "—",     starter: "✓",     pro: "✓",    agency: "✓" },
+  { feature: "AI Copywriter",             free: "—",     starter: "✓",     pro: "✓",    agency: "✓" },
+  { feature: "Social media kit",          free: "—",     starter: "✓",     pro: "✓",    agency: "✓" },
+  { feature: "Video production package",  free: "—",     starter: "—",     pro: "✓",    agency: "✓" },
+  { feature: "Deep SEO audit",            free: "—",     starter: "—",     pro: "✓",    agency: "✓" },
   { feature: "Embed / iframe export",      free: "—",     starter: "✓",     pro: "✓",    agency: "✓" },
   { feature: "Share links",               free: "7-day", starter: "90-day", pro: "✓",    agency: "✓" },
   { feature: "Password-protected shares",  free: "—",     starter: "—",     pro: "✓",    agency: "✓" },
@@ -150,6 +191,39 @@ export default function PricingPage() {
 .pr-faq strong{color:rgba(200,220,255,.70);}
 .pr-faq a{color:#00D4FF;text-decoration:none;text-shadow:0 0 8px rgba(0,212,255,.20);}
 .pr-faq a:hover{color:rgba(0,212,255,.95);}
+
+/* AI Add-ons section */
+.pr-addons-wrap{max-width:1080px;margin:72px auto 0;padding:0 24px;position:relative;z-index:1;}
+.pr-addons-h2{text-align:center;font-size:32px;font-weight:800;letter-spacing:-.04em;margin:0 0 8px;background:linear-gradient(135deg,#E8F0FF 30%,#A855F7 70%,#F59E0B 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.pr-addons-sub{text-align:center;font-size:15px;color:rgba(200,220,255,.45);margin:0 0 32px;font-family:'Inter',system-ui,sans-serif;}
+.pr-addons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.pr-addon{padding:22px 24px;border-radius:20px;border:1px solid rgba(100,180,255,.08);background:rgba(100,180,255,.025);display:flex;gap:16px;align-items:flex-start;transition:all 250ms;position:relative;overflow:hidden;}
+.pr-addon:hover{border-color:rgba(100,180,255,.18);transform:translateY(-3px);box-shadow:0 16px 48px rgba(0,0,0,.30);}
+.pr-addon-icon{font-size:28px;flex-shrink:0;width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:rgba(100,180,255,.04);border:1px solid rgba(100,180,255,.08);}
+.pr-addon-info{flex:1;min-width:0;}
+.pr-addon-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.pr-addon-name{font-size:15px;font-weight:800;color:#E8F0FF;letter-spacing:-.01em;}
+.pr-addon-badge{font-size:8px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.06em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;}
+.pr-addon-desc{font-size:12px;color:rgba(200,220,255,.50);line-height:1.5;margin-bottom:8px;font-family:'Inter',system-ui,sans-serif;}
+.pr-addon-meta{display:flex;align-items:center;gap:8px;}
+.pr-addon-cost{font-size:11px;font-weight:700;padding:3px 10px;border-radius:7px;font-family:'JetBrains Mono',monospace;}
+.pr-addon-plan{font-size:10px;color:rgba(200,220,255,.35);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+
+/* Credit packs section */
+.pr-packs-wrap{max-width:900px;margin:56px auto 0;padding:0 24px;position:relative;z-index:1;}
+.pr-packs-h2{text-align:center;font-size:28px;font-weight:800;letter-spacing:-.03em;margin:0 0 8px;background:linear-gradient(135deg,#E8F0FF 30%,#00FFB2 80%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.pr-packs-sub{text-align:center;font-size:14px;color:rgba(200,220,255,.40);margin:0 0 24px;font-family:'Inter',system-ui,sans-serif;}
+.pr-packs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media(max-width:768px){.pr-packs-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:440px){.pr-packs-grid{grid-template-columns:1fr;}}
+.pr-pack{padding:20px 18px;border-radius:18px;border:1px solid rgba(100,180,255,.08);background:rgba(100,180,255,.025);text-align:center;transition:all 250ms;position:relative;}
+.pr-pack:hover{border-color:rgba(0,255,178,.20);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.30);}
+.pr-pack--popular{border-color:rgba(0,255,178,.25);background:rgba(0,255,178,.04);}
+.pr-pack--popular::before{content:'BEST VALUE';position:absolute;top:8px;right:8px;font-size:8px;font-weight:800;padding:2px 8px;border-radius:5px;background:rgba(0,255,178,.15);color:#00FFB2;border:1px solid rgba(0,255,178,.30);letter-spacing:.06em;font-family:'JetBrains Mono',monospace;}
+.pr-pack-credits{font-size:32px;font-weight:900;letter-spacing:-.04em;color:#E8F0FF;margin-bottom:2px;}
+.pr-pack-label{font-size:10px;color:rgba(200,220,255,.35);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:10px;}
+.pr-pack-price{font-size:20px;font-weight:800;color:#00FFB2;margin-bottom:2px;}
+.pr-pack-per{font-size:11px;color:rgba(200,220,255,.35);font-family:'JetBrains Mono',monospace;}
       `}</style>
 
       <main className="pr-page">
@@ -218,6 +292,54 @@ export default function PricingPage() {
                 Any paid plan can generate beyond its monthly quota at <strong>$0.49 per extra generation</strong> — billed at end of month. No surprises, no upgrade pressure.
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* AI Add-ons */}
+        <div className="pr-addons-wrap pr-a pr-d5">
+          <h2 className="pr-addons-h2">AI-Powered Add-ons</h2>
+          <p className="pr-addons-sub">Supercharge your site with premium AI agents. Pay per use with credits.</p>
+          <div className="pr-addons-grid">
+            {AI_ADDONS.map(a => (
+              <div key={a.name} className="pr-addon">
+                <div className="pr-addon-icon" style={{ borderColor: `${a.color}22`, background: `${a.color}0A` }}>
+                  {a.icon}
+                </div>
+                <div className="pr-addon-info">
+                  <div className="pr-addon-head">
+                    <span className="pr-addon-name">{a.name}</span>
+                    {a.badge && (
+                      <span className="pr-addon-badge" style={{ background: `${a.color}18`, color: a.color, border: `1px solid ${a.color}30` }}>
+                        {a.badge}
+                      </span>
+                    )}
+                  </div>
+                  <div className="pr-addon-desc">{a.desc}</div>
+                  <div className="pr-addon-meta">
+                    <span className="pr-addon-cost" style={{ background: `${a.color}12`, color: a.color, border: `1px solid ${a.color}25` }}>
+                      {a.credits} credits
+                    </span>
+                    <span className="pr-addon-plan">{a.plan}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Credit packs */}
+        <div className="pr-packs-wrap pr-a pr-d5">
+          <h2 className="pr-packs-h2">Credit Packs</h2>
+          <p className="pr-packs-sub">Buy credits in bulk. Use them on any AI agent, anytime.</p>
+          <div className="pr-packs-grid">
+            {CREDIT_PACKS.map(pack => (
+              <div key={pack.credits} className={`pr-pack${pack.popular ? " pr-pack--popular" : ""}`}>
+                <div className="pr-pack-credits">{pack.credits.toLocaleString()}</div>
+                <div className="pr-pack-label">credits</div>
+                <div className="pr-pack-price">{pack.price}</div>
+                <div className="pr-pack-per">{pack.perCredit} / credit</div>
+              </div>
+            ))}
           </div>
         </div>
 

@@ -1,6 +1,14 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
+import { SafeClerkProvider } from "@/components/shared/SafeClerkProvider";
+
+const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+// Only enable Clerk when the publishable key exists AND has a valid format.
+// Clerk throws "Publishable key not valid" if the format is wrong, which
+// crashes the entire layout with a 500. Guard against that here.
+// SafeClerkProvider also wraps in an error boundary as a second safety net.
+const clerkReady = /^pk_(test|live)_/.test(clerkKey);
+const isStaging = process.env.NEXT_PUBLIC_D8_ENV === "staging" || process.env.VERCEL_ENV === "preview";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dominat8.io"),
@@ -49,19 +57,34 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ClerkProvider>
-      <html lang="en">
-        <head>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
-            rel="stylesheet"
-          />
-        </head>
-        <body style={{ margin: 0, padding: 0 }}>{children}</body>
-      </html>
-    </ClerkProvider>
+  const shell = (
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body style={{ margin: 0, padding: 0 }}>
+        {isStaging && (
+          <div style={{
+            position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 99999,
+            background: "linear-gradient(90deg, rgba(255,184,0,0.95), rgba(255,140,0,0.95))",
+            color: "#000", textAlign: "center", fontSize: 11, fontWeight: 700,
+            padding: "4px 0", letterSpacing: "0.06em", fontFamily: "system-ui, sans-serif",
+          }}>
+            STAGING ENVIRONMENT — Not production
+          </div>
+        )}
+        {children}
+      </body>
+    </html>
   );
+
+  // ClerkProvider throws at render time when NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  // is missing, which crashes the entire root layout with a 500.
+  // Wrap conditionally so the site still serves without auth.
+  return clerkReady ? <SafeClerkProvider>{shell}</SafeClerkProvider> : shell;
 }
