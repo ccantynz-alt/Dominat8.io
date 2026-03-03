@@ -32,6 +32,7 @@ const DIRECT_PREFIXES = [
   "/s/",
   "/tv/",
   "/admin",
+  "/build/",
   "/io",
 ];
 
