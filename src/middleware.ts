@@ -21,6 +21,9 @@ const DIRECT_PATHS = new Set([
   "/build",
   "/onboarding",
   "/video",
+  "/copywriter",
+  "/social-kit",
+  "/seo-audit",
 ]);
 
 // Path prefixes served directly
