@@ -2,12 +2,14 @@ import { OpenAI } from "openai";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { isAdminUserId } from "@/lib/admin";
+import { isAdminUser } from "@/lib/agent-credits";
+import { eq, and, sql } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// ── Plan limits ────────────────────────────────────────────────────────────────
+// ── Plan generation limits (monthly) ─────────────────────────────────────────
 
 const PLAN_LIMITS: Record<string, number> = {
   free: 3,
@@ -16,69 +18,42 @@ const PLAN_LIMITS: Record<string, number> = {
   agency: 500,
 };
 
-// Raw KV REST calls (edge-compatible — no Node.js require)
-async function kvGet(key: string): Promise<string | null> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return null;
-  try {
-    const res = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json() as { result?: string | null };
-    return data.result ?? null;
-  } catch { return null; }
-}
-
-async function kvIncr(key: string): Promise<number> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return 0;
-  try {
-    const res = await fetch(`${url}/incr/${encodeURIComponent(key)}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json() as { result?: number };
-    return data.result ?? 0;
-  } catch { return 0; }
-}
-
-async function kvExpire(key: string, seconds: number): Promise<void> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return;
-  try {
-    await fetch(`${url}/expire/${encodeURIComponent(key)}/${seconds}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  } catch { /* silent */ }
-}
-
+// Quota check backed by Neon Postgres (consistent with agent credits)
 async function checkUsage(userId: string): Promise<{
   allowed: boolean;
   plan: string;
   usage: number;
   limit: number;
 }> {
-  const planRaw = await kvGet(`user:${userId}:plan`);
-  const plan = ["starter", "pro", "agency"].includes(planRaw ?? "") ? planRaw! : "free";
+  // Get the user's actual plan from Postgres
+  const rows = await db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1);
+  const user = rows[0];
+  const plan = user && ["starter", "pro", "agency"].includes(user.plan) ? user.plan : "free";
   const limit = PLAN_LIMITS[plan] ?? 3;
 
-  const month = new Date().toISOString().slice(0, 7); // "2026-02"
-  const usageKey = `usage:${userId}:${month}`;
-  const usageRaw = await kvGet(usageKey);
-  const usage = parseInt(usageRaw ?? "0", 10) || 0;
+  const month = new Date().toISOString().slice(0, 7);
+  const usageRows = await db
+    .select()
+    .from(schema.creditUsage)
+    .where(and(eq(schema.creditUsage.userId, userId), eq(schema.creditUsage.month, month)))
+    .limit(1);
+
+  const usage = usageRows[0]?.used ?? 0;
 
   if (usage >= limit) {
     return { allowed: false, plan, usage, limit };
   }
 
-  const newUsage = await kvIncr(usageKey);
-  await kvExpire(usageKey, 60 * 60 * 24 * 35); // 35-day TTL
+  // Increment usage
+  await db
+    .insert(schema.creditUsage)
+    .values({ userId, month, used: 1 })
+    .onConflictDoUpdate({
+      target: [schema.creditUsage.userId, schema.creditUsage.month],
+      set: { used: sql`${schema.creditUsage.used} + 1` },
+    });
 
-  return { allowed: true, plan, usage: newUsage, limit };
+  return { allowed: true, plan, usage: usage + 1, limit };
 }
 
 const SYSTEM_PROMPT = `You are the world's most elite creative director and principal front-end engineer. Your work has won Webby Awards, FWA Site of the Day, CSS Design Awards, Awwwards Site of the Year. You build the kind of websites that get featured on design blogs, that CMOs show in boardrooms, that agencies charge $50,000–$150,000 for. Every site you create is your personal portfolio piece.
@@ -309,12 +284,12 @@ export async function POST(req: NextRequest) {
     // Auth unavailable (missing keys, timeout, edge runtime issue) — continue as anonymous
   }
 
-  if (userId && !isAdminUserId(userId)) {
-    // Authenticated non-admin: enforce monthly quota (with timeout — be lenient if KV is slow)
+  if (userId && !isAdminUser(userId)) {
+    // Authenticated non-admin: enforce monthly quota (with timeout — be lenient if DB is slow)
     try {
       const { allowed, plan, usage, limit } = await Promise.race([
         checkUsage(userId),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("KV timeout")), 5000)),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("DB timeout")), 5000)),
       ]);
       if (!allowed) {
         return new Response(
@@ -329,7 +304,7 @@ export async function POST(req: NextRequest) {
         );
       }
     } catch {
-      // KV unavailable or timeout — allow generation rather than blocking
+      // DB unavailable or timeout — allow generation rather than blocking
     }
   }
   // Unauthenticated users get 3 free generations tracked client-side (localStorage).

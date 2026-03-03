@@ -1,5 +1,6 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import type { NextFetchEvent } from "next/server";
 
 // Subdomains that serve the main app (not user-deployed sites)
 const RESERVED_SUBDOMAINS = new Set([
@@ -40,7 +41,7 @@ function shouldPassThrough(pathname: string): boolean {
   return DIRECT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-export default clerkMiddleware((_auth, request: NextRequest) => {
+function handleRouting(request: NextRequest): NextResponse {
   const { pathname, hostname } = request.nextUrl;
 
   // ── Subdomain routing: {slug}.dominat8.io → /api/subdomain/{slug} ──────────
@@ -67,7 +68,23 @@ export default clerkMiddleware((_auth, request: NextRequest) => {
   const url = request.nextUrl.clone();
   url.pathname = "/io";
   return NextResponse.rewrite(url);
+}
+
+// Clerk-wrapped middleware with routing logic
+const clerkHandler = clerkMiddleware((_auth, request: NextRequest) => {
+  return handleRouting(request);
 });
+
+// Resilient wrapper: if Clerk throws at runtime (misconfigured keys, etc.),
+// fall back to plain routing so the site doesn't go completely down.
+export default async function middleware(request: NextRequest, event: NextFetchEvent) {
+  try {
+    return await clerkHandler(request, event);
+  } catch {
+    // Clerk threw — serve the page without auth rather than crashing
+    return handleRouting(request);
+  }
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],

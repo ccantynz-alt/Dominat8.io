@@ -687,7 +687,7 @@ export function Builder() {
         try {
           const errData = await res.json() as { error?: string; code?: string };
           if (errData.error) msg = errData.error;
-          if (res.status === 429) code = "quota";
+          if (res.status === 429 || errData.code === "QUOTA_EXCEEDED") code = "quota";
           else if (res.status === 401) code = "auth";
         } catch { /* no JSON body */ }
         setErrorCode(code);
