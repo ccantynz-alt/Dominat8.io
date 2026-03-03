@@ -1,5 +1,5 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import type { NextFetchEvent } from "next/server";
 
 // Subdomains that serve the main app (not user-deployed sites)
 const RESERVED_SUBDOMAINS = new Set([
@@ -40,7 +40,7 @@ function shouldPassThrough(pathname: string): boolean {
   return DIRECT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-export default clerkMiddleware((_auth, request: NextRequest) => {
+function handleRouting(request: NextRequest): NextResponse {
   const { pathname, hostname } = request.nextUrl;
 
   // ── Subdomain routing: {slug}.dominat8.io → /api/subdomain/{slug} ──────────
@@ -67,7 +67,42 @@ export default clerkMiddleware((_auth, request: NextRequest) => {
   const url = request.nextUrl.clone();
   url.pathname = "/io";
   return NextResponse.rewrite(url);
-});
+}
+
+// Lazy Clerk handler — only initialised on first request so a bad key
+// can't crash the module at import time (which causes MIDDLEWARE_INVOCATION_FAILED).
+type MiddlewareFn = (req: NextRequest, evt: NextFetchEvent) => Promise<NextResponse>;
+let clerkHandler: MiddlewareFn | null = null;
+let clerkFailed = false;
+
+async function getClerkHandler(): Promise<MiddlewareFn | null> {
+  if (clerkFailed) return null;
+  if (clerkHandler) return clerkHandler;
+  try {
+    const { clerkMiddleware } = await import("@clerk/nextjs/server");
+    const handler = clerkMiddleware((_auth, request: NextRequest) => {
+      return handleRouting(request);
+    });
+    clerkHandler = handler as unknown as MiddlewareFn;
+    return clerkHandler;
+  } catch {
+    clerkFailed = true;
+    return null;
+  }
+}
+
+export default async function middleware(request: NextRequest, event: NextFetchEvent) {
+  try {
+    const handler = await getClerkHandler();
+    if (handler) {
+      return await handler(request, event);
+    }
+  } catch {
+    // Clerk threw at runtime — fall through to plain routing
+  }
+  // Clerk unavailable or threw — serve the page without auth
+  return handleRouting(request);
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],

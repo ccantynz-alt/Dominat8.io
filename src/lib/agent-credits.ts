@@ -1,5 +1,5 @@
 /**
- * Agent credit system
+ * Agent credit system — backed by Neon Postgres
  *
  * Two-pool model:
  *   1. Monthly allowance  — included with plan, resets each calendar month
@@ -11,7 +11,8 @@
  * get unlimited access with no deduction.
  */
 
-import { kv } from "@vercel/kv";
+import { eq, and, sql } from "drizzle-orm";
+import { db, schema } from "./db";
 
 export type AgentType =
   | "seo-sweep"
@@ -48,7 +49,6 @@ export const AGENT_COSTS: Record<AgentType, number> = {
 };
 
 // ── Which agents are unlocked per plan ────────────────────────────────────────
-// Agents NOT in a plan's list are locked behind an upgrade wall.
 export const PLAN_AGENT_ACCESS: Record<string, AgentType[]> = {
   free: [
     "seo-sweep",
@@ -121,14 +121,6 @@ export function isAdminUser(userId: string): boolean {
   return ids.includes(userId);
 }
 
-// ── KV key helpers ────────────────────────────────────────────────────────────
-export function agentUsageKey(userId: string, month: string) {
-  return `agent-usage:${userId}:${month}`;
-}
-export function purchasedKey(userId: string) {
-  return `agent-purchased:${userId}`;
-}
-
 // ── Balance ────────────────────────────────────────────────────────────────────
 export interface AgentBalance {
   plan: string;
@@ -140,17 +132,22 @@ export interface AgentBalance {
 }
 
 export async function getAgentBalance(userId: string): Promise<AgentBalance> {
-  const planRaw = await kv.get<string>(`user:${userId}:plan`);
-  const plan = ["starter", "pro", "agency"].includes(planRaw ?? "") ? planRaw! : "free";
+  const rows = await db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1);
+  const user = rows[0];
+
+  const plan = user && ["starter", "pro", "agency"].includes(user.plan) ? user.plan : "free";
   const monthlyAllowance = PLAN_MONTHLY_CREDITS[plan] ?? 5;
+  const purchased = Math.max(0, user?.purchasedCredits ?? 0);
 
-  const month = new Date().toISOString().slice(0, 7); // "2026-02"
-  const usedRaw = await kv.get<string | number>(agentUsageKey(userId, month));
-  const monthlyUsed = parseInt(String(usedRaw ?? "0"), 10) || 0;
+  const month = new Date().toISOString().slice(0, 7);
+  const usageRows = await db
+    .select()
+    .from(schema.creditUsage)
+    .where(and(eq(schema.creditUsage.userId, userId), eq(schema.creditUsage.month, month)))
+    .limit(1);
+
+  const monthlyUsed = usageRows[0]?.used ?? 0;
   const monthlyRemaining = Math.max(0, monthlyAllowance - monthlyUsed);
-
-  const purchasedRaw = await kv.get<number>(purchasedKey(userId));
-  const purchased = Math.max(0, Number(purchasedRaw ?? 0) || 0);
 
   return {
     plan,
@@ -199,17 +196,24 @@ export async function checkAndConsumeCredits(
 
   // Deduct monthly first, then purchased
   const month = new Date().toISOString().slice(0, 7);
-  const usageKey = agentUsageKey(userId, month);
   const fromMonthly = Math.min(cost, balance.monthlyRemaining);
   const fromPurchased = cost - fromMonthly;
 
   if (fromMonthly > 0) {
-    await kv.incrby(usageKey, fromMonthly);
-    await kv.expire(usageKey, 60 * 60 * 24 * 35);
+    await db
+      .insert(schema.creditUsage)
+      .values({ userId, month, used: fromMonthly })
+      .onConflictDoUpdate({
+        target: [schema.creditUsage.userId, schema.creditUsage.month],
+        set: { used: sql`${schema.creditUsage.used} + ${fromMonthly}` },
+      });
   }
+
   if (fromPurchased > 0) {
-    const remaining = await kv.decrby(purchasedKey(userId), fromPurchased);
-    if (remaining < 0) await kv.set(purchasedKey(userId), 0);
+    await db
+      .update(schema.users)
+      .set({ purchasedCredits: sql`GREATEST(${schema.users.purchasedCredits} - ${fromPurchased}, 0)` })
+      .where(eq(schema.users.id, userId));
   }
 
   return { ok: true, balance: await getAgentBalance(userId) };
@@ -217,5 +221,8 @@ export async function checkAndConsumeCredits(
 
 // ── Add purchased credits (called from Stripe webhook) ────────────────────────
 export async function addPurchasedCredits(userId: string, amount: number): Promise<void> {
-  await kv.incrby(purchasedKey(userId), amount);
+  await db
+    .update(schema.users)
+    .set({ purchasedCredits: sql`${schema.users.purchasedCredits} + ${amount}` })
+    .where(eq(schema.users.id, userId));
 }

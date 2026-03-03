@@ -2,10 +2,11 @@
  * GET  /api/sites  — list the current user's saved sites
  * DELETE /api/sites?id=xxx — delete a site
  */
-import { kv } from "@vercel/kv";
 import { del } from "@vercel/blob";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { eq, and, desc } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
 import type { SavedSiteMeta } from "./save/route";
 
 export const runtime = "nodejs";
@@ -15,19 +16,24 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    // Get site IDs for this user
-    const ids = await kv.lrange<string>(`user:${userId}:sites`, 0, 99);
-    if (!ids || ids.length === 0) return NextResponse.json({ sites: [] });
+    const rows = await db
+      .select()
+      .from(schema.sites)
+      .where(eq(schema.sites.userId, userId))
+      .orderBy(desc(schema.sites.createdAt))
+      .limit(100);
 
-    // Fetch metadata for each site in parallel
-    const metas = await Promise.all(
-      ids.map(id => kv.get<SavedSiteMeta>(`site:${id}`))
-    );
-
-    // Filter nulls (expired sites) and clean up stale IDs
-    const sites = metas
-      .map((meta, i) => meta ? meta : { id: ids[i], _expired: true })
-      .filter((s): s is SavedSiteMeta => !("_expired" in s));
+    const sites: SavedSiteMeta[] = rows.map((r) => ({
+      id: r.id,
+      userId: r.userId,
+      prompt: r.prompt,
+      title: r.title,
+      industry: r.industry,
+      vibe: r.vibe,
+      blobUrl: r.blobUrl,
+      slug: r.slug,
+      createdAt: r.createdAt.toISOString(),
+    }));
 
     return NextResponse.json({ sites });
   } catch {
@@ -43,28 +49,29 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   try {
-    const meta = await kv.get<SavedSiteMeta>(`site:${id}`);
+    const rows = await db
+      .select()
+      .from(schema.sites)
+      .where(and(eq(schema.sites.id, id), eq(schema.sites.userId, userId)))
+      .limit(1);
 
-    // Only owner can delete
-    if (!meta || meta.userId !== userId) {
+    const site = rows[0];
+    if (!site) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     // Delete from Blob storage
-    if (meta.blobUrl) {
-      await del(meta.blobUrl).catch(() => {});
+    if (site.blobUrl) {
+      await del(site.blobUrl).catch(() => {});
     }
 
-    // Delete site metadata
-    await kv.del(`site:${id}`);
-
-    // Remove from user's site list
-    await kv.lrem(`user:${userId}:sites`, 0, id);
-
-    // Clean up subdomain if deployed
-    if (meta.slug) {
-      await kv.del(`domain:${meta.slug}`);
+    // Delete domain mapping if deployed
+    if (site.slug) {
+      await db.delete(schema.domains).where(eq(schema.domains.slug, site.slug));
     }
+
+    // Delete the site
+    await db.delete(schema.sites).where(eq(schema.sites.id, id));
 
     return NextResponse.json({ ok: true });
   } catch {

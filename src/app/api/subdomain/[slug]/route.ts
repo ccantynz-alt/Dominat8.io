@@ -1,11 +1,11 @@
 /**
  * Handles subdomain routing: {slug}.dominat8.io
  * Middleware rewrites subdomain requests to /api/subdomain/{slug}
- * This route looks up the siteId from KV and serves the HTML.
+ * This route looks up the siteId from Postgres and serves the HTML.
  */
-import { kv } from "@vercel/kv";
+import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
-import type { SavedSiteMeta } from "../../sites/save/route";
+import { db, schema } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -20,14 +20,25 @@ export async function GET(
   }
 
   try {
-    const siteId = await kv.get<string>(`domain:${slug}`);
-    if (!siteId) return notFound(slug);
+    const domainRows = await db
+      .select({ siteId: schema.domains.siteId })
+      .from(schema.domains)
+      .where(eq(schema.domains.slug, slug))
+      .limit(1);
 
-    const meta = await kv.get<SavedSiteMeta>(`site:${siteId}`);
-    if (!meta?.blobUrl) return notFound(slug);
+    if (!domainRows[0]) return notFound(slug);
+    const siteId = domainRows[0].siteId;
+
+    const siteRows = await db
+      .select({ blobUrl: schema.sites.blobUrl })
+      .from(schema.sites)
+      .where(eq(schema.sites.id, siteId))
+      .limit(1);
+
+    if (!siteRows[0]?.blobUrl) return notFound(slug);
 
     // Fetch the HTML from Vercel Blob
-    const res = await fetch(meta.blobUrl, { cache: "no-store" });
+    const res = await fetch(siteRows[0].blobUrl, { cache: "no-store" });
     if (!res.ok) return notFound(slug);
 
     const html = await res.text();

@@ -1,6 +1,6 @@
 /**
  * Clerk webhook handler
- * Handles user.created → sends welcome email
+ * Handles user.created → creates user in Postgres + sends welcome email
  *
  * Setup:
  *   1. In Clerk Dashboard → Webhooks → Add endpoint: /api/webhooks/clerk
@@ -8,6 +8,7 @@
  *   3. Copy the signing secret to CLERK_WEBHOOK_SECRET env var
  */
 import { NextRequest, NextResponse } from "next/server";
+import { db, schema } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -45,10 +46,24 @@ export async function POST(req: NextRequest) {
   if (body.type === "user.created") {
     const user = body.data;
     const primaryEmail = user.email_addresses?.[0]?.email_address;
-    const firstName = user.first_name ?? undefined;
+    const firstName = user.first_name ?? null;
+    const lastName = user.last_name ?? null;
+
+    // Upsert user into Postgres
+    await db
+      .insert(schema.users)
+      .values({
+        id: user.id,
+        email: primaryEmail ?? null,
+        firstName,
+        lastName,
+        plan: "free",
+        purchasedCredits: 0,
+      })
+      .onConflictDoNothing();
 
     if (primaryEmail) {
-      await sendWelcomeEmail(primaryEmail, firstName);
+      await sendWelcomeEmail(primaryEmail, firstName ?? undefined);
     }
   }
 

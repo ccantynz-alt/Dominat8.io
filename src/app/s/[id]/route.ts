@@ -1,13 +1,7 @@
-import { kv } from "@vercel/kv";
+import { eq } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
 
 export const runtime = "nodejs";
-
-type SavedSiteMeta = {
-  id: string;
-  prompt: string;
-  blobUrl: string;
-  createdAt: string;
-};
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const { id } = params;
@@ -17,9 +11,13 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 
   try {
-    const meta = await kv.get<SavedSiteMeta>(`site:${id}`);
+    const rows = await db
+      .select({ blobUrl: schema.sites.blobUrl })
+      .from(schema.sites)
+      .where(eq(schema.sites.id, id))
+      .limit(1);
 
-    if (!meta?.blobUrl) {
+    if (!rows[0]?.blobUrl) {
       return new Response(
         `<!DOCTYPE html><html><head><title>Not Found — Dominat8.io</title>
         <style>body{background:#06080e;color:#e9eef7;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
@@ -32,7 +30,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     }
 
     // Fetch the HTML from Vercel Blob
-    const res = await fetch(meta.blobUrl, { cache: "no-store" });
+    const res = await fetch(rows[0].blobUrl, { cache: "no-store" });
     if (!res.ok) {
       throw new Error(`Blob fetch failed: ${res.status}`);
     }
