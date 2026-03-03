@@ -1,29 +1,16 @@
-import { Suspense } from "react";
-import { Builder } from "@/io/surfaces/Builder";
+import nextDynamic from "next/dynamic";
 
+// Dynamically import Builder with SSR disabled.
+// Builder uses useUser() from Clerk which throws during static generation
+// when ClerkProvider isn't available. ssr:false ensures it only runs client-side.
+const Builder = nextDynamic(
+  () => import("@/io/surfaces/Builder").then((m) => ({ default: m.Builder })),
+  { ssr: false }
+);
+
+// Prevent Next.js from attempting to prerender this page at build time.
 export const dynamic = "force-dynamic";
 
 export default function BuildPage() {
-  return (
-    <Suspense
-      fallback={
-        <div
-          style={{
-            background: "#030712",
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "rgba(200,220,255,0.45)",
-            fontFamily: "'Outfit', system-ui, sans-serif",
-            fontSize: 15,
-          }}
-        >
-          Loading builder…
-        </div>
-      }
-    >
-      <Builder />
-    </Suspense>
-  );
+  return <Builder />;
 }
