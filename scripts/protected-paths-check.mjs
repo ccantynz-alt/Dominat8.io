@@ -6,9 +6,8 @@ import { execSync } from "node:child_process";
 
 const allow = process.env.ALLOW_PROTECTED_PATHS === "1";
 
-// Only truly sensitive paths: routing, engine, billing. Rest (e.g. src/app/**) is unrestricted.
+// Only truly sensitive paths: engine, billing. Middleware is allowed to evolve.
 const protectedPrefixes = [
-  "src/middleware.ts",
   "middleware.ts",
   "src/lib/engine/",
   "src/app/api/stripe/",
