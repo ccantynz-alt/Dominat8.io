@@ -1,6 +1,6 @@
-import { SignIn } from "@clerk/nextjs";
+"use client";
 
-export const metadata = { title: "Sign in — Dominat8.io" };
+import { SignIn } from "@clerk/nextjs";
 
 export default function SignInPage() {
   return (

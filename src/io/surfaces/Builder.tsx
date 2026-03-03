@@ -595,6 +595,30 @@ export function Builder() {
 
   const { isSignedIn } = useUser();
 
+  // Generation usage / quota
+  const [usageInfo, setUsageInfo] = useState<{
+    plan: string; usage: number; limit: number; remaining: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isSignedIn) { setUsageInfo(null); return; }
+    let cancelled = false;
+    fetch("/api/io/usage")
+      .then((r) => r.json())
+      .then((d: { signedIn?: boolean; plan?: string; usage?: number; limit?: number; remaining?: number }) => {
+        if (!cancelled && d.signedIn) {
+          setUsageInfo({
+            plan: d.plan ?? "free",
+            usage: d.usage ?? 0,
+            limit: d.limit ?? 3,
+            remaining: d.remaining ?? 0,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isSignedIn]);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -739,6 +763,12 @@ export function Builder() {
       setState("done");
       // Track anonymous usage client-side
       if (!isSignedIn) incrementAnonCount();
+      // Refresh quota counter for signed-in users
+      if (isSignedIn) {
+        fetch("/api/io/usage").then(r => r.json()).then((d: { signedIn?: boolean; plan?: string; usage?: number; limit?: number; remaining?: number }) => {
+          if (d.signedIn) setUsageInfo({ plan: d.plan ?? "free", usage: d.usage ?? 0, limit: d.limit ?? 3, remaining: d.remaining ?? 0 });
+        }).catch(() => {});
+      }
       // Auto-save to cloud for logged-in users
       if (isSignedIn) {
         fetch("/api/sites/save", {
@@ -1033,6 +1063,27 @@ export function Builder() {
               {showOptions ? "Less options" : "+ Customize"}
             </button>
           </div>
+
+          {/* Generation quota indicator */}
+          {isSignedIn && usageInfo && usageInfo.plan !== "admin" && (
+            <div className="d8h-quota-bar">
+              <span className="d8h-quota-label">
+                {usageInfo.remaining > 0
+                  ? `${usageInfo.remaining} of ${usageInfo.limit} generations left`
+                  : "No generations left this month"}
+              </span>
+              <span className="d8h-quota-plan">{usageInfo.plan} plan</span>
+              {usageInfo.remaining === 0 && (
+                <a href="/pricing" className="d8h-quota-upgrade">Upgrade →</a>
+              )}
+            </div>
+          )}
+          {!isSignedIn && (
+            <div className="d8h-quota-bar">
+              <span className="d8h-quota-label">{Math.max(0, ANON_LIMIT - getAnonCount())} of {ANON_LIMIT} free generations left</span>
+              <a href="/sign-up" className="d8h-quota-upgrade">Sign up for more →</a>
+            </div>
+          )}
 
           {/* Expanded options */}
           {showOptions && (
@@ -3607,6 +3658,31 @@ function HomeStyles() {
         transform: translateY(-1px);
       }
       .d8h-gen-btn:disabled { opacity: 0.30; cursor: not-allowed; }
+
+      /* ── Quota indicator ── */
+      .d8h-quota-bar {
+        display: flex; align-items: center; justify-content: center;
+        gap: 10px; margin-top: 14px; flex-wrap: wrap;
+      }
+      .d8h-quota-label {
+        font-size: 13px; font-weight: 500;
+        color: rgba(240,240,245,0.55);
+      }
+      .d8h-quota-plan {
+        font-size: 11px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 2px 8px; border-radius: 6px;
+        background: rgba(0,212,255,0.08);
+        color: rgba(0,212,255,0.70);
+        border: 1px solid rgba(0,212,255,0.15);
+      }
+      .d8h-quota-upgrade {
+        font-size: 12px; font-weight: 600;
+        color: rgba(0,212,255,0.90);
+        text-decoration: none;
+        transition: color 150ms ease;
+      }
+      .d8h-quota-upgrade:hover { color: #00d4ff; }
 
       /* ── Quick options row ── */
       .d8h-quick-row {
