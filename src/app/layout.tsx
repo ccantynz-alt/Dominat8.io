@@ -1,8 +1,13 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
+import { SafeClerkProvider } from "@/components/shared/SafeClerkProvider";
 
-const clerkReady = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+// Only enable Clerk when the publishable key exists AND has a valid format.
+// Clerk throws "Publishable key not valid" if the format is wrong, which
+// crashes the entire layout with a 500. Guard against that here.
+// SafeClerkProvider also wraps in an error boundary as a second safety net.
+const clerkReady = /^pk_(test|live)_/.test(clerkKey);
 const isStaging = process.env.NEXT_PUBLIC_D8_ENV === "staging" || process.env.VERCEL_ENV === "preview";
 
 export const metadata: Metadata = {
@@ -81,5 +86,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // ClerkProvider throws at render time when NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   // is missing, which crashes the entire root layout with a 500.
   // Wrap conditionally so the site still serves without auth.
-  return clerkReady ? <ClerkProvider>{shell}</ClerkProvider> : shell;
+  return clerkReady ? <SafeClerkProvider>{shell}</SafeClerkProvider> : shell;
 }

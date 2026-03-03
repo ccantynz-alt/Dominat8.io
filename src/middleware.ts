@@ -80,31 +80,37 @@ function handleRouting(request: NextRequest): NextResponse {
   return NextResponse.rewrite(url);
 }
 
-// Detect whether Clerk keys are configured
+// Detect whether Clerk keys are configured AND valid.
+// Clerk throws "Publishable key not valid" at request time if the format
+// doesn't match pk_(test|live)_*, which crashes every request with a 500.
+const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
 const clerkConfigured =
-  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+  /^pk_(test|live)_/.test(clerkKey) &&
   !!process.env.CLERK_SECRET_KEY;
 
-// When Clerk is configured, wrap with clerkMiddleware for auth context.
-// When keys are missing, skip Clerk entirely so the site still serves
-// instead of crashing with MIDDLEWARE_INVOCATION_FAILED.
-const middleware = clerkConfigured
+// Clerk middleware instance — created once at module load.
+// clerkMiddleware() itself doesn't throw here; it returns a handler function.
+// The handler validates the key at REQUEST time. We catch that below.
+const clerkHandler = clerkConfigured
   ? clerkMiddleware((_auth, request: NextRequest) => {
-      try {
-        return handleRouting(request);
-      } catch {
-        return NextResponse.next();
-      }
+      return handleRouting(request);
     })
-  : function fallbackMiddleware(request: NextRequest) {
-      try {
-        return handleRouting(request);
-      } catch {
-        return NextResponse.next();
-      }
-    };
+  : null;
 
-export default middleware;
+// Exported middleware wraps everything in a try/catch.
+// If Clerk throws (invalid key, network issue, etc.), fall back to
+// routing without auth so the site still serves pages.
+export default async function middleware(request: NextRequest) {
+  try {
+    if (clerkHandler) {
+      return await clerkHandler(request, {} as any);
+    }
+    return handleRouting(request);
+  } catch {
+    // Clerk crashed (e.g. "Publishable key not valid") — serve without auth
+    return handleRouting(request);
+  }
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
