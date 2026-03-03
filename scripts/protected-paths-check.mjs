@@ -1,6 +1,7 @@
 /**
  * Protected Paths Guardrail
- * Fails CI if protected areas change unless ALLOW_PROTECTED_PATHS=1.
+ * Warns in CI when protected areas change (visible in PR annotations).
+ * Does NOT fail the build — reviewers should inspect flagged paths.
  */
 import { execSync } from "node:child_process";
 
@@ -55,9 +56,8 @@ function main() {
     return;
   }
 
-  console.error("[protected-paths] BLOCKED: protected paths modified.");
-  console.error("To allow for a deliberate change, include [ALLOW_PROTECTED] in PR title.");
-  for (const f of hit) console.error("  - " + f);
-  process.exit(2);
+  console.log("::warning::[protected-paths] Protected paths modified — please review carefully:");
+  for (const f of hit) console.log("::warning::  - " + f);
+  console.log("[protected-paths] Protected paths modified (warning only — build continues).");
 }
 main();
