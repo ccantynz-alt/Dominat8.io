@@ -1,4 +1,3 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import type { NextFetchEvent } from "next/server";
 
@@ -70,20 +69,39 @@ function handleRouting(request: NextRequest): NextResponse {
   return NextResponse.rewrite(url);
 }
 
-// Clerk-wrapped middleware with routing logic
-const clerkHandler = clerkMiddleware((_auth, request: NextRequest) => {
-  return handleRouting(request);
-});
+// Lazy Clerk handler — only initialised on first request so a bad key
+// can't crash the module at import time (which causes MIDDLEWARE_INVOCATION_FAILED).
+type MiddlewareFn = (req: NextRequest, evt: NextFetchEvent) => Promise<NextResponse>;
+let clerkHandler: MiddlewareFn | null = null;
+let clerkFailed = false;
 
-// Resilient wrapper: if Clerk throws at runtime (misconfigured keys, etc.),
-// fall back to plain routing so the site doesn't go completely down.
+async function getClerkHandler(): Promise<MiddlewareFn | null> {
+  if (clerkFailed) return null;
+  if (clerkHandler) return clerkHandler;
+  try {
+    const { clerkMiddleware } = await import("@clerk/nextjs/server");
+    const handler = clerkMiddleware((_auth, request: NextRequest) => {
+      return handleRouting(request);
+    });
+    clerkHandler = handler as unknown as MiddlewareFn;
+    return clerkHandler;
+  } catch {
+    clerkFailed = true;
+    return null;
+  }
+}
+
 export default async function middleware(request: NextRequest, event: NextFetchEvent) {
   try {
-    return await clerkHandler(request, event);
+    const handler = await getClerkHandler();
+    if (handler) {
+      return await handler(request, event);
+    }
   } catch {
-    // Clerk threw — serve the page without auth rather than crashing
-    return handleRouting(request);
+    // Clerk threw at runtime — fall through to plain routing
   }
+  // Clerk unavailable or threw — serve the page without auth
+  return handleRouting(request);
 }
 
 export const config = {
