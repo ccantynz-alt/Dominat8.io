@@ -50,8 +50,8 @@ export async function GET() {
       signedIn: true,
       plan: "admin",
       usage: 0,
-      limit: Infinity,
-      remaining: Infinity,
+      limit: 999999,
+      remaining: 999999,
     });
   }
 
