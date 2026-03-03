@@ -2,6 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 
+const clerkReady = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://dominat8.io"),
   title: {
@@ -49,19 +51,22 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ClerkProvider>
-      <html lang="en">
-        <head>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
-            rel="stylesheet"
-          />
-        </head>
-        <body style={{ margin: 0, padding: 0 }}>{children}</body>
-      </html>
-    </ClerkProvider>
+  const shell = (
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body style={{ margin: 0, padding: 0 }}>{children}</body>
+    </html>
   );
+
+  // ClerkProvider throws at render time when NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  // is missing, which crashes the entire root layout with a 500.
+  // Wrap conditionally so the site still serves without auth.
+  return clerkReady ? <ClerkProvider>{shell}</ClerkProvider> : shell;
 }
