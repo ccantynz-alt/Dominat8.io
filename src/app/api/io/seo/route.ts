@@ -55,7 +55,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const { html } = await req.json();
+  let html: string;
+  try {
+    const body = await req.json();
+    html = body.html;
+  } catch {
+    return new Response("Invalid JSON body", { status: 400 });
+  }
 
   if (!html?.trim()) {
     return new Response("HTML required", { status: 400 });

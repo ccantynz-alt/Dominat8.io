@@ -274,6 +274,46 @@ function GeneratingAnimation({ progress }: { progress: number }) {
   );
 }
 
+// ─── Success celebration ──────────────────────────────────────────────────────
+
+function SuccessCelebration({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+  // Generate confetti particles with deterministic spread
+  const particles = Array.from({ length: 36 }, (_, i) => {
+    const hue = (i * 37) % 360;
+    const angle = (i * 10) % 360;
+    const distance = 60 + (i * 7) % 140;
+    const delay = (i * 0.04) % 0.8;
+    const size = 4 + (i % 5) * 2;
+    return { hue, angle, distance, delay, size, id: i };
+  });
+  return (
+    <div className="d8b-celebrate" aria-hidden="true">
+      <div className="d8b-celebrate-ring" />
+      <div className="d8b-celebrate-check">
+        <svg viewBox="0 0 52 52" className="d8b-celebrate-svg">
+          <circle cx="26" cy="26" r="24" className="d8b-celebrate-circle" />
+          <path className="d8b-celebrate-path" d="M14 27l7 7 16-16" />
+        </svg>
+      </div>
+      <div className="d8b-celebrate-label">Site ready!</div>
+      {particles.map(p => (
+        <div
+          key={p.id}
+          className="d8b-confetti"
+          style={{
+            "--angle": `${p.angle}deg`,
+            "--dist": `${p.distance}px`,
+            "--delay": `${p.delay}s`,
+            "--hue": `${p.hue}`,
+            "--size": `${p.size}px`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ─── Deployments hook ─────────────────────────────────────────────────────────
 
 function useDeployments() {
@@ -379,7 +419,21 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
           <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
         </div>
         <div className="d8b-modal-body">
-          <p className="d8b-modal-desc">Site settings coming soon.</p>
+          <div className="d8b-modal-coming-soon">
+            <div className="d8b-modal-coming-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(0,212,255,0.6)" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+            </div>
+            <h3 className="d8b-modal-coming-title">Site settings launching soon</h3>
+            <p className="d8b-modal-coming-desc">Custom fonts, colour overrides, analytics, and meta tags — all configurable from here.</p>
+            <div className="d8b-modal-coming-features">
+              <span className="d8b-modal-coming-tag">Custom fonts</span>
+              <span className="d8b-modal-coming-tag">Brand colours</span>
+              <span className="d8b-modal-coming-tag">Analytics</span>
+              <span className="d8b-modal-coming-tag">Meta tags</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -527,14 +581,28 @@ function SSLModal({ onClose }: { onClose: () => void }) {
           <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
         </div>
         <div className="d8b-modal-body">
-          <p className="d8b-modal-desc">All deployed sites are served over HTTPS with automatic SSL certificates.</p>
+          <div className="d8b-modal-coming-soon">
+            <div className="d8b-modal-coming-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(0,255,178,0.6)" strokeWidth="1.5">
+                <rect x="7" y="11" width="10" height="8" rx="2"/><path d="M9 11V8a3 3 0 016 0v3"/><circle cx="12" cy="15" r="1" fill="rgba(0,255,178,0.6)"/>
+              </svg>
+            </div>
+            <h3 className="d8b-modal-coming-title">SSL included on every site</h3>
+            <p className="d8b-modal-coming-desc">All deployed sites are served over HTTPS with automatic SSL certificates. Zero configuration required.</p>
+            <div className="d8b-modal-coming-features">
+              <span className="d8b-modal-coming-tag">Auto-renewed</span>
+              <span className="d8b-modal-coming-tag">TLS 1.3</span>
+              <span className="d8b-modal-coming-tag">HSTS headers</span>
+              <span className="d8b-modal-coming-tag">A+ rating</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function AutomateModal({ onClose, html, prompt, onApplyHtml }: { onClose: () => void; html: string; prompt: string; onApplyHtml?: (h: string) => void }) {
+function AutomateModal({ onClose }: { onClose: () => void; html: string; prompt: string; onApplyHtml?: (h: string) => void }) {
   return (
     <div className="d8b-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="d8b-info-modal">
@@ -543,7 +611,21 @@ function AutomateModal({ onClose, html, prompt, onApplyHtml }: { onClose: () => 
           <button className="d8b-modal-close" onClick={onClose} type="button">✕</button>
         </div>
         <div className="d8b-modal-body">
-          <p className="d8b-modal-desc">Automation workflows coming soon. Schedule regenerations, A/B tests, and more.</p>
+          <div className="d8b-modal-coming-soon">
+            <div className="d8b-modal-coming-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,184,0,0.6)" strokeWidth="1.5">
+                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h3 className="d8b-modal-coming-title">Automation launching soon</h3>
+            <p className="d8b-modal-coming-desc">Schedule regenerations, run A/B tests, set up auto-healing, and trigger agent workflows — all on autopilot.</p>
+            <div className="d8b-modal-coming-features">
+              <span className="d8b-modal-coming-tag">Scheduled rebuilds</span>
+              <span className="d8b-modal-coming-tag">A/B testing</span>
+              <span className="d8b-modal-coming-tag">Auto-heal</span>
+              <span className="d8b-modal-coming-tag">Webhooks</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -592,6 +674,7 @@ export function Builder() {
   const [showAutomate, setShowAutomate] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const { isSignedIn } = useUser();
 
@@ -761,6 +844,9 @@ export function Builder() {
       setSites((prev) => [site, ...prev]);
       setActiveSite(site);
       setState("done");
+      // Trigger celebration animation
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 3500);
       // Track anonymous usage client-side
       if (!isSignedIn) incrementAnonCount();
       // Refresh quota counter for signed-in users
@@ -1315,6 +1401,9 @@ export function Builder() {
     <div className="d8b-root">
       <BuilderStyles />
 
+      {/* Success celebration overlay */}
+      <SuccessCelebration visible={showCelebration} />
+
       {/* Ambient animated background */}
       <div className="d8b-ambient" aria-hidden="true">
         <div className="d8b-ambient-orb d8b-ambient-orb-1" />
@@ -1741,7 +1830,7 @@ export function Builder() {
                     <span className="d8b-live-dot" /> LIVE
                   </div>
                 )}
-                {isDone && <div className="d8b-done-badge">✓ Complete</div>}
+                {isDone && <div className="d8b-done-badge">✓ Site ready</div>}
                 <span className="d8b-toolbar-prompt">{prompt.slice(0, 50)}{prompt.length > 50 ? "…" : ""}</span>
               </div>
               <div className="d8b-toolbar-right">
@@ -2076,6 +2165,31 @@ function BuilderStyles() {
         overflow: hidden;
         position: relative;
       }
+
+      /* ── Success Celebration ── */
+      @keyframes d8b-celebrate-in { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
+      @keyframes d8b-celebrate-out { 0% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes d8b-celebrate-ring-pulse { 0% { transform: translate(-50%,-50%) scale(0.3); opacity: 0.8; } 100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; } }
+      @keyframes d8b-check-circle { 0% { stroke-dashoffset: 166; } 100% { stroke-dashoffset: 0; } }
+      @keyframes d8b-check-path { 0% { stroke-dashoffset: 48; } 100% { stroke-dashoffset: 0; } }
+      @keyframes d8b-confetti-burst { 0% { opacity: 1; transform: translate(0,0) scale(1); } 60% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(cos(var(--angle)) * var(--dist)), calc(sin(var(--angle)) * var(--dist) - 40px)) scale(0.3); } }
+      .d8b-celebrate { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; animation: d8b-celebrate-in 0.4s cubic-bezier(0.16,1,0.3,1), d8b-celebrate-out 0.6s 2.8s ease forwards; }
+      .d8b-celebrate-ring { position: absolute; top: 50%; left: 50%; width: 200px; height: 200px; border-radius: 50%; border: 2px solid rgba(0,212,255,0.3); animation: d8b-celebrate-ring-pulse 1.2s cubic-bezier(0,0.5,0.3,1) 0.2s forwards; transform: translate(-50%,-50%); }
+      .d8b-celebrate-check { width: 80px; height: 80px; position: relative; z-index: 2; }
+      .d8b-celebrate-svg { width: 80px; height: 80px; }
+      .d8b-celebrate-circle { fill: none; stroke: #00D4FF; stroke-width: 2.5; stroke-dasharray: 166; stroke-dashoffset: 166; animation: d8b-check-circle 0.6s cubic-bezier(0.65,0,0.45,1) 0.1s forwards; filter: drop-shadow(0 0 12px rgba(0,212,255,0.5)); }
+      .d8b-celebrate-path { fill: none; stroke: #00FFB2; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 48; stroke-dashoffset: 48; animation: d8b-check-path 0.3s cubic-bezier(0.65,0,0.45,1) 0.5s forwards; filter: drop-shadow(0 0 8px rgba(0,255,178,0.5)); }
+      .d8b-celebrate-label { margin-top: 16px; font-size: 18px; font-weight: 800; color: #E8F0FF; letter-spacing: -0.02em; opacity: 0; animation: d8b-celebrate-in 0.3s 0.6s forwards; text-shadow: 0 0 20px rgba(0,212,255,0.3); }
+      .d8b-confetti { position: absolute; top: 50%; left: 50%; width: var(--size); height: var(--size); border-radius: 2px; background: hsl(var(--hue), 85%, 60%); animation: d8b-confetti-burst 1.4s cubic-bezier(0.16,1,0.3,1) var(--delay) forwards; opacity: 0; box-shadow: 0 0 6px hsl(var(--hue), 85%, 60%); }
+      @media (prefers-reduced-motion: reduce) { .d8b-celebrate, .d8b-celebrate * { animation: none !important; } }
+
+      /* ── Coming Soon Modals ── */
+      .d8b-modal-coming-soon { text-align: center; padding: 24px 0 8px; }
+      .d8b-modal-coming-icon { margin-bottom: 18px; }
+      .d8b-modal-coming-title { font-size: 18px; font-weight: 800; color: #E8F0FF; margin: 0 0 10px; letter-spacing: -0.02em; }
+      .d8b-modal-coming-desc { font-size: 14px; color: rgba(200,220,255,0.50); line-height: 1.7; margin: 0 0 20px; max-width: 340px; margin-left: auto; margin-right: auto; }
+      .d8b-modal-coming-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+      .d8b-modal-coming-tag { padding: 6px 14px; border-radius: 999px; background: rgba(0,212,255,0.06); border: 1px solid rgba(0,212,255,0.15); color: rgba(0,212,255,0.70); font-size: 12px; font-weight: 600; letter-spacing: 0.01em; }
 
       /* ── Top navigation bar ── */
       .d8b-topnav {
@@ -2938,15 +3052,18 @@ function BuilderStyles() {
       }
       @keyframes d8b-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
 
+      @keyframes d8b-done-glow { 0% { box-shadow: 0 0 6px rgba(0,255,180,0.20); } 50% { box-shadow: 0 0 16px rgba(0,255,180,0.35); } 100% { box-shadow: 0 0 6px rgba(0,255,180,0.20); } }
       .d8b-done-badge {
-        background: rgba(0,255,180,0.05);
-        border: 1px solid rgba(0,255,180,0.15);
+        background: rgba(0,255,180,0.08);
+        border: 1px solid rgba(0,255,180,0.25);
         border-radius: 999px;
-        padding: 4px 10px;
+        padding: 4px 12px;
         font-size: 10px;
         font-weight: 700;
-        color: rgba(0,255,180,0.85);
+        color: rgba(0,255,180,0.90);
         letter-spacing: 0.04em;
+        animation: d8b-done-glow 2s ease-in-out infinite;
+        text-shadow: 0 0 8px rgba(0,255,180,0.3);
       }
 
       .d8b-toolbar-prompt {

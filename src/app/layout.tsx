@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const clerkReady = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const isStaging = process.env.NEXT_PUBLIC_D8_ENV === "staging" || process.env.VERCEL_ENV === "preview";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dominat8.io"),
@@ -61,7 +62,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body style={{ margin: 0, padding: 0 }}>{children}</body>
+      <body style={{ margin: 0, padding: 0 }}>
+        {isStaging && (
+          <div style={{
+            position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 99999,
+            background: "linear-gradient(90deg, rgba(255,184,0,0.95), rgba(255,140,0,0.95))",
+            color: "#000", textAlign: "center", fontSize: 11, fontWeight: 700,
+            padding: "4px 0", letterSpacing: "0.06em", fontFamily: "system-ui, sans-serif",
+          }}>
+            STAGING ENVIRONMENT — Not production
+          </div>
+        )}
+        {children}
+      </body>
     </html>
   );
 

@@ -21,7 +21,15 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { siteId, slug } = await req.json() as { siteId: string; slug: string };
+  let siteId: string;
+  let slug: string;
+  try {
+    const body = await req.json() as { siteId: string; slug: string };
+    siteId = body.siteId;
+    slug = body.slug;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
   if (!siteId || !slug) {
     return NextResponse.json({ error: "siteId and slug required" }, { status: 400 });

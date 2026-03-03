@@ -15,21 +15,25 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   const secret = process.env.CLERK_WEBHOOK_SECRET;
 
-  // Verify webhook signature if secret is configured
-  if (secret) {
-    const svixId = req.headers.get("svix-id");
-    const svixTimestamp = req.headers.get("svix-timestamp");
-    const svixSignature = req.headers.get("svix-signature");
+  // Fail-secure: reject webhooks if signing secret is not configured
+  if (!secret) {
+    console.warn("[clerk-webhook] CLERK_WEBHOOK_SECRET not set — rejecting webhook");
+    return NextResponse.json({ error: "Webhook secret not configured" }, { status: 403 });
+  }
 
-    if (!svixId || !svixTimestamp || !svixSignature) {
-      return NextResponse.json({ error: "Missing svix headers" }, { status: 400 });
-    }
+  // Verify webhook signature
+  const svixId = req.headers.get("svix-id");
+  const svixTimestamp = req.headers.get("svix-timestamp");
+  const svixSignature = req.headers.get("svix-signature");
 
-    // Simple timestamp check (within 5 minutes)
-    const ts = parseInt(svixTimestamp, 10);
-    if (Math.abs(Date.now() / 1000 - ts) > 300) {
-      return NextResponse.json({ error: "Stale webhook" }, { status: 400 });
-    }
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    return NextResponse.json({ error: "Missing svix headers" }, { status: 400 });
+  }
+
+  // Simple timestamp check (within 5 minutes)
+  const ts = parseInt(svixTimestamp, 10);
+  if (Math.abs(Date.now() / 1000 - ts) > 300) {
+    return NextResponse.json({ error: "Stale webhook" }, { status: 400 });
   }
 
   const body = await req.json() as {
