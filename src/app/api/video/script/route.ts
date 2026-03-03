@@ -1,14 +1,16 @@
 /**
  * POST /api/video/script
  * Generates a TikTok/Reels video script from a site prompt
+ * Costs 2 credits (video-script agent). Admin bypass.
  *
- * Body: { prompt, industry, vibe, siteId? }
+ * Body: { prompt, industry, vibe, platform? }
  * Returns: { script: VideoScript }
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { OpenAI } from "openai";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkAndConsumeCredits, isAdminUser } from "@/lib/agent-credits";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -30,28 +32,42 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { prompt, industry, vibe, platform = "tiktok" } = await req.json() as {
-    prompt: string;
-    industry?: string;
-    vibe?: string;
-    platform?: "tiktok" | "facebook" | "instagram";
-  };
+  // Credit check (2 credits per video script, admin bypass)
+  if (!isAdminUser(userId)) {
+    const check = await checkAndConsumeCredits(userId, "video-script");
+    if (!check.ok) {
+      return NextResponse.json(
+        { error: check.message, code: check.code, balance: check.balance },
+        { status: check.code === "NO_ACCESS" ? 403 : 402 },
+      );
+    }
+  }
+
+  let prompt: string;
+  let industry: string | undefined;
+  let vibe: string | undefined;
+  let platform: "tiktok" | "facebook" | "instagram" = "tiktok";
+  try {
+    const body = await req.json();
+    prompt = body.prompt;
+    industry = body.industry;
+    vibe = body.vibe;
+    if (body.platform) platform = body.platform;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
   if (!prompt) return NextResponse.json({ error: "prompt required" }, { status: 400 });
 
-  const systemPrompt = `You are a world-class social media content strategist specialising in viral short-form video for SaaS products. You create high-converting TikTok and Facebook Reels scripts for AI tools.
+  const systemPrompt = `You are a world-class social media content strategist specialising in viral short-form video. You create high-converting TikTok and Facebook Reels scripts.
 
 Your scripts follow the proven hook → problem → solution → proof → CTA structure that converts at 3-5%.
-
-Product: Dominat8.io — AI that builds complete, professional websites from one sentence in under 30 seconds.
-Price: Free to start, $9/mo for Pro.
-URL: dominat8.io
 
 Output must be a single valid JSON object matching this exact structure:
 {
   "hook": "3-second attention grabber (shocking stat, bold claim, or question)",
   "problem": "Pain point the viewer feels (5 seconds)",
-  "solution": "How Dominat8.io solves it (7 seconds)",
+  "solution": "How the product/service solves it (7 seconds)",
   "proof": "Result, stat, or social proof (7 seconds)",
   "cta": "Strong call to action (3 seconds)",
   "caption": "Full platform caption with emojis (150-200 chars)",
@@ -61,7 +77,7 @@ Output must be a single valid JSON object matching this exact structure:
   "platform": "${platform}"
 }`;
 
-  const userMsg = `Create a viral ${platform} video script promoting Dominat8.io, tailored to someone who needs a ${industry ?? "business"} website. The site was built with a "${vibe ?? "modern"}" style. Prompt used: "${prompt.slice(0, 200)}"`;
+  const userMsg = `Create a viral ${platform} video script for: "${prompt.slice(0, 300)}". Industry: ${industry ?? "business"}. Style: ${vibe ?? "modern"}.`;
 
   try {
     let content = "";
