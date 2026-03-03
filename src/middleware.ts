@@ -33,6 +33,7 @@ const DIRECT_PREFIXES = [
   "/tv/",
   "/admin",
   "/io",
+  "/build/",
 ];
 
 function shouldPassThrough(pathname: string): boolean {
@@ -40,7 +41,7 @@ function shouldPassThrough(pathname: string): boolean {
   return DIRECT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-export default clerkMiddleware((_auth, request: NextRequest) => {
+function routingHandler(request: NextRequest): NextResponse {
   const { pathname, hostname } = request.nextUrl;
 
   // ── Subdomain routing: {slug}.dominat8.io → /api/subdomain/{slug} ──────────
@@ -49,10 +50,8 @@ export default clerkMiddleware((_auth, request: NextRequest) => {
     : "dominat8.io";
 
   if (hostname !== appHost && hostname !== "localhost" && !hostname.includes("vercel.app")) {
-    // Check if it's a subdomain of our app
     if (hostname.endsWith(`.${appHost}`)) {
       const slug = hostname.replace(`.${appHost}`, "");
-      // Reserved subdomains (staging, www, etc.) serve the main app
       if (!RESERVED_SUBDOMAINS.has(slug)) {
         const url = request.nextUrl.clone();
         url.pathname = `/api/subdomain/${encodeURIComponent(slug)}`;
@@ -67,7 +66,24 @@ export default clerkMiddleware((_auth, request: NextRequest) => {
   const url = request.nextUrl.clone();
   url.pathname = "/io";
   return NextResponse.rewrite(url);
+}
+
+// Wrap the routing handler in clerkMiddleware for auth support.
+// If Clerk throws at runtime (e.g. missing env vars), the error is caught
+// and we fall back to plain routing so the site remains operational.
+const clerkWrapped = clerkMiddleware((_auth, request) => {
+  return routingHandler(request);
 });
+
+export default function middleware(request: NextRequest) {
+  try {
+    return clerkWrapped(request, {} as any);
+  } catch {
+    // Clerk runtime error (missing key, network issue, etc.)
+    // Fall back to plain routing so the site still works
+    return routingHandler(request);
+  }
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
