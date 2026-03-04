@@ -2,8 +2,28 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import { HomeSections } from "./HomeSections";
+
+// ─── Safe Clerk imports: graceful no-op when ClerkProvider is absent ─────────
+import * as ClerkReact from "@clerk/nextjs";
+
+const CLERK_AVAILABLE = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+function useSafeUser() {
+  if (!CLERK_AVAILABLE) return { isSignedIn: false, user: null, isLoaded: true };
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return ClerkReact.useUser();
+}
+
+function SafeSignInButton({ children, mode }: { children: React.ReactNode; mode?: string }) {
+  if (!CLERK_AVAILABLE) return <>{children}</>;
+  return <ClerkReact.SignInButton mode={mode as any}>{children}</ClerkReact.SignInButton>;
+}
+
+function SafeUserButton(props: { afterSignOutUrl?: string }) {
+  if (!CLERK_AVAILABLE) return null;
+  return <ClerkReact.UserButton {...props} />;
+}
 
 // ─── Robust HTML extraction ───────────────────────────────────────────────────
 // AI models sometimes wrap HTML in code fences or add preamble text.
@@ -593,7 +613,7 @@ export function Builder() {
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
 
-  const { isSignedIn } = useUser();
+  const { isSignedIn } = useSafeUser();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -947,11 +967,11 @@ export function Builder() {
           </nav>
           <div className="d8h-header-actions">
             {isSignedIn ? (
-              <UserButton afterSignOutUrl="/" />
+              <SafeUserButton afterSignOutUrl="/" />
             ) : (
-              <SignInButton mode="redirect">
+              <SafeSignInButton mode="redirect">
                 <button type="button" className="d8h-nav-signin">Get Started</button>
-              </SignInButton>
+              </SafeSignInButton>
             )}
           </div>
         </header>
@@ -1287,11 +1307,11 @@ export function Builder() {
         </div>
         <div className="d8b-topnav-right">
           {isSignedIn ? (
-            <UserButton afterSignOutUrl="/" />
+            <SafeUserButton afterSignOutUrl="/" />
           ) : (
-            <SignInButton mode="redirect">
+            <SafeSignInButton mode="redirect">
               <button type="button" className="d8b-topnav-signin">Sign in</button>
-            </SignInButton>
+            </SafeSignInButton>
           )}
         </div>
       </nav>
