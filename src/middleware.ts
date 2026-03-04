@@ -1,4 +1,3 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 // Subdomains that serve the main app (not user-deployed sites)
@@ -68,21 +67,33 @@ function routingHandler(request: NextRequest): NextResponse {
   return NextResponse.rewrite(url);
 }
 
-// Wrap the routing handler in clerkMiddleware for auth support.
-// If Clerk throws at runtime (e.g. missing env vars), the error is caught
-// and we fall back to plain routing so the site remains operational.
-const clerkWrapped = clerkMiddleware((_auth, request) => {
-  return routingHandler(request);
-});
+// Only use Clerk middleware if the publishable key is configured.
+// Without it, clerkMiddleware throws asynchronously ("Missing publishableKey"),
+// causing a 500 on every request.
+const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-export default function middleware(request: NextRequest) {
+let clerkWrapped: ((req: NextRequest, evt: any) => Promise<NextResponse>) | null = null;
+if (hasClerkKey) {
   try {
-    return clerkWrapped(request, {} as any);
+    const { clerkMiddleware } = require("@clerk/nextjs/server");
+    clerkWrapped = clerkMiddleware((_auth: any, request: NextRequest) => {
+      return routingHandler(request);
+    });
   } catch {
-    // Clerk runtime error (missing key, network issue, etc.)
-    // Fall back to plain routing so the site still works
-    return routingHandler(request);
+    // Clerk module failed to load — fall back to plain routing
   }
+}
+
+export default async function middleware(request: NextRequest) {
+  if (clerkWrapped) {
+    try {
+      return await clerkWrapped(request, {} as any);
+    } catch {
+      // Clerk runtime error — fall back to plain routing
+      return routingHandler(request);
+    }
+  }
+  return routingHandler(request);
 }
 
 export const config = {
