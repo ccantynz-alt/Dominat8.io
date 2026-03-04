@@ -1,4 +1,3 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 // Subdomains that serve the main app (not user-deployed sites)
@@ -33,6 +32,7 @@ const DIRECT_PREFIXES = [
   "/tv/",
   "/admin",
   "/io",
+  "/build/",
 ];
 
 function shouldPassThrough(pathname: string): boolean {
@@ -40,7 +40,7 @@ function shouldPassThrough(pathname: string): boolean {
   return DIRECT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-export default clerkMiddleware((_auth, request: NextRequest) => {
+function routingHandler(request: NextRequest): NextResponse {
   const { pathname, hostname } = request.nextUrl;
 
   // ── Subdomain routing: {slug}.dominat8.io → /api/subdomain/{slug} ──────────
@@ -49,10 +49,8 @@ export default clerkMiddleware((_auth, request: NextRequest) => {
     : "dominat8.io";
 
   if (hostname !== appHost && hostname !== "localhost" && !hostname.includes("vercel.app")) {
-    // Check if it's a subdomain of our app
     if (hostname.endsWith(`.${appHost}`)) {
       const slug = hostname.replace(`.${appHost}`, "");
-      // Reserved subdomains (staging, www, etc.) serve the main app
       if (!RESERVED_SUBDOMAINS.has(slug)) {
         const url = request.nextUrl.clone();
         url.pathname = `/api/subdomain/${encodeURIComponent(slug)}`;
@@ -67,7 +65,36 @@ export default clerkMiddleware((_auth, request: NextRequest) => {
   const url = request.nextUrl.clone();
   url.pathname = "/io";
   return NextResponse.rewrite(url);
-});
+}
+
+// Only use Clerk middleware if the publishable key is configured.
+// Without it, clerkMiddleware throws asynchronously ("Missing publishableKey"),
+// causing a 500 on every request.
+const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+let clerkWrapped: ((req: NextRequest, evt: any) => Promise<NextResponse>) | null = null;
+if (hasClerkKey) {
+  try {
+    const { clerkMiddleware } = require("@clerk/nextjs/server");
+    clerkWrapped = clerkMiddleware((_auth: any, request: NextRequest) => {
+      return routingHandler(request);
+    });
+  } catch {
+    // Clerk module failed to load — fall back to plain routing
+  }
+}
+
+export default async function middleware(request: NextRequest) {
+  if (clerkWrapped) {
+    try {
+      return await clerkWrapped(request, {} as any);
+    } catch {
+      // Clerk runtime error — fall back to plain routing
+      return routingHandler(request);
+    }
+  }
+  return routingHandler(request);
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
